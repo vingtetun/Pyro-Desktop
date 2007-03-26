@@ -23,7 +23,9 @@ prefs_DATA = $(PREFS_SRCDIR)/prefs.js
 
 IDL_FILES =						\
 	$(srcdir)/public/compzillaIExtension.idl	\
-	$(srcdir)/public/compzillaIControl.idl
+	$(srcdir)/public/compzillaIControl.idl		\
+	$(srcdir)/public/compzillaIWindowManager.idl
+
 IDL_H_FILES = $(IDL_FILES:.idl=.h)
 IDL_XPT_FILES = $(IDL_FILES:.idl=.xpt)
 
@@ -32,8 +34,10 @@ CLEANFILES = $(IDL_H_FILES) $(IDL_XPT_FILES)
 
 
 componentdir = $(extensiondir)/components
+COMPONENT_SRCDIR = $(EXTENSION_SRCDIR)/components
 component_LTLIBRARIES = libcompzilla.la
-component_DATA = $(IDL_XPT_FILES)
+component_DATA = $(IDL_XPT_FILES)		\
+		 $(COMPONENT_SRCDIR)/compzillaWindowManager.js
 
 
 libcompzilla_la_LDFLAGS = -avoid-version -module
