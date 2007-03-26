@@ -1,10 +1,9 @@
 /* -*- mode: IDL; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
 #include "nsISupports.idl"
 #include "nsIDOMWindow.idl"
-#include "nsIDOMEventTarget.idl"
 
 [scriptable, uuid(8bf6de0a-ed8f-47af-8757-41551542d196)]
-interface compzillaIControl : nsIDOMEventTarget
+interface compzillaIControl : nsISupports
 {
     void RegisterWindowManager ();
 };
