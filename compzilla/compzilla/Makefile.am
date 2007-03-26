@@ -1,6 +1,6 @@
 
 
-extensiondir=$(GECKO_LIBDIR)/extensions/compzilla@beatniksoftware.com
+extensiondir = $(GECKO_LIBDIR)/extensions/compzilla@beatniksoftware.com
 EXTENSION_SRCDIR=$(srcdir)
 extension_DATA =				\
 	$(EXTENSION_SRCDIR)/chrome.manifest	\
