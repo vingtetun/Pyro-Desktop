@@ -17,6 +17,7 @@ class compzillaControl
 {
 public:
     NS_DECL_ISUPPORTS
+    NS_DECL_NSIDOMEVENTTARGET
     NS_DECL_COMPZILLAICONTROL
 
     compzillaControl();
@@ -24,6 +25,9 @@ public:
 
 private:
     void AddWindow (Window id, Window prev);
+
+    GdkFilterReturn Filter (GdkXEvent *xevent, GdkEvent *event);
+    static GdkFilterReturn gdk_filter_func (GdkXEvent *xevent, GdkEvent *event, gpointer data);
 
     GdkWindow *root;
 

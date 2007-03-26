@@ -36,6 +36,25 @@ compzillaControl::~compzillaControl()
 }
 
 NS_IMETHODIMP
+compzillaControl::AddEventListener(const nsAString & type, nsIDOMEventListener *listener, PRBool useCapture)
+{
+    printf ("AddEventListener\n");
+    return NS_OK;
+}
+
+NS_IMETHODIMP
+compzillaControl::RemoveEventListener(const nsAString & type, nsIDOMEventListener *listener, PRBool useCapture)
+{
+    return NS_OK;
+}
+
+NS_IMETHODIMP
+compzillaControl::DispatchEvent(nsIDOMEvent *evt, PRBool *_retval)
+{
+    return NS_OK;
+}
+
+NS_IMETHODIMP
 compzillaControl::RegisterWindowManager()
 {
     Display *dpy;
@@ -87,6 +106,9 @@ compzillaControl::RegisterWindowManager()
                                            GDK_STRUCTURE_MASK |
                                            GDK_PROPERTY_CHANGE_MASK));
 
+    gdk_window_add_filter (root, gdk_filter_func, this);
+
+#if false
     gdk_x11_grab_server ();
 
     // XXX this needs some gdk-ification
@@ -97,11 +119,13 @@ compzillaControl::RegisterWindowManager()
     XQueryTree (dpy, GDK_WINDOW_XID (root), &root_return, &parent_return, &children, &nchildren);
     for (i = 0; i < nchildren; i++) {
         XCompositeRedirectSubwindows (dpy, children[i], CompositeRedirectManual);
+        printf ("adding window 0x%0x\n", children[i]);
         AddWindow (children[i], i ? children[i-1] : None);
     }
     XFree (children);
 
     gdk_x11_ungrab_server ();
+#endif
 
     // not sure if we need this here.  it's to perform the initial
     // compositing to the root buffer.  what we really want, though,
@@ -167,6 +191,54 @@ compzillaControl::AddWindow (Window id, Window prev)
     if (new->a.map_state == IsViewable)
 	map_win (dpy, id, new->damage_sequence - 1);
 #endif
+}
+
+GdkFilterReturn
+compzillaControl::Filter (GdkXEvent *xevent, GdkEvent *event)
+{
+    XEvent *x11_event = (XEvent*)xevent;
+    Window w = x11_event->xany.window;
+
+    switch (x11_event->type) {
+    case CreateNotify:
+        printf ("CreateNotify: window=0x%0x, x=%d, y=%d, width=%d, height=%d\n",
+                x11_event->xcreatewindow.window,
+                x11_event->xcreatewindow.x,
+                x11_event->xcreatewindow.y,
+                x11_event->xcreatewindow.width,
+                x11_event->xcreatewindow.height);
+        XCompositeRedirectSubwindows (GDK_WINDOW_XDISPLAY (root), x11_event->xcreatewindow.window, CompositeRedirectManual);
+        break;
+    case ConfigureNotify:
+        printf ("ConfigureNotify: window=0x%0x, x=%d, y=%d, width=%d, height=%d\n",
+                x11_event->xconfigure.window,
+                x11_event->xconfigure.x,
+                x11_event->xconfigure.y,
+                x11_event->xconfigure.width,
+                x11_event->xconfigure.height);
+        break;
+    case DestroyNotify:
+        printf ("DestroyNotify: window=0x%0x\n", 
+                x11_event->xdestroywindow.window);
+        break;
+    case MapNotify:
+        printf ("MapNotify: window=0x%0x\n", 
+                x11_event->xmap.window);
+        break;
+    case UnmapNotify:
+        printf ("UnmapNotify: window=0x%0x\n", 
+                x11_event->xunmap.window);
+        break;
+    }
+
+    return GDK_FILTER_CONTINUE;
+}
+
+GdkFilterReturn
+compzillaControl::gdk_filter_func (GdkXEvent *xevent, GdkEvent *event, gpointer data)
+{
+    compzillaControl *control = reinterpret_cast<compzillaControl*>(data);
+    return control->Filter (xevent, event);
 }
 
 NS_IMPL_ISUPPORTS1_CI(compzillaControl, compzillaIControl);
