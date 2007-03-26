@@ -5,6 +5,7 @@
 [scriptable, uuid(8bf6de0a-ed8f-47af-8757-41551542d196)]
 interface compzillaIControl : nsISupports 
 {
+    void RegisterWindowManager ();
 };
 
 
