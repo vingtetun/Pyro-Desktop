@@ -24,7 +24,6 @@
 #include <X11/Xutil.h>
 #include <X11/Xatom.h>
 
-
 compzillaControl::compzillaControl()
 {
     printf ("ctor\n");
@@ -36,26 +35,7 @@ compzillaControl::~compzillaControl()
 }
 
 NS_IMETHODIMP
-compzillaControl::AddEventListener(const nsAString & type, nsIDOMEventListener *listener, PRBool useCapture)
-{
-    printf ("AddEventListener\n");
-    return NS_OK;
-}
-
-NS_IMETHODIMP
-compzillaControl::RemoveEventListener(const nsAString & type, nsIDOMEventListener *listener, PRBool useCapture)
-{
-    return NS_OK;
-}
-
-NS_IMETHODIMP
-compzillaControl::DispatchEvent(nsIDOMEvent *evt, PRBool *_retval)
-{
-    return NS_OK;
-}
-
-NS_IMETHODIMP
-compzillaControl::RegisterWindowManager()
+compzillaControl::RegisterWindowManager(/*compzillaIWindowManager* mgr*/)
 {
     Display *dpy;
 
@@ -118,7 +98,7 @@ compzillaControl::RegisterWindowManager()
     unsigned int nchildren;
     XQueryTree (dpy, GDK_WINDOW_XID (root), &root_return, &parent_return, &children, &nchildren);
     for (i = 0; i < nchildren; i++) {
-        XCompositeRedirectSubwindows (dpy, children[i], CompositeRedirectManual);
+        XCompositeRedirectSubwindows (dpy, children[i], CompositeRedirectAutomatic);
         printf ("adding window 0x%0x\n", children[i]);
         AddWindow (children[i], i ? children[i-1] : None);
     }
@@ -207,7 +187,15 @@ compzillaControl::Filter (GdkXEvent *xevent, GdkEvent *event)
                 x11_event->xcreatewindow.y,
                 x11_event->xcreatewindow.width,
                 x11_event->xcreatewindow.height);
-        XCompositeRedirectSubwindows (GDK_WINDOW_XDISPLAY (root), x11_event->xcreatewindow.window, CompositeRedirectManual);
+        //mgr->WindowCreated (x11_event->xcreatewindow.window);
+
+        // XXX the JS code MUST call back into the extension to give it a
+        // reference to the <canvas> element.  add an assert here to
+        // that effect, and if JS doesn't call back to us, maybe don't
+        // redirect the window so it at least gets drawn on the
+        // screen?
+        
+        XCompositeRedirectSubwindows (GDK_WINDOW_XDISPLAY (root), x11_event->xcreatewindow.window, CompositeRedirectAutomatic);
         break;
     case ConfigureNotify:
         printf ("ConfigureNotify: window=0x%0x, x=%d, y=%d, width=%d, height=%d\n",
@@ -216,19 +204,31 @@ compzillaControl::Filter (GdkXEvent *xevent, GdkEvent *event)
                 x11_event->xconfigure.y,
                 x11_event->xconfigure.width,
                 x11_event->xconfigure.height);
+        // XXX generate event "windowconfigured" so that the JS can resize/relayout the dom structure for the window
+
+        // XXX recreate our XImage backing store, but only if we're
+        // mapped (i don't think we'll get damage until we're
+        // displayed)
         break;
     case DestroyNotify:
         printf ("DestroyNotify: window=0x%0x\n", 
                 x11_event->xdestroywindow.window);
+        //mgr->WindowDestroyed (x11_event->xdestroywindow.window);
         break;
     case MapNotify:
         printf ("MapNotify: window=0x%0x\n", 
                 x11_event->xmap.window);
+        //mgr->WindowMapped (x11_event->xmap.window);
         break;
     case UnmapNotify:
         printf ("UnmapNotify: window=0x%0x\n", 
                 x11_event->xunmap.window);
+        //mgr->WindowUnmapped (x11_event->xunmap.window);
         break;
+    case PropertyNotify:
+        printf ("PropertyChange: window=0x%0x\n", 
+                x11_event->xproperty.window);
+        // XXX generate event "windowpropertychanged"
     }
 
     return GDK_FILTER_CONTINUE;
