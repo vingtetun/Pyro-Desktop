@@ -1,0 +1,16 @@
+/* -*- mode: IDL; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
+#include "nsISupports.idl"
+#include "nsIDOMWindow.idl"
+#include "nsIDOMEventTarget.idl"
+
+[scriptable, uuid(8bf6de0a-ed8f-47af-8757-41551542d196)]
+interface compzillaIWindowManager : nsISupports
+{
+  void WindowCreated (in long xid);
+  void WindowDestroyed (in long xid);
+
+  void WindowMapped (in long xid);
+  void WindowUnmapped (in long xid);
+
+  void WindowConfigured (in long xid);
+};
