@@ -13,6 +13,8 @@ AC_PROG_CC
 AC_PROG_INSTALL
 
 
+PKG_CHECK_MODULES(GDK, gdk-2.0 >= 2.8.0)
+
 PKG_CHECK_MODULES(NSPR, firefox-nspr >= 1.5.0)
 
 FIREFOX_XPCOM="firefox-xpcom >= 1.5.0"
@@ -33,9 +35,9 @@ AC_SUBST(XPIDL)
 
 
 ##
-## Checks for Xdamage libraries
+## Checks for our Xextensions
 ##
-PKG_CHECK_MODULES(XDAMAGE, xdamage)
+PKG_CHECK_MODULES(XEXTENSIONS, xdamage xcomposite)
 
 
 AC_OUTPUT([
@@ -55,8 +57,9 @@ echo "
 	xpidl:			  ${XPIDL}
 	Gecko includes:		  ${GECKO_INCLUDEDIR}
 	Gecko idl files:	  ${GECKO_IDLDIR}
-        XDAMAGE_CFLAGS:           ${XDAMAGE_CFLAGS}
-        XDAMAGE_LIBS:             ${XDAMAGE_LIBS}
+        XEXTENSIONS_CFLAGS:       ${XEXTENSIONS_CFLAGS}
+        XEXTENSIONS_LIBS:         ${XEXTENSIONS_LIBS}
+        GDK_CFLAGS:               ${GDK_CFLAGS}
 
         Now type 'make' to build $PACKAGE
 "

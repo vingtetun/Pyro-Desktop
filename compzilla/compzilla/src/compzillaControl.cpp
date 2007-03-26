@@ -18,9 +18,16 @@
 #include "nsIScriptGlobalObject.h"
 #include "nsIWidget.h"
 
+#include <gdk/gdkx.h>
+
+#include <X11/Xlib.h>
+#include <X11/Xutil.h>
+#include <X11/Xatom.h>
+
 
 compzillaControl::compzillaControl()
 {
+    printf ("ctor\n");
 }
 
 
@@ -31,17 +38,20 @@ compzillaControl::~compzillaControl()
 NS_IMETHODIMP
 compzillaControl::RegisterWindowManager()
 {
+    Display *dpy;
+
+    printf ("RegisterWindowManager\n");
+
     nsresult rv = NS_OK;
     int	composite_major, composite_minor;
 
-    dpy = XOpenDisplay (":0");
+    root = gdk_get_default_root_window ();
+
+    dpy = GDK_WINDOW_XDISPLAY (root);
     if (!dpy) {
         fprintf (stderr, "Can't open display\n");
         return -1; // XXX
     }
-
-    scr = DefaultScreen (dpy);
-    root = RootWindow (dpy, scr);
 
     if (!XRenderQueryExtension (dpy, &render_event, &render_error))
     {
@@ -72,25 +82,26 @@ compzillaControl::RegisterWindowManager()
 	return -1; // XXX
     }
 
-    XGrabServer (dpy);
+    gdk_window_set_events (root,
+                           (GdkEventMask) (GDK_SUBSTRUCTURE_MASK |
+                                           GDK_STRUCTURE_MASK |
+                                           GDK_PROPERTY_CHANGE_MASK));
 
-    XSelectInput (dpy, root, 
-		  SubstructureNotifyMask|
-		  StructureNotifyMask|
-		  PropertyChangeMask);
+    gdk_x11_grab_server ();
 
+    // XXX this needs some gdk-ification
     Window *children;
     Window root_return, parent_return;
     int i;
     unsigned int nchildren;
-    XQueryTree (dpy, root, &root_return, &parent_return, &children, &nchildren);
+    XQueryTree (dpy, GDK_WINDOW_XID (root), &root_return, &parent_return, &children, &nchildren);
     for (i = 0; i < nchildren; i++) {
         XCompositeRedirectSubwindows (dpy, children[i], CompositeRedirectManual);
         AddWindow (children[i], i ? children[i-1] : None);
     }
     XFree (children);
 
-    XUngrabServer (dpy);
+    gdk_x11_ungrab_server ();
 
     // not sure if we need this here.  it's to perform the initial
     // compositing to the root buffer.  what we really want, though,

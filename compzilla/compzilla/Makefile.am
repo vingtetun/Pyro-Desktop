@@ -37,11 +37,12 @@ component_DATA = $(IDL_XPT_FILES)
 
 
 libcompzilla_la_LDFLAGS = -avoid-version -module
-libcompzilla_la_LIBADD = $(XDAMAGE_LIBS)
+libcompzilla_la_LIBADD = $(XEXTENSIONS_LIBS)
 
 libcompzilla_la_CPPFLAGS =			\
 	$(AM_CPPFLAGS)				\
-	$(XDAMAGE_CFLAGS)			\
+	$(XEXTENSIONS_CFLAGS)			\
+	$(GDK_CFLAGS)				\
 	-I$(srcdir)/public
 
 GECKO_PRIVATE_INCLUDEDIR = $(top_srcdir)/gecko-sdk/include

@@ -2,9 +2,8 @@
 #include "compzillaIControl.h"
 #include "nsCOMPtr.h"
 
-#include <X11/Xlib.h>
-#include <X11/Xutil.h>
-#include <X11/Xatom.h>
+#include <gdk/gdkwindow.h>
+
 #include <X11/extensions/Xcomposite.h>
 #include <X11/extensions/Xdamage.h>
 #include <X11/extensions/Xrender.h>
@@ -26,9 +25,7 @@ public:
 private:
     void AddWindow (Window id, Window prev);
 
-    Display *dpy;
-    int scr;
-    Window root;
+    GdkWindow *root;
 
     int		xfixes_event, xfixes_error;
     int		damage_event, damage_error;
@@ -37,6 +34,6 @@ private:
     int		composite_opcode;
 
 #if HAS_NAME_WINDOW_PIXMAP
-    Bool	hasNamePixmap;
+    bool	hasNamePixmap;
 #endif
 };
