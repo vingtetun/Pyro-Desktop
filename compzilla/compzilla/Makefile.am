@@ -46,10 +46,6 @@ libcompzilla_la_CPPFLAGS =			\
 	$(XDAMAGE_CFLAGS)			\
 	-I$(srcdir)/public
 
-# The include of $(GECKO_INCLUDEDIR) in the FULL_GECKO case is for 
-# Ubuntu, which has a mix of the gecko-sdk directory arrangement
-# with including the full set of headers
-if HAVE_FULL_GECKO
 libcompzilla_la_CPPFLAGS +=			\
 	-I$(GECKO_INCLUDEDIR)			\
 	-I$(GECKO_INCLUDEDIR)/nspr		\
@@ -62,12 +58,8 @@ libcompzilla_la_CPPFLAGS +=			\
 	-I$(GECKO_INCLUDEDIR)/string		\
 	-I$(GECKO_INCLUDEDIR)/widget		\
 	-I$(GECKO_INCLUDEDIR)/xpcom		\
-	-I$(GECKO_INCLUDEDIR)/xpconnect
-else
-libcompzilla_la_CPPFLAGS +=			\
-	-I$(GECKO_INCLUDEDIR)			\
+	-I$(GECKO_INCLUDEDIR)/xpconnect		\
 	-I$(GECKO_PRIVATE_INCLUDEDIR)
-endif
 
 nodist_libcompzilla_la_SOURCES=			\
 	$(IDL_HEADERS)				\
@@ -82,15 +74,9 @@ nodist_libcompzilla_la_SOURCES=			\
 # xpidl generates .h and .xpt files from .idl files
 #
 
-if HAVE_FULL_GECKO
 XPIDL_INCLUDES =				\
 	-I$(GECKO_IDLDIR)			\
 	-I$(srcdir)/public
-else
-XPIDL_INCLUDES =				\
-	-I$(GECKO_IDLDIR)			\
-	-I$(srcdir)/public
-endif
 
 %.h: %.idl
 	$(XPIDL) $(XPIDL_INCLUDES) -m header -e $@ $<
