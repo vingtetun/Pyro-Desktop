@@ -1,0 +1,145 @@
+
+AC_INIT(compzilla, 0.1, alex@beatniksoftware.com)
+
+AC_CONFIG_SRCDIR(compzilla/install.rdf)
+AC_CONFIG_HEADERS(config.h)
+
+AM_INIT_AUTOMAKE
+
+AM_MAINTAINER_MODE
+AM_DISABLE_STATIC
+AM_PROG_LIBTOOL
+AC_PROG_CC
+AC_PROG_INSTALL
+
+
+##
+## Checks for Firefox build environment
+##
+AC_ARG_WITH(gecko_sdk, 
+	AC_HELP_STRING([--with-gecko-sdk=DIR],
+		       [Path to Gecko SDK]))
+AC_ARG_WITH(gecko_full_headers,
+	AC_HELP_STRING([--with-gecko-headers=DIR],
+		       [Path to Gecko headers]))
+AC_ARG_WITH(gecko_full_idl,
+	AC_HELP_STRING([--with-gecko-idl=DIR],
+		       [Path to Gecko IDL files]))
+AC_ARG_WITH(xpidl,
+	AC_HELP_STRING([--with-xpidl=SOURCE_DIR],
+		       [Path to XPIDL binary]))
+
+have_full_gecko=false
+sdk_includes_nspr=false
+
+if test "x$with_gecko_sdk" != x -a "x$with_gecko_sdk" != xyes -a "x$with_gecko_sdk" != xno ; then
+   GECKO_IDLDIR="$with_gecko_sdk/idl"
+   GECKO_INCLUDEDIR="$with_gecko_sdk/include"
+   XPIDL="$with_gecko_sdk/bin/xpidl"
+
+   if test -f "$GECKO_INCLUDEDIR/nspr.h" ; then
+       sdk_includes_nspr=true
+   fi
+fi
+
+if test "x$with_gecko_idl" != x -a "x$with_gecko_idl" != xyes -a "x$with_gecko_idl" != xno ; then
+    GECKO_IDLDIR="$with_gecko_idl"
+fi
+
+if test "x$with_gecko_headers" != x -a "x$with_gecko_headers" != xyes -a "x$with_gecko_headers" != xno ; then
+    GECKO_INCLUDEDIR="$with_gecko_headers"
+fi
+
+if test "x$with_xpidl" != x -a "x$with_xpidl" != xyes -a "x$with_xpidl" != xno ; then
+    XPIDL="$with_xpidl"
+fi
+
+if test "x$GECKO_INCLUDEDIR" = x ; then
+    AC_MSG_CHECKING([for Gecko SDK])
+    if test -f "/usr/share/idl/firefox/nsIURI.idl" ; then
+        GECKO_IDLDIR="/usr/share/idl/firefox"
+        GECKO_INCLUDEDIR="/usr/include/firefox"
+        XPIDL="/usr/lib/firefox/xpidl"
+	AC_MSG_RESULT([yes])
+    else
+	AC_MSG_RESULT([no])
+    fi
+fi
+
+if test "x$GECKO_IDLDIR" != x ; then
+   if ! test -f "$GECKO_IDLDIR/nsIURI.idl" ; then
+       AC_MSG_ERROR([Cannot find Gecko IDL files in $GECKO_IDLDIR])
+   fi
+else
+    AC_MSG_ERROR([Must either specify --with-gecko-sdk=DIR or --with-gecko-idl=DIR])
+fi
+
+if test "x$GECKO_INCLUDEDIR" != x ; then
+   if test -f "$GECKO_INCLUDEDIR/caps/nsIScriptSecurityManager.h" ; then
+	have_full_gecko=true
+   elif test -f "$GECKO_INCLUDEDIR/nsIURI.h" ; then
+	:
+   else
+       AC_MSG_ERROR([Cannot find Gecko headers in $GECKO_INCLUDEDIR])
+   fi
+else
+    AC_MSG_ERROR([Must either specify --with-gecko-sdk=DIR or --with-gecko-headers=DIR])
+fi
+
+if test "x$XPIDL" != x ; then
+    if ! test -x "$XPIDL" ; then
+        AC_MSG_ERROR([Cannot find xpidl at $XPIDL])
+    fi
+else
+    AC_MSG_ERROR([Must either specify --with-gecko-sdk=DIR or --with-xpidl=DIR])
+fi
+
+AM_CONDITIONAL(HAVE_FULL_GECKO, $have_full_gecko)
+
+AC_SUBST(GECKO_IDLDIR)
+AC_SUBST(GECKO_INCLUDEDIR)
+AC_SUBST(XPIDL)
+
+if $sdk_includes_nspr ; then
+    NSPR_LIBS="-L $with_gecko_sdk/lib -lnspr4"
+else
+    for pkg in firefox-nspr nspr ; do
+        if test "x$NSPR_PACKAGES" = x ; then
+	    PKG_CHECK_EXISTS($pkg, NSPR_PACKAGES=$pkg)
+	fi
+    done
+    if test "x$NSPR_PACKAGES" = x ; then
+	AC_MSG_ERROR([Can't find nspr])
+    fi
+fi
+
+
+##
+## Checks for Xdamage libraries
+##
+PKG_CHECK_MODULES(XDAMAGE, xdamage)
+
+
+AC_OUTPUT([
+Makefile
+compzilla/Makefile
+])
+
+
+dnl ==========================================================================
+echo "
+
+        Compzilla $VERSION
+	==================
+
+        prefix:                   ${prefix}
+        compiler:                 ${CC}
+	xpidl:			  ${XPIDL}
+	Gecko includes:		  ${GECKO_INCLUDEDIR}
+	Gecko idl files:	  ${GECKO_IDLDIR}
+	Full Gecko:	  	  ${have_full_gecko}
+        XDAMAGE_CFLAGS:           ${XDAMAGE_CFLAGS}
+        XDAMAGE_LIBS:             ${XDAMAGE_LIBS}
+
+        Now type 'make' to build $PACKAGE
+"
