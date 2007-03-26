@@ -17,7 +17,6 @@ class compzillaControl
 {
 public:
     NS_DECL_ISUPPORTS
-    NS_DECL_NSIDOMEVENTTARGET
     NS_DECL_COMPZILLAICONTROL
 
     compzillaControl();
