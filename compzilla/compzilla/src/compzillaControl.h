@@ -4,9 +4,8 @@
 
 #include <gdk/gdkwindow.h>
 
+#include <X11/Xlib.h>
 #include <X11/extensions/Xcomposite.h>
-#include <X11/extensions/Xdamage.h>
-#include <X11/extensions/Xrender.h>
 
 #if COMPOSITE_MAJOR > 0 || COMPOSITE_MINOR >= 2
 #define HAS_NAME_WINDOW_PIXMAP 1
