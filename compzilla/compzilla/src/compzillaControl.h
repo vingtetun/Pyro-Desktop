@@ -2,6 +2,16 @@
 #include "compzillaIControl.h"
 #include "nsCOMPtr.h"
 
+#include <X11/Xlib.h>
+#include <X11/Xutil.h>
+#include <X11/Xatom.h>
+#include <X11/extensions/Xcomposite.h>
+#include <X11/extensions/Xdamage.h>
+#include <X11/extensions/Xrender.h>
+
+#if COMPOSITE_MAJOR > 0 || COMPOSITE_MINOR >= 2
+#define HAS_NAME_WINDOW_PIXMAP 1
+#endif
 
 class compzillaControl
     : public compzillaIControl
@@ -12,4 +22,21 @@ public:
 
     compzillaControl();
     virtual ~compzillaControl();
+
+private:
+    void AddWindow (Window id, Window prev);
+
+    Display *dpy;
+    int scr;
+    Window root;
+
+    int		xfixes_event, xfixes_error;
+    int		damage_event, damage_error;
+    int		composite_event, composite_error;
+    int		render_event, render_error;
+    int		composite_opcode;
+
+#if HAS_NAME_WINDOW_PIXMAP
+    Bool	hasNamePixmap;
+#endif
 };
