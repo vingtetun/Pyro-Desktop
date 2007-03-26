@@ -5,8 +5,8 @@
 
   <Description about="urn:mozilla:install-manifest">
 
-    <em:id>{c9b5ebf9-b94f-4d21-828e-e8462e10cefa}</em:id>
-    <em:name>CompZilla</em:name>
+    <em:id>compzilla@beatniksoftware.com</em:id>
+    <em:name>Compzilla</em:name>
     <em:version>0.1</em:version>
     <em:description>Compositing Window manager built on Firefox</em:description>
 

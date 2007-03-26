@@ -1,8 +1,6 @@
 
-GECKO_PRIVATE_INCLUDEDIR=$(top_srcdir)/gecko-sdk/include
 
-
-extensiondir=$(pkglibdir)/firefox
+extensiondir=$(GECKO_LIBDIR)/extensions/compzilla@beatniksoftware.com
 EXTENSION_SRCDIR=$(srcdir)
 extension_DATA =				\
 	$(EXTENSION_SRCDIR)/chrome.manifest	\
@@ -18,8 +16,8 @@ endir=$(extensiondir)/chrome/locale/en-US
 EN_SRCDIR=$(EXTENSION_SRCDIR)/chrome/locale/en-US
 en_DATA = $(EN_SRCDIR)/overlay.dtd
 
-prefsdir=$(extensiondir)/defaults/preferences
-PREFS_SRCDIR=$(EXTENSION_SRCDIR)/defaults/preferences
+prefsdir = $(extensiondir)/defaults/preferences
+PREFS_SRCDIR = $(EXTENSION_SRCDIR)/defaults/preferences
 prefs_DATA = $(PREFS_SRCDIR)/prefs.js
 
 
@@ -33,7 +31,7 @@ BUILT_SOURCES = $(IDL_H_FILES) $(IDL_XPT_FILES)
 CLEANFILES = $(IDL_H_FILES) $(IDL_XPT_FILES)
 
 
-componentdir=$(extensiondir)/components
+componentdir = $(extensiondir)/components
 component_LTLIBRARIES = libcompzilla.la
 component_DATA = $(IDL_XPT_FILES)
 
@@ -45,6 +43,8 @@ libcompzilla_la_CPPFLAGS =			\
 	$(AM_CPPFLAGS)				\
 	$(XDAMAGE_CFLAGS)			\
 	-I$(srcdir)/public
+
+GECKO_PRIVATE_INCLUDEDIR = $(top_srcdir)/gecko-sdk/include
 
 libcompzilla_la_CPPFLAGS +=			\
 	-I$(GECKO_INCLUDEDIR)			\
@@ -61,7 +61,7 @@ libcompzilla_la_CPPFLAGS +=			\
 	-I$(GECKO_INCLUDEDIR)/xpconnect		\
 	-I$(GECKO_PRIVATE_INCLUDEDIR)
 
-nodist_libcompzilla_la_SOURCES=			\
+nodist_libcompzilla_la_SOURCES =		\
 	$(IDL_HEADERS)				\
 	$(srcdir)/src/compzillaExtension.cpp	\
 	$(srcdir)/src/compzillaExtension.h	\
