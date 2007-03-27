@@ -10,7 +10,9 @@ contentdir=$(extensiondir)/chrome/content
 CONTENT_SRCDIR=$(EXTENSION_SRCDIR)/chrome/content
 content_DATA =					\
 	$(CONTENT_SRCDIR)/overlay.js		\
-	$(CONTENT_SRCDIR)/overlay.xul
+	$(CONTENT_SRCDIR)/overlay.xul		\
+	$(CONTENT_SRCDIR)/start.js		\
+	$(CONTENT_SRCDIR)/start.xul
 
 endir=$(extensiondir)/chrome/locale/en-US
 EN_SRCDIR=$(EXTENSION_SRCDIR)/chrome/locale/en-US

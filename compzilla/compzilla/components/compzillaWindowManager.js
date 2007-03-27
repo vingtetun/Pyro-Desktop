@@ -59,13 +59,14 @@ var CompzillaWindowManagerModule =
   unregisterSelf : function(compMgr, fileSpec, location)
   {
      debug ("unregisterSelf");
-    compMgr = compMgr.QueryInterface(nsIComponentRegistrar);
+     compMgr = compMgr.QueryInterface(nsIComponentRegistrar);
 
-    compMgr.unregisterFactoryLocation(CLSID, fileSpec);
+     compMgr.unregisterFactoryLocation(CLSID, fileSpec);
   },
 
 
-  getClassObject: function (compMgr, cid, iid) {
+  getClassObject: function (compMgr, cid, iid) 
+  {
      debug ("getClassObject");
      if (!cid.equals(CLSID))
         throw Components.results.NS_ERROR_NO_INTERFACE;
