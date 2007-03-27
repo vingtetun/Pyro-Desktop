@@ -6,7 +6,7 @@
 [scriptable, uuid(38054e08-223b-4eea-adcf-442c58945704)]
 interface compzillaIWindowManager : nsISupports
 {
-  nsISupports WindowCreated (in long xid);
+  nsISupports WindowCreated (in long xid, in boolean override);
   void WindowDestroyed (in nsISupports win);
 
   void WindowMapped (in nsISupports win);

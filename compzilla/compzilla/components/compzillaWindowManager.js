@@ -20,7 +20,6 @@ var WindowStack = {
 	 this.layers.splice (above_layer+1, 1, w);
 	 for (var i = above_layer+1; i < this.layers.length; i ++) {
 	    this.layers[i].style.zIndex = i;
-	    this.layers[i].title.innerHTML = "<b> layer " + this.layers[i].style.zIndex + "</b>";
 	 }
       }
    },
@@ -33,7 +32,6 @@ var WindowStack = {
 	 for (var i = w_idx; i < this.layers.length-1; i ++) {
 	    this.layers[i] = this.layers[i+1];
 	    this.layers[i].style.zIndex = i;
-	    this.layers[i].title.innerHTML = "<b> layer " + this.layers[i].style.zIndex + "</b>";
 	 }
 	 this.layers.pop();
       }
@@ -44,14 +42,12 @@ var WindowStack = {
       this.layers.splice(0, 1, w);
       for (var i = 0; i < layers.length; i ++) {
 	 layers[i].style.zIndex = i;
-	 this.layers[i].title.innerHTML = "<b> layer " + this.layers[i].style.zIndex + "</b>";
       }
    },
 
    moveToTop: function(w) {
       this.removeWindow (w);
       w.style.zIndex = this.layers.push (w);
-      w.title.innerHTML = "<b> layer " + w.style.zIndex + "</b>";
    },
 };
 
@@ -71,14 +67,23 @@ CompzillaWindowManager.prototype =
   document: null,
 
   /* compzillaIWindowManager methods */
-  WindowCreated : function(xid) {
+  WindowCreated : function(xid, override) {
      //alert ("window " + xid + " created");
 
      var content = this.document.createElement ("canvas");
 
-     var chrome_root = this.CreateWMChrome (content, xid);
+     content.className = "content";
+     content.style.background = "#" + genHex();
 
-     this.document.body.appendChild (chrome_root)
+     if (override) {
+	this.document.body.appendChild (content);
+	content.chrome = content;
+     }
+     else {
+	var chrome_root = this.CreateWMChrome (content, xid);
+
+	this.document.body.appendChild (chrome_root)
+     }
 
      return content;
   },
@@ -86,6 +91,7 @@ CompzillaWindowManager.prototype =
   WindowDestroyed : function(content) {
      var chrome_root = content.crome;
      WindowStack.removeWindow (chrome_root);
+     /* XXX this generates a JS exception for me, for some reason - toshok */
      this.document.body.removeChild (chrome_root);
   },
 
@@ -118,7 +124,7 @@ CompzillaWindowManager.prototype =
 	need_relayout = true;
      }
 
-     if (need_relayout)
+     if (need_relayout && chrome_root != content)
 	this.LayoutChrome (chrome_root);
 
      if (above == null)
@@ -136,6 +142,8 @@ CompzillaWindowManager.prototype =
      var titlebar = this.document.createElement ("div");
      var title = this.document.createElement ("span");
 
+     title.innerHTML = "<b>window title here</b>";
+
      titlebar.appendChild (title);
      root.appendChild (titlebar);
      root.appendChild (content);
@@ -146,9 +154,6 @@ CompzillaWindowManager.prototype =
      root.className = "window";
      titlebar.className = "titlebar";
      title.className = "windowtitle";
-     content.className = "content";
-
-     content.style.background = "#" + genHex();
      
      // back reference so we can find the chrome in all the other methods
      content.chrome = root;

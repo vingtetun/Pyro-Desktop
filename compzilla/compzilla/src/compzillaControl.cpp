@@ -20,6 +20,7 @@
 #include "nsIWidget.h"
 
 #include <gdk/gdkx.h>
+#include <gdk/gdkdisplay.h>
 
 #include <X11/Xutil.h>
 #include <X11/Xatom.h>
@@ -40,6 +41,8 @@ compzillaControl::~compzillaControl()
     delete window_map;
 }
 
+#define DEMO_HACK 0
+
 NS_IMETHODIMP
 compzillaControl::RegisterWindowManager(compzillaIWindowManager* wm)
 {
@@ -51,9 +54,15 @@ compzillaControl::RegisterWindowManager(compzillaIWindowManager* wm)
 
     this->wm = wm;
 
+#if DEMO_HACK
+    GdkDisplay* gdk_dpy = gdk_display_open (":0");
+    dpy = GDK_DISPLAY_XDISPLAY (gdk_dpy);
+    root = gdk_window_foreign_new_for_display (gdk_dpy,
+                                               XDefaultRootWindow (dpy));
+#else
     root = gdk_get_default_root_window ();
-
     dpy = GDK_WINDOW_XDISPLAY (root);
+#endif
     if (!dpy) {
         fprintf (stderr, "Can't open display\n");
         return -1; // XXX
@@ -197,7 +206,7 @@ compzillaControl::Filter (GdkXEvent *xevent, GdkEvent *event)
 
         nsISupports *rv;
 
-        wm->WindowCreated (x11_event->xcreatewindow.window, &rv);
+        wm->WindowCreated (x11_event->xcreatewindow.window, x11_event->xcreatewindow.override_redirect != 0, &rv);
 
         printf ("WindowCreated returned %p\n", rv);
 
