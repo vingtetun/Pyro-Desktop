@@ -5,6 +5,56 @@ const nsISupports  = Components.interfaces.nsISupports;
 const nsIComponentRegistrar        = Components.interfaces.nsIComponentRegistrar;
 const compzillaIWindowManager      = Components.interfaces.compzillaIWindowManager;
 
+var WindowStack = {
+   layers: new Array (),
+
+   moveAbove: function(w, above) {
+      var above_layer = this.layers.indexOf (above);
+
+      if (above_layer == -1) {
+	 // badness, but in the interest of robustness, put the window on top
+	 this.moveToTop (w);
+      }
+      else {
+	 this.removeWindow (w);
+	 this.layers.splice (above_layer+1, 1, w);
+	 for (var i = above_layer+1; i < this.layers.length; i ++) {
+	    this.layers[i].style.zIndex = i;
+	    this.layers[i].title.innerHTML = "<b> layer " + this.layers[i].style.zIndex + "</b>";
+	 }
+      }
+   },
+
+   removeWindow: function(w) {
+      var w_idx = this.layers.indexOf (w);
+      if (w_idx == -1)
+	 return;
+      else {
+	 for (var i = w_idx; i < this.layers.length-1; i ++) {
+	    this.layers[i] = this.layers[i+1];
+	    this.layers[i].style.zIndex = i;
+	    this.layers[i].title.innerHTML = "<b> layer " + this.layers[i].style.zIndex + "</b>";
+	 }
+	 this.layers.pop();
+      }
+   },
+
+   moveToBottom: function(w) {
+      this.removeWindow(w);
+      this.layers.splice(0, 1, w);
+      for (var i = 0; i < layers.length; i ++) {
+	 layers[i].style.zIndex = i;
+	 this.layers[i].title.innerHTML = "<b> layer " + this.layers[i].style.zIndex + "</b>";
+      }
+   },
+
+   moveToTop: function(w) {
+      this.removeWindow (w);
+      w.style.zIndex = this.layers.push (w);
+      w.title.innerHTML = "<b> layer " + w.style.zIndex + "</b>";
+   },
+};
+
 function CompzillaWindowManager() {}
 CompzillaWindowManager.prototype =
 {
@@ -26,9 +76,6 @@ CompzillaWindowManager.prototype =
 
      var content = this.document.createElement ("canvas");
 
-     cls = Components.classes['@beatniksoftware.com/compzillaService'];
-     svc = cls.getService(Components.interfaces.compzillaIControl);
-
      var chrome_root = this.CreateWMChrome (content, xid);
 
      this.document.body.appendChild (chrome_root)
@@ -38,20 +85,23 @@ CompzillaWindowManager.prototype =
 
   WindowDestroyed : function(content) {
      var chrome_root = content.crome;
-     document.removeChild (chrome_root);
+     WindowStack.removeWindow (chrome_root);
+     this.document.body.removeChild (chrome_root);
   },
 
   WindowMapped : function(content) {
      var chrome_root = content.chrome;
+     WindowStack.moveToTop (chrome_root);
      content.chrome.style.visibility = "visible";
   },
 
   WindowUnmapped : function(content) {
      var chrome_root = content.chrome;
+     WindowStack.removeWindow (chrome_root);
      content.chrome.style.visibility = "hidden";
   },
 
-  WindowConfigured : function(content, x, y, width, height) {
+  WindowConfigured : function(content, x, y, width, height, above) {
      var chrome_root = content.chrome;
 
      chrome_root.style.left = x;
@@ -70,6 +120,11 @@ CompzillaWindowManager.prototype =
 
      if (need_relayout)
 	this.LayoutChrome (chrome_root);
+
+     if (above == null)
+	WindowStack.moveToTop (chrome_root);
+     else
+	WindowStack.moveAbove (chrome_root, above.chrome);
   },
 
    SetDocument : function(doc) {
@@ -102,6 +157,7 @@ CompzillaWindowManager.prototype =
      root.style.visibility = "hidden";
 
      // a couple of convenience refs
+     root.title = title;
      root.titlebar = titlebar;
      root.content = content;
 
