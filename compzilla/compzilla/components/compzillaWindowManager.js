@@ -1,15 +1,18 @@
 
-const CLSID        = Components.ID('{24bbc668-c039-478c-acb4-20734215bdf6}');
-const CONTRACTID   = "@beatnicksoftware.com/compzillaWindowManager";
+const CLSID        = Components.ID('{38054e08-223b-4eea-adcf-442c58945704}');
+const CONTRACTID   = "@beatniksoftware.com/compzillaWindowManager";
 const nsISupports  = Components.interfaces.nsISupports;
 const nsIComponentRegistrar        = Components.interfaces.nsIComponentRegistrar;
+const compzillaIWindowManager      = Components.interfaces.compzillaIWindowManager;
 
-function CompzillaIWindowManager() {}
-CompzillaIWindowManager.prototype =
+function CompzillaWindowManager() {}
+CompzillaWindowManager.prototype =
 {
   /* nsISupports */
   QueryInterface : function handler_QI(iid) {
     if (iid.equals(nsISupports))
+      return this;
+    if (iid.equals(compzillaIWindowManager))
       return this;
 
     throw Components.results.NS_ERROR_NO_INTERFACE;
@@ -42,7 +45,7 @@ var CompzillaWindowManagerModule =
 {
   registerSelf : function(compMgr, fileSpec, location, type)
   {
-     debug ("hi!");
+     debug ("registerSelf");
      compMgr = compMgr.QueryInterface(nsIComponentRegistrar);
 
      compMgr.registerFactoryLocation(CLSID,
@@ -55,6 +58,7 @@ var CompzillaWindowManagerModule =
 
   unregisterSelf : function(compMgr, fileSpec, location)
   {
+     debug ("unregisterSelf");
     compMgr = compMgr.QueryInterface(nsIComponentRegistrar);
 
     compMgr.unregisterFactoryLocation(CLSID, fileSpec);
@@ -62,7 +66,8 @@ var CompzillaWindowManagerModule =
 
 
   getClassObject: function (compMgr, cid, iid) {
-     if (!cid.equals(this.myCID))
+     debug ("getClassObject");
+     if (!cid.equals(CLSID))
         throw Components.results.NS_ERROR_NO_INTERFACE;
 
      if (!iid.equals(Components.interfaces.nsIFactory))

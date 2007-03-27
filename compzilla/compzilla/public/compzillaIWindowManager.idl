@@ -3,7 +3,7 @@
 #include "nsIDOMWindow.idl"
 #include "nsIDOMEventTarget.idl"
 
-[scriptable, uuid(8bf6de0a-ed8f-47af-8757-41551542d196)]
+[scriptable, uuid(38054e08-223b-4eea-adcf-442c58945704)]
 interface compzillaIWindowManager : nsISupports
 {
   void WindowCreated (in long xid);

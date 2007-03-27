@@ -37,14 +37,15 @@ compzillaControl::~compzillaControl()
 }
 
 NS_IMETHODIMP
-compzillaControl::RegisterWindowManager(/*compzillaIWindowManager* mgr*/)
+compzillaControl::RegisterWindowManager(compzillaIWindowManager* wm)
 {
     Display *dpy;
+    nsresult rv = NS_OK;
+    int	composite_major, composite_minor;
 
     printf ("RegisterWindowManager\n");
 
-    nsresult rv = NS_OK;
-    int	composite_major, composite_minor;
+    this->wm = wm;
 
     root = gdk_get_default_root_window ();
 
@@ -189,7 +190,7 @@ compzillaControl::Filter (GdkXEvent *xevent, GdkEvent *event)
                 x11_event->xcreatewindow.y,
                 x11_event->xcreatewindow.width,
                 x11_event->xcreatewindow.height);
-        //mgr->WindowCreated (x11_event->xcreatewindow.window);
+        wm->WindowCreated (x11_event->xcreatewindow.window);
 
         // XXX the JS code MUST call back into the extension to give it a
         // reference to the <canvas> element.  add an assert here to
@@ -206,7 +207,7 @@ compzillaControl::Filter (GdkXEvent *xevent, GdkEvent *event)
                 x11_event->xconfigure.y,
                 x11_event->xconfigure.width,
                 x11_event->xconfigure.height);
-        // XXX generate event "windowconfigured" so that the JS can resize/relayout the dom structure for the window
+        wm->WindowConfigured (x11_event->xconfigure.window);
 
         // XXX recreate our XImage backing store, but only if we're
         // mapped (i don't think we'll get damage until we're
@@ -215,22 +216,23 @@ compzillaControl::Filter (GdkXEvent *xevent, GdkEvent *event)
     case DestroyNotify:
         printf ("DestroyNotify: window=0x%0x\n", 
                 x11_event->xdestroywindow.window);
-        //mgr->WindowDestroyed (x11_event->xdestroywindow.window);
+        wm->WindowDestroyed (x11_event->xdestroywindow.window);
         break;
     case MapNotify:
         printf ("MapNotify: window=0x%0x\n", 
                 x11_event->xmap.window);
-        //mgr->WindowMapped (x11_event->xmap.window);
+        wm->WindowMapped (x11_event->xmap.window);
         break;
     case UnmapNotify:
         printf ("UnmapNotify: window=0x%0x\n", 
                 x11_event->xunmap.window);
-        //mgr->WindowUnmapped (x11_event->xunmap.window);
+        wm->WindowUnmapped (x11_event->xunmap.window);
         break;
     case PropertyNotify:
         printf ("PropertyChange: window=0x%0x\n", 
                 x11_event->xproperty.window);
         // XXX generate event "windowpropertychanged"
+        break;
     }
 
     return GDK_FILTER_CONTINUE;

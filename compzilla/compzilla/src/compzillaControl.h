@@ -28,6 +28,7 @@ private:
     static GdkFilterReturn gdk_filter_func (GdkXEvent *xevent, GdkEvent *event, gpointer data);
 
     GdkWindow *root;
+    compzillaIWindowManager *wm;
 
     int		xfixes_event, xfixes_error;
     int		damage_event, damage_error;

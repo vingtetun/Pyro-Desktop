@@ -5,34 +5,20 @@ window.screenY = 0;
 window.sizemode = maximized;
 */
 
-//alert ("hi");
 window.addEventListener("onload", compzillaLoad, true);
 
 function compzillaLoad()
 {
-   //alert (3);
-	cls = Components.classes['@beatniksoftware.com/compzillaService']
-
-   //alert (cls);
-
+	cls = Components.classes['@beatniksoftware.com/compzillaService'];
 	svc = cls.getService(Components.interfaces.compzillaIControl);
 
-   alert (svc);
+	wmcls = Components.classes['@beatniksoftware.com/compzillaWindowManager'];
+	wm = wmcls.getService(Components.interfaces.compzillaIWindowManager);
 
-   alert (svc.addEventListener);
-	svc.addEventListener ("onwindowcreated", compzillaWindowCreated, true);
-
-   alert ("yo");
+   alert (wm);
 
 	// this next call will generated a call to compzillaWindowCreated for each window
-	svc.RegisterWindowManager(window.document)
-
-   //alert ("yo");
-}
-
-function compzillaWindowCreated ()
-{
-   alert ("yO!");
+	svc.RegisterWindowManager(wm)
 }
 
 compzillaLoad ();
