@@ -18,28 +18,150 @@ CompzillaWindowManager.prototype =
     throw Components.results.NS_ERROR_NO_INTERFACE;
   },
 
+  document: null,
 
   /* compzillaIWindowManager methods */
   WindowCreated : function(xid) {
-     alert ("window " + xid + " created");
+     //alert ("window " + xid + " created");
+
+     var content = this.document.createElement ("canvas");
+
+     cls = Components.classes['@beatniksoftware.com/compzillaService'];
+     svc = cls.getService(Components.interfaces.compzillaIControl);
+
+     var chrome_root = this.CreateWMChrome (content, xid);
+
+     this.document.body.appendChild (chrome_root)
+
+     return content;
   },
 
-  WindowDestroyed : function(xid) {
-     alert ("window " + xid + " destroyed");
+  WindowDestroyed : function(content) {
+     var chrome_root = content.crome;
+     document.removeChild (chrome_root);
   },
 
-  WindowMapped : function(xid) {
-     alert ("window " + xid + " mapped");
+  WindowMapped : function(content) {
+     var chrome_root = content.chrome;
+     content.chrome.style.visibility = "visible";
   },
 
-  WindowUnmapped : function(xid) {
-     alert ("window " + xid + " unmapped");
+  WindowUnmapped : function(content) {
+     var chrome_root = content.chrome;
+     content.chrome.style.visibility = "hidden";
   },
 
-  WindowConfigured : function(xid) {
-     alert ("window " + xid + " configured");
+  WindowConfigured : function(content, x, y, width, height) {
+     var chrome_root = content.chrome;
+
+     chrome_root.style.left = x;
+     chrome_root.style.top = y;
+
+     var need_relayout = false;
+
+     if (chrome_root.offsetWidth != width) {
+	chrome_root.style.width = width;
+	need_relayout = true;
+     }
+     if (chrome_root.offsetHeight != height) {
+	chrome_root.style.height = height;
+	need_relayout = true;
+     }
+
+     if (need_relayout)
+	this.LayoutChrome (chrome_root);
   },
+
+   SetDocument : function(doc) {
+     this.document = doc;
+  },
+
+  CreateWMChrome : function (content, xid) {
+     var root = this.document.createElement ("div");
+     var titlebar = this.document.createElement ("div");
+     var title = this.document.createElement ("span");
+
+     titlebar.appendChild (title);
+     root.appendChild (titlebar);
+     root.appendChild (content);
+
+     root.style.width = 200;
+     root.style.hidth = 100;
+
+     root.className = "window";
+     titlebar.className = "titlebar";
+     title.className = "windowtitle";
+     content.className = "content";
+
+     content.style.background = "#" + genHex();
+     
+     // back reference so we can find the chrome in all the other methods
+     content.chrome = root;
+
+     // windows start hidden initially
+     root.style.visibility = "hidden";
+
+     // a couple of convenience refs
+     root.titlebar = titlebar;
+     root.content = content;
+
+     this.LayoutChrome (root);
+
+     return root;
+  },
+
+ BorderSize: 3,
+ TitleContentGap: 3,
+ TitleBarHeight: 15,
+ CornerSize: 25,
+
+ LayoutChrome: function(element) {
+
+      var bs = this.BorderSize;
+      var tbs = this.TitleBarHeight;
+      var tcg = this.TitleContentGap;
+
+      element.titlebar.style.left = bs;
+      element.titlebar.style.top = bs;
+      element.titlebar.style.width = element.offsetWidth - 2 * bs;
+      element.titlebar.style.height = tbs;
+
+      element.content.style.left = bs;
+      element.content.style.top = element.titlebar.offsetTop + element.titlebar.offsetHeight + tcg;
+      element.content.style.width = element.offsetWidth - 2 * bs;
+      element.content.style.height = element.offsetHeight - element.content.offsetTop - bs;
+   },
 };
+
+
+function genHex(){
+colors = new Array(14)
+colors[0]="0"
+colors[1]="1"
+colors[2]="2"
+colors[3]="3"
+colors[4]="4"
+colors[5]="5"
+colors[5]="6"
+colors[6]="7"
+colors[7]="8"
+colors[8]="9"
+colors[9]="a"
+colors[10]="b"
+colors[11]="c"
+colors[12]="d"
+colors[13]="e"
+colors[14]="f"
+
+digit = new Array(5)
+color=""
+for (i=0;i<6;i++){
+digit[i]=colors[Math.round(Math.random()*14)]
+color = color+digit[i]
+}
+
+return color;
+}
 
 var CompzillaWindowManagerModule =
 {

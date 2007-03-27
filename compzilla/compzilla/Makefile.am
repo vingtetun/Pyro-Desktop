@@ -14,6 +14,13 @@ content_DATA =					\
 	$(CONTENT_SRCDIR)/start.js		\
 	$(CONTENT_SRCDIR)/start.xul
 
+skindir=$(extensiondir)/chrome/skin
+SKIN_SRCDIR=$(EXTENSION_SRCDIR)/chrome/skin
+skin_DATA =					\
+	$(SKIN_SRCDIR)/compzilla.css		\
+	$(SKIN_SRCDIR)/desktop.html		\
+	$(SKIN_SRCDIR)/desktop-background.jpg
+
 endir=$(extensiondir)/chrome/locale/en-US
 EN_SRCDIR=$(EXTENSION_SRCDIR)/chrome/locale/en-US
 en_DATA = $(EN_SRCDIR)/overlay.dtd

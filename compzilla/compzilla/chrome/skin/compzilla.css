@@ -1,1 +1,27 @@
+body {
+background: url(chrome://compzilla/skin/desktop-background.jpg);
+}
+
+.window {
+	position: absolute;
+	width: 10px;
+	height: 10px;
+	background: #777777;
+}
+
+.titlebar {
+	position: absolute;
+	background: #cccccc;
+	cursor: default;
+	overflow: hidden;
+}
+
+.windowtitle {
+	font-weight: bold;
+}
+
+.content {
+	position: absolute;
+	background: #ffffff;
+}
 

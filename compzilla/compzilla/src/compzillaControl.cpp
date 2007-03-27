@@ -10,6 +10,7 @@
 #include "nsIScriptSecurityManager.h"
 #include "nsServiceManagerUtils.h"
 #include "nsStringAPI.h"
+
 #include "compzillaControl.h"
 
 // These headers are used for finding the GdkWindow for a DOM window
@@ -25,15 +26,18 @@
 #include <X11/extensions/Xdamage.h>
 #include <X11/extensions/Xrender.h>
 
-
 compzillaControl::compzillaControl()
 {
     printf ("ctor\n");
+
+    window_map = new nsTHashtable<DictionaryEntry>();
+    window_map->Init (50);
 }
 
 
 compzillaControl::~compzillaControl()
 {
+    delete window_map;
 }
 
 NS_IMETHODIMP
@@ -183,55 +187,96 @@ compzillaControl::Filter (GdkXEvent *xevent, GdkEvent *event)
     Window w = x11_event->xany.window;
 
     switch (x11_event->type) {
-    case CreateNotify:
+    case CreateNotify: {
         printf ("CreateNotify: window=0x%0x, x=%d, y=%d, width=%d, height=%d\n",
                 x11_event->xcreatewindow.window,
                 x11_event->xcreatewindow.x,
                 x11_event->xcreatewindow.y,
                 x11_event->xcreatewindow.width,
                 x11_event->xcreatewindow.height);
-        wm->WindowCreated (x11_event->xcreatewindow.window);
 
-        // XXX the JS code MUST call back into the extension to give it a
-        // reference to the <canvas> element.  add an assert here to
-        // that effect, and if JS doesn't call back to us, maybe don't
-        // redirect the window so it at least gets drawn on the
-        // screen?
-        
-        XCompositeRedirectSubwindows (GDK_WINDOW_XDISPLAY (root), x11_event->xcreatewindow.window, CompositeRedirectAutomatic);
+        nsISupports *rv;
+
+        wm->WindowCreated (x11_event->xcreatewindow.window, &rv);
+
+        printf ("WindowCreated returned %p\n", rv);
+
+        if (rv != NULL) {
+            DictionaryEntry* a = window_map->PutEntry(x11_event->xcreatewindow.window);
+            a->content = getter_AddRefs(rv);
+
+            //XCompositeRedirectSubwindows (GDK_WINDOW_XDISPLAY (root), x11_event->xcreatewindow.window, CompositeRedirectAutomatic);
+        }
+
         break;
-    case ConfigureNotify:
+    }
+    case ConfigureNotify: {
         printf ("ConfigureNotify: window=0x%0x, x=%d, y=%d, width=%d, height=%d\n",
                 x11_event->xconfigure.window,
                 x11_event->xconfigure.x,
                 x11_event->xconfigure.y,
                 x11_event->xconfigure.width,
                 x11_event->xconfigure.height);
-        wm->WindowConfigured (x11_event->xconfigure.window);
 
-        // XXX recreate our XImage backing store, but only if we're
-        // mapped (i don't think we'll get damage until we're
-        // displayed)
+        DictionaryEntry* b = window_map->GetEntry(x11_event->xconfigure.window);
+        if (b != NULL) {
+            nsISupports *win = b->content;
+
+            printf ("calling WindowConfigured with %p\n", win);
+
+            wm->WindowConfigured (win,
+                                  x11_event->xconfigure.x,
+                                  x11_event->xconfigure.y,
+                                  x11_event->xconfigure.width,
+                                  x11_event->xconfigure.height);
+
+            // XXX recreate our XImage backing store, but only if we're
+            // mapped (i don't think we'll get damage until we're
+            // displayed)
+        }
         break;
-    case DestroyNotify:
-        printf ("DestroyNotify: window=0x%0x\n", 
-                x11_event->xdestroywindow.window);
-        wm->WindowDestroyed (x11_event->xdestroywindow.window);
+    }
+    case DestroyNotify: {
+        DictionaryEntry* b = window_map->GetEntry(x11_event->xconfigure.window);
+        if (b != NULL) {
+            nsISupports *win = b->content;
+
+            printf ("DestroyNotify: window=0x%0x\n", 
+                    x11_event->xdestroywindow.window);
+
+            wm->WindowDestroyed (win);
+
+            window_map->RemoveEntry (x11_event->xconfigure.window);
+        }
         break;
-    case MapNotify:
+    }
+    case MapNotify: {
         printf ("MapNotify: window=0x%0x\n", 
                 x11_event->xmap.window);
-        wm->WindowMapped (x11_event->xmap.window);
+        DictionaryEntry* b = window_map->GetEntry(x11_event->xconfigure.window);
+        if (b != NULL) {
+            nsISupports *win = b->content;
+            wm->WindowMapped (win);
+        }
         break;
-    case UnmapNotify:
+    }
+    case UnmapNotify: {
         printf ("UnmapNotify: window=0x%0x\n", 
                 x11_event->xunmap.window);
-        wm->WindowUnmapped (x11_event->xunmap.window);
+        DictionaryEntry* b = window_map->GetEntry(x11_event->xconfigure.window);
+        if (b != NULL) {
+            nsISupports *win = b->content;
+            wm->WindowUnmapped (win);
+        }
         break;
+    }
     case PropertyNotify:
         printf ("PropertyChange: window=0x%0x\n", 
                 x11_event->xproperty.window);
         // XXX generate event "windowpropertychanged"
+        break;
+    default:
+        printf ("unhandled window event %d\n", x11_event->type);
         break;
     }
 

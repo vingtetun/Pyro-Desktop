@@ -1,15 +1,10 @@
 <?xml version="1.0"?>
-<?xml-stylesheet href="chrome://compzilla/skin/compzilla.css" type="text/css"?>
-<!DOCTYPE window SYSTEM "chrome://compzilla/locale/window.dtd">
-
-<window id="compzilla-start"
+<?xml-stylesheet href="chrome://global/skin/" type="text/css"?>
+<window id="desktopWindow"
         xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
-	type="compzilla"
-	hidechrome="true"
-	screenX="0"
-	screenY="0"
-	sizemode="maximized"
-	fullscreen="true">
-    <script src="start.js"/>
-    <iframe flex="1"/>
+	onload="compzillaLoad()" width="500" height="500">
+
+  <iframe id="desktop" src="chrome://compzilla/skin/desktop.html" flex="1" />
+
+  <script type="application/x-javascript" src="chrome://compzilla/content/start.js" />
 </window>
