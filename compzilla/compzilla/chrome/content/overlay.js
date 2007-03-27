@@ -13,9 +13,7 @@ function compzillaLoad()
 	svc = cls.getService(Components.interfaces.compzillaIControl);
 
 	wmcls = Components.classes['@beatniksoftware.com/compzillaWindowManager'];
-	wm = wmcls.getService(Components.interfaces.compzillaIWindowManager);
-
-   alert (wm);
+	wm = wmcls.createInstance(Components.interfaces.compzillaIWindowManager);
 
 	// this next call will generated a call to compzillaWindowCreated for each window
 	svc.RegisterWindowManager(wm)
