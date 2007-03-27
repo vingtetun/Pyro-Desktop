@@ -221,6 +221,11 @@ compzillaControl::Filter (GdkXEvent *xevent, GdkEvent *event)
         DictionaryEntry* b = window_map->GetEntry(x11_event->xconfigure.window);
         if (b != NULL) {
             nsISupports *win = b->content;
+            nsISupports *above = NULL;
+
+            b = window_map->GetEntry(x11_event->xconfigure.above);
+            if (b != NULL)
+                above = b->content;
 
             printf ("calling WindowConfigured with %p\n", win);
 
@@ -228,7 +233,8 @@ compzillaControl::Filter (GdkXEvent *xevent, GdkEvent *event)
                                   x11_event->xconfigure.x,
                                   x11_event->xconfigure.y,
                                   x11_event->xconfigure.width,
-                                  x11_event->xconfigure.height);
+                                  x11_event->xconfigure.height,
+                                  above);
 
             // XXX recreate our XImage backing store, but only if we're
             // mapped (i don't think we'll get damage until we're
