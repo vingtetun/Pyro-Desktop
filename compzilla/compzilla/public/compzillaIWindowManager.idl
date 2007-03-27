@@ -12,7 +12,7 @@ interface compzillaIWindowManager : nsISupports
   void WindowMapped (in nsISupports win);
   void WindowUnmapped (in nsISupports win);
 
-  void WindowConfigured (in nsISupports win, in long x, in long y, in long width, in long height);
+  void WindowConfigured (in nsISupports win, in long x, in long y, in long width, in long height, in nsISupports above);
 
   void SetDocument (in nsISupports doc);
 };
