@@ -21,30 +21,76 @@
 
 #include <gdk/gdkx.h>
 #include <gdk/gdkdisplay.h>
+#include <gdk/gdkscreen.h>
 
 #include <X11/Xutil.h>
 #include <X11/Xatom.h>
-#include <X11/extensions/Xdamage.h>
-#include <X11/extensions/Xrender.h>
+
+
+CompositedWindow::CompositedWindow()
+{
+}
+
+
+CompositedWindow::~CompositedWindow()
+{
+    if (mNativeWindow) {
+        /*
+        if (mDamage) {
+            XDamageDestroy(GDK_WINDOW_XDISPLAY(mNativeWindow), mDamage);
+        }
+        if (mPicture) {
+            XRenderFreePicture(GDK_WINDOW_XDISPLAY(mNativeWindow), mDamage);
+        }
+        */
+        gdk_window_unref(mNativeWindow);
+    }
+}
+
 
 compzillaControl::compzillaControl()
 {
-    printf ("ctor\n");
-
-    window_map = new nsTHashtable<DictionaryEntry>();
-    window_map->Init (50);
+    mWindowMap.Init(50);
 }
 
 
 compzillaControl::~compzillaControl()
 {
-    delete window_map;
+    gdk_window_unref(root);
 }
+
 
 #define DEMO_HACK 0
 
+GdkWindow *
+compzillaControl::GetNativeWindow(nsIDOMWindow *window)
+{
+    nsCOMPtr<nsIScriptGlobalObject> global = do_QueryInterface(window);
+
+    if (global) {
+        nsCOMPtr<nsIBaseWindow> baseWin = do_QueryInterface(global->GetDocShell());
+
+        if (baseWin) {
+            nsCOMPtr<nsIWidget> widget;
+            baseWin->GetMainWidget(getter_AddRefs(widget));
+
+            if (widget) {
+                GdkWindow *iframe = (GdkWindow *)widget->GetNativeData(NS_NATIVE_WINDOW);
+                GdkWindow *toplevel = gdk_window_get_toplevel(iframe);
+                printf ("GetNativeWindow: toplevel=0x%0x, iframe=0x%0x\n", 
+                        GDK_DRAWABLE_XID(toplevel), GDK_DRAWABLE_XID(iframe));
+                return toplevel;
+            }
+        }
+    }
+
+    printf (" !!! Could not get GdkWindow for nsIDOMWindow %p\n", window);
+    return NULL;
+}
+
+
 NS_IMETHODIMP
-compzillaControl::RegisterWindowManager(compzillaIWindowManager* wm)
+compzillaControl::RegisterWindowManager(nsIDOMWindow *window, compzillaIWindowManager* wm)
 {
     Display *dpy;
     nsresult rv = NS_OK;
@@ -52,6 +98,7 @@ compzillaControl::RegisterWindowManager(compzillaIWindowManager* wm)
 
     printf ("RegisterWindowManager\n");
 
+    this->mainwin = GetNativeWindow(window);
     this->wm = wm;
 
 #if DEMO_HACK
@@ -68,14 +115,12 @@ compzillaControl::RegisterWindowManager(compzillaIWindowManager* wm)
         return -1; // XXX
     }
 
-    if (!XRenderQueryExtension (dpy, &render_event, &render_error))
-    {
+    if (!XRenderQueryExtension (dpy, &render_event, &render_error)) {
 	fprintf (stderr, "No render extension\n");
 	return -1; // XXX
     }
     if (!XQueryExtension (dpy, COMPOSITE_NAME, &composite_opcode,
-			  &composite_event, &composite_error))
-    {
+			  &composite_event, &composite_error)) {
 	fprintf (stderr, "No composite extension\n");
         return -1; // XXX
     }
@@ -91,17 +136,18 @@ compzillaControl::RegisterWindowManager(compzillaIWindowManager* wm)
 	fprintf (stderr, "No damage extension\n");
 	return -1; // XXX
     }
+    printf("\n\nDAMAGE INFO: event=%d, error=%d\n", damage_event, damage_error);
+
     if (!XFixesQueryExtension (dpy, &xfixes_event, &xfixes_error))
     {
 	fprintf (stderr, "No XFixes extension\n");
 	return -1; // XXX
     }
+    printf("\n\nXFIXES INFO: event=%d, error=%d\n", xfixes_event, xfixes_error);
 
-    gdk_window_set_events (root,
-                           (GdkEventMask) (GDK_SUBSTRUCTURE_MASK |
-                                           GDK_STRUCTURE_MASK |
-                                           GDK_PROPERTY_CHANGE_MASK));
-
+    gdk_window_set_events (root, (GdkEventMask)(GDK_SUBSTRUCTURE_MASK |
+                                                GDK_STRUCTURE_MASK |
+                                                GDK_PROPERTY_CHANGE_MASK));
     gdk_window_add_filter (root, gdk_filter_func, this);
 
 #if false
@@ -131,6 +177,7 @@ compzillaControl::RegisterWindowManager(compzillaIWindowManager* wm)
 
     return rv;
 }
+
 
 void
 compzillaControl::AddWindow (Window id, Window prev)
@@ -189,11 +236,11 @@ compzillaControl::AddWindow (Window id, Window prev)
 #endif
 }
 
+
 GdkFilterReturn
 compzillaControl::Filter (GdkXEvent *xevent, GdkEvent *event)
 {
     XEvent *x11_event = (XEvent*)xevent;
-    Window w = x11_event->xany.window;
 
     switch (x11_event->type) {
     case CreateNotify: {
@@ -204,18 +251,72 @@ compzillaControl::Filter (GdkXEvent *xevent, GdkEvent *event)
                 x11_event->xcreatewindow.width,
                 x11_event->xcreatewindow.height);
 
-        nsISupports *rv;
-
-        wm->WindowCreated (x11_event->xcreatewindow.window, x11_event->xcreatewindow.override_redirect != 0, &rv);
-
-        printf ("WindowCreated returned %p\n", rv);
-
-        if (rv != NULL) {
-            DictionaryEntry* a = window_map->PutEntry(x11_event->xcreatewindow.window);
-            a->content = getter_AddRefs(rv);
-
-            //XCompositeRedirectSubwindows (GDK_WINDOW_XDISPLAY (root), x11_event->xcreatewindow.window, CompositeRedirectAutomatic);
+        if (x11_event->xcreatewindow.window == GDK_DRAWABLE_XID(this->mainwin)) {
+            printf("CreateNotify: discarding event on mainwin\n");
+            return GDK_FILTER_CONTINUE;
         }
+
+        CompositedWindow *compwin = new CompositedWindow();
+        wm->WindowCreated (x11_event->xcreatewindow.window, 
+                           x11_event->xcreatewindow.override_redirect != 0, 
+                           getter_AddRefs(compwin->mContent));
+
+        printf ("WindowCreated returned %p\n", compwin->mContent.get());
+
+        if (!compwin->mContent) {
+            delete compwin;
+            break;
+        }
+
+        compwin->mNativeWindow = 
+            gdk_window_foreign_new_for_display (gdk_drawable_get_display(this->root), 
+                                                x11_event->xcreatewindow.window);
+        gdk_window_add_filter (compwin->mNativeWindow, gdk_filter_func, this);
+        gdk_window_set_events (compwin->mNativeWindow, GDK_PROPERTY_CHANGE_MASK);
+
+        /* Don't need to receive all these events */
+        /*
+        XSelectInput(x11_event->xany.display, 
+                     x11_event->xcreatewindow.window, 
+                     (StructureNotifyMask |
+                      PropertyChangeMask | 
+                      ExposureMask |
+                      VisibilityChangeMask | 
+                      damage_event + XDamageNotify));
+        */
+
+
+        // Set up damage notification
+        compwin->mDamage = XDamageCreate (x11_event->xany.display, 
+                                         x11_event->xcreatewindow.window, 
+                                         XDamageReportNonEmpty);
+
+        printf ("XDamageCreate returned %x\n", compwin->mDamage);
+
+        XCompositeRedirectWindow(x11_event->xany.display, 
+                                 x11_event->xcreatewindow.window, 
+                                 CompositeRedirectAutomatic);
+        
+        XWindowAttributes attr = { 0 };
+        XGetWindowAttributes(x11_event->xany.display, 
+                             x11_event->xcreatewindow.window, 
+                             &attr);
+
+        const XRenderPictFormat *format = XRenderFindVisualFormat(x11_event->xany.display, 
+                                                                  attr.visual);
+
+        // Get handle for fetching window content
+        XRenderPictureAttributes pa = { 0 };
+        pa.subwindow_mode = IncludeInferiors; // Don't clip child widgets
+        compwin->mPicture = XRenderCreatePicture(x11_event->xany.display, 
+                                                  x11_event->xcreatewindow.window, 
+                                                  format, 
+                                                  CPSubwindowMode, 
+                                                  &pa);
+
+        printf ("XRenderCreatePicture returned %x\n", compwin->mPicture);
+
+        mWindowMap.Put (x11_event->xcreatewindow.window, compwin);
 
         break;
     }
@@ -227,76 +328,109 @@ compzillaControl::Filter (GdkXEvent *xevent, GdkEvent *event)
                 x11_event->xconfigure.width,
                 x11_event->xconfigure.height);
 
-        DictionaryEntry* b = window_map->GetEntry(x11_event->xconfigure.window);
-        if (b != NULL) {
-            nsISupports *win = b->content;
-            nsISupports *above = NULL;
+        CompositedWindow *compwin;
+        if (!mWindowMap.Get(x11_event->xconfigure.window, &compwin)) {
+            break;
+        }
 
-            b = window_map->GetEntry(x11_event->xconfigure.above);
-            if (b != NULL)
-                above = b->content;
+        CompositedWindow *abovewin;
+        mWindowMap.Get(x11_event->xconfigure.above, &abovewin);
 
-            printf ("calling WindowConfigured with %p\n", win);
+        wm->WindowConfigured (compwin->mContent,
+                              x11_event->xconfigure.x,
+                              x11_event->xconfigure.y,
+                              x11_event->xconfigure.width,
+                              x11_event->xconfigure.height,
+                              abovewin ? abovewin->mContent : NULL);
 
-            wm->WindowConfigured (win,
-                                  x11_event->xconfigure.x,
-                                  x11_event->xconfigure.y,
-                                  x11_event->xconfigure.width,
-                                  x11_event->xconfigure.height,
-                                  above);
+        // XXX recreate our XImage backing store, but only if we're
+        // mapped (i don't think we'll get damage until we're
+        // displayed)
+        break;
+    }
+    case ReparentNotify: {
+        printf ("ReparentNotify: window=0x%0x, parent=0x%0x, x=%d, y=%d, override_redirect=%d\n",
+                x11_event->xreparent.window,
+                x11_event->xreparent.parent,
+                x11_event->xreparent.x,
+                x11_event->xreparent.y,
+                x11_event->xreparent.override_redirect);
 
-            // XXX recreate our XImage backing store, but only if we're
-            // mapped (i don't think we'll get damage until we're
-            // displayed)
+        if (x11_event->xreparent.window == GDK_DRAWABLE_XID(this->mainwin) &&
+            x11_event->xreparent.parent != GDK_DRAWABLE_XID(this->root)) {
+            printf("ReparentNotify: discarding event on mainwin\n");
+
+            CompositedWindow *compwin;
+            if (!mWindowMap.Get(x11_event->xreparent.window, &compwin)) {
+                break;
+            }
+
+            wm->WindowDestroyed (compwin->mContent);
+            mWindowMap.Remove (x11_event->xreparent.window);
         }
         break;
     }
     case DestroyNotify: {
-        DictionaryEntry* b = window_map->GetEntry(x11_event->xconfigure.window);
-        if (b != NULL) {
-            nsISupports *win = b->content;
+        printf ("DestroyNotify: window=0x%0x\n", x11_event->xdestroywindow.window);
 
-            printf ("DestroyNotify: window=0x%0x\n", 
-                    x11_event->xdestroywindow.window);
-
-            wm->WindowDestroyed (win);
-
-            window_map->RemoveEntry (x11_event->xconfigure.window);
+        CompositedWindow *compwin;
+        if (!mWindowMap.Get(x11_event->xdestroywindow.window, &compwin)) {
+            break;
         }
+
+        wm->WindowDestroyed (compwin->mContent);
+        mWindowMap.Remove (x11_event->xdestroywindow.window);
         break;
     }
     case MapNotify: {
-        printf ("MapNotify: window=0x%0x\n", 
-                x11_event->xmap.window);
-        DictionaryEntry* b = window_map->GetEntry(x11_event->xconfigure.window);
-        if (b != NULL) {
-            nsISupports *win = b->content;
-            wm->WindowMapped (win);
+        printf ("MapNotify: window=0x%0x\n", x11_event->xmap.window);
+
+        CompositedWindow *compwin;
+        if (!mWindowMap.Get(x11_event->xmap.window, &compwin)) {
+            break;
         }
+
+        wm->WindowMapped (compwin->mContent);
         break;
     }
     case UnmapNotify: {
         printf ("UnmapNotify: window=0x%0x\n", 
                 x11_event->xunmap.window);
-        DictionaryEntry* b = window_map->GetEntry(x11_event->xconfigure.window);
-        if (b != NULL) {
-            nsISupports *win = b->content;
-            wm->WindowUnmapped (win);
+
+        CompositedWindow *compwin;
+        if (!mWindowMap.Get(x11_event->xunmap.window, &compwin)) {
+            break;
+        }
+
+        wm->WindowUnmapped (compwin->mContent);
+        break;
+    }
+    case PropertyNotify: {
+        printf ("PropertyChange: window=0x%0x, atom=%s\n", 
+                x11_event->xproperty.window, 
+                XGetAtomName(x11_event->xany.display, x11_event->xproperty.atom));
+        break;
+    }
+    default:
+        if (x11_event->type == damage_event + XDamageNotify) {
+            printf("\n\nDAMAGE!!!\n\n");
+
+            XDamageNotifyEvent *damage_ev = (XDamageNotifyEvent *)x11_event;
+            XDamageSubtract(damage_ev->display, damage_ev->damage, None, None);
+        }
+#if SHAPE_EXTENSION
+        else if (x11_event->type == shape_event + ShapeNotify) {
+        }
+#endif
+        else {
+            printf ("Unhandled window event %d\n", x11_event->type);
         }
         break;
     }
-    case PropertyNotify:
-        printf ("PropertyChange: window=0x%0x\n", 
-                x11_event->xproperty.window);
-        // XXX generate event "windowpropertychanged"
-        break;
-    default:
-        printf ("unhandled window event %d\n", x11_event->type);
-        break;
-    }
 
-    return GDK_FILTER_CONTINUE;
+    return GDK_FILTER_REMOVE;
 }
+
 
 GdkFilterReturn
 compzillaControl::gdk_filter_func (GdkXEvent *xevent, GdkEvent *event, gpointer data)
@@ -304,6 +438,7 @@ compzillaControl::gdk_filter_func (GdkXEvent *xevent, GdkEvent *event, gpointer 
     compzillaControl *control = reinterpret_cast<compzillaControl*>(data);
     return control->Filter (xevent, event);
 }
+
 
 NS_IMPL_ISUPPORTS1_CI(compzillaControl, compzillaIControl);
 
