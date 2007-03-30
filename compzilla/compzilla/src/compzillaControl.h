@@ -7,6 +7,7 @@
 #include <gdk/gdkwindow.h>
 
 #include <X11/Xlib.h>
+#include <X11/extensions/shape.h>
 #include <X11/extensions/Xcomposite.h>
 #include <X11/extensions/Xdamage.h>
 #include <X11/extensions/Xrender.h>
@@ -22,13 +23,18 @@
 class CompositedWindow
 {
 public:
-    CompositedWindow();
+    CompositedWindow(Display *display, Window window);
     ~CompositedWindow();
     
     nsCOMPtr<nsISupports> mContent;
-    GdkWindow *mNativeWindow;
+    Window mWindow;
+    Display *mDisplay;
+    XWindowAttributes mAttr;
     Damage mDamage;
     Picture mPicture;
+    Pixmap mPixmap;
+    Region mClip;
+    CompositedWindow *mFrame;
 };
 
 
@@ -43,16 +49,46 @@ public:
     virtual ~compzillaControl();
 
 private:
-    void AddWindow (Window id, Window prev);
+    CompositedWindow *FindWindow (Window win);
+    CompositedWindow *FindToplevelWindow (Window win);
+
+    void AddWindow (Window win);
+    void DestroyWindow (Window win);
+    void ForgetWindow (Window win);
+    void MapWindow (Window win);
+    void UnmapWindow (Window win);
 
     GdkWindow *GetNativeWindow(nsIDOMWindow *window);
+
+    void ShowOutputWindow();
+    void HideOutputWindow();
+    void PaintScreen();
+    void GetDamage(Region region);
 
     GdkFilterReturn Filter (GdkXEvent *xevent, GdkEvent *event);
     static GdkFilterReturn gdk_filter_func (GdkXEvent *xevent, GdkEvent *event, gpointer data);
 
-    GdkWindow *root;
-    GdkWindow *mainwin;
-    nsCOMPtr<compzillaIWindowManager> wm;
+    static PLDHashOperator FindWindowForFrame (const PRUint32& key,
+                                               CompositedWindow *entry, 
+                                               void *userData);
+
+    static PLDHashOperator AddWindowDamage (const PRUint32& key,
+                                            CompositedWindow *entry, 
+                                            void *userData);
+
+    static int ErrorHandler (Display *, XErrorEvent *);
+
+    GdkDisplay *mDisplay;
+    Display *mXDisplay;
+
+    GdkWindow *mRoot;
+    GdkWindow *mMainwin;
+    Window mMainwinParent;
+    Window mOverlay;
+
+    static Region sEmptyRegion;
+
+    nsCOMPtr<compzillaIWindowManager> mWM;
     nsClassHashtable<nsUint32HashKey, CompositedWindow> mWindowMap;
 
     int		xfixes_event, xfixes_error;

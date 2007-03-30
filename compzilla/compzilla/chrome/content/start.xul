@@ -5,8 +5,7 @@
         xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
 	title="compzilla"
 	onload="compzillaLoad()" 
-	width="500" height="500"
-	>
+	width="640" height="480">
 
   <iframe id="desktop" src="chrome://compzilla/skin/desktop.html" flex="1" />
 

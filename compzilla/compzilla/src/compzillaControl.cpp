@@ -27,36 +27,94 @@
 #include <X11/Xatom.h>
 
 
-CompositedWindow::CompositedWindow()
+#define DEBUG(format...) printf("   - " format)
+#define INFO(format...) printf(" *** " format)
+#define WARNING(format...) printf(" !!! " format)
+#define ERROR(format...) fprintf(stderr, format)
+
+
+CompositedWindow::CompositedWindow(Display *display, Window win)
+    : mContent(),
+      mDisplay(display),
+      mWindow(win)
 {
+    XGrabServer (display);
+
+    XGetWindowAttributes(display, win, &mAttr);
+
+    if (mAttr.map_state == IsViewable) {
+        mPixmap = XCompositeNameWindowPixmap (display, win);
+    }
+
+    XUngrabServer (display);
+
+    /* 
+     * Set up damage notification.  RawRectangles gives us smaller grain
+     * changes, versus NonEmpty which seems to always include the entire
+     * contents.
+     */
+    mDamage = XDamageCreate (display, win, XDamageReportRawRectangles);
+
+    DEBUG ("XDamageCreate returned %x\n", mDamage);
+
+    // Get handle for fetching window content
+    XRenderPictFormat *format = XRenderFindVisualFormat(display, mAttr.visual);
+    XRenderPictureAttributes pa;
+    pa.subwindow_mode = IncludeInferiors; // Don't clip child widgets
+    mPicture = XRenderCreatePicture (display, win, format, CPSubwindowMode, &pa);
+
+    DEBUG ("XRenderCreatePicture returned %x\n", mPicture);
+
+    // Redirect output
+    //XCompositeRedirectWindow(display, win, CompositeRedirectManual);
+    XCompositeRedirectWindow(display, win, CompositeRedirectAutomatic);
+
+    // Create a clips, used for determining what to draw
+    //mClip = XCreateRegion();
+
+    XSelectInput(display, win, (PropertyChangeMask | EnterWindowMask | FocusChangeMask));
 }
 
 
 CompositedWindow::~CompositedWindow()
 {
-    if (mNativeWindow) {
-        /*
-        if (mDamage) {
-            XDamageDestroy(GDK_WINDOW_XDISPLAY(mNativeWindow), mDamage);
-        }
-        if (mPicture) {
-            XRenderFreePicture(GDK_WINDOW_XDISPLAY(mNativeWindow), mDamage);
-        }
-        */
-        gdk_window_unref(mNativeWindow);
+    WARNING ("CompositedWindow::~CompositedWindow %p, xid=%p\n", this, mWindow);
+
+    if (mDamage) {
+        XDamageDestroy(mDisplay, mDamage);
+    }
+    if (mPicture) {
+        XRenderFreePicture(mDisplay, mPicture);
     }
 }
 
 
+NS_IMPL_ISUPPORTS1_CI(compzillaControl, compzillaIControl);
+
+
 compzillaControl::compzillaControl()
 {
+    if (!sEmptyRegion) {
+        //sEmptyRegion = XCreateRegion();
+    }
+
     mWindowMap.Init(50);
 }
 
 
 compzillaControl::~compzillaControl()
 {
-    gdk_window_unref(root);
+    if (mRoot) {
+        gdk_window_unref(mRoot);
+    }
+}
+
+
+GdkFilterReturn
+compzillaControl::gdk_filter_func (GdkXEvent *xevent, GdkEvent *event, gpointer data)
+{
+    compzillaControl *control = reinterpret_cast<compzillaControl*>(data);
+    return control->Filter (xevent, event);
 }
 
 
@@ -75,16 +133,21 @@ compzillaControl::GetNativeWindow(nsIDOMWindow *window)
             baseWin->GetMainWidget(getter_AddRefs(widget));
 
             if (widget) {
+                //widget->SetBorderStyle(eBorderStyle_none);
+                //INFO ("Clearing mainwin border\n");
+                    
                 GdkWindow *iframe = (GdkWindow *)widget->GetNativeData(NS_NATIVE_WINDOW);
                 GdkWindow *toplevel = gdk_window_get_toplevel(iframe);
-                printf ("GetNativeWindow: toplevel=0x%0x, iframe=0x%0x\n", 
+                DEBUG ("GetNativeWindow: toplevel=0x%0x, iframe=0x%0x\n", 
                         GDK_DRAWABLE_XID(toplevel), GDK_DRAWABLE_XID(iframe));
+                gdk_window_ref(toplevel);
+
                 return toplevel;
             }
         }
     }
 
-    printf (" !!! Could not get GdkWindow for nsIDOMWindow %p\n", window);
+    WARNING ("Could not get GdkWindow for nsIDOMWindow %p\n", window);
     return NULL;
 }
 
@@ -96,59 +159,65 @@ compzillaControl::RegisterWindowManager(nsIDOMWindow *window, compzillaIWindowMa
     nsresult rv = NS_OK;
     int	composite_major, composite_minor;
 
-    printf ("RegisterWindowManager\n");
+    DEBUG ("RegisterWindowManager\n");
 
-    this->mainwin = GetNativeWindow(window);
-    this->wm = wm;
+    mWM = wm;
+
+    mMainwin = GetNativeWindow(window);
+    gdk_window_set_override_redirect(mMainwin, true);
 
 #if DEMO_HACK
-    GdkDisplay* gdk_dpy = gdk_display_open (":0");
-    dpy = GDK_DISPLAY_XDISPLAY (gdk_dpy);
-    root = gdk_window_foreign_new_for_display (gdk_dpy,
-                                               XDefaultRootWindow (dpy));
+    mDisplay = gdk_display_open (":0");
+    mRoot = gdk_window_foreign_new_for_display (mDisplay, XDefaultRootWindow (mXDisplay));
 #else
-    root = gdk_get_default_root_window ();
-    dpy = GDK_WINDOW_XDISPLAY (root);
+    mRoot = gdk_get_default_root_window();
+    mDisplay = gdk_display_get_default ();
 #endif
-    if (!dpy) {
-        fprintf (stderr, "Can't open display\n");
-        return -1; // XXX
-    }
 
-    if (!XRenderQueryExtension (dpy, &render_event, &render_error)) {
-	fprintf (stderr, "No render extension\n");
+    mXDisplay = GDK_DISPLAY_XDISPLAY (mDisplay);
+
+    if (!XRenderQueryExtension (mXDisplay, &render_event, &render_error)) {
+	ERROR ("No render extension\n");
 	return -1; // XXX
     }
-    if (!XQueryExtension (dpy, COMPOSITE_NAME, &composite_opcode,
+    if (!XQueryExtension (mXDisplay, COMPOSITE_NAME, &composite_opcode,
 			  &composite_event, &composite_error)) {
-	fprintf (stderr, "No composite extension\n");
+	ERROR ("No composite extension\n");
         return -1; // XXX
     }
 
-    XCompositeQueryVersion (dpy, &composite_major, &composite_minor);
+    XCompositeQueryVersion (mXDisplay, &composite_major, &composite_minor);
 #if HAS_NAME_WINDOW_PIXMAP
     if (composite_major > 0 || composite_minor >= 2)
 	hasNamePixmap = True;
 #endif
 
-    if (!XDamageQueryExtension (dpy, &damage_event, &damage_error))
+    if (!XDamageQueryExtension (mXDisplay, &damage_event, &damage_error))
     {
-	fprintf (stderr, "No damage extension\n");
+	ERROR ("No damage extension\n");
 	return -1; // XXX
     }
-    printf("\n\nDAMAGE INFO: event=%d, error=%d\n", damage_event, damage_error);
+    DEBUG("DAMAGE INFO: event=%d, error=%d\n", damage_event, damage_error);
 
-    if (!XFixesQueryExtension (dpy, &xfixes_event, &xfixes_error))
+    if (!XFixesQueryExtension (mXDisplay, &xfixes_event, &xfixes_error))
     {
-	fprintf (stderr, "No XFixes extension\n");
+	ERROR ("No XFixes extension\n");
 	return -1; // XXX
     }
-    printf("\n\nXFIXES INFO: event=%d, error=%d\n", xfixes_event, xfixes_error);
+    DEBUG("XFIXES INFO: event=%d, error=%d\n", xfixes_event, xfixes_error);
 
-    gdk_window_set_events (root, (GdkEventMask)(GDK_SUBSTRUCTURE_MASK |
-                                                GDK_STRUCTURE_MASK |
-                                                GDK_PROPERTY_CHANGE_MASK));
-    gdk_window_add_filter (root, gdk_filter_func, this);
+    gdk_window_set_events (mRoot, (GdkEventMask) (GDK_SUBSTRUCTURE_MASK |
+                                                  GDK_STRUCTURE_MASK |
+                                                  GDK_PROPERTY_CHANGE_MASK));
+    
+    // Get ALL events for ALL windows
+    gdk_window_add_filter (NULL, gdk_filter_func, this);
+
+    XSetErrorHandler(ErrorHandler);
+
+    //mOverlay = XCompositeGetOverlayWindow (mXDisplay, GDK_WINDOW_XID (mRoot));
+    //ShowOutputWindow ();
+
 
 #if false
     gdk_x11_grab_server ();
@@ -158,10 +227,11 @@ compzillaControl::RegisterWindowManager(nsIDOMWindow *window, compzillaIWindowMa
     Window root_return, parent_return;
     int i;
     unsigned int nchildren;
-    XQueryTree (dpy, GDK_WINDOW_XID (root), &root_return, &parent_return, &children, &nchildren);
+    XQueryTree (mXDisplay, GDK_WINDOW_XID (mRoot), &root_return, &parent_return, 
+                &children, &nchildren);
     for (i = 0; i < nchildren; i++) {
-        XCompositeRedirectSubwindows (dpy, children[i], CompositeRedirectAutomatic);
-        printf ("adding window 0x%0x\n", children[i]);
+        XCompositeRedirectSubwindows (mXDisplay, children[i], CompositeRedirectAutomatic);
+        DEBUG ("adding window 0x%0x\n", children[i]);
         AddWindow (children[i], i ? children[i-1] : None);
     }
     XFree (children);
@@ -179,61 +249,203 @@ compzillaControl::RegisterWindowManager(nsIDOMWindow *window, compzillaIWindowMa
 }
 
 
-void
-compzillaControl::AddWindow (Window id, Window prev)
+void 
+compzillaControl::ShowOutputWindow()
 {
-    // XXX we need to emit an event so that the javascript side of
-    // things can create a canvas element and pass it back to us
-#if false
+    XserverRegion region = XFixesCreateRegion (mXDisplay, NULL, 0);
 
-    win				*new = malloc (sizeof (win));
-    win				**p;
-    
-    if (!new)
-	return;
-    if (prev)
-    {
-	for (p = &list; *p; p = &(*p)->next)
-	    if ((*p)->id == prev)
-		break;
-    }
-    else
-	p = &list;
-    new->id = id;
-    set_ignore (dpy, NextRequest (dpy));
-    if (!XGetWindowAttributes (dpy, id, &new->a))
-    {
-	free (new);
-	return;
-    }
-    new->damaged = 0;
-#if CAN_DO_USABLE
-    new->usable = False;
-#endif
-#if HAS_NAME_WINDOW_PIXMAP
-    new->pixmap = None;
-#endif
-    new->picture = None;
-    if (new->a.class == InputOnly)
-    {
-	new->damage_sequence = 0;
-	new->damage = None;
-    }
-    else
-    {
-	new->damage_sequence = NextRequest (dpy);
-	new->damage = XDamageCreate (dpy, id, XDamageReportNonEmpty);
-    }
-    new->extents = None;
+    XFixesSetWindowShapeRegion (mXDisplay,
+                                mOverlay,
+                                ShapeBounding,
+                                0, 0, 
+                                0);
+    XFixesSetWindowShapeRegion (mXDisplay,
+                                mOverlay,
+                                ShapeInput,
+                                0, 0, 
+                                region);
 
-    /* moved mode setting to one place */
-    determine_mode (dpy, new);
+    XFixesDestroyRegion (mXDisplay, region);
+}
+
+
+void 
+compzillaControl::HideOutputWindow()
+{
+    XserverRegion region = XFixesCreateRegion (mXDisplay, NULL, 0);
+
+    XFixesSetWindowShapeRegion (mXDisplay,
+                                mOverlay,
+                                ShapeBounding,
+                                0, 0, 
+                                region);
+
+    XFixesDestroyRegion (mXDisplay, region);
+}
+
+
+PLDHashOperator 
+compzillaControl::AddWindowDamage (const PRUint32& key,
+                                   CompositedWindow *entry, 
+                                   void *userData)
+{
+    Region workRegion = (Region) userData;
+    if (entry->mAttr.map_state == IsViewable) {
+        //XSubtractRegion(workRegion, sEmptyRegion, entry->mClip);
+    }
+    return PL_DHASH_NEXT;
+}
+
+
+int 
+compzillaControl::ErrorHandler (Display *, XErrorEvent *)
+{
+    ERROR ("\nGOT AN ERROR!!\n\n");
+    return 0;
+}
+
+
+void 
+compzillaControl::GetDamage(Region region)
+{
+    static Region workRegion = NULL;
+    if (!workRegion) {
+        //workRegion = XCreateRegion ();
+    }
+
+    //XSubtractRegion (region, sEmptyRegion, workRegion);
     
-    new->next = *p;
-    *p = new;
-    if (new->a.map_state == IsViewable)
-	map_win (dpy, id, new->damage_sequence - 1);
-#endif
+    mWindowMap.EnumerateRead (AddWindowDamage, workRegion);
+}
+
+
+void
+compzillaControl::AddWindow (Window win)
+{
+    INFO ("AddWindow for window %p\n", win);
+
+    nsAutoPtr<CompositedWindow> compwin(new CompositedWindow(mXDisplay, win));
+
+    if (compwin->mAttr.c_class == InputOnly) {
+        WARNING ("AddWindow ignoring InputOnly window %p\n", win);
+        return;
+    }
+
+    mWM->WindowCreated (win, 
+                        compwin->mAttr.override_redirect != 0, 
+                        getter_AddRefs(compwin->mContent));
+
+    INFO ("WindowCreated returned %p\n", compwin->mContent.get());
+
+    if (compwin->mContent) {
+        mWindowMap.Put (win, compwin);
+
+        if (compwin->mAttr.map_state == IsViewable) {
+            MapWindow (win);
+        }
+
+        // Stored the compwin in mWindowMap, so don't delete it now.
+        compwin.forget();
+    }
+}
+
+
+void
+compzillaControl::DestroyWindow (Window win)
+{
+    CompositedWindow *compwin = FindWindow (win);
+    if (compwin) {
+        if (compwin->mContent) {
+            mWM->WindowDestroyed (compwin->mContent);
+        }
+
+        // These are not valid if the window is already destroyed
+        compwin->mDamage = 0;
+        compwin->mPicture = 0;
+        mWindowMap.Remove (win);
+    }
+}
+
+
+void
+compzillaControl::ForgetWindow (Window win)
+{
+    CompositedWindow *compwin = FindWindow (win);
+    if (compwin) {
+        if (compwin->mContent) {
+            mWM->WindowDestroyed (compwin->mContent);
+        }
+
+        // Let the window render itself
+        XCompositeUnredirectWindow (mXDisplay, win, CompositeRedirectManual);
+        mWindowMap.Remove (win);
+    }
+}
+
+
+void
+compzillaControl::MapWindow (Window win)
+{
+    CompositedWindow *compwin = FindWindow (win);
+    if (compwin && compwin->mContent) {
+        mWM->WindowMapped (compwin->mContent);
+    }
+}
+
+
+void
+compzillaControl::UnmapWindow (Window win)
+{
+    CompositedWindow *compwin = FindWindow (win);
+    if (compwin && compwin->mContent) {
+        mWM->WindowUnmapped (compwin->mContent);
+    }
+}
+
+
+PLDHashOperator 
+compzillaControl::FindWindowForFrame (const PRUint32& key,
+                                      CompositedWindow *entry, 
+                                      void *userData)
+{
+    CompositedWindow **frame = (CompositedWindow **) userData;
+    if (entry->mFrame == *frame) {
+        *frame = entry;
+        return PL_DHASH_STOP;
+    }
+    return PL_DHASH_NEXT;
+}
+
+
+CompositedWindow *
+compzillaControl::FindToplevelWindow (Window win)
+{
+    CompositedWindow *compwin = FindWindow (win);
+
+    if (compwin && compwin->mAttr.override_redirect) {
+        // Likely a frame window
+        if (compwin->mAttr.c_class == InputOnly) {
+            CompositedWindow *found = compwin;
+            mWindowMap.EnumerateRead (FindWindowForFrame, &found);
+
+            if (found != compwin) {
+                return found;
+            }
+        }
+
+        return NULL;
+    }
+
+    return compwin;
+}
+
+
+CompositedWindow *
+compzillaControl::FindWindow (Window win)
+{
+    CompositedWindow *compwin;
+    mWindowMap.Get(win, &compwin);
+    return compwin;
 }
 
 
@@ -244,104 +456,47 @@ compzillaControl::Filter (GdkXEvent *xevent, GdkEvent *event)
 
     switch (x11_event->type) {
     case CreateNotify: {
-        printf ("CreateNotify: window=0x%0x, x=%d, y=%d, width=%d, height=%d\n",
+        DEBUG ("CreateNotify: window=0x%0x, x=%d, y=%d, width=%d, height=%d\n",
                 x11_event->xcreatewindow.window,
                 x11_event->xcreatewindow.x,
                 x11_event->xcreatewindow.y,
                 x11_event->xcreatewindow.width,
                 x11_event->xcreatewindow.height);
 
-        if (x11_event->xcreatewindow.window == GDK_DRAWABLE_XID(this->mainwin)) {
-            printf("CreateNotify: discarding event on mainwin\n");
-            return GDK_FILTER_CONTINUE;
+        if (x11_event->xcreatewindow.window == GDK_DRAWABLE_XID(this->mMainwin)) {
+            WARNING ("CreateNotify: discarding event on mainwin\n");
+            return GDK_FILTER_REMOVE;
         }
 
-        CompositedWindow *compwin = new CompositedWindow();
-        wm->WindowCreated (x11_event->xcreatewindow.window, 
-                           x11_event->xcreatewindow.override_redirect != 0, 
-                           getter_AddRefs(compwin->mContent));
+        AddWindow(x11_event->xcreatewindow.window);
+        break;
+    }
+    case DestroyNotify: {
+        DEBUG ("DestroyNotify: window=0x%0x\n", x11_event->xdestroywindow.window);
 
-        printf ("WindowCreated returned %p\n", compwin->mContent.get());
-
-        if (!compwin->mContent) {
-            delete compwin;
-            break;
-        }
-
-        compwin->mNativeWindow = 
-            gdk_window_foreign_new_for_display (gdk_drawable_get_display(this->root), 
-                                                x11_event->xcreatewindow.window);
-        gdk_window_add_filter (compwin->mNativeWindow, gdk_filter_func, this);
-        gdk_window_set_events (compwin->mNativeWindow, GDK_PROPERTY_CHANGE_MASK);
-
-        /* Don't need to receive all these events */
-        /*
-        XSelectInput(x11_event->xany.display, 
-                     x11_event->xcreatewindow.window, 
-                     (StructureNotifyMask |
-                      PropertyChangeMask | 
-                      ExposureMask |
-                      VisibilityChangeMask | 
-                      damage_event + XDamageNotify));
-        */
-
-
-        // Set up damage notification
-        compwin->mDamage = XDamageCreate (x11_event->xany.display, 
-                                         x11_event->xcreatewindow.window, 
-                                         XDamageReportNonEmpty);
-
-        printf ("XDamageCreate returned %x\n", compwin->mDamage);
-
-        XCompositeRedirectWindow(x11_event->xany.display, 
-                                 x11_event->xcreatewindow.window, 
-                                 CompositeRedirectAutomatic);
-        
-        XWindowAttributes attr = { 0 };
-        XGetWindowAttributes(x11_event->xany.display, 
-                             x11_event->xcreatewindow.window, 
-                             &attr);
-
-        const XRenderPictFormat *format = XRenderFindVisualFormat(x11_event->xany.display, 
-                                                                  attr.visual);
-
-        // Get handle for fetching window content
-        XRenderPictureAttributes pa = { 0 };
-        pa.subwindow_mode = IncludeInferiors; // Don't clip child widgets
-        compwin->mPicture = XRenderCreatePicture(x11_event->xany.display, 
-                                                  x11_event->xcreatewindow.window, 
-                                                  format, 
-                                                  CPSubwindowMode, 
-                                                  &pa);
-
-        printf ("XRenderCreatePicture returned %x\n", compwin->mPicture);
-
-        mWindowMap.Put (x11_event->xcreatewindow.window, compwin);
-
+        DestroyWindow (x11_event->xdestroywindow.window);
         break;
     }
     case ConfigureNotify: {
-        printf ("ConfigureNotify: window=0x%0x, x=%d, y=%d, width=%d, height=%d\n",
+        DEBUG ("ConfigureNotify: window=0x%0x, x=%d, y=%d, width=%d, height=%d\n",
                 x11_event->xconfigure.window,
                 x11_event->xconfigure.x,
                 x11_event->xconfigure.y,
                 x11_event->xconfigure.width,
                 x11_event->xconfigure.height);
 
-        CompositedWindow *compwin;
-        if (!mWindowMap.Get(x11_event->xconfigure.window, &compwin)) {
-            break;
+        CompositedWindow *compwin = FindWindow (x11_event->xconfigure.window);
+
+        if (compwin && compwin->mContent) {
+            CompositedWindow *abovewin = FindWindow (x11_event->xconfigure.above);
+
+            mWM->WindowConfigured (compwin->mContent,
+                                   x11_event->xconfigure.x,
+                                   x11_event->xconfigure.y,
+                                   x11_event->xconfigure.width,
+                                   x11_event->xconfigure.height,
+                                   abovewin ? abovewin->mContent : NULL);
         }
-
-        CompositedWindow *abovewin;
-        mWindowMap.Get(x11_event->xconfigure.above, &abovewin);
-
-        wm->WindowConfigured (compwin->mContent,
-                              x11_event->xconfigure.x,
-                              x11_event->xconfigure.y,
-                              x11_event->xconfigure.width,
-                              x11_event->xconfigure.height,
-                              abovewin ? abovewin->mContent : NULL);
 
         // XXX recreate our XImage backing store, but only if we're
         // mapped (i don't think we'll get damage until we're
@@ -349,73 +504,78 @@ compzillaControl::Filter (GdkXEvent *xevent, GdkEvent *event)
         break;
     }
     case ReparentNotify: {
-        printf ("ReparentNotify: window=0x%0x, parent=0x%0x, x=%d, y=%d, override_redirect=%d\n",
+        DEBUG ("ReparentNotify: window=0x%0x, parent=0x%0x, x=%d, y=%d, override_redirect=%d\n",
                 x11_event->xreparent.window,
                 x11_event->xreparent.parent,
                 x11_event->xreparent.x,
                 x11_event->xreparent.y,
                 x11_event->xreparent.override_redirect);
 
-        if (x11_event->xreparent.window == GDK_DRAWABLE_XID(this->mainwin) &&
-            x11_event->xreparent.parent != GDK_DRAWABLE_XID(this->root)) {
-            printf("ReparentNotify: discarding event on mainwin\n");
+        if (x11_event->xreparent.window == GDK_DRAWABLE_XID(this->mMainwin)) {
+            // Keep the new parent so we can ignore events on it.
+            mMainwinParent = x11_event->xreparent.parent;
 
-            CompositedWindow *compwin;
-            if (!mWindowMap.Get(x11_event->xreparent.window, &compwin)) {
-                break;
-            }
+            // Let the mainwin draw normally by unredirecting our new parent.
+            ForgetWindow (x11_event->xreparent.parent);
 
-            wm->WindowDestroyed (compwin->mContent);
-            mWindowMap.Remove (x11_event->xreparent.window);
-        }
-        break;
-    }
-    case DestroyNotify: {
-        printf ("DestroyNotify: window=0x%0x\n", x11_event->xdestroywindow.window);
-
-        CompositedWindow *compwin;
-        if (!mWindowMap.Get(x11_event->xdestroywindow.window, &compwin)) {
-            break;
+            WARNING ("ReparentNotify: discarding event on mainwin\n");
+            return GDK_FILTER_REMOVE;
         }
 
-        wm->WindowDestroyed (compwin->mContent);
-        mWindowMap.Remove (x11_event->xdestroywindow.window);
+        if (x11_event->xreparent.window == mMainwinParent) {
+            WARNING ("ReparentNotify: discarding event on mainwin's parent\n");
+            return GDK_FILTER_REMOVE;
+        }
+
+        CompositedWindow *compwin = FindWindow (x11_event->xreparent.window);
+
+        if (x11_event->xreparent.parent == GDK_DRAWABLE_XID(this->mRoot) && !compwin) {
+            AddWindow (x11_event->xreparent.window);
+        } else if (compwin) {
+            /* 
+             * This is the only case where a window is removed but not
+             * destroyed. We must remove our event mask and all passive
+             * grabs. 
+             */
+            XSelectInput (mXDisplay, x11_event->xreparent.window, NoEventMask);
+            XShapeSelectInput (mXDisplay, x11_event->xreparent.window, NoEventMask);
+            XUngrabButton (mXDisplay, AnyButton, AnyModifier, x11_event->xreparent.window);
+
+            DestroyWindow(x11_event->xreparent.window);
+        }
+
         break;
     }
     case MapNotify: {
-        printf ("MapNotify: window=0x%0x\n", x11_event->xmap.window);
+        DEBUG ("MapNotify: window=0x%0x\n", x11_event->xmap.window);
 
-        CompositedWindow *compwin;
-        if (!mWindowMap.Get(x11_event->xmap.window, &compwin)) {
-            break;
-        }
-
-        wm->WindowMapped (compwin->mContent);
+        MapWindow (x11_event->xmap.window);
         break;
     }
     case UnmapNotify: {
-        printf ("UnmapNotify: window=0x%0x\n", 
-                x11_event->xunmap.window);
+        DEBUG ("UnmapNotify: window=0x%0x\n", x11_event->xunmap.window);
 
-        CompositedWindow *compwin;
-        if (!mWindowMap.Get(x11_event->xunmap.window, &compwin)) {
-            break;
-        }
-
-        wm->WindowUnmapped (compwin->mContent);
+        UnmapWindow (x11_event->xunmap.window);
         break;
     }
     case PropertyNotify: {
-        printf ("PropertyChange: window=0x%0x, atom=%s\n", 
-                x11_event->xproperty.window, 
-                XGetAtomName(x11_event->xany.display, x11_event->xproperty.atom));
+        DEBUG ("PropertyChange: window=0x%0x, atom=%s\n", 
+               x11_event->xproperty.window, 
+               XGetAtomName(x11_event->xany.display, x11_event->xproperty.atom));
         break;
     }
     default:
         if (x11_event->type == damage_event + XDamageNotify) {
-            printf("\n\nDAMAGE!!!\n\n");
-
             XDamageNotifyEvent *damage_ev = (XDamageNotifyEvent *)x11_event;
+
+            CompositedWindow *compwin = FindWindow (damage_ev->drawable);
+            if (compwin) {
+                DEBUG("DAMAGE: drawable=%p, damage=%p, x=%d, y=%d, width=%d, height=%d\n", 
+                      damage_ev->drawable, damage_ev->damage, damage_ev->area.x,
+                      damage_ev->area.y, damage_ev->area.width, damage_ev->area.height);
+            }
+
+            // Signal the server to send more damage events
             XDamageSubtract(damage_ev->display, damage_ev->damage, None, None);
         }
 #if SHAPE_EXTENSION
@@ -423,22 +583,13 @@ compzillaControl::Filter (GdkXEvent *xevent, GdkEvent *event)
         }
 #endif
         else {
-            printf ("Unhandled window event %d\n", x11_event->type);
+            WARNING ("Unhandled window event %d\n", x11_event->type);
         }
         break;
     }
 
-    return GDK_FILTER_REMOVE;
+    return GDK_FILTER_CONTINUE;
 }
 
 
-GdkFilterReturn
-compzillaControl::gdk_filter_func (GdkXEvent *xevent, GdkEvent *event, gpointer data)
-{
-    compzillaControl *control = reinterpret_cast<compzillaControl*>(data);
-    return control->Filter (xevent, event);
-}
-
-
-NS_IMPL_ISUPPORTS1_CI(compzillaControl, compzillaIControl);
 
