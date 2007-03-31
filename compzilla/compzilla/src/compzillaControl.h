@@ -1,8 +1,10 @@
 /* -*- mode: C++; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
 
 #include "nsCOMPtr.h"
+
+#define MOZILLA_INTERNAL_API
 #include "nsClassHashtable.h"
-#include "nsHashKeys.h"
+#undef MOZILLA_INTERNAL_API
 
 #include <gdk/gdkwindow.h>
 
@@ -60,6 +62,12 @@ private:
 
     GdkWindow *GetNativeWindow(nsIDOMWindow *window);
 
+    void Render (nsCOMPtr<nsISupports> content, 
+                 int x, int y, 
+                 int width, int height, 
+                 const char *dataBuf, 
+                 int len);
+
     void ShowOutputWindow();
     void HideOutputWindow();
     void PaintScreen();
@@ -88,6 +96,7 @@ private:
 
     static Region sEmptyRegion;
 
+    nsCOMPtr<nsIDOMWindow> mDOMWindow;
     nsCOMPtr<compzillaIWindowManager> mWM;
     nsClassHashtable<nsUint32HashKey, CompositedWindow> mWindowMap;
 

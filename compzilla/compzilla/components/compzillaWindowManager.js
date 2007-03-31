@@ -5,6 +5,7 @@ const nsISupports  = Components.interfaces.nsISupports;
 const nsIComponentRegistrar        = Components.interfaces.nsIComponentRegistrar;
 const compzillaIWindowManager      = Components.interfaces.compzillaIWindowManager;
 
+
 var WindowStack = {
    layers: new Array (),
 
@@ -50,6 +51,7 @@ var WindowStack = {
       w.style.zIndex = this.layers.push (w);
    },
 };
+
 
 function CompzillaWindowManager() {}
 CompzillaWindowManager.prototype =
@@ -171,13 +173,12 @@ CompzillaWindowManager.prototype =
      return root;
   },
 
- BorderSize: 3,
- TitleContentGap: 3,
- TitleBarHeight: 15,
- CornerSize: 25,
+  BorderSize: 3,
+  TitleContentGap: 3,
+  TitleBarHeight: 15,
+  CornerSize: 25,
 
- LayoutChrome: function(element) {
-
+  LayoutChrome: function(element) {
       var bs = this.BorderSize;
       var tbs = this.TitleBarHeight;
       var tcg = this.TitleContentGap;
@@ -191,38 +192,40 @@ CompzillaWindowManager.prototype =
       element.content.style.top = element.titlebar.offsetTop + element.titlebar.offsetHeight + tcg;
       element.content.style.width = element.offsetWidth - 2 * bs;
       element.content.style.height = element.offsetHeight - element.content.offsetTop - bs;
-   },
+  },
 };
 
 
-function genHex(){
-colors = new Array(14)
-colors[0]="0"
-colors[1]="1"
-colors[2]="2"
-colors[3]="3"
-colors[4]="4"
-colors[5]="5"
-colors[5]="6"
-colors[6]="7"
-colors[7]="8"
-colors[8]="9"
-colors[9]="a"
-colors[10]="b"
-colors[11]="c"
-colors[12]="d"
-colors[13]="e"
-colors[14]="f"
+function genHex()
+{
+  colors = new Array(14)
+  colors[0]="0"
+  colors[1]="1"
+  colors[2]="2"
+  colors[3]="3"
+  colors[4]="4"
+  colors[5]="5"
+  colors[5]="6"
+  colors[6]="7"
+  colors[7]="8"
+  colors[8]="9"
+  colors[9]="a"
+  colors[10]="b"
+  colors[11]="c"
+  colors[12]="d"
+  colors[13]="e"
+  colors[14]="f"
 
-digit = new Array(5)
-color=""
-for (i=0;i<6;i++){
-digit[i]=colors[Math.round(Math.random()*14)]
-color = color+digit[i]
+  digit = new Array(5)
+  color=""
+  for (i=0;i<6;i++){
+    digit[i]=colors[Math.round(Math.random()*14)]
+    color = color+digit[i]
+  }
+
+  return color;
 }
 
-return color;
-}
 
 var CompzillaWindowManagerModule =
 {
@@ -276,6 +279,7 @@ var CompzillaWindowManagerModule =
       }
   }
 };
+
 
 function NSGetModule(compMgr, fileSpec) {
   return CompzillaWindowManagerModule;

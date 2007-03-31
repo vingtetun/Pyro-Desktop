@@ -1,7 +1,6 @@
 /* -*- mode: C++; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
 #include "nspr.h"
 #include "nsCOMPtr.h"
-#include "nsEmbedString.h"
 #include "nsXPCOMCID.h"
 
 #include "nsICategoryManager.h"
@@ -12,14 +11,17 @@
 #include "nsServiceManagerUtils.h"
 
 #include "compzillaControl.h"
+#include "compzillaRenderingContext.h"
 #include "compzillaExtension.h"
 
 
 NS_GENERIC_FACTORY_CONSTRUCTOR(compzillaExtension);
 
+NS_GENERIC_FACTORY_CONSTRUCTOR(compzillaRenderingContext);
 
 NS_GENERIC_FACTORY_CONSTRUCTOR(compzillaControl);
 NS_DECL_CLASSINFO(compzillaControl);
+
 
 
 static NS_METHOD 
@@ -35,11 +37,10 @@ registerGlobalConstructors(nsIComponentManager *aCompMgr,
     if (NS_FAILED(rv))
         return rv;
 
-    nsCString previous;
     rv = catman->AddCategoryEntry(JAVASCRIPT_GLOBAL_CONSTRUCTOR_CATEGORY,
                                   "CompzillaControl",
                                   COMPZILLA_CONTROL_CONTRACTID,
-                                  PR_TRUE, PR_TRUE, getter_Copies(previous));
+                                  PR_TRUE, PR_TRUE, NULL);
     NS_ENSURE_SUCCESS(rv, rv);
 
     return rv;
@@ -58,7 +59,13 @@ static const nsModuleComponentInfo components[] = {
         NS_CI_INTERFACE_GETTER_NAME(compzillaControl),
         NULL, // mGetLanguageHelperProc
         &NS_CLASSINFO_NAME(compzillaControl),
-        nsIClassInfo::DOM_OBJECT
+        nsIClassInfo::SINGLETON
+    },
+    { 
+        "Compzilla Canvas Rendering Context",
+        COMPZILLA_RENDERING_CONTEXT_CID,
+        COMPZILLA_RENDERING_CONTEXT_CONTRACTID,
+        compzillaRenderingContextConstructor
     },
     {
         "Compzilla Extension",

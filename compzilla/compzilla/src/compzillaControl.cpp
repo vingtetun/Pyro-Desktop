@@ -9,7 +9,13 @@
 #include "nsIURI.h"
 #include "nsIScriptSecurityManager.h"
 #include "nsServiceManagerUtils.h"
-#include "nsStringAPI.h"
+
+#include "nsIDOMCanvasRenderingContext2D.h"
+#include "nsIDOMHTMLCanvasElement.h"
+#define MOZILLA_INTERNAL_API
+#include "nsIScriptContext.h"
+#undef MOZILLA_INTERNAL_API
+#include "jsapi.h"
 
 #include "compzillaControl.h"
 
@@ -70,7 +76,7 @@ CompositedWindow::CompositedWindow(Display *display, Window win)
     XCompositeRedirectWindow(display, win, CompositeRedirectAutomatic);
 
     // Create a clips, used for determining what to draw
-    //mClip = XCreateRegion();
+    mClip = XCreateRegion();
 
     XSelectInput(display, win, (PropertyChangeMask | EnterWindowMask | FocusChangeMask));
 }
@@ -135,11 +141,11 @@ compzillaControl::GetNativeWindow(nsIDOMWindow *window)
             if (widget) {
                 //widget->SetBorderStyle(eBorderStyle_none);
                 //INFO ("Clearing mainwin border\n");
-                    
+
                 GdkWindow *iframe = (GdkWindow *)widget->GetNativeData(NS_NATIVE_WINDOW);
                 GdkWindow *toplevel = gdk_window_get_toplevel(iframe);
                 DEBUG ("GetNativeWindow: toplevel=0x%0x, iframe=0x%0x\n", 
-                        GDK_DRAWABLE_XID(toplevel), GDK_DRAWABLE_XID(iframe));
+                       GDK_DRAWABLE_XID(toplevel), GDK_DRAWABLE_XID(iframe));
                 gdk_window_ref(toplevel);
 
                 return toplevel;
@@ -161,10 +167,8 @@ compzillaControl::RegisterWindowManager(nsIDOMWindow *window, compzillaIWindowMa
 
     DEBUG ("RegisterWindowManager\n");
 
+    mDOMWindow = window;
     mWM = wm;
-
-    mMainwin = GetNativeWindow(window);
-    gdk_window_set_override_redirect(mMainwin, true);
 
 #if DEMO_HACK
     mDisplay = gdk_display_open (":0");
@@ -175,6 +179,9 @@ compzillaControl::RegisterWindowManager(nsIDOMWindow *window, compzillaIWindowMa
 #endif
 
     mXDisplay = GDK_DISPLAY_XDISPLAY (mDisplay);
+
+    mMainwin = GetNativeWindow(window);
+    gdk_window_set_override_redirect(mMainwin, true);
 
     if (!XRenderQueryExtension (mXDisplay, &render_event, &render_error)) {
 	ERROR ("No render extension\n");
@@ -215,7 +222,11 @@ compzillaControl::RegisterWindowManager(nsIDOMWindow *window, compzillaIWindowMa
 
     XSetErrorHandler(ErrorHandler);
 
+    // Create the overlay window, and make the X server stop drawing windows
     //mOverlay = XCompositeGetOverlayWindow (mXDisplay, GDK_WINDOW_XID (mRoot));
+    
+
+    //mOverlay = XCompositeGetOverlayWindow (mXDisplay, GDK_WINDOW_XID (mMainwin));
     //ShowOutputWindow ();
 
 
@@ -310,7 +321,7 @@ compzillaControl::GetDamage(Region region)
 {
     static Region workRegion = NULL;
     if (!workRegion) {
-        //workRegion = XCreateRegion ();
+        workRegion = XCreateRegion ();
     }
 
     //XSubtractRegion (region, sEmptyRegion, workRegion);
@@ -347,6 +358,81 @@ compzillaControl::AddWindow (Window win)
         // Stored the compwin in mWindowMap, so don't delete it now.
         compwin.forget();
     }
+}
+
+
+void 
+compzillaControl::Render (nsCOMPtr<nsISupports> content, 
+                          int x, int y, 
+                          int width, int height, 
+                          const char *dataBuf, 
+                          int len)
+{
+    if (!content) {
+        return;
+    }
+
+    nsCOMPtr<nsIScriptGlobalObject> global = do_QueryInterface(mDOMWindow);
+    WARNING ("GetGlobalJSObject == %p\n", global.get());
+
+    nsIScriptContext *globalctx = global->GetContext();
+    WARNING ("GetScriptContext == %p\n", globalctx);
+
+    JSContext *ctx = (JSContext *) globalctx->GetNativeContext();
+    WARNING ("GetNativeContext == %p\n", ctx);
+
+    // Make a JS vector to hold pixel data
+    nsAutoArrayPtr<jsval> jsvector(new jsval[width * height * 4]);
+    NS_ASSERTION(jsvector, "nsAutoArrayPtr<jsval> FAILED for jsvector");
+    WARNING ("jsvector == %p\n", jsvector.get());
+
+    // Fill up the vector
+    jsval *dest = jsvector.get();
+    PRUint8 *row;
+    for (int j = 0; j < height; j++) {
+        for (int i = 0; i < width; i++) {
+            // FIXME: Fill!
+        }
+    }
+
+    // Make the JS array to hold the JS vector data
+    JSObject *dataArray = JS_NewArrayObject(ctx, width * height * 4, jsvector.get());
+    NS_ASSERTION(dataArray, "JS_NewArrayObject FAILED");
+
+    // Not part of Public API
+    //nsAutoGCRoot arrayGCRoot(&dataArray, &rv);
+    //NS_ASSERTION(NS_SUCCEEDED(rv), "nsAutoGCRoot FAILED for dataArray");
+
+    // Make an ImageData object to hold the arguments
+    JSObject *dataObject = JS_NewObject (ctx, NULL, NULL, NULL);
+    NS_ASSERTION(dataObject, "JS_NewObject FAILED");
+
+    // Not part of Public API
+    //nsAutoGCRoot dataObjectGCRoot(&dataObject, &rv);
+    //NS_ASSERTION(NS_SUCCEEDED(rv), "nsAutoGCRoot FAILED for dataObject");
+
+    JS_DefineProperty(ctx, dataObject, "width", INT_TO_JSVAL(width), NULL, NULL, 0);
+    JS_DefineProperty(ctx, dataObject, "height", INT_TO_JSVAL(height), NULL, NULL, 0);
+    JS_DefineProperty(ctx, dataObject, "data", OBJECT_TO_JSVAL(dataArray), NULL, NULL, 0);
+
+    void *arg_marker = NULL;
+    JS_PushArguments (ctx, &arg_marker, "ojj", dataObject, x, y);
+
+    NS_ASSERTION(arg_marker, "JS_PushArguments returned invalid marker");
+
+    nsCOMPtr<nsIDOMHTMLCanvasElement> canvas = do_QueryInterface(content);
+    WARNING ("nsIDOMHTMLCanvasElement == %p\n", canvas.get());
+
+    NS_ConvertASCIItoUTF16 twodee("2d");
+
+    nsCOMPtr<nsIDOMCanvasRenderingContext2D> rendCtx;
+    canvas->GetContext(twodee, getter_AddRefs(rendCtx));
+    WARNING ("nsIDOMCanvasRenderingContext2D == %p\n", rendCtx.get());
+
+    INFO ("Calling rendCtx->DrawImage\n");
+    rendCtx->DrawImage();
+
+    JS_PopArguments (ctx, arg_marker);
 }
 
 
@@ -570,13 +656,16 @@ compzillaControl::Filter (GdkXEvent *xevent, GdkEvent *event)
 
             CompositedWindow *compwin = FindWindow (damage_ev->drawable);
             if (compwin) {
-                DEBUG("DAMAGE: drawable=%p, damage=%p, x=%d, y=%d, width=%d, height=%d\n", 
-                      damage_ev->drawable, damage_ev->damage, damage_ev->area.x,
-                      damage_ev->area.y, damage_ev->area.width, damage_ev->area.height);
+                DEBUG ("DAMAGE: drawable=%p, damage=%p, x=%d, y=%d, width=%d, height=%d\n", 
+                       damage_ev->drawable, damage_ev->damage, damage_ev->area.x,
+                       damage_ev->area.y, damage_ev->area.width, damage_ev->area.height);
+
+                // DANGER!
+                //Render (compwin->mContent, 0, 0, 1, 1, NULL, 4);
             }
 
             // Signal the server to send more damage events
-            XDamageSubtract(damage_ev->display, damage_ev->damage, None, None);
+            XDamageSubtract (damage_ev->display, damage_ev->damage, None, None);
         }
 #if SHAPE_EXTENSION
         else if (x11_event->type == shape_event + ShapeNotify) {

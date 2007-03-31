@@ -30,62 +30,20 @@ PREFS_SRCDIR = $(EXTENSION_SRCDIR)/defaults/preferences
 prefs_DATA = $(PREFS_SRCDIR)/prefs.js
 
 
-IDL_FILES =						\
-	$(srcdir)/public/compzillaIExtension.idl	\
-	$(srcdir)/public/compzillaIControl.idl		\
-	$(srcdir)/public/compzillaIWindowManager.idl
-
-IDL_H_FILES = $(IDL_FILES:.idl=.h)
-IDL_XPT_FILES = $(IDL_FILES:.idl=.xpt)
-
-BUILT_SOURCES = $(IDL_H_FILES) $(IDL_XPT_FILES) 
-CLEANFILES = $(IDL_H_FILES) $(IDL_XPT_FILES)
-
+#
+# The 'components' directory contains the generated .xpt typelibs,
+# libcompzilla.so, and compzillaWindowManager.js
+#
 
 componentdir = $(extensiondir)/components
 COMPONENT_SRCDIR = $(EXTENSION_SRCDIR)/components
-component_LTLIBRARIES = libcompzilla.la
-component_DATA = $(IDL_XPT_FILES)		\
+component_DATA = $(IDL_XPT_FILES)				\
 		 $(COMPONENT_SRCDIR)/compzillaWindowManager.js
-
-
-libcompzilla_la_LDFLAGS = -avoid-version -module
-libcompzilla_la_LIBADD = $(XEXTENSIONS_LIBS)
-
-libcompzilla_la_CPPFLAGS =			\
-	$(AM_CPPFLAGS)				\
-	$(XEXTENSIONS_CFLAGS)			\
-	$(GDK_CFLAGS)				\
-	-I$(srcdir)/public
-
-GECKO_PRIVATE_INCLUDEDIR = $(top_srcdir)/gecko-sdk/include
-
-libcompzilla_la_CPPFLAGS +=			\
-	-I$(GECKO_INCLUDEDIR)			\
-	-I$(GECKO_INCLUDEDIR)/nspr		\
-	-I$(GECKO_INCLUDEDIR)/caps		\
-	-I$(GECKO_INCLUDEDIR)/docshell		\
-	-I$(GECKO_INCLUDEDIR)/dom		\
-	-I$(GECKO_INCLUDEDIR)/gfx		\
-	-I$(GECKO_INCLUDEDIR)/js		\
-	-I$(GECKO_INCLUDEDIR)/necko		\
-	-I$(GECKO_INCLUDEDIR)/string		\
-	-I$(GECKO_INCLUDEDIR)/widget		\
-	-I$(GECKO_INCLUDEDIR)/xpcom		\
-	-I$(GECKO_INCLUDEDIR)/xpconnect		\
-	-I$(GECKO_PRIVATE_INCLUDEDIR)
-
-nodist_libcompzilla_la_SOURCES =		\
-	$(IDL_HEADERS)				\
-	$(srcdir)/src/compzillaExtension.cpp	\
-	$(srcdir)/src/compzillaExtension.h	\
-	$(srcdir)/src/compzillaModule.cpp	\
-	$(srcdir)/src/compzillaControl.cpp	\
-	$(srcdir)/src/compzillaControl.h
+component_LTLIBRARIES = libcompzilla.la
 
 
 #
-# xpidl generates .h and .xpt files from .idl files
+# Use 'xpidl' to generate .h and .xpt files from .idl files
 #
 
 XPIDL_INCLUDES =				\
@@ -97,3 +55,68 @@ XPIDL_INCLUDES =				\
 
 %.xpt: %.idl
 	$(XPIDL) $(XPIDL_INCLUDES)  -m typelib -e $@ $<
+
+IDL_FILES =						\
+	$(srcdir)/public/compzillaIExtension.idl	\
+	$(srcdir)/public/compzillaIControl.idl		\
+	$(srcdir)/public/compzillaIWindowManager.idl
+
+IDL_H_FILES = $(IDL_FILES:.idl=.h)
+IDL_XPT_FILES = $(IDL_FILES:.idl=.xpt)
+
+BUILT_SOURCES = 		\
+	$(IDL_H_FILES) 		\
+	$(IDL_XPT_FILES) 
+CLEANFILES = 			\
+	$(IDL_H_FILES) 		\
+	$(IDL_XPT_FILES)
+
+
+#
+# libcompzilla.so contains all C++ XPCOM components
+#
+
+libcompzilla_la_LDFLAGS = -avoid-version -module
+libcompzilla_la_LIBADD = $(XEXTENSIONS_LIBS)
+
+libcompzilla_la_CPPFLAGS =			\
+	-fno-rtti 				\
+	-fno-exceptions 			\
+	-shared					\
+	\
+	$(AM_CPPFLAGS)				\
+	$(XEXTENSIONS_CFLAGS)			\
+	$(GDK_CFLAGS)				\
+	\
+	-I$(GECKO_INCLUDEDIR)			\
+	-include mozilla-config.h		\
+	-I$(GECKO_INCLUDEDIR)/nspr		\
+	-I$(GECKO_INCLUDEDIR)/caps		\
+	-I$(GECKO_INCLUDEDIR)/content		\
+	-I$(GECKO_INCLUDEDIR)/docshell		\
+	-I$(GECKO_INCLUDEDIR)/dom		\
+	-I$(GECKO_INCLUDEDIR)/gfx		\
+	-I$(GECKO_INCLUDEDIR)/js		\
+	-I$(GECKO_INCLUDEDIR)/layout		\
+	-I$(GECKO_INCLUDEDIR)/locale		\
+	-I$(GECKO_INCLUDEDIR)/necko		\
+	-I$(GECKO_INCLUDEDIR)/pref		\
+	-I$(GECKO_INCLUDEDIR)/string		\
+	-I$(GECKO_INCLUDEDIR)/widget		\
+	-I$(GECKO_INCLUDEDIR)/xpcom		\
+	-I$(GECKO_INCLUDEDIR)/xpconnect		\
+	\
+	-I$(top_srcdir)/gecko-sdk/include	\
+	-I$(srcdir)/public
+
+nodist_libcompzilla_la_SOURCES = $(IDL_H_FILES)
+
+libcompzilla_la_SOURCES =				\
+	$(srcdir)/src/compzillaExtension.cpp		\
+	$(srcdir)/src/compzillaExtension.h		\
+	$(srcdir)/src/compzillaControl.cpp		\
+	$(srcdir)/src/compzillaControl.h		\
+	$(srcdir)/src/compzillaModule.cpp		\
+	$(srcdir)/src/compzillaRenderingContext.h 	\
+	$(srcdir)/src/compzillaRenderingContext.cpp
+
