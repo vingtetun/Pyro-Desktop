@@ -1,14 +1,7 @@
 /* -*- mode: C++; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
 
 #include "nspr.h"
-#include "nsMemory.h"
-#include "nsNetCID.h"
-#include "nsISupportsUtils.h"
-#include "nsIIOService.h"
 #include "nsIObserverService.h"
-#include "nsIURI.h"
-#include "nsIScriptSecurityManager.h"
-#include "nsServiceManagerUtils.h"
 
 #include "nsIDOMCanvasRenderingContext2D.h"
 #include "nsIDOMHTMLCanvasElement.h"
@@ -33,6 +26,10 @@
 #include <X11/Xatom.h>
 
 
+// Show windows from display :0
+#define DEMO_HACK 0
+
+
 #define DEBUG(format...) printf("   - " format)
 #define INFO(format...) printf(" *** " format)
 #define WARNING(format...) printf(" !!! " format)
@@ -44,41 +41,23 @@ CompositedWindow::CompositedWindow(Display *display, Window win)
       mDisplay(display),
       mWindow(win)
 {
-    XGrabServer (display);
-
-    XGetWindowAttributes(display, win, &mAttr);
-
-    if (mAttr.map_state == IsViewable) {
-        mPixmap = XCompositeNameWindowPixmap (display, win);
-    }
-
-    XUngrabServer (display);
-
     /* 
      * Set up damage notification.  RawRectangles gives us smaller grain
      * changes, versus NonEmpty which seems to always include the entire
      * contents.
      */
-    mDamage = XDamageCreate (display, win, XDamageReportRawRectangles);
-
-    DEBUG ("XDamageCreate returned %x\n", mDamage);
-
-    // Get handle for fetching window content
-    XRenderPictFormat *format = XRenderFindVisualFormat(display, mAttr.visual);
-    XRenderPictureAttributes pa;
-    pa.subwindow_mode = IncludeInferiors; // Don't clip child widgets
-    mPicture = XRenderCreatePicture (display, win, format, CPSubwindowMode, &pa);
-
-    DEBUG ("XRenderCreatePicture returned %x\n", mPicture);
+    mDamage = XDamageCreate (display, win, XDamageReportNonEmpty);
 
     // Redirect output
-    //XCompositeRedirectWindow(display, win, CompositeRedirectManual);
-    XCompositeRedirectWindow(display, win, CompositeRedirectAutomatic);
+    //XCompositeRedirectWindow (display, win, CompositeRedirectManual);
+    XCompositeRedirectWindow (display, win, CompositeRedirectAutomatic);
 
     // Create a clips, used for determining what to draw
-    mClip = XCreateRegion();
+    mClip = XCreateRegion ();
 
     XSelectInput(display, win, (PropertyChangeMask | EnterWindowMask | FocusChangeMask));
+
+    EnsurePixmap();
 }
 
 
@@ -86,11 +65,33 @@ CompositedWindow::~CompositedWindow()
 {
     WARNING ("CompositedWindow::~CompositedWindow %p, xid=%p\n", this, mWindow);
 
+    // Let the window render itself
+    //XCompositeUnredirectWindow (mDisplay, mWindow, CompositeRedirectManual);
+    XCompositeUnredirectWindow (mDisplay, mWindow, CompositeRedirectAutomatic);
+
     if (mDamage) {
         XDamageDestroy(mDisplay, mDamage);
     }
-    if (mPicture) {
-        XRenderFreePicture(mDisplay, mPicture);
+    if (mPixmap) {
+        XFreePixmap(mDisplay, mPixmap);
+    }
+
+    XDestroyRegion(mClip);
+}
+
+
+void
+CompositedWindow::EnsurePixmap()
+{
+    if (!mPixmap) {
+        XGrabServer (mDisplay);
+
+        XGetWindowAttributes(mDisplay, mWindow, &mAttr);
+        if (mAttr.map_state == IsViewable) {
+            mPixmap = XCompositeNameWindowPixmap (mDisplay, mWindow);
+        }
+
+        XUngrabServer (mDisplay);
     }
 }
 
@@ -100,10 +101,6 @@ NS_IMPL_ISUPPORTS1_CI(compzillaControl, compzillaIControl);
 
 compzillaControl::compzillaControl()
 {
-    if (!sEmptyRegion) {
-        //sEmptyRegion = XCreateRegion();
-    }
-
     mWindowMap.Init(50);
 }
 
@@ -124,8 +121,6 @@ compzillaControl::gdk_filter_func (GdkXEvent *xevent, GdkEvent *event, gpointer 
 }
 
 
-#define DEMO_HACK 0
-
 GdkWindow *
 compzillaControl::GetNativeWindow(nsIDOMWindow *window)
 {
@@ -139,9 +134,6 @@ compzillaControl::GetNativeWindow(nsIDOMWindow *window)
             baseWin->GetMainWidget(getter_AddRefs(widget));
 
             if (widget) {
-                //widget->SetBorderStyle(eBorderStyle_none);
-                //INFO ("Clearing mainwin border\n");
-
                 GdkWindow *iframe = (GdkWindow *)widget->GetNativeData(NS_NATIVE_WINDOW);
                 GdkWindow *toplevel = gdk_window_get_toplevel(iframe);
                 DEBUG ("GetNativeWindow: toplevel=0x%0x, iframe=0x%0x\n", 
@@ -158,12 +150,45 @@ compzillaControl::GetNativeWindow(nsIDOMWindow *window)
 }
 
 
+bool
+compzillaControl::InitXExtensions ()
+{
+#define ERR_RET(_str) do { ERROR (_str); return false; } while (0)
+
+    if (!XRenderQueryExtension (mXDisplay, &render_event, &render_error)) {
+	ERR_RET ("No render extension\n");
+    }
+
+    if (!XQueryExtension (mXDisplay, COMPOSITE_NAME, 
+                          &composite_opcode, &composite_event, &composite_error)) {
+	ERR_RET ("No composite extension\n");
+    }
+
+    int	composite_major, composite_minor;
+    XCompositeQueryVersion (mXDisplay, &composite_major, &composite_minor);
+    if (composite_major == 0 && composite_minor < 2) {
+        ERR_RET ("Old composite extension does not support XCompositeGetOverlayWindow\n");
+    }
+
+    if (!XDamageQueryExtension (mXDisplay, &damage_event, &damage_error)) {
+	ERR_RET ("No damage extension\n");
+    }
+
+    if (!XFixesQueryExtension (mXDisplay, &xfixes_event, &xfixes_error)) {
+	ERR_RET ("No XFixes extension\n");
+    }
+
+#undef ERR_RET
+
+    return true;
+}
+
+
 NS_IMETHODIMP
 compzillaControl::RegisterWindowManager(nsIDOMWindow *window, compzillaIWindowManager* wm)
 {
     Display *dpy;
     nsresult rv = NS_OK;
-    int	composite_major, composite_minor;
 
     DEBUG ("RegisterWindowManager\n");
 
@@ -177,78 +202,25 @@ compzillaControl::RegisterWindowManager(nsIDOMWindow *window, compzillaIWindowMa
     mRoot = gdk_get_default_root_window();
     mDisplay = gdk_display_get_default ();
 #endif
-
     mXDisplay = GDK_DISPLAY_XDISPLAY (mDisplay);
 
-    mMainwin = GetNativeWindow(window);
-    gdk_window_set_override_redirect(mMainwin, true);
-
-    if (!XRenderQueryExtension (mXDisplay, &render_event, &render_error)) {
-	ERROR ("No render extension\n");
-	return -1; // XXX
-    }
-    if (!XQueryExtension (mXDisplay, COMPOSITE_NAME, &composite_opcode,
-			  &composite_event, &composite_error)) {
-	ERROR ("No composite extension\n");
-        return -1; // XXX
+    // Check extension versions
+    if (!InitXExtensions ()) {
+        ERROR ("InitXExtensions failed");
+        exit (1); // return NS_ERROR_UNEXPECTED;
     }
 
-    XCompositeQueryVersion (mXDisplay, &composite_major, &composite_minor);
-#if HAS_NAME_WINDOW_PIXMAP
-    if (composite_major > 0 || composite_minor >= 2)
-	hasNamePixmap = True;
-#endif
-
-    if (!XDamageQueryExtension (mXDisplay, &damage_event, &damage_error))
-    {
-	ERROR ("No damage extension\n");
-	return -1; // XXX
+    // Register as window manager
+    if (!InitWindowState ()) {
+        ERROR ("InitWindowState failed");
+        exit (1); // return NS_ERROR_UNEXPECTED;
     }
-    DEBUG("DAMAGE INFO: event=%d, error=%d\n", damage_event, damage_error);
 
-    if (!XFixesQueryExtension (mXDisplay, &xfixes_event, &xfixes_error))
-    {
-	ERROR ("No XFixes extension\n");
-	return -1; // XXX
+    // Take over drawing
+    if (!InitOutputWindow ()) {
+        ERROR ("InitOutputWindow failed");
+        exit (1); // return NS_ERROR_UNEXPECTED;
     }
-    DEBUG("XFIXES INFO: event=%d, error=%d\n", xfixes_event, xfixes_error);
-
-    gdk_window_set_events (mRoot, (GdkEventMask) (GDK_SUBSTRUCTURE_MASK |
-                                                  GDK_STRUCTURE_MASK |
-                                                  GDK_PROPERTY_CHANGE_MASK));
-    
-    // Get ALL events for ALL windows
-    gdk_window_add_filter (NULL, gdk_filter_func, this);
-
-    XSetErrorHandler(ErrorHandler);
-
-    // Create the overlay window, and make the X server stop drawing windows
-    //mOverlay = XCompositeGetOverlayWindow (mXDisplay, GDK_WINDOW_XID (mRoot));
-    
-
-    //mOverlay = XCompositeGetOverlayWindow (mXDisplay, GDK_WINDOW_XID (mMainwin));
-    //ShowOutputWindow ();
-
-
-#if false
-    gdk_x11_grab_server ();
-
-    // XXX this needs some gdk-ification
-    Window *children;
-    Window root_return, parent_return;
-    int i;
-    unsigned int nchildren;
-    XQueryTree (mXDisplay, GDK_WINDOW_XID (mRoot), &root_return, &parent_return, 
-                &children, &nchildren);
-    for (i = 0; i < nchildren; i++) {
-        XCompositeRedirectSubwindows (mXDisplay, children[i], CompositeRedirectAutomatic);
-        DEBUG ("adding window 0x%0x\n", children[i]);
-        AddWindow (children[i], i ? children[i-1] : None);
-    }
-    XFree (children);
-
-    gdk_x11_ungrab_server ();
-#endif
 
     // not sure if we need this here.  it's to perform the initial
     // compositing to the root buffer.  what we really want, though,
@@ -260,9 +232,75 @@ compzillaControl::RegisterWindowManager(nsIDOMWindow *window, compzillaIWindowMa
 }
 
 
+bool
+compzillaControl::InitWindowState ()
+{
+    gdk_window_set_events (mRoot, (GdkEventMask) (GDK_SUBSTRUCTURE_MASK |
+                                                  GDK_STRUCTURE_MASK |
+                                                  GDK_PROPERTY_CHANGE_MASK));
+    
+    // Get ALL events for ALL windows
+    gdk_window_add_filter (NULL, gdk_filter_func, this);
+
+    // Just ignore errors for now
+    XSetErrorHandler (ErrorHandler);
+
+#if 0
+    XGrabServer (mXDisplay);
+
+    Window *children;
+    Window root_notused, parent_notused;
+    unsigned int nchildren;
+
+    XQueryTree (mXDisplay, GDK_WINDOW_XID (mRoot), 
+                &root_notused, &parent_notused, 
+                &children, &nchildren);
+
+    for (int i = 0; i < nchildren; i++) {
+        AddWindow (children[i]);
+    }
+
+    XFree (children);
+
+    XGrabServer (mXDisplay);
+#endif
+
+    return true;
+}
+
+
+bool
+compzillaControl::InitOutputWindow ()
+{
+    mMainwin = GetNativeWindow(mDOMWindow);
+    if (!mMainwin) {
+        return false;
+    }
+    gdk_window_set_override_redirect(mMainwin, true);
+
+    // Create the overlay window, and make the X server stop drawing windows
+    mOverlay = XCompositeGetOverlayWindow (mXDisplay, GDK_WINDOW_XID (mRoot));
+    if (!mOverlay) {
+        return false;
+    }
+
+    // Put the our window into the overlay
+    XReparentWindow (mXDisplay, GDK_DRAWABLE_XID (mMainwin), mOverlay, 0, 0);
+
+    ShowOutputWindow ();
+
+    // FIXME: Send Mouse/Keyboard events to mMainwin
+
+    return true;
+}
+
+
 void 
 compzillaControl::ShowOutputWindow()
 {
+    // NOTE: Ripped off from compiz.  Not sure why this is needed.  Maybe to
+    //       support multiple monitors with different dimensions?
+
     XserverRegion region = XFixesCreateRegion (mXDisplay, NULL, 0);
 
     XFixesSetWindowShapeRegion (mXDisplay,
@@ -283,6 +321,9 @@ compzillaControl::ShowOutputWindow()
 void 
 compzillaControl::HideOutputWindow()
 {
+    // NOTE: Ripped off from compiz.  Not sure why this is needed.  Maybe to
+    //       support multiple monitors with different dimensions?
+
     XserverRegion region = XFixesCreateRegion (mXDisplay, NULL, 0);
 
     XFixesSetWindowShapeRegion (mXDisplay,
@@ -295,38 +336,11 @@ compzillaControl::HideOutputWindow()
 }
 
 
-PLDHashOperator 
-compzillaControl::AddWindowDamage (const PRUint32& key,
-                                   CompositedWindow *entry, 
-                                   void *userData)
-{
-    Region workRegion = (Region) userData;
-    if (entry->mAttr.map_state == IsViewable) {
-        //XSubtractRegion(workRegion, sEmptyRegion, entry->mClip);
-    }
-    return PL_DHASH_NEXT;
-}
-
-
 int 
 compzillaControl::ErrorHandler (Display *, XErrorEvent *)
 {
     ERROR ("\nGOT AN ERROR!!\n\n");
     return 0;
-}
-
-
-void 
-compzillaControl::GetDamage(Region region)
-{
-    static Region workRegion = NULL;
-    if (!workRegion) {
-        workRegion = XCreateRegion ();
-    }
-
-    //XSubtractRegion (region, sEmptyRegion, workRegion);
-    
-    mWindowMap.EnumerateRead (AddWindowDamage, workRegion);
 }
 
 
@@ -423,10 +437,8 @@ compzillaControl::Render (nsCOMPtr<nsISupports> content,
     nsCOMPtr<nsIDOMHTMLCanvasElement> canvas = do_QueryInterface(content);
     WARNING ("nsIDOMHTMLCanvasElement == %p\n", canvas.get());
 
-    NS_ConvertASCIItoUTF16 twodee("2d");
-
     nsCOMPtr<nsIDOMCanvasRenderingContext2D> rendCtx;
-    canvas->GetContext(twodee, getter_AddRefs(rendCtx));
+    canvas->GetContext(NS_LITERAL_STRING("2d"), getter_AddRefs(rendCtx));
     WARNING ("nsIDOMCanvasRenderingContext2D == %p\n", rendCtx.get());
 
     INFO ("Calling rendCtx->DrawImage\n");
@@ -445,9 +457,8 @@ compzillaControl::DestroyWindow (Window win)
             mWM->WindowDestroyed (compwin->mContent);
         }
 
-        // These are not valid if the window is already destroyed
+        // Damage is not valid if the window is already destroyed
         compwin->mDamage = 0;
-        compwin->mPicture = 0;
         mWindowMap.Remove (win);
     }
 }
@@ -462,8 +473,6 @@ compzillaControl::ForgetWindow (Window win)
             mWM->WindowDestroyed (compwin->mContent);
         }
 
-        // Let the window render itself
-        XCompositeUnredirectWindow (mXDisplay, win, CompositeRedirectManual);
         mWindowMap.Remove (win);
     }
 }
@@ -474,6 +483,8 @@ compzillaControl::MapWindow (Window win)
 {
     CompositedWindow *compwin = FindWindow (win);
     if (compwin && compwin->mContent) {
+        // Make sure we've got a handle to the content
+        compwin->EnsurePixmap ();
         mWM->WindowMapped (compwin->mContent);
     }
 }
@@ -486,43 +497,6 @@ compzillaControl::UnmapWindow (Window win)
     if (compwin && compwin->mContent) {
         mWM->WindowUnmapped (compwin->mContent);
     }
-}
-
-
-PLDHashOperator 
-compzillaControl::FindWindowForFrame (const PRUint32& key,
-                                      CompositedWindow *entry, 
-                                      void *userData)
-{
-    CompositedWindow **frame = (CompositedWindow **) userData;
-    if (entry->mFrame == *frame) {
-        *frame = entry;
-        return PL_DHASH_STOP;
-    }
-    return PL_DHASH_NEXT;
-}
-
-
-CompositedWindow *
-compzillaControl::FindToplevelWindow (Window win)
-{
-    CompositedWindow *compwin = FindWindow (win);
-
-    if (compwin && compwin->mAttr.override_redirect) {
-        // Likely a frame window
-        if (compwin->mAttr.c_class == InputOnly) {
-            CompositedWindow *found = compwin;
-            mWindowMap.EnumerateRead (FindWindowForFrame, &found);
-
-            if (found != compwin) {
-                return found;
-            }
-        }
-
-        return NULL;
-    }
-
-    return compwin;
 }
 
 
