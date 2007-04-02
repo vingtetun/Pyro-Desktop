@@ -19,5 +19,7 @@ interface compzillaIWindowManager : nsISupports
                          in long height, 
                          in nsISupports above);
 
+  void PropertyChanged (in nsISupports win, in string property);
+
   void SetDocument (in nsISupports doc);
 };
