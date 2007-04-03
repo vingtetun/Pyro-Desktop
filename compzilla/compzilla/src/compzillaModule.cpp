@@ -14,15 +14,40 @@
 #include "compzillaRenderingContext.h"
 #include "compzillaExtension.h"
 
+#include "compzillaIRenderingContext.h"
+
+nsresult CZ_NewRenderingContext(compzillaIRenderingContext** aResult);
+
+#define MAKE_CTOR(ctor_, iface_, func_)                   \
+static NS_IMETHODIMP                                      \
+ctor_(nsISupports* aOuter, REFNSIID aIID, void** aResult) \
+{                                                         \
+  *aResult = nsnull;                                      \
+  if (aOuter)                                             \
+{ \
+printf ("1\n"); \
+    return NS_ERROR_NO_AGGREGATION;                       \
+} \
+  iface_* inst;                                           \
+printf ("2\n"); \
+  nsresult rv = func_(&inst);                             \
+printf ("3\n"); \
+  if (NS_SUCCEEDED(rv)) {                                 \
+printf ("4\n"); \
+    rv = inst->QueryInterface(aIID, aResult);             \
+    NS_RELEASE(inst);                                     \
+  }                                                       \
+printf ("5\n"); \
+  return rv;                                              \
+}
 
 NS_GENERIC_FACTORY_CONSTRUCTOR(compzillaExtension);
-
-NS_GENERIC_FACTORY_CONSTRUCTOR(compzillaRenderingContext);
 
 NS_GENERIC_FACTORY_CONSTRUCTOR(compzillaControl);
 NS_DECL_CLASSINFO(compzillaControl);
 
-
+MAKE_CTOR(compzillaRenderingContextConstructor, compzillaIRenderingContext, CZ_NewRenderingContext)
+NS_DECL_CLASSINFO(compzillaRenderingContext)
 
 static NS_METHOD 
 registerGlobalConstructors(nsIComponentManager *aCompMgr,
@@ -61,11 +86,16 @@ static const nsModuleComponentInfo components[] = {
         &NS_CLASSINFO_NAME(compzillaControl),
         nsIClassInfo::SINGLETON
     },
-    { 
+    {
         "Compzilla Canvas Rendering Context",
         COMPZILLA_RENDERING_CONTEXT_CID,
         COMPZILLA_RENDERING_CONTEXT_CONTRACTID,
-        compzillaRenderingContextConstructor
+        compzillaRenderingContextConstructor,
+        nsnull, nsnull, nsnull,
+        NS_CI_INTERFACE_GETTER_NAME(compzillaRenderingContext),
+        nsnull,
+        &NS_CLASSINFO_NAME(compzillaRenderingContext),
+        nsIClassInfo::DOM_OBJECT
     },
     {
         "Compzilla Extension",
