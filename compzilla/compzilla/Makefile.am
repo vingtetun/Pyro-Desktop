@@ -81,6 +81,7 @@ libcompzilla_la_LDFLAGS = -avoid-version -module
 libcompzilla_la_LIBADD = $(XEXTENSIONS_LIBS)
 
 libcompzilla_la_CPPFLAGS =			\
+	-fshort-wchar				\
 	-fno-rtti 				\
 	-fno-exceptions 			\
 	-shared					\
