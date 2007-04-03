@@ -5,20 +5,18 @@
 #include "nsICanvasRenderingContextInternal.h"
 #undef MOZILLA_INTERNAL_API
 
+#include "compzillaIRenderingContext.h"
 
-/* 598f50df-cc22-4a60-9c6c-6595cbd2393c */
-#define COMPZILLA_RENDERING_CONTEXT_CID \
-    { 0x598f50df, 0xcc22, 0x4a60, \
-    { 0x9c, 0x6c, 0x65, 0x95, 0xcb, 0xd2, 0x39, 0x3c }}
-#define COMPZILLA_RENDERING_CONTEXT_CONTRACTID \
-        "@mozilla.org/content/canvas-rendering-context;1?id=compzilla"
+#include "cairo.h"
 
-
-class compzillaRenderingContext 
-    : public nsICanvasRenderingContextInternal
+class compzillaRenderingContext :
+    public compzillaIRenderingContext,
+    public nsICanvasRenderingContextInternal
 {
 public:
   NS_DECL_ISUPPORTS
+
+  NS_DECL_COMPZILLAIRENDERINGCONTEXT
 
   /*
    * Implement nsICanvasRenderingContextInternal...
@@ -52,4 +50,11 @@ public:
 
 private:
   ~compzillaRenderingContext();
+
+  nsICanvasElement* mCanvasElement;
+
+  cairo_surface_t *mCairoImageSurface;
+  PRUint8 *mImageBuffer;
+
+  PRInt32 mWidth, mHeight, mStride;
 };
