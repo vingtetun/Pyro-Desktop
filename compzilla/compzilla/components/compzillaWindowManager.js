@@ -1,3 +1,4 @@
+/* -*- mode: javascript; c-basic-offset: 4; indent-tabs-mode: t; -*- */
 
 const CLSID        = Components.ID('{38054e08-223b-4eea-adcf-442c58945704}');
 const CONTRACTID   = "@beatniksoftware.com/compzillaWindowManager";
@@ -5,6 +6,26 @@ const nsISupports  = Components.interfaces.nsISupports;
 const nsIComponentRegistrar        = Components.interfaces.nsIComponentRegistrar;
 const compzillaIWindowManager      = Components.interfaces.compzillaIWindowManager;
 
+var ResizeHandle = {
+  none: -1,
+
+  north: 0x001,
+  south: 0x002,
+  east:  0x004,
+  west:  0x008,
+
+  northEast: 0x005,
+  northWest: 0x009,
+  southEast: 0x006,
+  southWest: 0x00a
+};
+
+var CompzillaState = {
+  dragWindow: null,
+  mousePosition: new Object (),
+  resizeHandle: ResizeHandle.None,
+  wm: null,
+};
 
 var WindowStack = {
    layers: new Array (),
@@ -75,7 +96,6 @@ CompzillaWindowManager.prototype =
      var content = this.document.createElement ("canvas");
 
      content.className = "content";
-     content.style.background = "#" + genHex();
 
      if (override) {
 	this.document.body.appendChild (content);
@@ -112,6 +132,13 @@ CompzillaWindowManager.prototype =
   WindowConfigured : function(content, x, y, width, height, above) {
      var chrome_root = content.chrome;
 
+     /* XXX this is a hack to get the wm borders to appear on the
+        outside of the real, uncomposited X window */
+     x -= this.BorderSize;
+     y -= this.BorderSize + this.TitleBarHeight + this.TitleContentGap;
+     width += 2 * this.BorderSize;
+     height += 2 * this.BorderSize + this.TitleBarHeight + this.TitleContentGap;
+
      chrome_root.style.left = x;
      chrome_root.style.top = y;
 
@@ -135,9 +162,84 @@ CompzillaWindowManager.prototype =
 	WindowStack.moveAbove (chrome_root, above.chrome);
   },
 
-   SetDocument : function(doc) {
-     this.document = doc;
+  PropertyChanged: function(content, propname) {
+     // XXX not really useful at the moment, as we can't get the
+     // values of X properties here yet
   },
+
+  SetDocument : function(doc) {
+     CompzillaState.wm = this;
+     this.document = doc;
+
+     this.document.onmouseup = function (event) {
+	var state = CompzillaState;
+	state.dragWindow = null;
+	state.resizeWindow = null;
+	state.resizeHandle = null;
+     };
+
+     this.document.onmousemove = function (event) {
+	var state = CompzillaState;
+	if (state.dragWindow != null) {
+           // figure out the deltas
+	   var dx = event.clientX - state.mousePosition.x;
+	   var dy = event.clientY - state.mousePosition.y;
+
+	   state.mousePosition.x = event.clientX;
+	   state.mousePosition.y = event.clientY;
+
+	   state.wm.MoveElementBy (state.dragWindow, dx, dy);
+
+           //Debug ("mousemove on window titlebar at " + state.mousePosition.x + ", " + state.mousePosition.y);
+	   event.stopPropagation ();
+	}
+	else if (state.resizeWindow != null && state.resizeHandle != ResizeHandle.none) {
+           // figure out the deltas
+	   var dx = event.clientX - state.mousePosition.x;
+	   var dy = event.clientY - state.mousePosition.y;
+
+	   state.mousePosition.x = event.clientX;
+	   state.mousePosition.y = event.clientY;
+
+	   switch (state.resizeHandle) {
+	   case ResizeHandle.north:
+	      state.wm.MoveElementBy (state.resizeWindow, 0, dy);
+	      state.wm.ResizeElementBy (state.resizeWindow, 0, -dy);
+	      break;
+	   case ResizeHandle.south:
+	      state.wm.ResizeElementBy (state.resizeWindow, 0, dy);
+	      break;
+	   case ResizeHandle.east:
+	      state.wm.ResizeElementBy (state.resizeWindow, dx, 0);
+	      break;
+	   case ResizeHandle.west:
+	      state.wm.MoveElementBy (state.resizeWindow, dx, 0);
+	      state.wm.ResizeElementBy (state.resizeWindow, -dx, 0);
+	      break;
+	   case ResizeHandle.northWest:
+	      state.wm.MoveElementBy (state.resizeWindow, dx, dy);
+	      state.wm.ResizeElementBy (state.resizeWindow, -dx, -dy);
+	      break;
+	   case ResizeHandle.northEast:
+	      state.wm.MoveElementBy (state.resizeWindow, 0, dy);
+	      state.wm.ResizeElementBy (state.resizeWindow, dx, -dy);
+	      break;
+	   case ResizeHandle.southWest:
+	      state.wm.MoveElementBy (state.resizeWindow, dx, 0);
+	      state.wm.ResizeElementBy (state.resizeWindow, -dx, dy);
+	      break;
+	   case ResizeHandle.southEast:
+	      state.wm.ResizeElementBy (state.resizeWindow, dx, dy);
+	      break;
+	   }
+	   event.stopPropagation ();
+	}
+     };
+   },
+
+// ****************************************************
+// private methods.  these aren't callable through the
+// compzillaIWindowManager interface
 
   CreateWMChrome : function (content, xid) {
      var root = this.document.createElement ("div");
@@ -168,6 +270,7 @@ CompzillaWindowManager.prototype =
      root.titlebar = titlebar;
      root.content = content;
 
+     this.HookupChromeEvents (root);
      this.LayoutChrome (root);
 
      return root;
@@ -177,6 +280,91 @@ CompzillaWindowManager.prototype =
   TitleContentGap: 3,
   TitleBarHeight: 15,
   CornerSize: 25,
+
+  HookupChromeEvents: function(element) {
+     element.titlebar.onmousedown = function (event) {
+	var state = CompzillaState;
+	state.dragWindow = element;
+	state.mousePosition.x = event.clientX;
+	state.mousePosition.y = event.clientY;
+	event.stopPropagation (); // need this or the window's mousedown handler below gets called
+     };
+
+     element.onmousedown = function (event) {
+	var state = CompzillaState;
+	state.mousePosition.x = event.clientX;
+	state.mousePosition.y = event.clientY;
+
+	var handle = state.wm.InsideResizeHandle (element);
+	if (handle != ResizeHandle.None) {
+	   state.resizeWindow = element;
+	   state.resizeHandle = handle;
+	}
+     };
+  },
+
+  MoveElementTo: function(element, x, y) {
+     element.style.left = x + "px";
+     element.style.top = y + "px";
+  },
+
+  MoveElementBy: function(element, dx, dy) {
+     element.style.left = element.offsetLeft + dx;
+     element.style.top = element.offsetTop + dy;
+  },
+
+  ResizeElementTo: function(element, w, h) {
+     element.style.width = w + "px";
+     element.style.height = h + "px";
+
+     this.LayoutChrome (element);
+  },
+
+  ResizeElementBy: function(element, dw, dh) {
+     element.style.width = (element.offsetWidth + dw) + "px";
+     element.style.height = (element.offsetHeight + dh) + "px";
+
+     this.LayoutChrome (element)
+  },
+
+  InsideResizeHandle: function(element) {
+     var state = CompzillaState;
+
+     var bs = this.BorderSize;
+     var cs = this.CornerSize;
+
+     var mx = state.mousePosition.x - element.offsetLeft;
+     var my = state.mousePosition.y - element.offsetTop;
+
+     if (mx < bs) {
+	// left side
+	if (my < cs)
+	   return ResizeHandle.northWest;
+	else if (my > element.offsetHeight - cs)
+	   return ResizeHandle.southWest;
+	else
+	   return ResizeHandle.west;
+     }
+     else if (mx > element.offsetWidth - bs) {
+	// right side
+	if (my < cs)
+	   return ResizeHandle.northEast;
+	else if (my > element.offsetHeight - cs)
+	   return ResizeHandle.southEast;
+	else
+	   return ResizeHandle.east;
+     }
+     else if (my < bs) {
+	// top side
+	return ResizeHandle.north;
+     }
+     else if (my > element.offsetHeight - bs) {
+	// bottom side
+	return ResizeHandle.south;
+     }
+     else
+	return ResizeHandle.None
+  },
 
   LayoutChrome: function(element) {
       var bs = this.BorderSize;
@@ -194,37 +382,6 @@ CompzillaWindowManager.prototype =
       element.content.style.height = element.offsetHeight - element.content.offsetTop - bs;
   },
 };
-
-
-function genHex()
-{
-  colors = new Array(14)
-  colors[0]="0"
-  colors[1]="1"
-  colors[2]="2"
-  colors[3]="3"
-  colors[4]="4"
-  colors[5]="5"
-  colors[5]="6"
-  colors[6]="7"
-  colors[7]="8"
-  colors[8]="9"
-  colors[9]="a"
-  colors[10]="b"
-  colors[11]="c"
-  colors[12]="d"
-  colors[13]="e"
-  colors[14]="f"
-
-  digit = new Array(5)
-  color=""
-  for (i=0;i<6;i++){
-    digit[i]=colors[Math.round(Math.random()*14)]
-    color = color+digit[i]
-  }
-
-  return color;
-}
 
 
 var CompzillaWindowManagerModule =
