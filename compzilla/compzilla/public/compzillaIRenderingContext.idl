@@ -5,13 +5,14 @@
 [scriptable, uuid(4fa17c67-d131-4c96-a197-15f2ae1dd561)]
 interface compzillaIRenderingContext : nsISupports
 {
+    /*
   readonly attribute nsIDOMHTMLCanvasElement canvas;
 
-  void copyImageDataFrom (in PRUint32 display,
-                          in PRUint32 drawable,
+  void copyImageDataFrom (in PRUint32 drawable,
                           in PRInt32 src_x, in PRInt32 src_y,
                           in PRInt32 dest_x, in PRInt32 dest_y,
                           in PRUint32 w, in PRUint32 h);
+    */
 };
 
 %{ C++

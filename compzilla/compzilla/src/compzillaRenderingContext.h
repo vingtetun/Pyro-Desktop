@@ -9,17 +9,38 @@
 
 #include "cairo.h"
 
+// {fa62d345-f608-47eb-9401-533984cfd471}
+#define COMPZILLA_RENDERING_CONTEXT_INTERNAL_IID \
+  { 0xfa62d345, 0xf608, 0x47eb, { 0x94, 0x01, 0x53, 0x39, 0x84, 0xcf, 0xd4, 0x71 } }
+
+class compzillaIRenderingContextInternal : public nsICanvasRenderingContextInternal {
+public:
+  NS_DECLARE_STATIC_IID_ACCESSOR(COMPZILLA_RENDERING_CONTEXT_INTERNAL_IID)
+
+  NS_IMETHOD CopyImageDataFrom (Display *dpy,
+                                Window drawable,
+                                PRInt32 src_x, PRInt32 src_y,
+                                PRUint32 w, PRUint32 h) = 0;
+};
+
+NS_DEFINE_STATIC_IID_ACCESSOR(compzillaIRenderingContextInternal,
+                              COMPZILLA_RENDERING_CONTEXT_INTERNAL_IID)                              
+
 class compzillaRenderingContext :
     public compzillaIRenderingContext,
-    public nsICanvasRenderingContextInternal
+    public compzillaIRenderingContextInternal
 {
 public:
-  NS_DECL_ISUPPORTS
 
+  compzillaRenderingContext ();
+  virtual ~compzillaRenderingContext();
+
+
+  NS_DECL_ISUPPORTS
   NS_DECL_COMPZILLAIRENDERINGCONTEXT
 
   /*
-   * Implement nsICanvasRenderingContextInternal...
+   * Implement nsICanvasRenderingContextInternal and compzillaRenderingContextInternal
    */
 
   // This method should NOT hold a ref to aParentCanvas; it will be called
@@ -46,10 +67,16 @@ public:
                             const nsAString& aEncoderOptions,
                             nsIInputStream **aStream);
 
-  compzillaRenderingContext();
+  NS_IMETHOD CopyImageDataFrom (Display *dpy,
+                                Window drawable,
+                                PRInt32 src_x, PRInt32 src_y,
+                                PRUint32 w, PRUint32 h);
 
 private:
-  ~compzillaRenderingContext();
+  nsIFrame* GetCanvasLayoutFrame ();
+  nsresult Redraw ();
+
+  void Destroy ();
 
   nsICanvasElement* mCanvasElement;
 
