@@ -57,12 +57,6 @@ private:
 
     GdkWindow *GetNativeWindow(nsIDOMWindow *window);
 
-    void Render (nsCOMPtr<nsISupports> content, 
-                 int x, int y, 
-                 int width, int height, 
-                 const char *dataBuf, 
-                 int len);
-
     bool InitXExtensions ();
     bool InitOutputWindow ();
     bool InitWindowState ();

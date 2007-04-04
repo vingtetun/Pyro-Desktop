@@ -1,21 +1,26 @@
 /* -*- mode: C++; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
 
+#define MOZILLA_INTERNAL_API
+
 #include "nspr.h"
 #include "nsIObserverService.h"
 
 #include "nsIDOMCanvasRenderingContext2D.h"
 #include "nsIDOMHTMLCanvasElement.h"
-#define MOZILLA_INTERNAL_API
 #include "nsIScriptContext.h"
-#undef MOZILLA_INTERNAL_API
 #include "jsapi.h"
 
 #include "compzillaControl.h"
+#include "compzillaIRenderingContext.h"
+#include "compzillaRenderingContext.h"
 
 // These headers are used for finding the GdkWindow for a DOM window
 #include "nsIBaseWindow.h"
 #include "nsIDocShell.h"
 #include "nsIScriptGlobalObject.h"
+#ifndef MOZILLA_1_8_BRANCH
+#include "nsPIDOMWindow.h"
+#endif
 #include "nsIWidget.h"
 
 #include <gdk/gdkx.h>
@@ -39,7 +44,8 @@
 CompositedWindow::CompositedWindow(Display *display, Window win)
     : mContent(),
       mDisplay(display),
-      mWindow(win)
+      mWindow(win),
+      mPixmap(nsnull)
 {
     /* 
      * Set up damage notification.  RawRectangles gives us smaller grain
@@ -124,7 +130,11 @@ compzillaControl::gdk_filter_func (GdkXEvent *xevent, GdkEvent *event, gpointer 
 GdkWindow *
 compzillaControl::GetNativeWindow(nsIDOMWindow *window)
 {
+#ifdef MOZILLA_1_8_BRANCH
     nsCOMPtr<nsIScriptGlobalObject> global = do_QueryInterface(window);
+#else
+    nsCOMPtr<nsPIDOMWindow> global = do_QueryInterface(window);
+#endif
 
     if (global) {
         nsCOMPtr<nsIBaseWindow> baseWin = do_QueryInterface(global->GetDocShell());
@@ -200,6 +210,7 @@ compzillaControl::RegisterWindowManager(nsIDOMWindow *window, compzillaIWindowMa
     mRoot = gdk_window_foreign_new_for_display (mDisplay, XDefaultRootWindow (mXDisplay));
 #else
     mRoot = gdk_get_default_root_window();
+    DEBUG ("got root window %p", mRoot);
     mDisplay = gdk_display_get_default ();
 #endif
     mXDisplay = GDK_DISPLAY_XDISPLAY (mDisplay);
@@ -274,6 +285,7 @@ compzillaControl::InitOutputWindow ()
 {
     mMainwin = GetNativeWindow(mDOMWindow);
     if (!mMainwin) {
+        ERROR ("failed to get native window\n");
         return false;
     }
     gdk_window_set_override_redirect(mMainwin, true);
@@ -281,13 +293,15 @@ compzillaControl::InitOutputWindow ()
     // Create the overlay window, and make the X server stop drawing windows
     mOverlay = XCompositeGetOverlayWindow (mXDisplay, GDK_WINDOW_XID (mRoot));
     if (!mOverlay) {
+        ERROR ("failed call to XCompositeGetOverlayWindow\n");
         return false;
     }
+    else {
+        // Put the our window into the overlay
+        XReparentWindow (mXDisplay, GDK_DRAWABLE_XID (mMainwin), mOverlay, 0, 0);
 
-    // Put the our window into the overlay
-    XReparentWindow (mXDisplay, GDK_DRAWABLE_XID (mMainwin), mOverlay, 0, 0);
-
-    ShowOutputWindow ();
+        ShowOutputWindow ();
+    }
 
     // FIXME: Send Mouse/Keyboard events to mMainwin
 
@@ -372,79 +386,6 @@ compzillaControl::AddWindow (Window win)
         // Stored the compwin in mWindowMap, so don't delete it now.
         compwin.forget();
     }
-}
-
-
-void 
-compzillaControl::Render (nsCOMPtr<nsISupports> content, 
-                          int x, int y, 
-                          int width, int height, 
-                          const char *dataBuf, 
-                          int len)
-{
-    if (!content) {
-        return;
-    }
-
-    nsCOMPtr<nsIScriptGlobalObject> global = do_QueryInterface(mDOMWindow);
-    WARNING ("GetGlobalJSObject == %p\n", global.get());
-
-    nsIScriptContext *globalctx = global->GetContext();
-    WARNING ("GetScriptContext == %p\n", globalctx);
-
-    JSContext *ctx = (JSContext *) globalctx->GetNativeContext();
-    WARNING ("GetNativeContext == %p\n", ctx);
-
-    // Make a JS vector to hold pixel data
-    nsAutoArrayPtr<jsval> jsvector(new jsval[width * height * 4]);
-    NS_ASSERTION(jsvector, "nsAutoArrayPtr<jsval> FAILED for jsvector");
-    WARNING ("jsvector == %p\n", jsvector.get());
-
-    // Fill up the vector
-    jsval *dest = jsvector.get();
-    PRUint8 *row;
-    for (int j = 0; j < height; j++) {
-        for (int i = 0; i < width; i++) {
-            // FIXME: Fill!
-        }
-    }
-
-    // Make the JS array to hold the JS vector data
-    JSObject *dataArray = JS_NewArrayObject(ctx, width * height * 4, jsvector.get());
-    NS_ASSERTION(dataArray, "JS_NewArrayObject FAILED");
-
-    // Not part of Public API
-    //nsAutoGCRoot arrayGCRoot(&dataArray, &rv);
-    //NS_ASSERTION(NS_SUCCEEDED(rv), "nsAutoGCRoot FAILED for dataArray");
-
-    // Make an ImageData object to hold the arguments
-    JSObject *dataObject = JS_NewObject (ctx, NULL, NULL, NULL);
-    NS_ASSERTION(dataObject, "JS_NewObject FAILED");
-
-    // Not part of Public API
-    //nsAutoGCRoot dataObjectGCRoot(&dataObject, &rv);
-    //NS_ASSERTION(NS_SUCCEEDED(rv), "nsAutoGCRoot FAILED for dataObject");
-
-    JS_DefineProperty(ctx, dataObject, "width", INT_TO_JSVAL(width), NULL, NULL, 0);
-    JS_DefineProperty(ctx, dataObject, "height", INT_TO_JSVAL(height), NULL, NULL, 0);
-    JS_DefineProperty(ctx, dataObject, "data", OBJECT_TO_JSVAL(dataArray), NULL, NULL, 0);
-
-    void *arg_marker = NULL;
-    JS_PushArguments (ctx, &arg_marker, "ojj", dataObject, x, y);
-
-    NS_ASSERTION(arg_marker, "JS_PushArguments returned invalid marker");
-
-    nsCOMPtr<nsIDOMHTMLCanvasElement> canvas = do_QueryInterface(content);
-    WARNING ("nsIDOMHTMLCanvasElement == %p\n", canvas.get());
-
-    nsCOMPtr<nsIDOMCanvasRenderingContext2D> rendCtx;
-    canvas->GetContext(NS_LITERAL_STRING("2d"), getter_AddRefs(rendCtx));
-    WARNING ("nsIDOMCanvasRenderingContext2D == %p\n", rendCtx.get());
-
-    INFO ("Calling rendCtx->DrawImage\n");
-    rendCtx->DrawImage();
-
-    JS_PopArguments (ctx, arg_marker);
 }
 
 
@@ -628,18 +569,25 @@ compzillaControl::Filter (GdkXEvent *xevent, GdkEvent *event)
         if (x11_event->type == damage_event + XDamageNotify) {
             XDamageNotifyEvent *damage_ev = (XDamageNotifyEvent *)x11_event;
 
+            // Signal the server to send more damage events
+            XDamageSubtract (damage_ev->display, damage_ev->damage, None, None);
+
             CompositedWindow *compwin = FindWindow (damage_ev->drawable);
             if (compwin) {
                 DEBUG ("DAMAGE: drawable=%p, damage=%p, x=%d, y=%d, width=%d, height=%d\n", 
                        damage_ev->drawable, damage_ev->damage, damage_ev->area.x,
                        damage_ev->area.y, damage_ev->area.width, damage_ev->area.height);
 
-                // DANGER!
-                //Render (compwin->mContent, 0, 0, 1, 1, NULL, 4);
-            }
+                nsCOMPtr<compzillaIRenderingContextInternal> internal;
+                nsCOMPtr<nsIDOMHTMLCanvasElement> canvas = do_QueryInterface (compwin->mContent);
 
-            // Signal the server to send more damage events
-            XDamageSubtract (damage_ev->display, damage_ev->damage, None, None);
+                nsresult rv = canvas->GetContext (NS_LITERAL_STRING ("compzilla"), getter_AddRefs (internal));
+                if (NS_SUCCEEDED (rv)) {
+                    internal->CopyImageDataFrom (mXDisplay, compwin->mPixmap,
+                                                 damage_ev->area.x, damage_ev->area.y,
+                                                 damage_ev->area.width, damage_ev->area.height);
+                }
+            }
         }
 #if SHAPE_EXTENSION
         else if (x11_event->type == shape_event + ShapeNotify) {
