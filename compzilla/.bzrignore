@@ -28,3 +28,4 @@ stamp-h1
 compzillaIControl.h
 compzillaIExtension.h
 compzillaIWindowManager.h
+compzillaIRenderingContext.h
