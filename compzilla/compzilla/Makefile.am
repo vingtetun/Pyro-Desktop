@@ -104,6 +104,7 @@ libcompzilla_la_CPPFLAGS =			\
 	-I$(GECKO_INCLUDEDIR)/necko		\
 	-I$(GECKO_INCLUDEDIR)/pref		\
 	-I$(GECKO_INCLUDEDIR)/string		\
+	-I$(GECKO_INCLUDEDIR)/view		\
 	-I$(GECKO_INCLUDEDIR)/widget		\
 	-I$(GECKO_INCLUDEDIR)/xpcom		\
 	-I$(GECKO_INCLUDEDIR)/xpconnect		\
