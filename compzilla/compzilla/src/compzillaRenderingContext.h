@@ -19,7 +19,11 @@ class compzillaIRenderingContextInternal
     : public nsICanvasRenderingContextInternal 
 {
 public:
+#ifdef MOZILLA_1_8_BRANCH
   NS_DEFINE_STATIC_IID_ACCESSOR(COMPZILLA_RENDERING_CONTEXT_INTERNAL_IID)
+#else
+  NS_DECLARE_STATIC_IID_ACCESSOR(COMPZILLA_RENDERING_CONTEXT_INTERNAL_IID)
+#endif
 
   NS_IMETHOD CopyImageDataFrom (Display *dpy,
                                 Window drawable,
