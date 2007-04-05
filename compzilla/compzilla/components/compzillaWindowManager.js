@@ -108,7 +108,7 @@ CompzillaWindowManager.prototype =
      }
 
      return content;
-  },
+n  },
 
   WindowDestroyed : function(content) {
      var chrome_root = content.crome;
@@ -134,10 +134,12 @@ CompzillaWindowManager.prototype =
 
      /* XXX this is a hack to get the wm borders to appear on the
         outside of the real, uncomposited X window */
-     x -= this.BorderSize;
-     y -= this.BorderSize + this.TitleBarHeight + this.TitleContentGap;
-     width += 2 * this.BorderSize + 2 * border;
-     height += 2 * this.BorderSize + 2 * border + this.TitleBarHeight + this.TitleContentGap;
+     if (chrome_root != content) {
+	x -= this.BorderSize;
+	y -= this.BorderSize + this.TitleBarHeight + this.TitleContentGap;
+	width += 2 * this.BorderSize + 2 * border;
+	height += 2 * this.BorderSize + 2 * border + this.TitleBarHeight + this.TitleContentGap;
+     }
 
      chrome_root.style.left = x;
      chrome_root.style.top = y;
@@ -145,12 +147,20 @@ CompzillaWindowManager.prototype =
      var need_relayout = false;
 
      if (chrome_root.offsetWidth != width) {
-	chrome_root.style.width = width;
-	need_relayout = true;
+	if (chrome_root == content)
+	   chrome.width = width;
+	else {
+	   chrome_root.style.width = width;
+	   need_relayout = true;
+	}
      }
      if (chrome_root.offsetHeight != height) {
-	chrome_root.style.height = height;
-	need_relayout = true;
+	if (chrome_root == content)
+	   chrome_root.height = height;
+	else {
+	   chrome_root.style.height = height;
+	   need_relayout = true;
+	}
      }
 
      if (need_relayout && chrome_root != content)
