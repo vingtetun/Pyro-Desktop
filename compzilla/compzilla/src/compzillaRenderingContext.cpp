@@ -1,6 +1,7 @@
 #define MOZILLA_INTERNAL_API
 
 #include <X11/Xlib.h>
+#include <X11/extensions/Xrender.h>
 
 #include "prmem.h"
 #include "prlog.h"
@@ -25,6 +26,7 @@
 #else
 #include "nsTransform2D.h"
 #include "cairo-xlib.h"
+#include "cairo-xlib-xrender.h"
 #endif
 
 #define DEBUG(format...) printf("   - " format)
@@ -127,7 +129,8 @@ compzillaRenderingContext::SetDimensions (PRInt32 width, PRInt32 height)
     // actually provides a much smoother and faster display.
     // However, we provide MOZ_CANVAS_USE_RENDER for whomever wants to
     // go that route.
-    if (getenv("MOZ_CANVAS_USE_RENDER")) {
+
+    //if (getenv("MOZ_CANVAS_USE_RENDER")) {
         XRenderPictFormat *fmt = XRenderFindStandardFormat (GDK_DISPLAY(),
                                                             PictStandardARGB32);
         if (fmt) {
@@ -150,7 +153,7 @@ compzillaRenderingContext::SetDimensions (PRInt32 width, PRInt32 height)
                      fmt, mWidth, mHeight);
             }
         }
-    }
+    //}
 
     // fall back to image surface
     if (!mSurface) {
@@ -382,11 +385,17 @@ compzillaRenderingContext::CopyImageDataFrom (Display *dpy,
 #endif
 
 #else
+    // Fix colors
+    unsigned char *r = (unsigned char*)image->data;
+    for (int i = 0; i < w * h; i ++) {
+      r[3] = 255; r += 4;
+    }
+
     if (mImageSurfaceData) {
         int stride = mWidth*4;
-        PRUint8 *dest = mImageSurfaceData + stride*y + x*4;
+        PRUint8 *dest = mImageSurfaceData + stride*src_y + src_x*4;
 
-        for (int32 i = 0; i < y; i++) {
+        for (int32 i = 0; i < src_y; i++) {
             memcpy(dest, image->data + (w*4)*i, w*4);
             dest += stride;
         }
