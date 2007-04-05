@@ -84,8 +84,18 @@ private:
 
   nsICanvasElement* mCanvasElement;
 
-  cairo_surface_t *mCairoImageSurface;
-  PRUint8 *mImageBuffer;
+    // yay cairo
+#ifdef MOZ_CAIRO_GFX
+    nsRefPtr<gfxContext> mThebesContext;
+    nsRefPtr<gfxASurface> mThebesSurface;
+#endif
+
+    cairo_t *mCairo;
+    cairo_surface_t *mSurface;
+    PRUint8 *mImageSurfaceData;
+
+    Pixmap mSurfacePixmap;
+
 
   PRInt32 mWidth, mHeight, mStride;
 };
