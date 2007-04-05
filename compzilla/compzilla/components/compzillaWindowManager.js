@@ -129,15 +129,15 @@ CompzillaWindowManager.prototype =
      content.chrome.style.visibility = "hidden";
   },
 
-  WindowConfigured : function(content, x, y, width, height, above) {
+  WindowConfigured : function(content, x, y, width, height, border, above) {
      var chrome_root = content.chrome;
 
      /* XXX this is a hack to get the wm borders to appear on the
         outside of the real, uncomposited X window */
      x -= this.BorderSize;
      y -= this.BorderSize + this.TitleBarHeight + this.TitleContentGap;
-     width += 2 * this.BorderSize;
-     height += 2 * this.BorderSize + this.TitleBarHeight + this.TitleContentGap;
+     width += 2 * this.BorderSize + 2 * border;
+     height += 2 * this.BorderSize + 2 * border + this.TitleBarHeight + this.TitleContentGap;
 
      chrome_root.style.left = x;
      chrome_root.style.top = y;
@@ -378,8 +378,8 @@ CompzillaWindowManager.prototype =
 
       element.content.style.left = bs;
       element.content.style.top = element.titlebar.offsetTop + element.titlebar.offsetHeight + tcg;
-      element.content.style.width = element.offsetWidth - 2 * bs;
-      element.content.style.height = element.offsetHeight - element.content.offsetTop - bs;
+      element.content.width = element.offsetWidth - 2 * bs;
+      element.content.height = element.offsetHeight - element.content.offsetTop - bs;
   },
 };
 

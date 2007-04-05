@@ -5,8 +5,6 @@
 #include "nspr.h"
 #include "nsIObserverService.h"
 
-#include "nsIDOMCanvasRenderingContext2D.h"
-#include "nsIDOMHTMLCanvasElement.h"
 #include "nsIScriptContext.h"
 #include "jsapi.h"
 
@@ -496,6 +494,7 @@ compzillaControl::Filter (GdkXEvent *xevent, GdkEvent *event)
                                    x11_event->xconfigure.y,
                                    x11_event->xconfigure.width,
                                    x11_event->xconfigure.height,
+                                   x11_event->xconfigure.border_width,
                                    abovewin ? abovewin->mContent : NULL);
         }
 
