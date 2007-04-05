@@ -27,20 +27,13 @@ ctor_(nsISupports* aOuter, REFNSIID aIID, void** aResult) \
 {                                                         \
   *aResult = nsnull;                                      \
   if (aOuter)                                             \
-{ \
-printf ("1\n"); \
     return NS_ERROR_NO_AGGREGATION;                       \
-} \
   iface_* inst;                                           \
-printf ("2\n"); \
   nsresult rv = func_(&inst);                             \
-printf ("3\n"); \
   if (NS_SUCCEEDED(rv)) {                                 \
-printf ("4\n"); \
     rv = inst->QueryInterface(aIID, aResult);             \
     NS_RELEASE(inst);                                     \
   }                                                       \
-printf ("5\n"); \
   return rv;                                              \
 }
 
