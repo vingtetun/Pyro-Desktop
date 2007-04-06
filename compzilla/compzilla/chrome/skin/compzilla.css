@@ -1,5 +1,6 @@
 body {
 background: url(chrome://compzilla/skin/desktop-background.jpg);
+margin: 0px;
 }
 
 .window {
@@ -7,6 +8,7 @@ background: url(chrome://compzilla/skin/desktop-background.jpg);
 	width: 10px;
 	height: 10px;
 	background: #777777;
+	opacity: 0.8;
 }
 
 .titlebar {
@@ -24,4 +26,3 @@ background: url(chrome://compzilla/skin/desktop-background.jpg);
 	position: absolute;
 	background: #ffffff;
 }
-
