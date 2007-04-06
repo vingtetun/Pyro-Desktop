@@ -6,6 +6,10 @@ const nsISupports  = Components.interfaces.nsISupports;
 const nsIComponentRegistrar        = Components.interfaces.nsIComponentRegistrar;
 const compzillaIWindowManager      = Components.interfaces.compzillaIWindowManager;
 
+var Atoms = {
+    WM_NAME : "WM_NAME",
+};
+
 var ResizeHandle = {
   none: -1,
 
@@ -21,10 +25,12 @@ var ResizeHandle = {
 };
 
 var CompzillaState = {
+  debugContent: null,
   dragWindow: null,
   mousePosition: new Object (),
   resizeHandle: ResizeHandle.None,
   wm: null,
+  svc: null
 };
 
 var WindowStack = {
@@ -107,8 +113,10 @@ CompzillaWindowManager.prototype =
 	this.document.body.appendChild (chrome_root)
      }
 
+     chrome_root.xid = xid;
+
      return content;
-n  },
+  },
 
   WindowDestroyed : function(content) {
      var chrome_root = content.crome;
@@ -173,14 +181,29 @@ n  },
   },
 
   PropertyChanged: function(content, propname) {
-     // XXX not really useful at the moment, as we can't get the
-     // values of X properties here yet
+     var chrome_root = content.chrome;
+
+     if (propname == Atoms.WM_NAME) {
+	chrome_root.titlespan.innerHTML = CompzillaState.svc.GetStringProperty (chrome_root.xid, Atoms.WM_NAME);
+     }
   },
 
   SetDocument : function(doc) {
      CompzillaState.wm = this;
      this.document = doc;
 
+     cls = Components.classes['@beatniksoftware.com/compzillaService'];
+     CompzillaState.svc = cls.getService(Components.interfaces.compzillaIControl);
+
+     // add a debug window
+     CompzillaState.debugContent = this.document.createElement ("div");
+     var debugChrome = this.CreateWMChrome (CompzillaState.debugContent, 0);
+     this.document.body.appendChild (debugChrome);
+     this.MoveElementTo (debugChrome, 500, 50);
+     this.ResizeElementTo (debugChrome, 300, 500);
+     debugChrome.titlespan.innerHTML = "debug window";
+     debugChrome.style.visibility = "visible";
+     
      this.document.onmouseup = function (event) {
 	var state = CompzillaState;
 	state.dragWindow = null;
@@ -251,12 +274,16 @@ n  },
 // private methods.  these aren't callable through the
 // compzillaIWindowManager interface
 
+  Debug : function (str) {
+     CompzillaState.debugContent.innerHTML += str + "<br>";
+  },
+
   CreateWMChrome : function (content, xid) {
      var root = this.document.createElement ("div");
      var titlebar = this.document.createElement ("div");
      var title = this.document.createElement ("span");
 
-     title.innerHTML = "<b>window title here</b>";
+     title.innerHTML = "window title here";
 
      titlebar.appendChild (title);
      root.appendChild (titlebar);
@@ -276,7 +303,7 @@ n  },
      root.style.visibility = "hidden";
 
      // a couple of convenience refs
-     root.title = title;
+     root.titlespan = title;
      root.titlebar = titlebar;
      root.content = content;
 
