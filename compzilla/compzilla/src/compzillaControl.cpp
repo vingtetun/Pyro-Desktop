@@ -240,6 +240,30 @@ compzillaControl::RegisterWindowManager(nsIDOMWindow *window, compzillaIWindowMa
     return rv;
 }
 
+NS_IMETHODIMP
+compzillaControl::GetStringProperty (PRUint32 xid, const char *property, nsAString& value)
+{
+    DEBUG ("GetStringProperty (prop = %s)\n", property);
+
+    Atom prop = XInternAtom (mXDisplay, property, FALSE);
+    Atom actual_type;
+    int format;
+    unsigned long nitems;
+    unsigned long bytes_after_return;
+    unsigned char *data;
+
+    XGetWindowProperty (mXDisplay, xid, prop,
+                        0, BUFSIZ, false, XA_STRING, 
+                        &actual_type, &format, &nitems, &bytes_after_return, 
+                        &data);
+
+    // XXX this is wrong - it's not always ASCII.  look at metacity's
+    // handling of it (it calls a gdk function to convert the text
+    // property to utf8).
+    value = NS_ConvertASCIItoUTF16 ((const char*)data);
+
+    return NS_OK;
+}
 
 bool
 compzillaControl::InitWindowState ()
@@ -438,6 +462,14 @@ compzillaControl::UnmapWindow (Window win)
     }
 }
 
+void
+compzillaControl::PropertyChanged (Window win, const char *prop)
+{
+    CompositedWindow *compwin = FindWindow (win);
+    if (compwin && compwin->mContent) {
+        mWM->PropertyChanged (compwin->mContent, prop);
+    }
+}
 
 CompositedWindow *
 compzillaControl::FindWindow (Window win)
@@ -562,6 +594,8 @@ compzillaControl::Filter (GdkXEvent *xevent, GdkEvent *event)
         DEBUG ("PropertyChange: window=0x%0x, atom=%s\n", 
                x11_event->xproperty.window, 
                XGetAtomName(x11_event->xany.display, x11_event->xproperty.atom));
+        PropertyChanged (x11_event->xproperty.window,
+                         XGetAtomName(x11_event->xany.display, x11_event->xproperty.atom));
         break;
     }
     default:

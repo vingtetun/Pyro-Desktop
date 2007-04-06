@@ -54,6 +54,7 @@ private:
     void ForgetWindow (Window win);
     void MapWindow (Window win);
     void UnmapWindow (Window win);
+    void PropertyChanged (Window win, const char *prop);
 
     GdkWindow *GetNativeWindow(nsIDOMWindow *window);
 
