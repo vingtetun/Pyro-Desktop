@@ -34,6 +34,20 @@ AC_SUBST(GECKO_INCLUDEDIR)
 AC_SUBST(XPIDL)
 
 
+AC_CACHE_CHECK(if Gecko was compiled to use Thebes, ac_cv_gecko_thebes, [
+	CPPFLAGS_save="$CPPFLAGS"
+	CPPFLAGS="$CPPFLAGS -I${GECKO_INCLUDEDIR}"
+	AC_EGREP_CPP(yes, [
+		#include "mozilla-config.h"
+		#ifdef MOZ_CAIRO_GFX
+		yes
+		#endif
+	], ac_cv_gecko_thebes=yes, ac_cv_gecko_thebes=no)
+	CPPFLAGS="$CPPFLAGS_save"
+])
+
+AM_CONDITIONAL(GECKO_USE_THEBES, test "x$ac_cv_gecko_thebes" = "xyes")
+
 ##
 ## Checks for our Xextensions
 ##
@@ -57,6 +71,7 @@ echo "
 	xpidl:			  ${XPIDL}
 	Gecko includes:		  ${GECKO_INCLUDEDIR}
 	Gecko idl files:	  ${GECKO_IDLDIR}
+	Gecko using thebes:       ${ac_cv_gecko_thebes}
         XEXTENSIONS_CFLAGS:       ${XEXTENSIONS_CFLAGS}
         XEXTENSIONS_LIBS:         ${XEXTENSIONS_LIBS}
         GDK_CFLAGS:               ${GDK_CFLAGS}

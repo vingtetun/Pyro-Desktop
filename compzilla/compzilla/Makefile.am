@@ -77,8 +77,14 @@ CLEANFILES = 			\
 # libcompzilla.so contains all C++ XPCOM components
 #
 
+if GECKO_USE_THEBES
+GFX_LIBS=-lthebes
+else
+GFX_LIBS=-lgkgfx
+endif
+
 libcompzilla_la_LDFLAGS = -avoid-version -module
-libcompzilla_la_LIBADD = $(XEXTENSIONS_LIBS) -L$(GECKO_LIBDIR) -lgkgfx
+libcompzilla_la_LIBADD = $(XEXTENSIONS_LIBS) -L$(GECKO_LIBDIR) $(GFX_LIBS)
 
 libcompzilla_la_CPPFLAGS =			\
 	-fshort-wchar				\
