@@ -1,5 +1,12 @@
 2007-04-10  Alex Graveley  <alex@beatniksoftware.com>
 
+	* compzilla/src/compzillaWindow.cpp (SendMouseEvent): Adjust
+	button+1, since DOM event buttons start at 0;
+	(TranslateClientXYToWindow): New.  Adjusts a client x/y for the
+	canvas frame's screen offset.  This seems to make button events
+	work in the Metacity case, but focus stealing is preventing it
+	in the standalone case.
+
 	* compzilla/src/compzillaControl.cpp: Add commented out XEVIE
 	stuff.  
 	(Filter): Handle MapRequest and ConfigureRequest by just calling

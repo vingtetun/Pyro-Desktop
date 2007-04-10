@@ -36,6 +36,7 @@ public:
 
     void EnsurePixmap ();
     void SetContent (nsCOMPtr<nsISupports> aContent);
+    void TranslateClientXYToWindow (int *x, int *y);
 
     // nsIDOMKeyListener
 

@@ -1,8 +1,11 @@
 /* -*- mode: C++; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
 
+#define MOZILLA_INTERNAL_API
+
 #include "compzillaWindow.h"
 
 #include <nsIDOMEventTarget.h>
+#include <nsICanvasElement.h>
 #include <nsISupportsUtils.h>
 #include <nsStringAPI.h>
 
@@ -200,47 +203,85 @@ compzillaWindow::KeyPress(nsIDOMEvent* aDOMEvent)
 
 
 void
+compzillaWindow::TranslateClientXYToWindow (int *x, int *y)
+{
+    nsCOMPtr<nsICanvasElement> canvasElement = do_QueryInterface (mContent);
+    if (!canvasElement) {
+	return;
+    }
+
+    // FIXME: This is probably broken and not robust
+
+    nsIFrame *frame;
+    canvasElement->GetPrimaryCanvasFrame (&frame);
+    if (!frame) {
+	return;
+    }
+
+    nsIntRect screenRect = frame->GetScreenRectExternal ();
+    *x = *x - screenRect.x;
+    *y = *y - screenRect.y;
+}
+
+
+void
 compzillaWindow::SendMouseEvent (int eventType, nsIDOMMouseEvent *mouseEv)
 {
     // Build up the XEvent we will send
     XEvent xev = { 0 };
-
     xev.xany.type = eventType;
+
+    Time timestamp;
+    PRUint16 button;
+    int state;
+    int x, y;
+    int x_root, y_root;
+
+    mouseEv->GetTimeStamp ((DOMTimeStamp *) &timestamp);
+    mouseEv->GetScreenX (&x_root);
+    mouseEv->GetScreenY (&y_root);
+    mouseEv->GetClientX (&x);
+    mouseEv->GetClientY (&y);
+    TranslateClientXYToWindow (&x, &y);
+
+    mouseEv->GetButton (&button);
+    state = Button1Mask << button;
+    button += 1; // DOM buttons start at 0
 
     switch (eventType) {
     case ButtonPress:
     case ButtonRelease:
 	xev.xbutton.window = mWindow;
 	xev.xbutton.root = mAttr.root;
-	mouseEv->GetTimeStamp ((DOMTimeStamp *) &xev.xbutton.time);
-	mouseEv->GetClientX (&xev.xbutton.x);
-	mouseEv->GetClientY (&xev.xbutton.y);
-	mouseEv->GetScreenX (&xev.xbutton.x_root);
-	mouseEv->GetScreenY (&xev.xbutton.y_root);
-	mouseEv->GetButton ((PRUint16 *) &xev.xbutton.button);
+	xev.xbutton.time = timestamp;
+	xev.xbutton.state = state;
+	xev.xbutton.button = button;
+	xev.xbutton.x = x;
+	xev.xbutton.y = y;
+	xev.xbutton.x_root = x_root;
+	xev.xbutton.y_root = y_root;
 	break;
-
     case MotionNotify:
 	xev.xmotion.window = mWindow;
 	xev.xmotion.root = mAttr.root;
-	mouseEv->GetTimeStamp ((DOMTimeStamp *) &xev.xmotion.time);
-	mouseEv->GetClientX (&xev.xmotion.x);
-	mouseEv->GetClientY (&xev.xmotion.y);
-	mouseEv->GetScreenX (&xev.xmotion.x_root);
-	mouseEv->GetScreenY (&xev.xmotion.y_root);
+	xev.xmotion.time = timestamp;
+	xev.xmotion.state = state;
+	xev.xmotion.x = x;
+	xev.xmotion.y = y;
+	xev.xmotion.x_root = x_root;
+	xev.xmotion.y_root = y_root;
 	break;
-
     case EnterNotify:
     case LeaveNotify:
 	xev.xcrossing.window = mWindow;
 	xev.xcrossing.root = mAttr.root;
-	mouseEv->GetTimeStamp ((DOMTimeStamp *) &xev.xcrossing.time);
-	mouseEv->GetClientX (&xev.xcrossing.x);
-	mouseEv->GetClientY (&xev.xcrossing.y);
-	mouseEv->GetScreenX (&xev.xcrossing.x_root);
-	mouseEv->GetScreenY (&xev.xcrossing.y_root);
+	xev.xcrossing.time = timestamp;
+	xev.xcrossing.state = state;
+	xev.xcrossing.x = x;
+	xev.xcrossing.y = y;
+	xev.xcrossing.x_root = x_root;
+	xev.xcrossing.y_root = y_root;
 	break;
-
     default:
 	ERROR ("compzillaWindow::SendMouseEvent: Unknown event type %d\n", eventType);
 	return;
@@ -275,8 +316,9 @@ compzillaWindow::SendMouseEvent (int eventType, nsIDOMMouseEvent *mouseEv)
 	break;
     }
 
-    int ret = XSendEvent (mDisplay, mWindow, True, xevMask, &xev);
-    DEBUG ("compzillaWindow::SendMouseEvent: XSendEvent to win=%p returned %d\n", mWindow, ret);
+    DEBUG ("compzillaWindow::SendMouseEvent: XSendEvent win=%p, x=%d, y=%d, state=%p, button=%u\n", 
+	   mWindow, x, y, state, button);
+    XSendEvent (mDisplay, mWindow, True, xevMask, &xev);
 
     // Stop processing event
     mouseEv->StopPropagation ();
