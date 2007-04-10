@@ -13,9 +13,12 @@
 #include <nsXPCOMStrings.h>
 #endif
 
+extern "C" {
 #include <stdio.h>
 #include <X11/extensions/Xcomposite.h>
 
+extern uint32 gtk_get_current_event_time (void);
+}
 
 #define DEBUG(format...) printf("   - " format)
 #define INFO(format...) printf(" *** " format)
@@ -174,6 +177,11 @@ compzillaWindow::HandleEvent (nsIDOMEvent* aDOMEvent)
 
     WARNING ("compzillaWindow::HandleEvent: type=%s, target=%p!!!\n", cdata, target.get ());
 
+    if (strcmp (cdata, "mousemove") == 0) {
+        nsCOMPtr<nsIDOMMouseEvent> mouseEv = do_QueryInterface (aDOMEvent);
+        SendMouseEvent (MotionNotify, mouseEv);
+    }
+
     // Eat DOMMouseScroll events
     aDOMEvent->StopPropagation ();
     aDOMEvent->PreventDefault ();
@@ -235,13 +243,18 @@ compzillaWindow::SendMouseEvent (int eventType, nsIDOMMouseEvent *mouseEv)
     XEvent xev = { 0 };
     xev.xany.type = eventType;
 
-    Time timestamp;
+    DOMTimeStamp timestamp;
     PRUint16 button;
-    int state;
     int x, y;
     int x_root, y_root;
+    PRBool ctrl, shift, alt, meta;
+    int state = 0;
 
-    mouseEv->GetTimeStamp ((DOMTimeStamp *) &timestamp);
+    mouseEv->GetTimeStamp (&timestamp);
+    if (!timestamp) {
+        timestamp = gtk_get_current_event_time (); // CurrentTime;
+    }
+
     mouseEv->GetScreenX (&x_root);
     mouseEv->GetScreenY (&y_root);
     mouseEv->GetClientX (&x);
@@ -249,8 +262,24 @@ compzillaWindow::SendMouseEvent (int eventType, nsIDOMMouseEvent *mouseEv)
     TranslateClientXYToWindow (&x, &y);
 
     mouseEv->GetButton (&button);
-    state = Button1Mask << button;
-    button += 1; // DOM buttons start at 0
+
+    mouseEv->GetCtrlKey (&ctrl);
+    mouseEv->GetShiftKey (&shift);
+    mouseEv->GetAltKey (&alt);
+    mouseEv->GetMetaKey (&meta);
+
+    if (ctrl) {
+        state |= ControlMask;
+    }
+    if (shift) {
+        state |= ShiftMask;
+    }
+    if (alt) {
+        state |= Mod1Mask;
+    }
+    if (meta) {
+        state |= Mod2Mask;
+    }
 
     switch (eventType) {
     case ButtonPress:
@@ -258,8 +287,8 @@ compzillaWindow::SendMouseEvent (int eventType, nsIDOMMouseEvent *mouseEv)
 	xev.xbutton.window = mWindow;
 	xev.xbutton.root = mAttr.root;
 	xev.xbutton.time = timestamp;
-	xev.xbutton.state = state;
-	xev.xbutton.button = button;
+	xev.xbutton.state = Button1Mask << button;
+	xev.xbutton.button = button + 1; // DOM buttons start at 0
 	xev.xbutton.x = x;
 	xev.xbutton.y = y;
 	xev.xbutton.x_root = x_root;
@@ -303,13 +332,9 @@ compzillaWindow::SendMouseEvent (int eventType, nsIDOMMouseEvent *mouseEv)
 	break;
     case MotionNotify:
 	xevMask = (PointerMotionMask | PointerMotionHintMask);
-	if (xev.xmotion.state) {
-	    xevMask |= (Button1MotionMask |
-			Button2MotionMask |
-			Button3MotionMask |
-			Button4MotionMask |
-			Button5MotionMask | 
-			ButtonMotionMask);
+	if (button) {
+            xevMask |= ButtonMotionMask;
+            xevMask |= Button1MotionMask << button;
 	}
 	break;
     case EnterNotify:
@@ -320,8 +345,8 @@ compzillaWindow::SendMouseEvent (int eventType, nsIDOMMouseEvent *mouseEv)
 	break;
     }
 
-    DEBUG ("compzillaWindow::SendMouseEvent: XSendEvent win=%p, x=%d, y=%d, state=%p, button=%u\n", 
-	   mWindow, x, y, state, button);
+    DEBUG ("compzillaWindow::SendMouseEvent: XSendEvent win=%p, x=%d, y=%d, state=%p, button=%u, timestamp=%d\n", 
+	   mWindow, x, y, state, button, timestamp);
     XSendEvent (mDisplay, mWindow, True, xevMask, &xev);
 
     // Stop processing event

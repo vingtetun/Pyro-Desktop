@@ -1,3 +1,12 @@
+2007-04-10  Alex Graveley  <alex@beatniksoftware.com>
+
+	* compzilla/src/compzillaControl.cpp (Filter): Call XSetInputFocus
+	on MapRequest.
+
+	* compzilla/src/compzillaWindow.cpp (HandleEvent): Send
+	MotionNotify events if DOM eventtype is "mousemove".
+	(SendMouseEvent): Set ButtonMotionMask correctly.
+
 2007-04-10  Chris Toshok  <toshok@ximian.com>
 
 	* compzilla/components/compzillaWindowManager.js: add an EWMH

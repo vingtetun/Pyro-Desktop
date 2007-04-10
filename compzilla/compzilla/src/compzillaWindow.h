@@ -6,9 +6,11 @@
 #include <nsIDOMMouseListener.h>
 #include <nsIDOMUIListener.h>
 
+extern "C" {
 #include <X11/Xlib.h>
 #include <X11/extensions/Xdamage.h>
 #include <X11/extensions/Xrender.h>
+}
 
 
 // From X.h

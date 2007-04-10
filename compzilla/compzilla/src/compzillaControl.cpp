@@ -684,6 +684,7 @@ compzillaControl::Filter (GdkXEvent *xevent, GdkEvent *event)
     }
     case MapRequest:
         XMapRaised (mXDisplay, x11_event->xmaprequest.window);
+        XSetInputFocus (mXDisplay, x11_event->xmaprequest.window, RevertToParent, CurrentTime);
         break;
     case MapNotify: {
         DEBUG ("MapNotify: window=0x%0x, override=%d\n", x11_event->xmap.window, x11_event->xmap.override_redirect);
