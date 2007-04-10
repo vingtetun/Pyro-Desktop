@@ -1,5 +1,15 @@
 2007-04-10  Chris Toshok  <toshok@ximian.com>
 
+	* compzilla/components/compzillaWindowManager.js: add an EWMH
+	inspired layered window stack.
+
+	* compzilla/chrome/skin/desktop.html: add an html tag, just cuz.
+
+	* compzilla/chrome/skin/compzilla.css: add overflow: hidden to the
+	html element, so we never see scrollbars on our desktop.
+
+2007-04-10  Chris Toshok  <toshok@ximian.com>
+
 	* compzilla/components/compzillaWindowManager.js: fairly big
 	changes.  Clean up some errors that were screwing up
 	sizing/scaling of override windows.  Also, add code to remove the
