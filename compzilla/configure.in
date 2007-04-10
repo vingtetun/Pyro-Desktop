@@ -51,7 +51,8 @@ AM_CONDITIONAL(GECKO_USE_THEBES, test "x$ac_cv_gecko_thebes" = "xyes")
 ##
 ## Checks for our Xextensions
 ##
-PKG_CHECK_MODULES(XEXTENSIONS, xdamage xcomposite)
+#PKG_CHECK_MODULES(XEXTENSIONS, xcomposite xdamage xevie)
+PKG_CHECK_MODULES(XEXTENSIONS, xcomposite xdamage)
 
 
 AC_OUTPUT([

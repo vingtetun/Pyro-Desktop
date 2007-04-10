@@ -1,0 +1,24 @@
+2007-04-10  Alex Graveley  <alex@beatniksoftware.com>
+
+	* compzilla/src/compzillaControl.cpp: Add commented out XEVIE
+	stuff.  
+	(Filter): Handle MapRequest and ConfigureRequest by just calling
+	XMapRaised and XMoveResizeWindow respectively; eventually this
+	should call the JS and allow for stopping/mutating the event.
+	(InitWindowState): XSelectInput on the root win for
+	SubstructureRedirectMask, and if errors occur (i.e. a WM is
+	running), try again without it.
+
+	* compzilla/src/compzillaControl.h: Keep an XError count, and add
+	ClearError which returns the last count.  This is used to detect
+	an existing WM.
+
+	* compzilla/src/compzillaWindow.cpp: New.  Replaces
+	CompositingWindow with an nsIDOMEventHandler subclass.
+
+	* compzilla/src/compzillaModule.cpp: Use
+	NS_GENERIC_FACTORY_CONSTRUCTOR(compzillaRenderingContext).
+
+	* compzilla/src/compzillaRenderingContext.cpp: Drop
+	CZ_NewRenderingContext.  Fix some whitespace.
+

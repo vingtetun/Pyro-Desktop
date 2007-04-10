@@ -1,39 +1,15 @@
 /* -*- mode: C++; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
 
-#include "nsCOMPtr.h"
-
+#include <nsCOMPtr.h>
 #define MOZILLA_INTERNAL_API
-#include "nsClassHashtable.h"
+#include <nsClassHashtable.h>
 #undef MOZILLA_INTERNAL_API
 
-#include <gdk/gdkwindow.h>
-
-#include <X11/Xlib.h>
-#include <X11/extensions/shape.h>
-#include <X11/extensions/Xcomposite.h>
-#include <X11/extensions/Xdamage.h>
-#include <X11/extensions/Xrender.h>
-
 #include "compzillaIControl.h"
+#include "compzillaWindow.h"
 
-
-class CompositedWindow
-{
-public:
-    CompositedWindow(Display *display, Window window);
-    ~CompositedWindow();
-
-    void EnsurePixmap();
-    
-    nsCOMPtr<nsISupports> mContent;
-    Window mWindow;
-    Display *mDisplay;
-    XWindowAttributes mAttr;
-    Damage mDamage;
-    Pixmap mPixmap;
-    Region mClip;
-    CompositedWindow *mFrame;
-};
+#include <gdk/gdkwindow.h>
+#include <X11/Xlib.h>
 
 
 class compzillaControl
@@ -43,11 +19,11 @@ public:
     NS_DECL_ISUPPORTS
     NS_DECL_COMPZILLAICONTROL
 
-    compzillaControl();
-    virtual ~compzillaControl();
+    compzillaControl ();
+    virtual ~compzillaControl ();
 
 private:
-    CompositedWindow *FindWindow (Window win);
+    compzillaWindow *FindWindow (Window win);
 
     void AddWindow (Window win);
     void DestroyWindow (Window win);
@@ -69,6 +45,8 @@ private:
     static GdkFilterReturn gdk_filter_func (GdkXEvent *xevent, GdkEvent *event, gpointer data);
 
     static int ErrorHandler (Display *, XErrorEvent *);
+    static int ClearErrors (Display *dpy);
+    static int sErrorCnt;
 
     GdkDisplay *mDisplay;
     Display *mXDisplay;
@@ -80,9 +58,10 @@ private:
 
     nsCOMPtr<nsIDOMWindow> mDOMWindow;
     nsCOMPtr<compzillaIWindowManager> mWM;
-    nsClassHashtable<nsUint32HashKey, CompositedWindow> mWindowMap;
+    nsClassHashtable<nsUint32HashKey, compzillaWindow> mWindowMap;
 
-    int		composite_event, composite_error, composite_opcode;
+    int		composite_event, composite_error;
+    int		xevie_event, xevie_error;
     int		damage_event, damage_error;
     int		xfixes_event, xfixes_error;
     int		render_event, render_error;

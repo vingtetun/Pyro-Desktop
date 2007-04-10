@@ -19,31 +19,15 @@
 
 #include "compzillaIRenderingContext.h"
 
-nsresult CZ_NewRenderingContext(compzillaIRenderingContext** aResult);
-
-#define MAKE_CTOR(ctor_, iface_, func_)                   \
-static NS_IMETHODIMP                                      \
-ctor_(nsISupports* aOuter, REFNSIID aIID, void** aResult) \
-{                                                         \
-  *aResult = nsnull;                                      \
-  if (aOuter)                                             \
-    return NS_ERROR_NO_AGGREGATION;                       \
-  iface_* inst;                                           \
-  nsresult rv = func_(&inst);                             \
-  if (NS_SUCCEEDED(rv)) {                                 \
-    rv = inst->QueryInterface(aIID, aResult);             \
-    NS_RELEASE(inst);                                     \
-  }                                                       \
-  return rv;                                              \
-}
 
 NS_GENERIC_FACTORY_CONSTRUCTOR(compzillaExtension);
 
 NS_GENERIC_FACTORY_CONSTRUCTOR(compzillaControl);
 NS_DECL_CLASSINFO(compzillaControl);
 
-MAKE_CTOR(compzillaRenderingContextConstructor, compzillaIRenderingContext, CZ_NewRenderingContext)
+NS_GENERIC_FACTORY_CONSTRUCTOR(compzillaRenderingContext);
 NS_DECL_CLASSINFO(compzillaRenderingContext)
+
 
 static NS_METHOD 
 registerGlobalConstructors(nsIComponentManager *aCompMgr,

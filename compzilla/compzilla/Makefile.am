@@ -127,5 +127,7 @@ libcompzilla_la_SOURCES =				\
 	$(srcdir)/src/compzillaControl.h		\
 	$(srcdir)/src/compzillaModule.cpp		\
 	$(srcdir)/src/compzillaRenderingContext.h 	\
-	$(srcdir)/src/compzillaRenderingContext.cpp
+	$(srcdir)/src/compzillaRenderingContext.cpp	\
+	$(srcdir)/src/compzillaWindow.h			\
+	$(srcdir)/src/compzillaWindow.cpp
 

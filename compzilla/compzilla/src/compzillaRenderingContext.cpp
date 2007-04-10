@@ -1,3 +1,5 @@
+/* -*- mode: C++; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
+
 #define MOZILLA_INTERNAL_API
 
 #include <X11/Xlib.h>
@@ -29,30 +31,28 @@
 #include "cairo-xlib-xrender.h"
 #endif
 
+
 #define DEBUG(format...) printf("   - " format)
 #define INFO(format...) printf(" *** " format)
 #define WARNING(format...) printf(" !!! " format)
 #define ERROR(format...) fprintf(stderr, format)
+
 
 NS_IMPL_ISUPPORTS3_CI (compzillaRenderingContext,
 		       compzillaIRenderingContext,
 		       compzillaIRenderingContextInternal,
 		       nsICanvasRenderingContextInternal)
 
-nsresult
-CZ_NewRenderingContext(compzillaIRenderingContext** aResult)
-{
-    compzillaIRenderingContext* ctx = new compzillaRenderingContext();
-    if (!ctx)
-        return NS_ERROR_OUT_OF_MEMORY;
-
-    NS_ADDREF(*aResult = ctx);
-    return NS_OK;
-}
 
 compzillaRenderingContext::compzillaRenderingContext()
-  : mWidth(0), mHeight(0), mStride(0), mImageSurfaceData(nsnull),
-    mCanvasElement(nsnull), mSurface(nsnull), mCairo(nsnull), mSurfacePixmap(None)
+    : mWidth(0), 
+      mHeight(0), 
+      mStride(0), 
+      mImageSurfaceData(nsnull),
+      mCanvasElement(nsnull), 
+      mSurface(nsnull), 
+      mCairo(nsnull), 
+      mSurfacePixmap(None)
 {
 }
 
@@ -69,6 +69,7 @@ compzillaRenderingContext::SetCanvasElement (nsICanvasElement* aParentCanvas)
     DEBUG ("SetCanvasElement: %p\n", mCanvasElement);
     return NS_OK;
 }
+
 
 void
 compzillaRenderingContext::Destroy ()
@@ -95,10 +96,11 @@ compzillaRenderingContext::Destroy ()
     }
 }
 
+
 NS_METHOD 
 compzillaRenderingContext::SetDimensions (PRInt32 width, PRInt32 height)
 {
-  DEBUG ("SetDimensions (%d,%d)\n", width, height);
+    DEBUG ("SetDimensions (%d,%d)\n", width, height);
 
     Destroy();
 
@@ -114,7 +116,9 @@ compzillaRenderingContext::SetDimensions (PRInt32 width, PRInt32 height)
 #ifdef MOZ_CAIRO_GFX
     DEBUG ("thebes\n");
 
-    mThebesSurface = gfxPlatform::GetPlatform()->CreateOffscreenSurface(gfxIntSize (width, height), gfxASurface::ImageFormatARGB32);
+    mThebesSurface = gfxPlatform::GetPlatform()->CreateOffscreenSurface(
+        gfxIntSize (width, height), 
+        gfxASurface::ImageFormatARGB32);
     mThebesContext = new gfxContext(mThebesSurface);
 
     mSurface = mThebesSurface->CairoSurface();
@@ -186,6 +190,7 @@ compzillaRenderingContext::SetDimensions (PRInt32 width, PRInt32 height)
     return NS_OK;
 }
 
+
 nsIFrame*
 compzillaRenderingContext::GetCanvasLayoutFrame()
 {
@@ -196,6 +201,7 @@ compzillaRenderingContext::GetCanvasLayoutFrame()
     mCanvasElement->GetPrimaryCanvasFrame(&fr);
     return fr;
 }
+
 
 nsresult
 compzillaRenderingContext::Redraw()
@@ -247,6 +253,7 @@ compzillaRenderingContext::Redraw()
 
     return NS_OK;
 }
+
 
 /*
  * This is identical to nsCanvasRenderingContext2D::Render, we just don't
@@ -350,32 +357,34 @@ compzillaRenderingContext::GetInputStream (const nsACString& aMimeType,
    return NS_ERROR_NOT_IMPLEMENTED;
 }
 
+
 NS_IMETHODIMP
 compzillaRenderingContext::CopyImageDataFrom (Display *dpy,
 					      Window drawable,
 					      PRInt32 src_x, PRInt32 src_y,
 					      PRUint32 w, PRUint32 h)
 {
-  DEBUG ("CopyImageDataFrom (%d,%d)\n", w, h);
+    DEBUG ("CopyImageDataFrom (%d,%d)\n", w, h);
 
-   // XXX this is wrong, but it'll do for now.  it needs to create a
-   // (possibly smaller) subimage and composite it into the larger
-   // mSurface.
+    // XXX this is wrong, but it'll do for now.  it needs to create a
+    // (possibly smaller) subimage and composite it into the larger
+    // mSurface.
 
     XImage *image = XGetImage (dpy, drawable, src_x, src_y, w, h, AllPlanes, ZPixmap);
 
 #ifdef MOZ_CAIRO_GFX
     DEBUG ("thebes\n");
 
-    gfxImageSurface *imagesurf = new gfxImageSurface(gfxIntSize (w, h), gfxASurface::ImageFormatARGB32);
+    gfxImageSurface *imagesurf = new gfxImageSurface(gfxIntSize (w, h), 
+						     gfxASurface::ImageFormatARGB32);
 
     unsigned char *r = imagesurf->Data();
     unsigned char *p = (unsigned char*)image->data;
     for (int i = 0; i < w * h; i ++) {
-      *r++ = *p++;
-      *r++ = *p++;
-      *r++ = *p++;
-      *r = 255; r++; p++;
+	*r++ = *p++;
+	*r++ = *p++;
+	*r++ = *p++;
+	*r = 255; r++; p++;
     }
 
     mThebesContext->SetSource (imagesurf, gfxPoint (src_x, src_y));
@@ -419,10 +428,10 @@ compzillaRenderingContext::CopyImageDataFrom (Display *dpy,
         cairo_surface_destroy (imgsurf);
     }
 #endif
-   XFree (image);
+    XFree (image);
 
-   // XXX this redraws the entire canvas element.  we only need to
-   // force a redraw of the affected rectangle.
-   return Redraw ();
+    // XXX this redraws the entire canvas element.  we only need to
+    // force a redraw of the affected rectangle.
+    return Redraw ();
 }
 
