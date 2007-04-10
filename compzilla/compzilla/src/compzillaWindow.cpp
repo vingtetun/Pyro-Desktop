@@ -7,7 +7,11 @@
 #include <nsIDOMEventTarget.h>
 #include <nsICanvasElement.h>
 #include <nsISupportsUtils.h>
+#if MOZILLA_1_8_BRANCH
 #include <nsStringAPI.h>
+#else
+#include <nsXPCOMStrings.h>
+#endif
 
 #include <stdio.h>
 #include <X11/extensions/Xcomposite.h>

@@ -9,7 +9,11 @@ interface compzillaIControl : nsISupports
     void RegisterWindowManager (in nsIDOMWindow window, in compzillaIWindowManager wm);
 
     // @property is just an atom name, which is ascii.
-    DOMString GetStringProperty (in PRUint32 xid, in string property);
+    PRUint32 InternAtom (in string property);
+
+    // window property accessors
+    DOMString GetStringProperty (in PRUint32 xid, in PRUint32 prop);
+    PRUint32 GetAtomProperty (in PRUint32 xid, in PRUint32 prop);
 };
 
 

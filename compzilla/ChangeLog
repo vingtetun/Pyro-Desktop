@@ -1,3 +1,38 @@
+2007-04-10  Chris Toshok  <toshok@ximian.com>
+
+	* compzilla/components/compzillaWindowManager.js: fairly big
+	changes.  Clean up some errors that were screwing up
+	sizing/scaling of override windows.  Also, add code to remove the
+	wm chrome, and make it so you can call
+	CreateWMChrome/DestroyWMChrome multiple times on the same window,
+	which can happen when the _NET_WM_WINDOW_TYPE property is set on a
+	window.  Add support for this property, so we now get a borderless
+	panel (which isn't override_redirect, but is decorationless.)
+
+	* compzilla/public/compzillaIControl.idl: add InternAtom and
+	GetAtomProperty, and change signature for GetStringProperty.
+
+	* compzilla/src/compzillaWindow.cpp: fix build on minefield.
+
+	* compzilla/public/compzillaIWindowManager.idl: add x/y/w/h args
+	to WindowCreated, and change PropertyChanged to take the atom
+	instead of the string name.
+
+	* compzilla/src/compzillaControl.cpp (InternAtom): new method,
+	callable from JS.
+	(GetStringProperty): we pass the atom, not the property name.
+	(GetAtomProperty): new method, returns the atom value of a
+	property.
+	(InitManagerWindow): create the offscreen window and grab the
+	window manager + compositor selections.  we aren't graceful about
+	replacing an existing wm here.
+	(AddWindow): add the x/y/width/height to the WindowCreated method
+	call, so we can create the chrome of the right size.
+	(PropertyChanged): pass the atom now, not the name.
+
+	* compzilla/src/compzillaControl.h: change signature for
+	PropertyChanged, and add manager window foo.
+
 2007-04-10  Alex Graveley  <alex@beatniksoftware.com>
 
 	* compzilla/src/compzillaWindow.cpp (SendMouseEvent): Adjust

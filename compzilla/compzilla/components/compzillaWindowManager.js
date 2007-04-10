@@ -6,8 +6,28 @@ const nsISupports  = Components.interfaces.nsISupports;
 const nsIComponentRegistrar        = Components.interfaces.nsIComponentRegistrar;
 const compzillaIWindowManager      = Components.interfaces.compzillaIWindowManager;
 
+const jsLoader = Components.classes["@mozilla.org/moz/jssubscript-loader;1"]
+                           .getService(Components.interfaces.mozIJSSubScriptLoader);
+
+/* load the various pieces we need */
+// const scriptPrefix = "chrome://compzilla/content/windowmanager/";
+// jsLoader.loadSubScript (scriptPrefix + "windowStack.js");
+// jsLoader.loadSubScript (scriptPrefix + "windowFrame.js");
+
 var Atoms = {
-    WM_NAME : "WM_NAME",
+    cache : new Object (),
+    Get : function (atom_name) {
+	if (this.cache[atom_name] == null)
+		this.cache[atom_name] = CompzillaState.svc.InternAtom (atom_name);
+	return this.cache[atom_name];
+    },
+
+    WM_NAME : function () { return this.Get ("WM_NAME"); },
+    _NET_WM_NAME : function () { return this.Get ("_NET_WM_NAME"); },
+    _NET_WM_WINDOW_TYPE : function () { return this.Get ("_NET_WM_WINDOW_TYPE"); },
+    _NET_WM_WINDOW_TYPE_DOCK : function () { return this.Get ("_NET_WM_WINDOW_TYPE_DOCK"); },
+    _NET_WM_WINDOW_TYPE_MENU : function () { return this.Get ("_NET_WM_WINDOW_TYPE_MENU"); },
+    _NET_WM_WINDOW_TYPE_DESKTOP : function () { return this.Get ("_NET_WM_WINDOW_TYPE_DESKTOP"); },
 };
 
 var ResizeHandle = {
@@ -33,7 +53,22 @@ var CompzillaState = {
   svc: null
 };
 
+function Debug (str)
+{
+//  CompzillaState.debugContent.innerHTML += str + "<br>";
+}
+
 var WindowStack = {
+   /* from EWMH:
+      from bottom to top:
+       * windows of type _NET_WM_TYPE_DESKTOP
+       * windows having state _NET_WM_STATE_BELOW
+       * windows not belonging in any other layer
+       * windows of type _NET_WM_TYPE_DOCK (unless they have state _NET_WM_TYPE_BELOW) and
+         windows having state _NET_WM_STATE_ABOVE
+       * focused windows having state _NET_WM_STATE_FULLSCREEN
+   */
+
    layers: new Array (),
 
    moveAbove: function(w, above) {
@@ -96,30 +131,30 @@ CompzillaWindowManager.prototype =
   document: null,
 
   /* compzillaIWindowManager methods */
-  WindowCreated : function(xid, override) {
-     //alert ("window " + xid + " created");
+  WindowCreated : function(xid, override, x, y, width, height) {
+     Debug ("window " + xid + " created");
 
      var content = this.document.createElement ("canvas");
 
      content.className = "content";
 
-     if (override) {
-	this.document.body.appendChild (content);
-	content.chrome = content;
-     }
-     else {
-	var chrome_root = this.CreateWMChrome (content, xid);
+     /* start out without a frame, we'll attach it in a sec */
+     content.style.visibility = "hidden";
+     content.chrome = content;
+     content.xid = xid;
+     this.document.body.appendChild (content)
 
-	this.document.body.appendChild (chrome_root)
-     }
+     if (!override)
+         this.CreateWMChrome (content, xid);
 
-     chrome_root.xid = xid;
+     this.MoveElementTo (content.chrome, x, y);
+     this.ResizeElementTo (content.chrome, width, height);
 
      return content;
   },
 
   WindowDestroyed : function(content) {
-     var chrome_root = content.crome;
+     var chrome_root = content.chrome;
      WindowStack.removeWindow (chrome_root);
      /* XXX this generates a JS exception for me, for some reason - toshok */
      this.document.body.removeChild (chrome_root);
@@ -129,22 +164,22 @@ CompzillaWindowManager.prototype =
      var chrome_root = content.chrome;
      WindowStack.moveToTop (chrome_root);
      content.chrome.style.visibility = "visible";
+     Debug ("window + " + content.chrome.xid + " mapped");
   },
 
   WindowUnmapped : function(content) {
      var chrome_root = content.chrome;
      WindowStack.removeWindow (chrome_root);
      content.chrome.style.visibility = "hidden";
+     Debug ("window + " + content.chrome.xid + " unmapped");
   },
 
   WindowConfigured : function(content, x, y, width, height, border, above) {
      var chrome_root = content.chrome;
 
-     /* XXX this is a hack to get the wm borders to appear on the
-        outside of the real, uncomposited X window */
+     Debug ("window " + content.xid + " configured to " + width + ", " + height);
+
      if (chrome_root != content) {
-	x -= this.BorderSize;
-	y -= this.BorderSize + this.TitleBarHeight + this.TitleContentGap;
 	width += 2 * this.BorderSize + 2 * border;
 	height += 2 * this.BorderSize + 2 * border + this.TitleBarHeight + this.TitleContentGap;
      }
@@ -156,7 +191,7 @@ CompzillaWindowManager.prototype =
 
      if (chrome_root.offsetWidth != width) {
 	if (chrome_root == content)
-	   chrome.width = width;
+	   chrome_root.width = width;
 	else {
 	   chrome_root.style.width = width;
 	   need_relayout = true;
@@ -180,11 +215,28 @@ CompzillaWindowManager.prototype =
 	WindowStack.moveAbove (chrome_root, above.chrome);
   },
 
-  PropertyChanged: function(content, propname) {
+  PropertyChanged: function(content, prop) {
      var chrome_root = content.chrome;
 
-     if (propname == Atoms.WM_NAME) {
-	chrome_root.titlespan.innerHTML = CompzillaState.svc.GetStringProperty (chrome_root.xid, Atoms.WM_NAME);
+     if (prop == Atoms.WM_NAME()) {
+	if (chrome_root != content)
+		chrome_root.titlespan.innerHTML = CompzillaState.svc.GetStringProperty (chrome_root.xid, Atoms.WM_NAME());
+     }
+     else if (prop == Atoms._NET_WM_NAME()) {
+	if (chrome_root != content)
+		chrome_root.titlespan.innerHTML = CompzillaState.svc.GetStringProperty (chrome_root.xid, Atoms._NET_WM_NAME());
+     }
+     else if (prop == Atoms._NET_WM_WINDOW_TYPE()) {
+	Debug ("window type set");
+	// XXX _NET_WM_WINDOW_TYPE is actually an array of atoms, not just 1.
+	var type = CompzillaState.svc.GetAtomProperty (chrome_root.xid, Atoms._NET_WM_WINDOW_TYPE());
+	if (type == Atoms._NET_WM_WINDOW_TYPE_DOCK() ||
+	    type == Atoms._NET_WM_WINDOW_TYPE_DESKTOP()) {
+		this.DestroyWMChrome (content);
+	}
+	else {
+		this.CreateWMChrome (content);
+	}
      }
   },
 
@@ -197,12 +249,13 @@ CompzillaWindowManager.prototype =
 
      // add a debug window
      CompzillaState.debugContent = this.document.createElement ("div");
+     CompzillaState.debugContent.className = "content";
+     CompzillaState.debugContent.style.overflow = "scroll";
+
      var debugChrome = this.CreateWMChrome (CompzillaState.debugContent, 0);
-     this.document.body.appendChild (debugChrome);
      this.MoveElementTo (debugChrome, 500, 50);
      this.ResizeElementTo (debugChrome, 300, 500);
      debugChrome.titlespan.innerHTML = "debug window";
-     debugChrome.style.visibility = "visible";
      
      this.document.onmouseup = function (event) {
 	var state = CompzillaState;
@@ -274,11 +327,12 @@ CompzillaWindowManager.prototype =
 // private methods.  these aren't callable through the
 // compzillaIWindowManager interface
 
-  Debug : function (str) {
-     CompzillaState.debugContent.innerHTML += str + "<br>";
-  },
-
   CreateWMChrome : function (content, xid) {
+     if (content.chrome != null && content.chrome != content)
+	return;
+
+     Debug ("CreateWMChrome for " + content.xid);
+
      var root = this.document.createElement ("div");
      var titlebar = this.document.createElement ("div");
      var title = this.document.createElement ("span");
@@ -287,10 +341,6 @@ CompzillaWindowManager.prototype =
 
      titlebar.appendChild (title);
      root.appendChild (titlebar);
-     root.appendChild (content);
-
-     root.style.width = 200;
-     root.style.hidth = 100;
 
      root.className = "window";
      titlebar.className = "titlebar";
@@ -299,18 +349,53 @@ CompzillaWindowManager.prototype =
      // back reference so we can find the chrome in all the other methods
      content.chrome = root;
 
-     // windows start hidden initially
-     root.style.visibility = "hidden";
+     root.style.visibility = content.style.visibility;
+     content.style.visibility = "visible";
 
      // a couple of convenience refs
      root.titlespan = title;
      root.titlebar = titlebar;
      root.content = content;
+     root.xid = content.xid;
+
+     try {
+	     content = this.document.body.removeChild (content);
+     } catch (e) { }
+	
+     root.appendChild (content);
+     content.chrome = root;
+     this.MoveElementTo (root, content.offsetLeft, content.offsetTop);
+     this.ResizeElementTo (root, content.offsetWidth, content.offsetHeight); // XXX do we want this here?
+
+     // XXX fix the stacking order
+
+     this.document.body.appendChild (root);
 
      this.HookupChromeEvents (root);
      this.LayoutChrome (root);
 
      return root;
+  },
+
+  DestroyWMChrome : function (content) {
+     if (content.chrome != null && content.chrome == content)
+	return;
+
+     Debug ("DestroyWMChrome for " + content.xid);
+
+     var old_chrome = content.chrome;
+     content.chrome = content;
+     
+     content.style.visibility = old_chrome.style.visibility;
+
+     this.document.body.appendChild (content); // this both removes from chrome and appends to document
+
+     this.MoveElementTo (content, old_chrome.offsetLeft, old_chrome.offsetTop);
+     this.ResizeElementTo (content, old_chrome.offsetWidth, old_chrome.offsetHeight); // XXX do we want this here?
+
+     this.document.body.removeChild (old_chrome);
+
+     // XXX fix the stacking order
   },
 
   BorderSize: 3,
@@ -351,17 +436,29 @@ CompzillaWindowManager.prototype =
   },
 
   ResizeElementTo: function(element, w, h) {
-     element.style.width = w + "px";
-     element.style.height = h + "px";
+     if (element.chrome == element) {
+	element.width = w + "px";
+	element.height = h + "px";
+     }
+     else {
+	element.style.width = w + "px";
+	element.style.height = h + "px";
 
-     this.LayoutChrome (element);
+	this.LayoutChrome (element);
+     }
   },
 
   ResizeElementBy: function(element, dw, dh) {
-     element.style.width = (element.offsetWidth + dw) + "px";
-     element.style.height = (element.offsetHeight + dh) + "px";
+     if (element.chrome == element) {
+	element.width = (element.offsetWidth + dw) + "px";
+	element.height = (element.offsetHeight + dh) + "px";
+     }
+     else {
+	element.style.width = (element.offsetWidth + dw) + "px";
+	element.style.height = (element.offsetHeight + dh) + "px";
 
-     this.LayoutChrome (element)
+	this.LayoutChrome (element)
+     }
   },
 
   InsideResizeHandle: function(element) {

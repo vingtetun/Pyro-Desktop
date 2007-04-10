@@ -6,7 +6,11 @@
 [scriptable, uuid(38054e08-223b-4eea-adcf-442c58945704)]
 interface compzillaIWindowManager : nsISupports
 {
-  nsISupports WindowCreated (in long xid, in boolean override);
+  nsISupports WindowCreated (in long xid, in boolean override,
+                             in long x,
+                             in long y,
+                             in long width,
+                             in long height);
   void WindowDestroyed (in nsISupports win);
 
   void WindowMapped (in nsISupports win);
@@ -20,7 +24,7 @@ interface compzillaIWindowManager : nsISupports
                          in long border,
                          in nsISupports above);
 
-  void PropertyChanged (in nsISupports win, in string property);
+  void PropertyChanged (in nsISupports win, in long atom);
 
   void SetDocument (in nsISupports doc);
 };

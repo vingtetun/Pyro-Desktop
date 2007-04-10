@@ -44,7 +44,6 @@
 #define WARNING(format...) printf(" !!! " format)
 #define ERROR(format...) fprintf(stderr, format)
 
-
 NS_IMPL_ISUPPORTS1_CI(compzillaControl, compzillaIControl);
 
 
@@ -206,18 +205,24 @@ compzillaControl::RegisterWindowManager(nsIDOMWindow *window, compzillaIWindowMa
 
 
 NS_IMETHODIMP
-compzillaControl::GetStringProperty (PRUint32 xid, const char *property, nsAString& value)
+compzillaControl::InternAtom (const char *property, PRUint32 *value)
 {
-    DEBUG ("GetStringProperty (prop = %s)\n", property);
+    *value = (PRUint32)XInternAtom (mXDisplay, property, FALSE);
+    return NS_OK;
+}
 
-    Atom prop = XInternAtom (mXDisplay, property, FALSE);
+NS_IMETHODIMP
+compzillaControl::GetStringProperty (PRUint32 xid, PRUint32 prop, nsAString& value)
+{
+    DEBUG ("GetStringProperty (prop = %s)\n", XGetAtomName (mXDisplay, prop));
+
     Atom actual_type;
     int format;
     unsigned long nitems;
     unsigned long bytes_after_return;
     unsigned char *data;
 
-    XGetWindowProperty (mXDisplay, xid, prop,
+    XGetWindowProperty (mXDisplay, xid, (Atom)prop,
                         0, BUFSIZ, false, XA_STRING, 
                         &actual_type, &format, &nitems, &bytes_after_return, 
                         &data);
@@ -227,6 +232,29 @@ compzillaControl::GetStringProperty (PRUint32 xid, const char *property, nsAStri
     // property to utf8).
     value = NS_ConvertASCIItoUTF16 ((const char*)data);
 
+    DEBUG (" + %s\n", data);
+
+    return NS_OK;
+}
+
+NS_IMETHODIMP
+compzillaControl::GetAtomProperty (PRUint32 xid, PRUint32 prop, PRUint32* value)
+{
+    DEBUG ("GetAtomProperty (prop = %s)\n", XGetAtomName (mXDisplay, prop));
+
+    Atom actual_type;
+    int format;
+    unsigned long nitems;
+    unsigned long bytes_after_return;
+    unsigned char *data;
+
+    XGetWindowProperty (mXDisplay, xid, (Atom)prop,
+                        0, BUFSIZ, false, XA_ATOM,
+                        &actual_type, &format, &nitems, &bytes_after_return, 
+                        &data);
+
+    *value = *(PRUint32*)data;
+
     return NS_OK;
 }
 
@@ -234,6 +262,9 @@ compzillaControl::GetStringProperty (PRUint32 xid, const char *property, nsAStri
 bool
 compzillaControl::InitWindowState ()
 {
+    if (!InitManagerWindow ())
+        return FALSE;
+
     // Get ALL events for ALL windows
     gdk_window_add_filter (NULL, gdk_filter_func, this);
 
@@ -292,6 +323,51 @@ compzillaControl::InitWindowState ()
     return true;
 }
 
+bool
+compzillaControl::InitManagerWindow ()
+{
+    DEBUG ("InitManagerWindow\n");
+
+    XSetWindowAttributes attrs;
+
+    attrs.override_redirect = True;
+    attrs.event_mask = PropertyChangeMask;
+  
+    mManagerWindow = XCreateWindow (mXDisplay,
+                                    GDK_WINDOW_XID (mRoot),
+                                    -100, -100, 1, 1,
+                                    0,
+                                    CopyFromParent,
+                                    CopyFromParent,
+                                    (Visual *)CopyFromParent,
+                                    CWOverrideRedirect | CWEventMask,
+                                    &attrs);
+
+    char *atom_name;
+    Atom atom;
+
+    atom_name = g_strdup_printf ("_NET_WM_CM_S%d", 0);
+    atom = XInternAtom (mXDisplay, atom_name, FALSE);
+    g_free (atom_name);
+
+    XSetSelectionOwner (mXDisplay, atom, mManagerWindow, CurrentTime);
+
+    if (XGetSelectionOwner (mXDisplay, atom) != mManagerWindow) {
+        ERROR ("Couldn't acquire window manager selection");
+    }
+
+    atom_name = g_strdup_printf ("WM_S%d", 0);
+    atom = XInternAtom (mXDisplay, atom_name, FALSE);
+    g_free (atom_name);
+
+    XSetSelectionOwner (mXDisplay, atom, mManagerWindow, CurrentTime);
+    
+    if (XGetSelectionOwner (mXDisplay, atom) != mManagerWindow) {
+        ERROR ("Couldn't acquire compositor selection");
+    }
+
+    return TRUE;
+}
 
 bool
 compzillaControl::InitOutputWindow ()
@@ -404,7 +480,11 @@ compzillaControl::AddWindow (Window win)
 
     nsCOMPtr<nsISupports> domContent;
     mWM->WindowCreated (win, 
-                        compwin->mAttr.override_redirect != 0, 
+                        compwin->mAttr.override_redirect != 0,
+                        compwin->mAttr.x,
+                        compwin->mAttr.y,
+                        compwin->mAttr.width,
+                        compwin->mAttr.height,
                         getter_AddRefs(domContent));
 
     INFO ("WindowCreated returned %p\n", domContent.get());
@@ -476,11 +556,11 @@ compzillaControl::UnmapWindow (Window win)
 
 
 void
-compzillaControl::PropertyChanged (Window win, const char *prop)
+compzillaControl::PropertyChanged (Window win, Atom prop)
 {
     compzillaWindow *compwin = FindWindow (win);
     if (compwin && compwin->mContent) {
-        mWM->PropertyChanged (compwin->mContent, prop);
+        mWM->PropertyChanged (compwin->mContent, (PRUint32)prop);
     }
 }
 
@@ -501,12 +581,13 @@ compzillaControl::Filter (GdkXEvent *xevent, GdkEvent *event)
 
     switch (x11_event->type) {
     case CreateNotify: {
-        DEBUG ("CreateNotify: window=0x%0x, x=%d, y=%d, width=%d, height=%d\n",
-                x11_event->xcreatewindow.window,
-                x11_event->xcreatewindow.x,
-                x11_event->xcreatewindow.y,
-                x11_event->xcreatewindow.width,
-                x11_event->xcreatewindow.height);
+        DEBUG ("CreateNotify: window=0x%0x, x=%d, y=%d, width=%d, height=%d, override=%d\n",
+               x11_event->xcreatewindow.window,
+               x11_event->xcreatewindow.x,
+               x11_event->xcreatewindow.y,
+               x11_event->xcreatewindow.width,
+               x11_event->xcreatewindow.height,
+               x11_event->xcreatewindow.override_redirect);
 
         if (x11_event->xcreatewindow.window == GDK_DRAWABLE_XID(this->mMainwin)) {
             WARNING ("CreateNotify: discarding event on mainwin\n");
@@ -531,12 +612,13 @@ compzillaControl::Filter (GdkXEvent *xevent, GdkEvent *event)
                            x11_event->xconfigurerequest.height);
         break;
     case ConfigureNotify: {
-        DEBUG ("ConfigureNotify: window=0x%0x, x=%d, y=%d, width=%d, height=%d\n",
-                x11_event->xconfigure.window,
-                x11_event->xconfigure.x,
-                x11_event->xconfigure.y,
-                x11_event->xconfigure.width,
-                x11_event->xconfigure.height);
+        DEBUG ("ConfigureNotify: window=0x%0x, x=%d, y=%d, width=%d, height=%d, override=%d\n",
+               x11_event->xconfigure.window,
+               x11_event->xconfigure.x,
+               x11_event->xconfigure.y,
+               x11_event->xconfigure.width,
+               x11_event->xconfigure.height,
+               x11_event->xconfigure.override_redirect);
 
         compzillaWindow *compwin = FindWindow (x11_event->xconfigure.window);
 
@@ -604,7 +686,7 @@ compzillaControl::Filter (GdkXEvent *xevent, GdkEvent *event)
         XMapRaised (mXDisplay, x11_event->xmaprequest.window);
         break;
     case MapNotify: {
-        DEBUG ("MapNotify: window=0x%0x\n", x11_event->xmap.window);
+        DEBUG ("MapNotify: window=0x%0x, override=%d\n", x11_event->xmap.window, x11_event->xmap.override_redirect);
 
         MapWindow (x11_event->xmap.window);
         break;
@@ -619,8 +701,7 @@ compzillaControl::Filter (GdkXEvent *xevent, GdkEvent *event)
         DEBUG ("PropertyChange: window=0x%0x, atom=%s\n", 
                x11_event->xproperty.window, 
                XGetAtomName(x11_event->xany.display, x11_event->xproperty.atom));
-        PropertyChanged (x11_event->xproperty.window,
-                         XGetAtomName(x11_event->xany.display, x11_event->xproperty.atom));
+        PropertyChanged (x11_event->xproperty.window, x11_event->xproperty.atom);
         break;
     }
     case _KeyPress:

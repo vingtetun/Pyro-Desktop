@@ -30,12 +30,13 @@ private:
     void ForgetWindow (Window win);
     void MapWindow (Window win);
     void UnmapWindow (Window win);
-    void PropertyChanged (Window win, const char *prop);
+    void PropertyChanged (Window win, Atom prop);
 
     GdkWindow *GetNativeWindow(nsIDOMWindow *window);
 
     bool InitXExtensions ();
     bool InitOutputWindow ();
+    bool InitManagerWindow ();
     bool InitWindowState ();
 
     void ShowOutputWindow ();
@@ -55,6 +56,7 @@ private:
     GdkWindow *mMainwin;
     Window mMainwinParent;
     Window mOverlay;
+    Window mManagerWindow;
 
     nsCOMPtr<nsIDOMWindow> mDOMWindow;
     nsCOMPtr<compzillaIWindowManager> mWM;
