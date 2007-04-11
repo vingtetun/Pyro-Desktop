@@ -389,10 +389,8 @@ compzillaRenderingContext::CopyImageDataFrom (Display *dpy,
 
     mThebesContext->SetSource (imagesurf, gfxPoint (src_x, src_y));
     mThebesContext->Paint ();
-#if 0
-    mThebesContext->DrawSurface (imagesurf, gfxSize (w, h));
-#endif
 
+    delete imagesurf;
 #else
     // Fix colors
     unsigned char *r = (unsigned char*)image->data;
@@ -428,6 +426,7 @@ compzillaRenderingContext::CopyImageDataFrom (Display *dpy,
         cairo_surface_destroy (imgsurf);
     }
 #endif
+    XFree (image->data);
     XFree (image);
 
     // XXX this redraws the entire canvas element.  we only need to

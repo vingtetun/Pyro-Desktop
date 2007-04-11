@@ -1,3 +1,14 @@
+2007-04-11  Chris Toshok  <toshok@ximian.com>
+
+	* compzilla/chrome/skin/compzilla.css: add the overlay div's
+	style.
+
+	* compzilla/chrome/skin/desktop.html: add the overlay div here so
+	people can add their widgets.
+
+	* compzilla/src/compzillaRenderingContext.cpp (CopyImageDataFrom):
+	fix a copy of glaring memory leaks.  we seem okay with memory now.
+
 2007-04-10  Alex Graveley  <alex@beatniksoftware.com>
 
 	* compzilla/src/compzillaControl.cpp (Filter): Call XSetInputFocus

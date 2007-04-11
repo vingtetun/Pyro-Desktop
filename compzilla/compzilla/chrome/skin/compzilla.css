@@ -25,7 +25,24 @@ body {
 	font-weight: bold;
 }
 
+.debugContent {
+	position: absolute;
+	background: #ffffff;
+	overflow: scroll;
+	font-family: Andale Mono, monospace;
+	font-size: 0.75em;
+}
+
 .content {
 	position: absolute;
 	background: #ffffff;
+}
+
+#overlay {
+	position: absolute;
+	background: #000000;
+	overflow: hidden;
+	visibility: hidden;
+	opacity: 0.85;
+	z-index: 65535;
 }
