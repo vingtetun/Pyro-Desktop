@@ -1,3 +1,10 @@
+2007-04-11  Alex Graveley  <alex@beatniksoftware.com>
+
+	* compzilla/src/compzillaWindow.cpp (SendMouseEvent): Make mouse
+	event sending sorta work.  Use new GetSubwindowAtPoint to get
+	destination subwindow, and fake enter/leave events when the
+	subwindow changes.
+
 2007-04-11  Chris Toshok  <toshok@ximian.com>
 
 	* compzilla/chrome/skin/compzilla.css: add the overlay div's

@@ -69,8 +69,11 @@ public:
     Pixmap mPixmap;
     compzillaWindow *mFrame;
 
+    Window mLastEntered;
+
  private:
     void SendMouseEvent (int eventType, nsIDOMMouseEvent *mouseEv);
     void ConnectListeners (bool connect);
+    Window GetSubwindowAtPoint (int *x, int *y);
 };
 

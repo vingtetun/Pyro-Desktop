@@ -16,9 +16,13 @@
 extern "C" {
 #include <stdio.h>
 #include <X11/extensions/Xcomposite.h>
+#if HAVE_XEVIE
+#include <X11/extensions/Xevie.h>
+#endif
 
 extern uint32 gtk_get_current_event_time (void);
 }
+
 
 #define DEBUG(format...) printf("   - " format)
 #define INFO(format...) printf(" *** " format)
@@ -121,6 +125,9 @@ compzillaWindow::ConnectListeners (bool connect)
 	"activate",
 	"focusin",
 	"focusout",
+        "DOMFocusIn",
+        "DOMFocusOut",
+        "resize",
 
 	// HandleEvent events
 	"mousemove",
@@ -175,11 +182,11 @@ compzillaWindow::HandleEvent (nsIDOMEvent* aDOMEvent)
     nsCOMPtr<nsIDOMEventTarget> target;
     aDOMEvent->GetTarget (getter_AddRefs (target));
 
-    WARNING ("compzillaWindow::HandleEvent: type=%s, target=%p!!!\n", cdata, target.get ());
-
     if (strcmp (cdata, "mousemove") == 0) {
         nsCOMPtr<nsIDOMMouseEvent> mouseEv = do_QueryInterface (aDOMEvent);
         SendMouseEvent (MotionNotify, mouseEv);
+    } else {
+        WARNING ("compzillaWindow::HandleEvent: type=%s, target=%p!!!\n", cdata, target.get ());
     }
 
     // Eat DOMMouseScroll events
@@ -236,13 +243,30 @@ compzillaWindow::TranslateClientXYToWindow (int *x, int *y)
 }
 
 
+Window
+compzillaWindow::GetSubwindowAtPoint (int *x, int *y)
+{
+    Window last_child, child, new_child;
+    last_child = child = mWindow;
+
+    while (child) {
+        XTranslateCoordinates (mDisplay, 
+                               last_child, 
+                               child, 
+                               *x, *y, x, y, 
+                               &new_child);
+
+        last_child = child;
+        child = new_child;
+    }
+
+    return last_child;
+}
+
+
 void
 compzillaWindow::SendMouseEvent (int eventType, nsIDOMMouseEvent *mouseEv)
 {
-    // Build up the XEvent we will send
-    XEvent xev = { 0 };
-    xev.xany.type = eventType;
-
     DOMTimeStamp timestamp;
     PRUint16 button;
     int x, y;
@@ -281,21 +305,58 @@ compzillaWindow::SendMouseEvent (int eventType, nsIDOMMouseEvent *mouseEv)
         state |= Mod2Mask;
     }
 
+    Window destChild = GetSubwindowAtPoint (&x, &y);
+
+    if (destChild != mLastEntered && (eventType != EnterNotify)) {
+        if (mLastEntered) {
+            XEvent xev = { 0 };
+            xev.xcrossing.type = LeaveNotify;
+            xev.xcrossing.serial = 0;
+            xev.xcrossing.display = mDisplay;
+            xev.xcrossing.window = mLastEntered;
+            xev.xcrossing.root = mAttr.root;
+            xev.xcrossing.time = timestamp;
+            xev.xcrossing.state = state;
+            xev.xcrossing.x = x;
+            xev.xcrossing.y = y;
+            xev.xcrossing.x_root = x_root;
+            xev.xcrossing.y_root = y_root;
+            xev.xcrossing.same_screen = True;
+
+            XSendEvent (mDisplay, mLastEntered, True, LeaveWindowMask, &xev);
+            //XevieSendEvent(mDisplay, &xev, XEVIE_MODIFIED);
+        }
+        
+        mLastEntered = destChild;
+        SendMouseEvent (EnterNotify, mouseEv);
+    }
+
+    // Build up the XEvent we will send
+    XEvent xev = { 0 };
+    xev.xany.type = eventType;
+
     switch (eventType) {
     case ButtonPress:
     case ButtonRelease:
-	xev.xbutton.window = mWindow;
+        xev.xbutton.display = mDisplay;
+        xev.xbutton.window = destChild;
+	//xev.xbutton.window = mWindow;
+        //xev.xbutton.subwindow = destChild;
 	xev.xbutton.root = mAttr.root;
 	xev.xbutton.time = timestamp;
-	xev.xbutton.state = Button1Mask << button;
+	xev.xbutton.state = eventType == ButtonRelease ? Button1Mask << button : 0;
 	xev.xbutton.button = button + 1; // DOM buttons start at 0
 	xev.xbutton.x = x;
 	xev.xbutton.y = y;
 	xev.xbutton.x_root = x_root;
 	xev.xbutton.y_root = y_root;
+	xev.xbutton.same_screen = True;
 	break;
     case MotionNotify:
-	xev.xmotion.window = mWindow;
+        xev.xmotion.display = mDisplay;
+        xev.xmotion.window = destChild;
+	//xev.xmotion.window = mWindow;
+        //xev.xmotion.subwindow = destChild;
 	xev.xmotion.root = mAttr.root;
 	xev.xmotion.time = timestamp;
 	xev.xmotion.state = state;
@@ -303,10 +364,16 @@ compzillaWindow::SendMouseEvent (int eventType, nsIDOMMouseEvent *mouseEv)
 	xev.xmotion.y = y;
 	xev.xmotion.x_root = x_root;
 	xev.xmotion.y_root = y_root;
+	xev.xmotion.same_screen = True;
 	break;
     case EnterNotify:
+        XSetInputFocus (mDisplay, mWindow, RevertToParent, timestamp);
+        // nobreak
     case LeaveNotify:
-	xev.xcrossing.window = mWindow;
+        xev.xcrossing.display = mDisplay;
+        xev.xcrossing.window = destChild;
+        //xev.xcrossing.window = mWindow;
+        //xev.xcrossing.subwindow = destChild;
 	xev.xcrossing.root = mAttr.root;
 	xev.xcrossing.time = timestamp;
 	xev.xcrossing.state = state;
@@ -314,6 +381,7 @@ compzillaWindow::SendMouseEvent (int eventType, nsIDOMMouseEvent *mouseEv)
 	xev.xcrossing.y = y;
 	xev.xcrossing.x_root = x_root;
 	xev.xcrossing.y_root = y_root;
+	xev.xcrossing.same_screen = True;
 	break;
     default:
 	ERROR ("compzillaWindow::SendMouseEvent: Unknown event type %d\n", eventType);
@@ -345,9 +413,12 @@ compzillaWindow::SendMouseEvent (int eventType, nsIDOMMouseEvent *mouseEv)
 	break;
     }
 
-    DEBUG ("compzillaWindow::SendMouseEvent: XSendEvent win=%p, x=%d, y=%d, state=%p, button=%u, timestamp=%d\n", 
-	   mWindow, x, y, state, button, timestamp);
-    XSendEvent (mDisplay, mWindow, True, xevMask, &xev);
+    DEBUG ("compzillaWindow::SendMouseEvent: XSendEvent win=%p, child=%p, x=%d, y=%d, state=%p, "
+           "button=%u, timestamp=%d\n", 
+	   mWindow, destChild, x, y, state, button + 1, timestamp);
+
+    XSendEvent (mDisplay, destChild, True, xevMask, &xev);
+    //XevieSendEvent(mDisplay, &xev, XEVIE_MODIFIED);
 
     // Stop processing event
     mouseEv->StopPropagation ();
