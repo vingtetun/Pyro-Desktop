@@ -57,649 +57,721 @@ var CompzillaState = {
 
 function Debug (str)
 {
-//  CompzillaState.debugContent.innerHTML += str + "<br>";
+//   CompzillaState.debugContent.innerHTML += str + "<br>";
 }
 
-function WindowStack () {
+function WindowStack ()
+{
 }
-WindowStack.prototype = {
-   /* from EWMH:
-      from bottom to top:
-       * 0: windows of type _NET_WM_WINDOW_TYPE_DESKTOP
-       * 1: windows having state _NET_WM_STATE_BELOW
-       * 2: windows not belonging in any other layer
-       * 3: windows of type _NET_WM_TYPE_DOCK (unless they have state _NET_WM_TYPE_BELOW) and
-            windows having state _NET_WM_STATE_ABOVE
-       * 4: focused windows having state _NET_WM_STATE_FULLSCREEN
-   */
 
-   layers: null,
+WindowStack.prototype =
+{
+ /* from EWMH:
+    from bottom to top:
+     * 0: windows of type _NET_WM_WINDOW_TYPE_DESKTOP
+     * 1: windows having state _NET_WM_STATE_BELOW
+     * 2: windows not belonging in any other layer
+     * 3: windows of type _NET_WM_TYPE_DOCK (unless they have state _NET_WM_TYPE_BELOW) and
+          windows having state _NET_WM_STATE_ABOVE
+     * 4: focused windows having state _NET_WM_STATE_FULLSCREEN
+ */
 
-   init : function () {
-	this.layers = new Array ();
-	for (var i = 0; i < 5; i ++)
-		this.layers[i] = new Array();
-   },
+ layers: null,
 
-   determineLayer : function (w) {
-	if (w._net_wm_window_type == Atoms._NET_WM_WINDOW_TYPE_DESKTOP())
-		return 0;
-	else if (w._net_wm_window_type == Atoms._NET_WM_WINDOW_TYPE_DOCK())
-		return 3;
-	/* XXX we need cases 1 and 4 here */
-	else
-		return 2;
-   },
+ init : function () {
+    this.layers = new Array ();
+    for (var i = 0; i < 5; i ++)
+       this.layers[i] = new Array();
+ },
 
-   addWindow : function (w) {
-	this.removeWindow (w);
-	this.addWindowToLayer (w, this.determineLayer (w));
-   },
+ determineLayer : function (w) {
+    if (w._net_wm_window_type == Atoms._NET_WM_WINDOW_TYPE_DESKTOP())
+       return 0;
+    else if (w._net_wm_window_type == Atoms._NET_WM_WINDOW_TYPE_DOCK())
+       return 3;
+    /* XXX we need cases 1 and 4 here */
+    else
+       return 2;
+ },
 
-   addWindowToLayer : function (w, l) {
-	Debug ("adding window " + w.xid + " to layer " + l);
-	this.layers[l].push (w);
-	w.layer = l;
-   },
+ addWindow : function (w) {
+    this.removeWindow (w);
+    this.addWindowToLayer (w, this.determineLayer (w));
+ },
 
-   restackAll: function (windows) {
-	init ();
+ replaceWindow : function (w1, w2) {
+    if (w1.layer == undefined) {
+       this.addWindow (w2);
+    }
+    else {
+       w2.layer = w1.layer;
+       var idx = this.layers[w1.layer].indexOf (w1);
+       this.layers[w1.layer][idx] = w2;
+       w1.layer = undefined;
+    }
+ },
 
-	for (var i = 0; i < windows.length; i ++) {
-		var w = windows[i];
-		var layer = this.determineLayer (w);
+ addWindowToLayer : function (w, l) {
+    Debug ("adding window " + w.xid + " to layer " + l);
+    this.layers[l].push (w);
+    w.layer = l;
+    this.restackFromLayer (l);
+ },
 
-		addWindowToLayer (w, layer);
-	}
+ restackAll: function (windows) {
+    init ();
 
-	restackFromLayer (0);
-    },
+    for (var i = 0; i < windows.length; i ++) {
+       var w = windows[i];
+       var layer = this.determineLayer (w);
 
-    restackWindow : function (w) {
-	var before, after, start;
+       addWindowToLayer (w, layer);
+    }
 
-	if (w.layer == undefined)
-	    before = -1;
-	else
-	    before = w.layer;
+    restackFromLayer (0);
+ },
 
-	this.removeWindow (w);
+ restackWindow : function (w) {
+    var before, after, start;
 
-	after = this.determineLayer (w);
-	this.addWindowToLayer (w, after);
+    if (w.layer == undefined)
+       before = -1;
+    else
+       before = w.layer;
 
-	if (before = -1)
-		start = after;
-	else if (before < after)
-		start = before;
-	else
-		start = after;
+    this.removeWindow (w);
 
-	this.restackFromLayer (start);
-    },
+    after = this.determineLayer (w);
+    this.addWindowToLayer (w, after);
 
-    restackFromLayer : function (l) {
-	Debug ("restack from layer " + l);
+    if (before = -1)
+       start = after;
+    else if (before < after)
+       start = before;
+    else
+       start = after;
 
-	var z = -1;
-	if (l == 0) {
-		z = 0;
-	}
-	else {
-		for (var i = l-1; i >=0; i --) {
-			if (this.layers[i] != null && this.layers[i].length > 0) {
-				z = this.layers [i][this.layers[i].length - 1].style.zIndex;
-				break;
-			}
-		}
-		if (z == -1)
-			z = 0;
-	}
+    this.restackFromLayer (start);
+ },
 
-	Debug ("starting z = " + z);
+ restackFromLayer : function (l) {
+    Debug ("restack from layer " + l);
 
-	for (var i = l; i < this.layers.length; i ++) {
-		if (this.layers[i] != null) {
-			for (var j = 0; j < this.layers[i].length; j ++) {
-				this.layers[i][j].style.zIndex = z++;
-			}
-		}
-	}
-   },
+    var z = -1;
+    if (l == 0) {
+       z = 0;
+    }
+    else {
+       for (var i = l-1; i >=0; i --) {
+	  if (this.layers[i] != null && this.layers[i].length > 0) {
+	     z = this.layers [i][this.layers[i].length - 1].style.zIndex;
+	     break;
+	  }
+       }
+       if (z == -1)
+	  z = 0;
+    }
 
-   moveAbove: function(w, above) {
-	if (above.layer == undefined)
-	    this.addWindowToLayer (above, this.determineLayer (above));
+    Debug ("starting z = " + z);
 
-	if (w.layer == undefined)
-	    this.addWindowToLayer (w, this.determineLayer (w));
+    for (var i = l; i < this.layers.length; i ++) {
+       for (var j = 0; j < this.layers[i].length; j ++) {
+	  Debug ("setting window zIndex to " + this.layers[i][j].style.zIndex);
+	  this.layers[i][j].style.zIndex = z++;
+       }
+    }
+ },
 
-	if (above.layer != w.layer)
-	    return; // XXX
+ moveAbove: function(w, above) {
+    if (above.layer == undefined)
+       this.addWindowToLayer (above, this.determineLayer (above));
 
-	var above_index = this.layers[above.layer].indexOf (above);
+    if (w.layer == undefined)
+       this.addWindowToLayer (w, this.determineLayer (w));
 
-	this.removeWindow (w);
-	w.layer = above.layer; /* removeWindow clears this */
-	this.layers[above.layer].splice (above_index+1, 1, w);
-	this.restackFromLayer (above.layer);
-   },
+    if (above.layer != w.layer)
+       return; // XXX
 
-   removeWindow: function(w) {
-	if (w.layer == undefined)
-	    return;
+    var above_index = this.layers[above.layer].indexOf (above);
 
-	Debug ("removing window from layer " + w.layer);
-	Debug ("layer 2 has " + this.layers[2].length + " elements");
-	var w_idx = this.layers[w.layer].indexOf (w);
+    this.removeWindow (w);
+    w.layer = above.layer; /* removeWindow clears this */
+    this.layers[above.layer].splice (above_index+1, 1, w);
+    this.restackFromLayer (above.layer);
+ },
 
-	for (var i = w_idx; i < this.layers[w.layer].length-1; i ++) {
-	    this.layers[w.layer][i] = this.layers[w.layer][i+1];
-	}
+ removeWindow: function(w) {
+    if (w.layer == undefined)
+       return;
 
-	this.layers[w.layer].pop();
+    Debug ("removing window from layer " + w.layer);
+    Debug ("layer 2 has " + this.layers[2].length + " elements");
+    var w_idx = this.layers[w.layer].indexOf (w);
 
-	this.restackFromLayer (w.layer);
-	w.layer = undefined;
-   },
+    for (var i = w_idx; i < this.layers[w.layer].length-1; i ++) {
+       this.layers[w.layer][i] = this.layers[w.layer][i+1];
+    }
 
-   moveToBottom: function(w) {
-	if (w.layer == undefined)
-	    return;
+    this.layers[w.layer].pop();
 
-	var l = w.layer;
+    this.restackFromLayer (w.layer);
+    w.layer = undefined;
+ },
 
-	this.removeWindow(w);
+ moveToBottom: function(w) {
+    if (w.layer == undefined)
+       return;
 
-	w.layer = l; /* removeWindow clears this */
+    var l = w.layer;
 
-	this.layers[l].splice(0, 1, w);
+    this.removeWindow(w);
 
-	this.restackFromLayer (l);
-   },
+    w.layer = l; /* removeWindow clears this */
 
-   moveToTop: function(w) {
-	if (w.layer == undefined)
-	    return;
+    this.layers[l].splice(0, 1, w);
 
-	var l = w.layer;
+    this.restackFromLayer (l);
+ },
 
-	this.removeWindow (w);
+ moveToTop: function(w) {
+    if (w.layer == undefined)
+       return;
 
-	w.layer = l; /* removeWindow clears this */
+    var l = w.layer;
 
-	this.restackFromLayer (l);
-   },
+    this.removeWindow (w);
+    this.addWindowToLayer (w, l);
+ },
 };
 
 
 function CompzillaWindowManager() {}
 CompzillaWindowManager.prototype =
 {
-  /* nsISupports */
-  QueryInterface : function handler_QI(iid) {
+ /* nsISupports */
+ QueryInterface : function handler_QI(iid) {
     if (iid.equals(nsISupports))
-      return this;
+       return this;
     if (iid.equals(compzillaIWindowManager))
-      return this;
+       return this;
 
     throw Components.results.NS_ERROR_NO_INTERFACE;
-  },
+ },
 
-  document: null,
+ /* compzillaIWindowManager methods */
+ WindowCreated : function(xid, override, x, y, width, height) {
 
-  /* compzillaIWindowManager methods */
-  WindowCreated : function(xid, override, x, y, width, height) {
-//     Debug ("window " + xid + " created");
+    var content = this.document.createElement ("canvas");
 
-     var content = this.document.createElement ("canvas");
+    content.className = "content";
 
-     content.className = "content";
+    /* start out without a frame, we'll attach it in a sec */
+    content.style.visibility = "hidden";
+    content.chrome = content;
+    content.xid = xid;
+    this.document.body.appendChild (content)
 
-     /* start out without a frame, we'll attach it in a sec */
-     content.style.visibility = "hidden";
-     content.chrome = content;
-     content.xid = xid;
-     this.document.body.appendChild (content)
+    if (override)
+       content.style.opacity = "0.8";
+    else
+       this.CreateWMChrome (content, xid);
 
-     if (override)
-	 content.style.opacity = "0.8";
-     else
-         this.CreateWMChrome (content, xid);
+    this.MoveElementTo (content.chrome, x, y);
+    this.ResizeElementTo (content.chrome, width, height);
 
-     this.MoveElementTo (content.chrome, x, y);
-     this.ResizeElementTo (content.chrome, width, height);
+    return content;
+ },
 
-     return content;
-  },
+ WindowDestroyed : function(content) {
+    var chrome_root = content.chrome;
+    CompzillaState.windowStack.removeWindow (chrome_root);
+    /* XXX this generates a JS exception for me, for some reason - toshok */
+    this.document.body.removeChild (chrome_root);
+ },
 
-  WindowDestroyed : function(content) {
-     var chrome_root = content.chrome;
-     CompzillaState.windowStack.removeWindow (chrome_root);
-     /* XXX this generates a JS exception for me, for some reason - toshok */
-     this.document.body.removeChild (chrome_root);
-  },
-
-  WindowMapped : function(content) {
-     var chrome_root = content.chrome;
-     CompzillaState.windowStack.addWindow (content.chrome);
-     content.chrome.style.visibility = "visible";
+ WindowMapped : function(content) {
+    var chrome_root = content.chrome;
+    CompzillaState.windowStack.addWindow (content.chrome);
+    content.chrome.style.visibility = "visible";
 //     Debug ("window + " + content.chrome.xid + " mapped");
-  },
+ },
 
-  WindowUnmapped : function(content) {
-     var chrome_root = content.chrome;
-     CompzillaState.windowStack.removeWindow (chrome_root);
-     content.chrome.style.visibility = "hidden";
+ WindowUnmapped : function(content) {
+    var chrome_root = content.chrome;
+    CompzillaState.windowStack.removeWindow (chrome_root);
+    content.chrome.style.visibility = "hidden";
 //     Debug ("window + " + content.chrome.xid + " unmapped");
-  },
+ },
 
-  WindowConfigured : function(content, x, y, width, height, border, above) {
-     var chrome_root = content.chrome;
+ WindowConfigured : function(content, x, y, width, height, border, above) {
+    var chrome_root = content.chrome;
 
 //     Debug ("window " + content.xid + " configured to " + width + ", " + height);
 
-     if (chrome_root != content) {
-	width += 2 * this.BorderSize + 2 * border;
-	height += 2 * this.BorderSize + 2 * border + this.TitleBarHeight + this.TitleContentGap;
-     }
+    if (chrome_root != content) {
+       width += 2 * this.BorderSize + 2 * border;
+       height += 2 * this.BorderSize + 2 * border + this.TitleBarHeight + this.TitleContentGap;
+    }
 
-     chrome_root.style.left = x;
-     chrome_root.style.top = y;
+    chrome_root.style.left = x;
+    chrome_root.style.top = y;
 
-     var need_relayout = false;
+    var need_relayout = false;
 
-     if (chrome_root.offsetWidth != width) {
-	if (chrome_root == content)
-	   chrome_root.width = width;
-	else {
-	   chrome_root.style.width = width;
-	   need_relayout = true;
-	}
-     }
-     if (chrome_root.offsetHeight != height) {
-	if (chrome_root == content)
-	   chrome_root.height = height;
-	else {
-	   chrome_root.style.height = height;
-	   need_relayout = true;
-	}
-     }
+    if (chrome_root.offsetWidth != width) {
+       if (chrome_root == content)
+	  chrome_root.width = width;
+       else {
+	  chrome_root.style.width = width;
+	  need_relayout = true;
+       }
+    }
+    if (chrome_root.offsetHeight != height) {
+       if (chrome_root == content)
+	  chrome_root.height = height;
+       else {
+	  chrome_root.style.height = height;
+	  need_relayout = true;
+       }
+    }
 
-     if (need_relayout && chrome_root != content)
-	this.LayoutChrome (chrome_root);
+    if (need_relayout && chrome_root != content)
+       this.LayoutChrome (chrome_root);
 
-     if (above != null)
-	CompzillaState.windowStack.moveAbove (chrome_root, above.chrome);
-  },
+    if (above != null)
+       CompzillaState.windowStack.moveAbove (chrome_root, above.chrome);
+ },
 
-  PropertyChanged: function(content, prop) {
-     var chrome_root = content.chrome;
+ PropertyChanged: function(content, prop) {
+    var chrome_root = content.chrome;
 
-     if (prop == Atoms.WM_NAME()) {
-	if (chrome_root != content)
-		chrome_root.titlespan.innerHTML = CompzillaState.svc.GetStringProperty (chrome_root.xid, Atoms.WM_NAME());
-     }
-     else if (prop == Atoms._NET_WM_NAME()) {
-	if (chrome_root != content)
-		chrome_root.titlespan.innerHTML = CompzillaState.svc.GetStringProperty (chrome_root.xid, Atoms._NET_WM_NAME());
-     }
-     else if (prop == Atoms._NET_WM_WINDOW_TYPE()) {
-	Debug ("window type set");
-	// XXX _NET_WM_WINDOW_TYPE is actually an array of atoms, not just 1.
-	var type = CompzillaState.svc.GetAtomProperty (chrome_root.xid, Atoms._NET_WM_WINDOW_TYPE());
+    if (prop == Atoms.WM_NAME()) {
+       if (chrome_root != content)
+	  chrome_root.titlespan.innerHTML = CompzillaState.svc.GetStringProperty (chrome_root.xid, Atoms.WM_NAME());
+    }
+    else if (prop == Atoms._NET_WM_NAME()) {
+       if (chrome_root != content)
+	  chrome_root.titlespan.innerHTML = CompzillaState.svc.GetStringProperty (chrome_root.xid, Atoms._NET_WM_NAME());
+    }
+    else if (prop == Atoms._NET_WM_WINDOW_TYPE()) {
+       Debug ("window type set");
+       // XXX _NET_WM_WINDOW_TYPE is actually an array of atoms, not just 1.
+       var type = CompzillaState.svc.GetAtomProperty (chrome_root.xid, Atoms._NET_WM_WINDOW_TYPE());
 
-	content._net_wm_window_type = type;
+       content._net_wm_window_type = type;
 
-	if (type == Atoms._NET_WM_WINDOW_TYPE_DOCK() ||
-	    type == Atoms._NET_WM_WINDOW_TYPE_DESKTOP() ||
-	    type == Atoms._NET_WM_WINDOW_TYPE_SPLASH()) {
-		this.DestroyWMChrome (content);
-		content.style.opacity = "0.8";
-	}
-	else {
-		this.CreateWMChrome (content);
-	}
+       if (type == Atoms._NET_WM_WINDOW_TYPE_DOCK() ||
+	  type == Atoms._NET_WM_WINDOW_TYPE_DESKTOP() ||
+	  type == Atoms._NET_WM_WINDOW_TYPE_SPLASH()) {
+	     this.DestroyWMChrome (content);
+	     content.style.opacity = "0.8";
+       }
+       else {
+	  this.CreateWMChrome (content);
+       }
 
-	CompzillaState.windowStack.restackWindow (content.chrome);
-     }
-  },
+       CompzillaState.windowStack.restackWindow (content.chrome);
+    }
+ },
 
-  SetDocument : function(doc) {
-     CompzillaState.wm = this;
-     this.document = doc;
+ SetDocument : function(doc) {
+    CompzillaState.wm = this;
+    this.document = doc;
 
-     CompzillaState.windowStack = new WindowStack ();
-     CompzillaState.windowStack.init ();
+    CompzillaState.windowStack = new WindowStack ();
+    CompzillaState.windowStack.init ();
 
-     cls = Components.classes['@beatniksoftware.com/compzillaService'];
-     CompzillaState.svc = cls.getService(Components.interfaces.compzillaIControl);
+    cls = Components.classes['@beatniksoftware.com/compzillaService'];
+    CompzillaState.svc = cls.getService(Components.interfaces.compzillaIControl);
 
-     // add a debug window
-//     CompzillaState.debugContent = this.document.createElement ("div");
-//     CompzillaState.debugContent.className = "content";
+    // add a debug window
+    CompzillaState.debugContent = this.document.createElement ("div");
+    CompzillaState.debugContent.className = "debugContent";
+    
+    var debugChrome = this.CreateWMChrome (CompzillaState.debugContent, 0);
+    this.MoveElementTo (debugChrome, 500, 50);
+    this.ResizeElementTo (debugChrome, 300, 500);
+    debugChrome.titlespan.innerHTML = "debug window";
+    debugChrome.style.zIndex = 10000; // always on top
 
-//     var debugChrome = this.CreateWMChrome (CompzillaState.debugContent, 0);
-//     this.MoveElementTo (debugChrome, 500, 50);
-//     this.ResizeElementTo (debugChrome, 300, 500);
-//     debugChrome.titlespan.innerHTML = "debug window";
-//     debugChrome.style.zIndex = 10000; // always on top
+    // create the overlay window
+    CompzillaState.overlay = this.document.getElementById ("overlay");
+    Debug ("overlay = " + CompzillaState.overlay == null ? "null!" : "not null!")
+    this.document.onmouseup = this.DocumentMouseUp;
+    this.document.onmousemove = this.DocumentMouseMove;
 
-     this.document.onmouseup = function (event) {
+    this.document.addEventListener("keypress", this.DocumentKeyPressListener, true);
+ },
+
+ // ****************************************************
+ // private stuff.  not accessible through the
+ // compzillaIWindowManager interface
+
+ document: null,
+
+ DocumentKeyPressListener : {
+     handleEvent : function (event) {
 	var state = CompzillaState;
-	state.dragWindow = null;
-	state.resizeWindow = null;
-	state.resizeHandle = null;
-     };
 
-     this.document.onmousemove = function (event) {
-	var state = CompzillaState;
-	if (state.dragWindow != null) {
-           // figure out the deltas
-	   var dx = event.clientX - state.mousePosition.x;
-	   var dy = event.clientY - state.mousePosition.y;
+	if (event.keyCode == event.DOM_VK_F12 && event.ctrlKey) {
+	   // toggle the overlay
+	   var overlay = CompzillaState.overlay;
 
-	   state.mousePosition.x = event.clientX;
-	   state.mousePosition.y = event.clientY;
+	   if (overlay == null)
+	      return;
 
-	   state.wm.MoveElementBy (state.dragWindow, dx, dy);
+	   if (overlay.style.visibility != "visible") {
+	      Debug ("overlay should be visible");
 
-           //Debug ("mousemove on window titlebar at " + state.mousePosition.x + ", " + state.mousePosition.y);
-	   event.stopPropagation ();
-	}
-	else if (state.resizeWindow != null && state.resizeHandle != ResizeHandle.none) {
-           // figure out the deltas
-	   var dx = event.clientX - state.mousePosition.x;
-	   var dy = event.clientY - state.mousePosition.y;
+	      overlay.style.width = overlay.parentNode.clientWidth;
+	      overlay.style.height = overlay.parentNode.clientHeight;
+	      overlay.style.x = 0;
+	      overlay.style.y = 0;
 
-	   state.mousePosition.x = event.clientX;
-	   state.mousePosition.y = event.clientY;
+	      Debug ("overlay should be " + overlay.parentNode.style.width + " pixels wide");
 
-	   switch (state.resizeHandle) {
-	   case ResizeHandle.north:
-	      state.wm.MoveElementBy (state.resizeWindow, 0, dy);
-	      state.wm.ResizeElementBy (state.resizeWindow, 0, -dy);
-	      break;
-	   case ResizeHandle.south:
-	      state.wm.ResizeElementBy (state.resizeWindow, 0, dy);
-	      break;
-	   case ResizeHandle.east:
-	      state.wm.ResizeElementBy (state.resizeWindow, dx, 0);
-	      break;
-	   case ResizeHandle.west:
-	      state.wm.MoveElementBy (state.resizeWindow, dx, 0);
-	      state.wm.ResizeElementBy (state.resizeWindow, -dx, 0);
-	      break;
-	   case ResizeHandle.northWest:
-	      state.wm.MoveElementBy (state.resizeWindow, dx, dy);
-	      state.wm.ResizeElementBy (state.resizeWindow, -dx, -dy);
-	      break;
-	   case ResizeHandle.northEast:
-	      state.wm.MoveElementBy (state.resizeWindow, 0, dy);
-	      state.wm.ResizeElementBy (state.resizeWindow, dx, -dy);
-	      break;
-	   case ResizeHandle.southWest:
-	      state.wm.MoveElementBy (state.resizeWindow, dx, 0);
-	      state.wm.ResizeElementBy (state.resizeWindow, -dx, dy);
-	      break;
-	   case ResizeHandle.southEast:
-	      state.wm.ResizeElementBy (state.resizeWindow, dx, dy);
-	      break;
+	      overlay.style.visibility = "visible";
 	   }
-	   event.stopPropagation ();
+           else {
+	      Debug ("overlay should be hidden");
+	      overlay.style.visibility = "hidden";
+           }
+
+	   event.stopPropagation();
 	}
-     };
-   },
+     }
+ },
 
-// ****************************************************
-// private methods.  these aren't callable through the
-// compzillaIWindowManager interface
+ DocumentMouseUp : function (event) {
+    var state = CompzillaState;
+    if (state.originalOpacity != undefined) {
+       state.dragWindow.style.opacity = state.originalOpacity;
+       state.originalOpacity = undefined;
+    }
+    state.dragWindow = null;
+    state.resizeWindow = null;
+    state.resizeHandle = null;
+ },
 
-  CreateWMChrome : function (content, xid) {
-     if (content.chrome != null && content.chrome != content)
-	return;
+ DocumentMouseMove : function (event) {
+    var state = CompzillaState;
+    if (state.dragWindow != null) {
 
-     Debug ("CreateWMChrome for " + content.xid);
+       if (state.originalOpacity == undefined) {
+	  state.originalOpacity = state.dragWindow.style.opacity
+	  Debug ("original opacity = " + state.originalOpacity);
+	  state.dragWindow.style.opacity = "0.8";
+       }
 
-     var root = this.document.createElement ("div");
-     var titlebar = this.document.createElement ("div");
-     var title = this.document.createElement ("span");
+       // figure out the deltas
+       var dx = event.clientX - state.mousePosition.x;
+       var dy = event.clientY - state.mousePosition.y;
 
-     title.innerHTML = "window title here";
+       state.mousePosition.x = event.clientX;
+       state.mousePosition.y = event.clientY;
 
-     titlebar.appendChild (title);
-     root.appendChild (titlebar);
+       state.wm.MoveElementBy (state.dragWindow, dx, dy);
 
-     root.className = "window";
-     titlebar.className = "titlebar";
-     title.className = "windowtitle";
+       //Debug ("mousemove on window titlebar at " + state.mousePosition.x + ", " + state.mousePosition.y);
+       event.stopPropagation ();
+    }
+    else if (state.resizeWindow != null && state.resizeHandle != ResizeHandle.none) {
+       // figure out the deltas
+       var dx = event.clientX - state.mousePosition.x;
+       var dy = event.clientY - state.mousePosition.y;
+
+       state.mousePosition.x = event.clientX;
+       state.mousePosition.y = event.clientY;
+
+       switch (state.resizeHandle) {
+       case ResizeHandle.north:
+	  state.wm.MoveElementBy (state.resizeWindow, 0, dy);
+	  state.wm.ResizeElementBy (state.resizeWindow, 0, -dy);
+	  break;
+       case ResizeHandle.south:
+	  state.wm.ResizeElementBy (state.resizeWindow, 0, dy);
+	  break;
+       case ResizeHandle.east:
+	  state.wm.ResizeElementBy (state.resizeWindow, dx, 0);
+	  break;
+       case ResizeHandle.west:
+	  state.wm.MoveElementBy (state.resizeWindow, dx, 0);
+	  state.wm.ResizeElementBy (state.resizeWindow, -dx, 0);
+	  break;
+       case ResizeHandle.northWest:
+	  state.wm.MoveElementBy (state.resizeWindow, dx, dy);
+	  state.wm.ResizeElementBy (state.resizeWindow, -dx, -dy);
+	  break;
+       case ResizeHandle.northEast:
+	  state.wm.MoveElementBy (state.resizeWindow, 0, dy);
+	  state.wm.ResizeElementBy (state.resizeWindow, dx, -dy);
+	  break;
+       case ResizeHandle.southWest:
+	  state.wm.MoveElementBy (state.resizeWindow, dx, 0);
+	  state.wm.ResizeElementBy (state.resizeWindow, -dx, dy);
+	  break;
+       case ResizeHandle.southEast:
+	  state.wm.ResizeElementBy (state.resizeWindow, dx, dy);
+	  break;
+       }
+       event.stopPropagation ();
+    }
+ },
+
+ // ****************************************************
+ // window manager frame related stuff
+ //
+
+ CreateWMChrome : function (content, xid) {
+    if (content.chrome != null && content.chrome != content)
+       return;
+
+    Debug ("CreateWMChrome for " + content.xid);
+
+    var root = this.document.createElement ("div");
+    var titlebar = this.document.createElement ("div");
+    var title = this.document.createElement ("span");
+
+    title.innerHTML = "window title here";
+
+    titlebar.appendChild (title);
+    root.appendChild (titlebar);
+
+    root.className = "window";
+    titlebar.className = "titlebar";
+    title.className = "windowtitle";
      
-     // back reference so we can find the chrome in all the other methods
-     content.chrome = root;
+    // back reference so we can find the chrome in all the other methods
+    content.chrome = root;
 
-     root.style.visibility = content.style.visibility;
-     content.style.visibility = "visible";
+    root.style.visibility = content.style.visibility;
+    content.style.visibility = "visible";
 
-     // a couple of convenience refs
-     root.titlespan = title;
-     root.titlebar = titlebar;
-     root.content = content;
-     root.xid = content.xid;
+    // a couple of convenience refs
+    root.titlespan = title;
+    root.titlebar = titlebar;
+    root.content = content;
+    root.xid = content.xid;
 
-     try {
-	     content = this.document.body.removeChild (content);
-     } catch (e) { }
+    try {
+       content = this.document.body.removeChild (content);
+    } catch (e) { }
 	
-     root.appendChild (content);
-     content.chrome = root;
-     this.MoveElementTo (root, content.offsetLeft, content.offsetTop);
-     this.ResizeElementTo (root, content.offsetWidth, content.offsetHeight); // XXX do we want this here?
+    root.appendChild (content);
+    content.chrome = root;
+    this.MoveElementTo (root, content.offsetLeft, content.offsetTop);
+    this.ResizeElementTo (root, content.offsetWidth, content.offsetHeight); // XXX do we want this here?
 
-     // XXX fix the stacking order
+    /* XXX this causes a crash for me */
+    // CompzillaState.windowStack.replaceWindow (content, root);
 
-     this.document.body.appendChild (root);
+    this.document.body.appendChild (root);
 
-     this.HookupChromeEvents (root);
-     this.LayoutChrome (root);
+    this.HookupChromeEvents (root);
+    this.LayoutChrome (root);
 
-     return root;
-  },
+    return root;
+ },
 
-  DestroyWMChrome : function (content) {
-     if (content.chrome != null && content.chrome == content)
-	return;
+ DestroyWMChrome : function (content) {
+    if (content.chrome != null && content.chrome == content)
+       return;
 
-     Debug ("DestroyWMChrome for " + content.xid);
+    Debug ("DestroyWMChrome for " + content.xid);
 
-     var old_chrome = content.chrome;
-     content.chrome = content;
+    var old_chrome = content.chrome;
+    content.chrome = content;
      
-     content.style.visibility = old_chrome.style.visibility;
+    content.style.visibility = old_chrome.style.visibility;
 
-     this.document.body.appendChild (content); // this both removes from chrome and appends to document
+    this.document.body.appendChild (content); // this both removes from chrome and appends to document
 
-     this.MoveElementTo (content, old_chrome.offsetLeft, old_chrome.offsetTop);
-     this.ResizeElementTo (content, old_chrome.offsetWidth, old_chrome.offsetHeight); // XXX do we want this here?
+    this.MoveElementTo (content, old_chrome.offsetLeft, old_chrome.offsetTop);
+    this.ResizeElementTo (content, old_chrome.offsetWidth, old_chrome.offsetHeight); // XXX do we want this here?
 
-     this.document.body.removeChild (old_chrome);
+    this.document.body.removeChild (old_chrome);
 
-     // XXX fix the stacking order
-  },
+    CompzillaState.windowStack.replaceWindow (old_chrome, content);
+ },
 
-  BorderSize: 3,
-  TitleContentGap: 3,
-  TitleBarHeight: 15,
-  CornerSize: 25,
+ BorderSize: 3,
+ TitleContentGap: 3,
+ TitleBarHeight: 15,
+ CornerSize: 25,
 
-  HookupChromeEvents: function(element) {
-     element.titlebar.onmousedown = function (event) {
-	var state = CompzillaState;
-	state.dragWindow = element;
-	state.mousePosition.x = event.clientX;
-	state.mousePosition.y = event.clientY;
-	event.stopPropagation (); // need this or the window's mousedown handler below gets called
-     };
+ HookupChromeEvents: function(element) {
+    element.titlebar.onmousedown = function (event) {
+       var state = CompzillaState;
+       state.windowStack.moveToTop (element);
+       state.dragWindow = element;
+       state.mousePosition.x = event.clientX;
+       state.mousePosition.y = event.clientY;
+       event.stopPropagation (); // need this or the window's mousedown handler below gets called
+    };
 
-     element.onmousedown = function (event) {
-	var state = CompzillaState;
-	state.mousePosition.x = event.clientX;
-	state.mousePosition.y = event.clientY;
+    element.onmousedown = function (event) {
+       var state = CompzillaState;
+       state.mousePosition.x = event.clientX;
+       state.mousePosition.y = event.clientY;
 
-	var handle = state.wm.InsideResizeHandle (element);
-	if (handle != ResizeHandle.None) {
-	   state.resizeWindow = element;
-	   state.resizeHandle = handle;
-	}
-     };
-  },
+       var handle = state.wm.InsideResizeHandle (element);
+       if (handle != ResizeHandle.None) {
+	  state.resizeWindow = element;
+	  state.resizeHandle = handle;
+       }
+    };
+ },
 
-  MoveElementTo: function(element, x, y) {
-     element.style.left = x + "px";
-     element.style.top = y + "px";
-  },
+ MoveElementTo: function(element, x, y) {
+    element.style.left = x + "px";
+    element.style.top = y + "px";
+ },
 
-  MoveElementBy: function(element, dx, dy) {
-     element.style.left = element.offsetLeft + dx;
-     element.style.top = element.offsetTop + dy;
-  },
+ MoveElementBy: function(element, dx, dy) {
+    element.style.left = element.offsetLeft + dx;
+    element.style.top = element.offsetTop + dy;
+ },
 
-  ResizeElementTo: function(element, w, h) {
-     if (element.chrome == element) {
-	element.width = w + "px";
-	element.height = h + "px";
-     }
-     else {
-	element.style.width = w + "px";
-	element.style.height = h + "px";
+ ResizeElementTo: function(element, w, h) {
+    if (element.chrome == element) {
+       element.width = w + "px";
+       element.height = h + "px";
+    }
+    else {
+       element.style.width = w + "px";
+       element.style.height = h + "px";
 
-	this.LayoutChrome (element);
-     }
-  },
+       this.LayoutChrome (element);
+    }
+ },
 
-  ResizeElementBy: function(element, dw, dh) {
-     if (element.chrome == element) {
-	element.width = (element.offsetWidth + dw) + "px";
-	element.height = (element.offsetHeight + dh) + "px";
-     }
-     else {
-	element.style.width = (element.offsetWidth + dw) + "px";
-	element.style.height = (element.offsetHeight + dh) + "px";
+ ResizeElementBy: function(element, dw, dh) {
+    if (element.chrome == element) {
+       element.width = (element.offsetWidth + dw) + "px";
+       element.height = (element.offsetHeight + dh) + "px";
+    }
+    else {
+       element.style.width = (element.offsetWidth + dw) + "px";
+       element.style.height = (element.offsetHeight + dh) + "px";
 
-	this.LayoutChrome (element)
-     }
-  },
+       this.LayoutChrome (element)
+    }
+ },
 
-  InsideResizeHandle: function(element) {
-     var state = CompzillaState;
+ InsideResizeHandle: function(element) {
+    var state = CompzillaState;
 
-     var bs = this.BorderSize;
-     var cs = this.CornerSize;
+    var bs = this.BorderSize;
+    var cs = this.CornerSize;
 
-     var mx = state.mousePosition.x - element.offsetLeft;
-     var my = state.mousePosition.y - element.offsetTop;
+    var mx = state.mousePosition.x - element.offsetLeft;
+    var my = state.mousePosition.y - element.offsetTop;
 
-     if (mx < bs) {
-	// left side
-	if (my < cs)
-	   return ResizeHandle.northWest;
-	else if (my > element.offsetHeight - cs)
-	   return ResizeHandle.southWest;
-	else
-	   return ResizeHandle.west;
-     }
-     else if (mx > element.offsetWidth - bs) {
-	// right side
-	if (my < cs)
-	   return ResizeHandle.northEast;
-	else if (my > element.offsetHeight - cs)
-	   return ResizeHandle.southEast;
-	else
-	   return ResizeHandle.east;
-     }
-     else if (my < bs) {
-	// top side
-	return ResizeHandle.north;
-     }
-     else if (my > element.offsetHeight - bs) {
-	// bottom side
-	return ResizeHandle.south;
-     }
-     else
-	return ResizeHandle.None
-  },
+    if (mx < bs) {
+       // left side
+       if (my < cs)
+	  return ResizeHandle.northWest;
+       else if (my > element.offsetHeight - cs)
+	  return ResizeHandle.southWest;
+       else
+	  return ResizeHandle.west;
+    }
+    else if (mx > element.offsetWidth - bs) {
+       // right side
+       if (my < cs)
+	  return ResizeHandle.northEast;
+       else if (my > element.offsetHeight - cs)
+	  return ResizeHandle.southEast;
+       else
+	  return ResizeHandle.east;
+    }
+    else if (my < bs) {
+       // top side
+       return ResizeHandle.north;
+    }
+    else if (my > element.offsetHeight - bs) {
+       // bottom side
+       return ResizeHandle.south;
+    }
+    else
+       return ResizeHandle.None
+ },
 
-  LayoutChrome: function(element) {
-      var bs = this.BorderSize;
-      var tbs = this.TitleBarHeight;
-      var tcg = this.TitleContentGap;
+ LayoutChrome: function(element) {
+    var bs = this.BorderSize;
+    var tbs = this.TitleBarHeight;
+    var tcg = this.TitleContentGap;
 
-      element.titlebar.style.left = bs;
-      element.titlebar.style.top = bs;
-      element.titlebar.style.width = element.offsetWidth - 2 * bs;
-      element.titlebar.style.height = tbs;
+    element.titlebar.style.left = bs;
+    element.titlebar.style.top = bs;
+    element.titlebar.style.width = element.offsetWidth - 2 * bs;
+    element.titlebar.style.height = tbs;
 
-      element.content.style.left = bs;
-      element.content.style.top = element.titlebar.offsetTop + element.titlebar.offsetHeight + tcg;
-      element.content.width = element.offsetWidth - 2 * bs;
-      element.content.height = element.offsetHeight - element.content.offsetTop - bs;
-  },
+    element.content.style.left = bs;
+    element.content.style.top = element.titlebar.offsetTop + element.titlebar.offsetHeight + tcg;
+
+    if (element.content.className == "debugContent") {
+       element.content.style.width = element.offsetWidth - 2 * bs;
+       element.content.style.height = element.offsetHeight - element.content.offsetTop - bs;
+    }
+    else {
+       element.content.width = element.offsetWidth - 2 * bs;
+       element.content.height = element.offsetHeight - element.content.offsetTop - bs;
+    }
+ },
 };
 
 
 var CompzillaWindowManagerModule =
 {
-  registerSelf : function(compMgr, fileSpec, location, type)
-  {
-     debug ("registerSelf");
-     compMgr = compMgr.QueryInterface(nsIComponentRegistrar);
+ registerSelf : function(compMgr, fileSpec, location, type)
+ {
+    compMgr = compMgr.QueryInterface(nsIComponentRegistrar);
 
-     compMgr.registerFactoryLocation(CLSID,
-                                    "Compzilla Window Manager Service",
-                                    CONTRACTID,
-                                    fileSpec,
-                                    location,
-                                    type);
-  },
+    compMgr.registerFactoryLocation(CLSID,
+       "Compzilla Window Manager Service",
+       CONTRACTID,
+       fileSpec,
+       location,
+       type);
+ },
 
-  unregisterSelf : function(compMgr, fileSpec, location)
-  {
-     debug ("unregisterSelf");
-     compMgr = compMgr.QueryInterface(nsIComponentRegistrar);
+ unregisterSelf : function(compMgr, fileSpec, location)
+ {
+    compMgr = compMgr.QueryInterface(nsIComponentRegistrar);
 
-     compMgr.unregisterFactoryLocation(CLSID, fileSpec);
-  },
+    compMgr.unregisterFactoryLocation(CLSID, fileSpec);
+ },
 
+ getClassObject: function (compMgr, cid, iid) 
+ {
+    if (!cid.equals(CLSID))
+       throw Components.results.NS_ERROR_NO_INTERFACE;
 
-  getClassObject: function (compMgr, cid, iid) 
-  {
-     debug ("getClassObject");
-     if (!cid.equals(CLSID))
-        throw Components.results.NS_ERROR_NO_INTERFACE;
+    if (!iid.equals(Components.interfaces.nsIFactory))
+       throw Components.results.NS_ERROR_NOT_IMPLEMENTED;
 
-     if (!iid.equals(Components.interfaces.nsIFactory))
-        throw Components.results.NS_ERROR_NOT_IMPLEMENTED;
+    return this.myFactory;
+ },
 
-     return this.myFactory;
-  },
-
-  myFactory: {
+ myFactory: {
      /*
       * Construct an instance of the interface specified by iid, possibly
       * aggregating it with the provided outer.  (If you don't know what
       * aggregation is all about, you don't need to.  It reduces even the
       * mightiest of XPCOM warriors to snivelling cowards.)
       */
-      createInstance: function (outer, iid) {
-         debug("CI: " + iid + "\n");
-         if (outer != null)
-            throw Components.results.NS_ERROR_NO_AGGREGATION;
 
-         return (new CompzillaWindowManager()).QueryInterface(iid);
-      }
-  }
+     createInstance: function (outer, iid) {
+	if (outer != null)
+	   throw Components.results.NS_ERROR_NO_AGGREGATION;
+
+	return (new CompzillaWindowManager()).QueryInterface(iid);
+     }
+ }
 };
 
 
 function NSGetModule(compMgr, fileSpec) {
-  return CompzillaWindowManagerModule;
+   return CompzillaWindowManagerModule;
 }
