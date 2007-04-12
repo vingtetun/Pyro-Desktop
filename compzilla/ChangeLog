@@ -1,5 +1,13 @@
 2007-04-12  Chris Toshok  <toshok@ximian.com>
 
+	* compzilla/components/compzillaWindowManager.js
+	(HookupChromeEvents): make the mousedown handler a capture phase
+	event handler, so we can raise the window if we mouse down
+	anywhere on it, and still have it end up going to the native
+	window.
+
+2007-04-12  Chris Toshok  <toshok@ximian.com>
+
 	* compzilla/src/compzillaControl.cpp: use the new hotness.
 
 	* compzilla/src/compzillaRenderingContext.h: new improved api.

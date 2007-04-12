@@ -600,9 +600,20 @@ CompzillaWindowManager.prototype =
  CornerSize: 25,
 
  HookupChromeEvents: function(element) {
+    element.addEventListener("mousedown",
+                             {
+			       handleEvent: function (event) {
+				  var state = CompzillaState;
+				  state.windowStack.moveToTop (element);
+                                  // don't stop propagation of the
+				  // event, so it'll still make it to
+				  // the canvas/X window
+			       }
+			     },
+                             true);
+    
     element.titlebar.onmousedown = function (event) {
        var state = CompzillaState;
-       state.windowStack.moveToTop (element);
        state.dragWindow = element;
        state.mousePosition.x = event.clientX;
        state.mousePosition.y = event.clientY;
