@@ -769,9 +769,13 @@ compzillaControl::Filter (GdkXEvent *xevent, GdkEvent *event)
 
                 nsresult rv = canvas->GetContext (NS_LITERAL_STRING ("compzilla"), getter_AddRefs (internal));
                 if (NS_SUCCEEDED (rv)) {
-                    internal->CopyImageDataFrom (mXDisplay, compwin->mPixmap,
+                    compwin->EnsurePixmap ();
+                    internal->CopyImageDataFrom (mXDisplay, 
+                                                 compwin->mPixmap,
+                                                 compwin->mAttr.visual,
                                                  damage_ev->area.x, damage_ev->area.y,
-                                                 damage_ev->area.width, damage_ev->area.height);
+                                                 damage_ev->area.width, 
+                                                 damage_ev->area.height);
                 }
             }
         }

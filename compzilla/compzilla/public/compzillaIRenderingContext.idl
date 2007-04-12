@@ -9,6 +9,7 @@ interface compzillaIRenderingContext : nsISupports
   readonly attribute nsIDOMHTMLCanvasElement canvas;
 
   void copyImageDataFrom (in PRUint32 drawable,
+                          in PRUint32 visual,
                           in PRInt32 src_x, in PRInt32 src_y,
                           in PRInt32 dest_x, in PRInt32 dest_y,
                           in PRUint32 w, in PRUint32 h);

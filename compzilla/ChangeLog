@@ -1,3 +1,13 @@
+2007-04-12  Alex Graveley  <alex@beatniksoftware.com>
+
+	* compzilla/src/compzillaRenderingContext.cpp: Drop non-thebes,
+	non-render fallback code and remove mImageSurfaceData.
+	(CopyImageDataFrom): For non-thebes, avoid XGetImage and call
+	cairo_xlib_surface_create for the drawable to avoid copying data.
+
+	* compzilla/src/compzillaControl.cpp (Filter): Pass window's
+	visual to CopyImageDataFrom.
+
 2007-04-11  Alex Graveley  <alex@beatniksoftware.com>
 
 	* compzilla/src/compzillaWindow.cpp (SendMouseEvent): Make mouse

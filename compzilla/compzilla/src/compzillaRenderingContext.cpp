@@ -48,7 +48,6 @@ compzillaRenderingContext::compzillaRenderingContext()
     : mWidth(0), 
       mHeight(0), 
       mStride(0), 
-      mImageSurfaceData(nsnull),
       mCanvasElement(nsnull), 
       mSurface(nsnull), 
       mCairo(nsnull), 
@@ -88,11 +87,6 @@ compzillaRenderingContext::Destroy ()
     if (mSurfacePixmap != None) {
         XFreePixmap(GDK_DISPLAY(), mSurfacePixmap);
         mSurfacePixmap = None;
-    }
-
-    if (mImageSurfaceData) {
-        PR_Free (mImageSurfaceData);
-        mImageSurfaceData = nsnull;
     }
 }
 
@@ -134,56 +128,51 @@ compzillaRenderingContext::SetDimensions (PRInt32 width, PRInt32 height)
     // However, we provide MOZ_CANVAS_USE_RENDER for whomever wants to
     // go that route.
 
-    //if (getenv("MOZ_CANVAS_USE_RENDER")) {
-        XRenderPictFormat *fmt = XRenderFindStandardFormat (GDK_DISPLAY(),
-                                                            PictStandardARGB32);
-        if (fmt) {
-            int npfmts = 0;
-            XPixmapFormatValues *pfmts = XListPixmapFormats(GDK_DISPLAY(), &npfmts);
-            for (int i = 0; i < npfmts; i++) {
-                if (pfmts[i].depth == 32) {
-                    npfmts = -1;
-                    break;
-                }
-            }
-            XFree(pfmts);
-
-            if (npfmts == -1) {
-                mSurfacePixmap = XCreatePixmap (GDK_DISPLAY(),
-                                                DefaultRootWindow(GDK_DISPLAY()),
-                                                width, height, 32);
-                mSurface = cairo_xlib_surface_create_with_xrender_format
-                    (GDK_DISPLAY(), mSurfacePixmap, DefaultScreenOfDisplay(GDK_DISPLAY()),
-                     fmt, mWidth, mHeight);
+    XRenderPictFormat *fmt = XRenderFindStandardFormat (GDK_DISPLAY(),
+                                                        PictStandardARGB32);
+    if (fmt) {
+        int npfmts = 0;
+        XPixmapFormatValues *pfmts = XListPixmapFormats(GDK_DISPLAY(), &npfmts);
+        for (int i = 0; i < npfmts; i++) {
+            if (pfmts[i].depth == 32) {
+                npfmts = -1;
+                break;
             }
         }
-    //}
+        XFree(pfmts);
 
-    // fall back to image surface
-    if (!mSurface) {
-        mImageSurfaceData = (PRUint8*) PR_Malloc (mWidth * mHeight * 4);
-        if (!mImageSurfaceData)
-            return NS_ERROR_OUT_OF_MEMORY;
-
-        mSurface = cairo_image_surface_create_for_data (mImageSurfaceData,
-                                                        CAIRO_FORMAT_ARGB32,
-                                                        mWidth, mHeight,
-                                                        mWidth * 4);
+        if (npfmts == -1) {
+            mSurfacePixmap = XCreatePixmap (GDK_DISPLAY(),
+                                            DefaultRootWindow(GDK_DISPLAY()),
+                                            width, height, 32);
+            mSurface = cairo_xlib_surface_create_with_xrender_format (
+                GDK_DISPLAY (), 
+                mSurfacePixmap, 
+                DefaultScreenOfDisplay (GDK_DISPLAY()),
+                fmt, 
+                mWidth, 
+                mHeight);
+        }
     }
 
-    mCairo = cairo_create(mSurface);
+    mCairo = cairo_create (mSurface);
 #endif
 
-    cairo_set_operator(mCairo, CAIRO_OPERATOR_CLEAR);
-    cairo_new_path(mCairo);
-    cairo_rectangle(mCairo, 0, 0, mWidth, mHeight);
-    cairo_fill(mCairo);
+    if (!mSurface || !mCairo) {
+        ERROR ("compzillaRenderingContext::SetDimensions: Unable to create drawing surface");
+        return NS_ERROR_FAILURE;
+    }
 
-    cairo_set_line_width(mCairo, 1.0);
-    cairo_set_operator(mCairo, CAIRO_OPERATOR_OVER);
-    cairo_set_miter_limit(mCairo, 10.0);
-    cairo_set_line_cap(mCairo, CAIRO_LINE_CAP_BUTT);
-    cairo_set_line_join(mCairo, CAIRO_LINE_JOIN_MITER);
+    cairo_set_operator (mCairo, CAIRO_OPERATOR_CLEAR);
+    cairo_new_path (mCairo);
+    cairo_rectangle (mCairo, 0, 0, mWidth, mHeight);
+    cairo_fill (mCairo);
+
+    cairo_set_line_width (mCairo, 1.0);
+    cairo_set_operator (mCairo, CAIRO_OPERATOR_OVER);
+    cairo_set_miter_limit (mCairo, 10.0);
+    cairo_set_line_cap (mCairo, CAIRO_LINE_CAP_BUTT);
+    cairo_set_line_join (mCairo, CAIRO_LINE_JOIN_MITER);
 
     cairo_new_path(mCairo);
 
@@ -292,7 +281,8 @@ compzillaRenderingContext::Render (nsIRenderingContext *rc)
     if (NS_FAILED(rv) || !gdkdraw)
         return NS_ERROR_FAILURE;
 #else
-    gdkdraw = (GdkDrawable*) rc->GetNativeGraphicData(nsIRenderingContext::NATIVE_GDK_DRAWABLE);
+    gdkdraw = (GdkDrawable*) rc->GetNativeGraphicData(
+        nsIRenderingContext::NATIVE_GDK_DRAWABLE);
     if (!gdkdraw)
         return NS_ERROR_FAILURE;
 #endif
@@ -361,6 +351,7 @@ compzillaRenderingContext::GetInputStream (const nsACString& aMimeType,
 NS_IMETHODIMP
 compzillaRenderingContext::CopyImageDataFrom (Display *dpy,
 					      Window drawable,
+                                              Visual *visual,
 					      PRInt32 src_x, PRInt32 src_y,
 					      PRUint32 w, PRUint32 h)
 {
@@ -370,13 +361,13 @@ compzillaRenderingContext::CopyImageDataFrom (Display *dpy,
     // (possibly smaller) subimage and composite it into the larger
     // mSurface.
 
-    XImage *image = XGetImage (dpy, drawable, src_x, src_y, w, h, AllPlanes, ZPixmap);
-
 #ifdef MOZ_CAIRO_GFX
     DEBUG ("thebes\n");
 
-    gfxImageSurface *imagesurf = new gfxImageSurface(gfxIntSize (w, h), 
-						     gfxASurface::ImageFormatARGB32);
+    XImage *image = XGetImage (dpy, drawable, src_x, src_y, w, h, AllPlanes, ZPixmap);
+
+    gfxImageSurface *imagesurf = 
+        new gfxImageSurface(gfxIntSize (w, h), gfxASurface::ImageFormatARGB32);
 
     unsigned char *r = imagesurf->Data();
     unsigned char *p = (unsigned char*)image->data;
@@ -391,43 +382,25 @@ compzillaRenderingContext::CopyImageDataFrom (Display *dpy,
     mThebesContext->Paint ();
 
     delete imagesurf;
-#else
-    // Fix colors
-    unsigned char *r = (unsigned char*)image->data;
-    for (int i = 0; i < w * h; i ++) {
-      r[3] = 255; r += 4;
-    }
-
-    if (mImageSurfaceData) {
-        int stride = mWidth*4;
-        PRUint8 *dest = mImageSurfaceData + stride*src_y + src_x*4;
-
-        for (int32 i = 0; i < src_y; i++) {
-            memcpy(dest, image->data + (w*4)*i, w*4);
-            dest += stride;
-        }
-    }
-    else {
-      cairo_surface_t *imgsurf;
-
-        imgsurf = cairo_image_surface_create_for_data ((unsigned char*)image->data,
-                                                       CAIRO_FORMAT_ARGB32,
-                                                       w, h, w*4);
-        cairo_save (mCairo);
-        cairo_identity_matrix (mCairo);
-        cairo_translate (mCairo, src_x, src_y);
-        cairo_new_path (mCairo);
-        cairo_rectangle (mCairo, 0, 0, w, h);
-        cairo_set_source_surface (mCairo, imgsurf, 0, 0);
-        cairo_set_operator (mCairo, CAIRO_OPERATOR_SOURCE);
-        cairo_fill (mCairo);
-        cairo_restore (mCairo);
-
-        cairo_surface_destroy (imgsurf);
-    }
-#endif
     XFree (image->data);
     XFree (image);
+#else
+    cairo_surface_t *xsurf = cairo_xlib_surface_create (GDK_DISPLAY(),
+                                                        drawable,
+                                                        visual,
+                                                        w, h);
+    cairo_save (mCairo);
+    cairo_identity_matrix (mCairo);
+    cairo_translate (mCairo, src_x, src_y);
+    cairo_new_path (mCairo);
+    cairo_rectangle (mCairo, 0, 0, w, h);
+    cairo_set_source_surface (mCairo, xsurf, 0, 0);
+    cairo_set_operator (mCairo, CAIRO_OPERATOR_SOURCE);
+    cairo_fill (mCairo);
+    cairo_restore (mCairo);
+
+    cairo_surface_destroy (xsurf);
+#endif
 
     // XXX this redraws the entire canvas element.  we only need to
     // force a redraw of the affected rectangle.

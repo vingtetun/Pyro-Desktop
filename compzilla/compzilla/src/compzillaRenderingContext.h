@@ -12,7 +12,7 @@
 
 // {fa62d345-f608-47eb-9401-533984cfd471}
 #define COMPZILLA_RENDERING_CONTEXT_INTERNAL_IID \
-  { 0xfa62d345, 0xf608, 0x47eb, { 0x94, 0x01, 0x53, 0x39, 0x84, 0xcf, 0xd4, 0x71 } }
+    { 0xfa62d345, 0xf608, 0x47eb, { 0x94, 0x01, 0x53, 0x39, 0x84, 0xcf, 0xd4, 0x71 } }
 
 
 class compzillaIRenderingContextInternal 
@@ -20,15 +20,16 @@ class compzillaIRenderingContextInternal
 {
 public:
 #ifdef MOZILLA_1_8_BRANCH
-  NS_DEFINE_STATIC_IID_ACCESSOR(COMPZILLA_RENDERING_CONTEXT_INTERNAL_IID)
+    NS_DEFINE_STATIC_IID_ACCESSOR(COMPZILLA_RENDERING_CONTEXT_INTERNAL_IID)
 #else
-  NS_DECLARE_STATIC_IID_ACCESSOR(COMPZILLA_RENDERING_CONTEXT_INTERNAL_IID)
+    NS_DECLARE_STATIC_IID_ACCESSOR(COMPZILLA_RENDERING_CONTEXT_INTERNAL_IID)
 #endif
 
-  NS_IMETHOD CopyImageDataFrom (Display *dpy,
-                                Window drawable,
-                                PRInt32 src_x, PRInt32 src_y,
-                                PRUint32 w, PRUint32 h) = 0;
+    NS_IMETHOD CopyImageDataFrom (Display *dpy,
+                                  Window drawable,
+                                  Visual *visual,
+                                  PRInt32 src_x, PRInt32 src_y,
+                                  PRUint32 w, PRUint32 h) = 0;
 };
 
 
@@ -37,54 +38,54 @@ class compzillaRenderingContext :
     public compzillaIRenderingContextInternal
 {
 public:
-  NS_DECL_ISUPPORTS
-  NS_DECL_COMPZILLAIRENDERINGCONTEXT
+    NS_DECL_ISUPPORTS
+    NS_DECL_COMPZILLAIRENDERINGCONTEXT
 
-  compzillaRenderingContext ();
-  virtual ~compzillaRenderingContext();
+    compzillaRenderingContext ();
+    virtual ~compzillaRenderingContext();
 
-  /*
-   * Implement nsICanvasRenderingContextInternal and compzillaRenderingContextInternal
-   */
+    /*
+     * Implement nsICanvasRenderingContextInternal and compzillaRenderingContextInternal
+     */
+    
+    // This method should NOT hold a ref to aParentCanvas; it will be called
+    // with nsnull when the element is going away.
+    NS_IMETHOD SetCanvasElement(nsICanvasElement* aParentCanvas);
+    
+    // Sets the dimensions of the canvas, in pixels.  Called
+    // whenever the size of the element changes.
+    NS_IMETHOD SetDimensions(PRInt32 width, PRInt32 height);
+    
+    // Render the canvas at the origin of the given nsIRenderingContext
+    NS_IMETHOD Render(nsIRenderingContext *rc);
 
-  // This method should NOT hold a ref to aParentCanvas; it will be called
-  // with nsnull when the element is going away.
-  NS_IMETHOD SetCanvasElement(nsICanvasElement* aParentCanvas);
+    // Render the canvas at the origin of the given cairo surface
+    NS_IMETHOD RenderToSurface(struct _cairo_surface *surf);
 
-  // Sets the dimensions of the canvas, in pixels.  Called
-  // whenever the size of the element changes.
-  NS_IMETHOD SetDimensions(PRInt32 width, PRInt32 height);
-
-  // Render the canvas at the origin of the given nsIRenderingContext
-  NS_IMETHOD Render(nsIRenderingContext *rc);
-
-  // Render the canvas at the origin of the given cairo surface
-  NS_IMETHOD RenderToSurface(struct _cairo_surface *surf);
-
-  // Gives you a stream containing the image represented by this context.
-  // The format is given in aMimeTime, for example "image/png".
-  //
-  // If the image format does not support transparency or aIncludeTransparency
-  // is false, alpha will be discarded and the result will be the image
-  // composited on black.
-  NS_IMETHOD GetInputStream(const nsACString& aMimeType,
-                            const nsAString& aEncoderOptions,
-                            nsIInputStream **aStream);
-
-  NS_IMETHOD CopyImageDataFrom (Display *dpy,
-                                Window drawable,
-                                PRInt32 src_x, PRInt32 src_y,
-                                PRUint32 w, PRUint32 h);
+    // Gives you a stream containing the image represented by this context.
+    // The format is given in aMimeTime, for example "image/png".
+    //
+    // If the image format does not support transparency or aIncludeTransparency
+    // is false, alpha will be discarded and the result will be the image
+    // composited on black.
+    NS_IMETHOD GetInputStream(const nsACString& aMimeType,
+                              const nsAString& aEncoderOptions,
+                              nsIInputStream **aStream);
+    
+    NS_IMETHOD CopyImageDataFrom (Display *dpy,
+                                  Window drawable,
+                                  Visual *visual,
+                                  PRInt32 src_x, PRInt32 src_y,
+                                  PRUint32 w, PRUint32 h);
 
 private:
-  nsIFrame* GetCanvasLayoutFrame ();
-  nsresult Redraw ();
+    nsIFrame* GetCanvasLayoutFrame ();
+    nsresult Redraw ();
+    
+    void Destroy ();
 
-  void Destroy ();
+    nsICanvasElement* mCanvasElement;
 
-  nsICanvasElement* mCanvasElement;
-
-    // yay cairo
 #ifdef MOZ_CAIRO_GFX
     nsRefPtr<gfxContext> mThebesContext;
     nsRefPtr<gfxASurface> mThebesSurface;
@@ -92,10 +93,7 @@ private:
 
     cairo_t *mCairo;
     cairo_surface_t *mSurface;
-    PRUint8 *mImageSurfaceData;
 
     Pixmap mSurfacePixmap;
-
-
-  PRInt32 mWidth, mHeight, mStride;
+    PRInt32 mWidth, mHeight, mStride;
 };
