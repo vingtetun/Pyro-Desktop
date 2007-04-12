@@ -24,7 +24,7 @@
 #include "thebes/gfxContext.h"
 #include "thebes/gfxASurface.h"
 #include "thebes/gfxPlatform.h"
-#include "thebes/gfxImageSurface.h"
+#include "thebes/gfxXlibSurface.h"
 #else
 #include "nsTransform2D.h"
 #include "cairo-xlib.h"
@@ -47,11 +47,7 @@ NS_IMPL_ISUPPORTS3_CI (compzillaRenderingContext,
 compzillaRenderingContext::compzillaRenderingContext()
     : mWidth(0), 
       mHeight(0), 
-      mStride(0), 
-      mCanvasElement(nsnull), 
-      mSurface(nsnull), 
-      mCairo(nsnull), 
-      mSurfacePixmap(None)
+      mCanvasElement(nsnull)
 {
 }
 
@@ -70,33 +66,10 @@ compzillaRenderingContext::SetCanvasElement (nsICanvasElement* aParentCanvas)
 }
 
 
-void
-compzillaRenderingContext::Destroy ()
-{
-    if (mCairo) {
-        cairo_destroy(mCairo);
-        mCairo = nsnull;
-    }
-
-    if (mSurface) {
-      DEBUG ("destroying cairo surface");
-      cairo_surface_destroy (mSurface);
-      mSurface = nsnull;
-    }
-
-    if (mSurfacePixmap != None) {
-        XFreePixmap(GDK_DISPLAY(), mSurfacePixmap);
-        mSurfacePixmap = None;
-    }
-}
-
-
 NS_METHOD 
 compzillaRenderingContext::SetDimensions (PRInt32 width, PRInt32 height)
 {
-    DEBUG ("SetDimensions (%d,%d)\n", width, height);
-
-    Destroy();
+    //    DEBUG ("SetDimensions (%d,%d)\n", width, height);
 
 #if false
     // Check that the dimensions are sane
@@ -106,75 +79,6 @@ compzillaRenderingContext::SetDimensions (PRInt32 width, PRInt32 height)
 
     mWidth = width;
     mHeight = height;
-
-#ifdef MOZ_CAIRO_GFX
-    DEBUG ("thebes\n");
-
-    mThebesSurface = gfxPlatform::GetPlatform()->CreateOffscreenSurface(
-        gfxIntSize (width, height), 
-        gfxASurface::ImageFormatARGB32);
-    mThebesContext = new gfxContext(mThebesSurface);
-
-    mSurface = mThebesSurface->CairoSurface();
-    cairo_surface_reference(mSurface);
-    mCairo = mThebesContext->GetCairo();
-    cairo_reference(mCairo);
-
-    DEBUG ("/thebes\n");
-#else
-    // non-cairo gfx
-    // On most current X servers, using the software-only surface
-    // actually provides a much smoother and faster display.
-    // However, we provide MOZ_CANVAS_USE_RENDER for whomever wants to
-    // go that route.
-
-    XRenderPictFormat *fmt = XRenderFindStandardFormat (GDK_DISPLAY(),
-                                                        PictStandardARGB32);
-    if (fmt) {
-        int npfmts = 0;
-        XPixmapFormatValues *pfmts = XListPixmapFormats(GDK_DISPLAY(), &npfmts);
-        for (int i = 0; i < npfmts; i++) {
-            if (pfmts[i].depth == 32) {
-                npfmts = -1;
-                break;
-            }
-        }
-        XFree(pfmts);
-
-        if (npfmts == -1) {
-            mSurfacePixmap = XCreatePixmap (GDK_DISPLAY(),
-                                            DefaultRootWindow(GDK_DISPLAY()),
-                                            width, height, 32);
-            mSurface = cairo_xlib_surface_create_with_xrender_format (
-                GDK_DISPLAY (), 
-                mSurfacePixmap, 
-                DefaultScreenOfDisplay (GDK_DISPLAY()),
-                fmt, 
-                mWidth, 
-                mHeight);
-        }
-    }
-
-    mCairo = cairo_create (mSurface);
-#endif
-
-    if (!mSurface || !mCairo) {
-        ERROR ("compzillaRenderingContext::SetDimensions: Unable to create drawing surface");
-        return NS_ERROR_FAILURE;
-    }
-
-    cairo_set_operator (mCairo, CAIRO_OPERATOR_CLEAR);
-    cairo_new_path (mCairo);
-    cairo_rectangle (mCairo, 0, 0, mWidth, mHeight);
-    cairo_fill (mCairo);
-
-    cairo_set_line_width (mCairo, 1.0);
-    cairo_set_operator (mCairo, CAIRO_OPERATOR_OVER);
-    cairo_set_miter_limit (mCairo, 10.0);
-    cairo_set_line_cap (mCairo, CAIRO_LINE_CAP_BUTT);
-    cairo_set_line_join (mCairo, CAIRO_LINE_JOIN_MITER);
-
-    cairo_new_path(mCairo);
 
     return NS_OK;
 }
@@ -192,14 +96,15 @@ compzillaRenderingContext::GetCanvasLayoutFrame()
 }
 
 
-nsresult
-compzillaRenderingContext::Redraw()
+NS_METHOD
+compzillaRenderingContext::Redraw (nsRect r)
 {
     // then invalidate the region and do a sync redraw
     // (uh, why sync?)
     nsIFrame *frame = GetCanvasLayoutFrame();
     if (frame) {
-        nsRect r = frame->GetRect();
+        // XXX this should use the parameter, but for some reason it's not working
+        r = frame->GetRect ();
         r.x = r.y = 0;
 
         // sync redraw
@@ -252,26 +157,32 @@ compzillaRenderingContext::Redraw()
 NS_METHOD 
 compzillaRenderingContext::Render (nsIRenderingContext *rc)
 {
-    DEBUG ("Render\n");
+    //    DEBUG ("Render\n");
 
     nsresult rv = NS_OK;
 
 #ifdef MOZ_CAIRO_GFX
-
-    DEBUG ("thebes\n");
+    //    DEBUG ("thebes\n");
+    gfxXlibSurface *xlib_surf = new gfxXlibSurface (mXDisplay, mXDrawable, mXVisual);
 
     gfxContext* ctx = (gfxContext*) rc->GetNativeGraphicData(nsIRenderingContext::NATIVE_THEBES_CONTEXT);
-    nsRefPtr<gfxPattern> pat = new gfxPattern(mThebesSurface);
+    nsRefPtr<gfxPattern> pat = new gfxPattern(xlib_surf);
 
     // XXX I don't want to use PixelSnapped here, but layout doesn't guarantee
     // pixel alignment for this stuff!
     ctx->NewPath();
     ctx->PixelSnappedRectangleAndSetPattern(gfxRect(0, 0, mWidth, mHeight), pat);
     ctx->Fill();
+    delete xlib_surf;
 #else
-    DEBUG ("non-thebes\n");
+    //    DEBUG ("non-thebes\n");
 
     // non-Thebes; this becomes exciting
+
+    cairo_surface_t *xlib_surf = cairo_xlib_surface_create (mXDisplay
+                                                            mXDrawable,
+                                                            mXVisual,
+                                                            mWidth, mHeight);
     cairo_surface_t *dest = nsnull;
     cairo_t *dest_cr = nsnull;
 
@@ -319,13 +230,15 @@ compzillaRenderingContext::Render (nsIRenderingContext *rc)
     cairo_rectangle (dest_cr, 0, 0, mWidth, mHeight);
     cairo_clip (dest_cr);
 
-    cairo_set_source_surface (dest_cr, mSurface, 0, 0);
+    cairo_set_source_surface (dest_cr, xlib_surf, 0, 0);
     cairo_paint (dest_cr);
 
     if (dest_cr)
         cairo_destroy (dest_cr);
     if (dest)
         cairo_surface_destroy (dest);
+
+    cairo_surface_destroy (xlib_surf);
 #endif
 
     return rv;
@@ -349,61 +262,11 @@ compzillaRenderingContext::GetInputStream (const nsACString& aMimeType,
 
 
 NS_IMETHODIMP
-compzillaRenderingContext::CopyImageDataFrom (Display *dpy,
-					      Window drawable,
-                                              Visual *visual,
-					      PRInt32 src_x, PRInt32 src_y,
-					      PRUint32 w, PRUint32 h)
+compzillaRenderingContext::SetDrawable (Display *dpy,
+                                        Drawable drawable,
+                                        Visual *visual)
 {
-    DEBUG ("CopyImageDataFrom (%d,%d)\n", w, h);
-
-    // XXX this is wrong, but it'll do for now.  it needs to create a
-    // (possibly smaller) subimage and composite it into the larger
-    // mSurface.
-
-#ifdef MOZ_CAIRO_GFX
-    DEBUG ("thebes\n");
-
-    XImage *image = XGetImage (dpy, drawable, src_x, src_y, w, h, AllPlanes, ZPixmap);
-
-    gfxImageSurface *imagesurf = 
-        new gfxImageSurface(gfxIntSize (w, h), gfxASurface::ImageFormatARGB32);
-
-    unsigned char *r = imagesurf->Data();
-    unsigned char *p = (unsigned char*)image->data;
-    for (int i = 0; i < w * h; i ++) {
-	*r++ = *p++;
-	*r++ = *p++;
-	*r++ = *p++;
-	*r = 255; r++; p++;
-    }
-
-    mThebesContext->SetSource (imagesurf, gfxPoint (src_x, src_y));
-    mThebesContext->Paint ();
-
-    delete imagesurf;
-    XFree (image->data);
-    XFree (image);
-#else
-    cairo_surface_t *xsurf = cairo_xlib_surface_create (GDK_DISPLAY(),
-                                                        drawable,
-                                                        visual,
-                                                        w, h);
-    cairo_save (mCairo);
-    cairo_identity_matrix (mCairo);
-    cairo_translate (mCairo, src_x, src_y);
-    cairo_new_path (mCairo);
-    cairo_rectangle (mCairo, 0, 0, w, h);
-    cairo_set_source_surface (mCairo, xsurf, 0, 0);
-    cairo_set_operator (mCairo, CAIRO_OPERATOR_SOURCE);
-    cairo_fill (mCairo);
-    cairo_restore (mCairo);
-
-    cairo_surface_destroy (xsurf);
-#endif
-
-    // XXX this redraws the entire canvas element.  we only need to
-    // force a redraw of the affected rectangle.
-    return Redraw ();
+    mXDisplay = dpy;
+    mXDrawable = drawable;
+    mXVisual = visual;
 }
-

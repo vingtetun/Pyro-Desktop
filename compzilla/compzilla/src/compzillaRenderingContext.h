@@ -25,11 +25,9 @@ public:
     NS_DECLARE_STATIC_IID_ACCESSOR(COMPZILLA_RENDERING_CONTEXT_INTERNAL_IID)
 #endif
 
-    NS_IMETHOD CopyImageDataFrom (Display *dpy,
-                                  Window drawable,
-                                  Visual *visual,
-                                  PRInt32 src_x, PRInt32 src_y,
-                                  PRUint32 w, PRUint32 h) = 0;
+    NS_IMETHOD Redraw (nsRect rect) = 0;
+
+    NS_IMETHOD SetDrawable (Display *dpy, Drawable drawable, Visual *visual) = 0;
 };
 
 
@@ -71,29 +69,21 @@ public:
     NS_IMETHOD GetInputStream(const nsACString& aMimeType,
                               const nsAString& aEncoderOptions,
                               nsIInputStream **aStream);
-    
-    NS_IMETHOD CopyImageDataFrom (Display *dpy,
-                                  Window drawable,
-                                  Visual *visual,
-                                  PRInt32 src_x, PRInt32 src_y,
-                                  PRUint32 w, PRUint32 h);
+
+
+
+    NS_IMETHOD Redraw (nsRect rect);
+
+    NS_IMETHOD SetDrawable (Display *dpy, Drawable drawable, Visual *visual);
 
 private:
     nsIFrame* GetCanvasLayoutFrame ();
-    nsresult Redraw ();
     
-    void Destroy ();
-
     nsICanvasElement* mCanvasElement;
 
-#ifdef MOZ_CAIRO_GFX
-    nsRefPtr<gfxContext> mThebesContext;
-    nsRefPtr<gfxASurface> mThebesSurface;
-#endif
+    Display *mXDisplay;
+    Visual *mXVisual;
+    Pixmap mXDrawable;
 
-    cairo_t *mCairo;
-    cairo_surface_t *mSurface;
-
-    Pixmap mSurfacePixmap;
-    PRInt32 mWidth, mHeight, mStride;
+    PRInt32 mWidth, mHeight;
 };
