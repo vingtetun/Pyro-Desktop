@@ -103,9 +103,12 @@ compzillaRenderingContext::Redraw (nsRect r)
     // (uh, why sync?)
     nsIFrame *frame = GetCanvasLayoutFrame();
     if (frame) {
-        // XXX this should use the parameter, but for some reason it's not working
-        r = frame->GetRect ();
-        r.x = r.y = 0;
+#if MOZILLA_1_8_BRANCH
+        nsPresContext *presctx = frame->GetPresContext ();
+#else
+        nsPresContext *presctx = frame->PresContext ();
+#endif
+        r *= presctx->PixelsToTwips ();
 
         // sync redraw
         //frame->Invalidate(r, PR_TRUE);
@@ -113,11 +116,7 @@ compzillaRenderingContext::Redraw (nsRect r)
         // nsIFrame::Invalidate is an internal non-virtual method,
         // so we basically recreate it here.  I would suggest
         // an InvalidateExternal for the trunk.
-#if MOZILLA_1_8_BRANCH
-        nsIPresShell *shell = frame->GetPresContext()->GetPresShell();
-#else
-        nsIPresShell *shell = frame->PresContext()->GetPresShell();
-#endif
+        nsIPresShell *shell = presctx->GetPresShell();
         if (shell) {
             PRBool suppressed = PR_FALSE;
             shell->IsPaintingSuppressed(&suppressed);
@@ -125,23 +124,24 @@ compzillaRenderingContext::Redraw (nsRect r)
                 return NS_OK;
         }
 
-        // maybe VMREFRESH_IMMEDIATE in some cases,
-        // need to think
-#if ASYNC_UPDATES
-        PRUint32 flags = NS_VMREFRESH_NO_SYNC;
-#else
         PRUint32 flags = NS_VMREFRESH_IMMEDIATE;
+#if ASYNC_UPDATE
+        // Maybe slow update is okay in some cases?
+        flags = NS_VMREFRESH_NO_SYNC;
 #endif
+
         if (frame->HasView()) {
-            nsIView* view = frame->GetViewExternal();
-            view->GetViewManager()->UpdateView(view, r, flags);
+            nsIView* view = frame->GetViewExternal ();
+            view->GetViewManager ()->UpdateView (view, r, flags);
         } else {
             nsPoint offset;
             nsIView *view;
-            frame->GetOffsetFromView(offset, &view);
-            NS_ASSERTION(view, "no view");
+
+            frame->GetOffsetFromView (offset, &view);
+            NS_ASSERTION (view, "no view");
+
             r += offset;
-            view->GetViewManager()->UpdateView(view, r, flags);
+            view->GetViewManager ()->UpdateView (view, r, flags);
         }
     }
 
@@ -157,42 +157,32 @@ compzillaRenderingContext::Redraw (nsRect r)
 NS_METHOD 
 compzillaRenderingContext::Render (nsIRenderingContext *rc)
 {
-    //    DEBUG ("Render\n");
-
     nsresult rv = NS_OK;
 
 #ifdef MOZ_CAIRO_GFX
     //    DEBUG ("thebes\n");
     gfxXlibSurface *xlib_surf = new gfxXlibSurface (mXDisplay, mXDrawable, mXVisual);
 
-    gfxContext* ctx = (gfxContext*) rc->GetNativeGraphicData(nsIRenderingContext::NATIVE_THEBES_CONTEXT);
-    nsRefPtr<gfxPattern> pat = new gfxPattern(xlib_surf);
+    gfxContext* ctx = (gfxContext*) rc->GetNativeGraphicData (
+        nsIRenderingContext::NATIVE_THEBES_CONTEXT);
+    nsRefPtr<gfxPattern> pat = new gfxPattern (xlib_surf);
 
     // XXX I don't want to use PixelSnapped here, but layout doesn't guarantee
     // pixel alignment for this stuff!
-    ctx->NewPath();
-    ctx->PixelSnappedRectangleAndSetPattern(gfxRect(0, 0, mWidth, mHeight), pat);
-    ctx->Fill();
+    ctx->NewPath ();
+    ctx->PixelSnappedRectangleAndSetPattern (gfxRect(0, 0, mWidth, mHeight), pat);
+    ctx->Fill ();
     delete xlib_surf;
 #else
-    //    DEBUG ("non-thebes\n");
-
     // non-Thebes; this becomes exciting
-
-    cairo_surface_t *xlib_surf = cairo_xlib_surface_create (mXDisplay
-                                                            mXDrawable,
-                                                            mXVisual,
-                                                            mWidth, mHeight);
-    cairo_surface_t *dest = nsnull;
-    cairo_t *dest_cr = nsnull;
 
     GdkDrawable *gdkdraw = nsnull;
 #ifdef MOZILLA_1_8_BRANCH
-    rv = rc->RetrieveCurrentNativeGraphicData((void**) &gdkdraw);
-    if (NS_FAILED(rv) || !gdkdraw)
+    rv = rc->RetrieveCurrentNativeGraphicData ((void**) &gdkdraw);
+    if (NS_FAILED (rv) || !gdkdraw)
         return NS_ERROR_FAILURE;
 #else
-    gdkdraw = (GdkDrawable*) rc->GetNativeGraphicData(
+    gdkdraw = (GdkDrawable*) rc->GetNativeGraphicData (
         nsIRenderingContext::NATIVE_GDK_DRAWABLE);
     if (!gdkdraw)
         return NS_ERROR_FAILURE;
@@ -200,27 +190,30 @@ compzillaRenderingContext::Render (nsIRenderingContext *rc)
 
     gint w, h;
     gdk_drawable_get_size (gdkdraw, &w, &h);
-    dest = cairo_xlib_surface_create (GDK_DRAWABLE_XDISPLAY(gdkdraw),
-                                      GDK_DRAWABLE_XID(gdkdraw),
-                                      GDK_VISUAL_XVISUAL(gdk_drawable_get_visual(gdkdraw)),
-                                      w, h);
-    dest_cr = cairo_create (dest);
+
+    cairo_surface_t *dest = cairo_xlib_surface_create (
+        GDK_DRAWABLE_XDISPLAY (gdkdraw),
+        GDK_DRAWABLE_XID (gdkdraw),
+        GDK_VISUAL_XVISUAL (gdk_drawable_get_visual (gdkdraw)),
+        w, h);
+
+    cairo_t *dest_cr = cairo_create (dest);
 
     nsTransform2D *tx = nsnull;
-    rc->GetCurrentTransform(tx);
-
-    nsCOMPtr<nsIDeviceContext> dctx;
-    rc->GetDeviceContext(*getter_AddRefs(dctx));
+    rc->GetCurrentTransform (tx);
 
     float x0 = 0.0, y0 = 0.0;
     float sx = 1.0, sy = 1.0;
     if (tx->GetType() & MG_2DTRANSLATION) {
-        tx->Transform(&x0, &y0);
+        tx->Transform (&x0, &y0);
     }
 
     if (tx->GetType() & MG_2DSCALE) {
+        nsIDeviceContext *dctx = nsnull;
+        rc->GetDeviceContext (dctx);
+
         sx = sy = dctx->DevUnitsToTwips();
-        tx->TransformNoXLate(&sx, &sy);
+        tx->TransformNoXLate (&sx, &sy);
     }
 
     cairo_translate (dest_cr, NSToIntRound(x0), NSToIntRound(y0));
@@ -229,6 +222,9 @@ compzillaRenderingContext::Render (nsIRenderingContext *rc)
 
     cairo_rectangle (dest_cr, 0, 0, mWidth, mHeight);
     cairo_clip (dest_cr);
+
+    cairo_surface_t *xlib_surf = 
+        cairo_xlib_surface_create (mXDisplay, mXDrawable, mXVisual, mWidth, mHeight);
 
     cairo_set_source_surface (dest_cr, xlib_surf, 0, 0);
     cairo_paint (dest_cr);

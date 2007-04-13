@@ -54,11 +54,10 @@ compzillaWindow::compzillaWindow(Display *display, Window win)
      * changes, versus NonEmpty which seems to always include the entire
      * contents.
      */
-    mDamage = XDamageCreate (display, win, XDamageReportNonEmpty);
+    mDamage = XDamageCreate (display, win, XDamageReportRawRectangles);
 
-    // Redirect output
-    //XCompositeRedirectWindow (display, win, CompositeRedirectManual);
-    XCompositeRedirectWindow (display, win, CompositeRedirectAutomatic);
+    // Redirect output entirely
+    XCompositeRedirectWindow (display, win, CompositeRedirectManual);
 
     XSelectInput(display, win, (PropertyChangeMask | EnterWindowMask | FocusChangeMask));
 
@@ -75,7 +74,7 @@ compzillaWindow::~compzillaWindow()
     //ConnectListeners (false);
 
     // Let the window render itself
-    XCompositeUnredirectWindow (mDisplay, mWindow, CompositeRedirectAutomatic);
+    XCompositeUnredirectWindow (mDisplay, mWindow, CompositeRedirectManual);
 
     if (mDamage) {
         XDamageDestroy(mDisplay, mDamage);

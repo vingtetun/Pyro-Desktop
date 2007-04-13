@@ -1,3 +1,11 @@
+2007-04-13  Alex Graveley  <alex@beatniksoftware.com>
+
+	* compzilla/src/compzillaRenderingContext.cpp (Redraw): Convert
+	damaged rect to Twips, using the nsPresContext.
+
+	* compzilla/src/compzillaWindow.cpp (compzillaWindow): Use manual
+	redirection, and XDamageReportRawRectangles.
+
 2007-04-12  Chris Toshok  <toshok@ximian.com>
 
 	* compzilla/components/compzillaWindowManager.js
