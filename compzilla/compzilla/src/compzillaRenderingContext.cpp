@@ -105,10 +105,11 @@ compzillaRenderingContext::Redraw (nsRect r)
     if (frame) {
 #if MOZILLA_1_8_BRANCH
         nsPresContext *presctx = frame->GetPresContext ();
+        r *= presctx->PixelsToTwips ();
 #else
         nsPresContext *presctx = frame->PresContext ();
+        r *= presctx->AppUnitsPerCSSPixel ();
 #endif
-        r *= presctx->PixelsToTwips ();
 
         // sync redraw
         //frame->Invalidate(r, PR_TRUE);

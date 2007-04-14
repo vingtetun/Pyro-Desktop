@@ -1,3 +1,8 @@
+2007-04-14  Chris Toshok  <toshok@ximian.com>
+
+	* compzilla/src/compzillaRenderingContext.cpp (Redraw): fix the
+	non-1.8 branch case for scaling the rectangle.
+
 2007-04-13  Alex Graveley  <alex@beatniksoftware.com>
 
 	* compzilla/src/compzillaRenderingContext.cpp (Redraw): Convert
