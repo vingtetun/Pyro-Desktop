@@ -4,12 +4,15 @@
 #define MOZILLA_INTERNAL_API
 #include <nsClassHashtable.h>
 #undef MOZILLA_INTERNAL_API
+#include "nsIWidget.h"
 
 #include "compzillaIControl.h"
 #include "compzillaWindow.h"
 
+extern "C" {
 #include <gdk/gdkwindow.h>
 #include <X11/Xlib.h>
+}
 
 
 class compzillaControl
@@ -31,8 +34,10 @@ private:
     void MapWindow (Window win);
     void UnmapWindow (Window win);
     void PropertyChanged (Window win, Atom prop);
+    void WindowDamaged (Window win, XRectangle *rect);
 
     GdkWindow *GetNativeWindow(nsIDOMWindow *window);
+    nsCOMPtr<nsIWidget> GetNativeWidget(nsIDOMWindow *window);
 
     bool InitXExtensions ();
     bool InitOutputWindow ();
@@ -43,8 +48,10 @@ private:
     void HideOutputWindow ();
 
     GdkFilterReturn Filter (GdkXEvent *xevent, GdkEvent *event);
-    static GdkFilterReturn gdk_filter_func (GdkXEvent *xevent, GdkEvent *event, gpointer data);
 
+    static GdkFilterReturn gdk_filter_func (GdkXEvent *xevent, 
+                                            GdkEvent *event, 
+                                            gpointer data);
     static int ErrorHandler (Display *, XErrorEvent *);
     static int ClearErrors (Display *dpy);
     static int sErrorCnt;
@@ -56,7 +63,10 @@ private:
     GdkWindow *mMainwin;
     Window mMainwinParent;
     Window mOverlay;
+
     Window mManagerWindow;
+    bool mIsWindowManager;
+    bool mIsCompositor;
 
     nsCOMPtr<nsIDOMWindow> mDOMWindow;
     nsCOMPtr<compzillaIWindowManager> mWM;
@@ -66,5 +76,6 @@ private:
     int		xevie_event, xevie_error;
     int		damage_event, damage_error;
     int		xfixes_event, xfixes_error;
+    int		shape_event, shape_error;
     int		render_event, render_error;
 };
