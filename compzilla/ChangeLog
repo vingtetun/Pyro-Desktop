@@ -1,3 +1,31 @@
+2007-04-18  Alex Graveley  <alex@beatniksoftware.com>
+
+	* compzilla/src/nsKeycodes.h: New file, copied nsKeycodes and
+	nsSunKeycodes DOM<->GDK keysym tables from
+	mozilla/widget/src/gtk/nsGtkEventHandler.cpp.
+
+	* compzilla/src/compzillaWindow.cpp (DOMKeyCodeToKeySym): New,
+	converts a DOM keyCode to a GDK keysym.
+	(SendKeyEvent): Use DOMKeyCodeToKeySym and XKeysymToKeycode to get
+	the proper X keycode to forward to the native window.
+
+	* compzilla/src/compzillaControl.cpp (Filter): We're the only ones
+	who should process DAMAGE events, so remove them.
+
+	Also change DEBUG -> SPEW, to avoid conflicting with the define
+	used by nsDebug.h.
+	
+2007-04-18  Alex Graveley  <alex@beatniksoftware.com>
+
+	* compzilla/src/compzillaWindow.cpp (HandleEvent): Initial
+	FocusIn/Out, DOMMouseScroll, and KeyPress/Release support.
+
+	* compzilla/src/compzillaControl.cpp (InitOutputWindow): Call
+	XSetInputFocus for the Moz window.
+
+	* compzilla/components/compzillaWindowManager.js: Set
+	content.tabIndex=1 so the canvas elements are focusable.
+
 2007-04-15  Alex Graveley  <alex@beatniksoftware.com>
 
 	* compzilla/src/compzillaControl.cpp (InitWindowState): If we're

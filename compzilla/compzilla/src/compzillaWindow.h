@@ -78,5 +78,6 @@ public:
     void ConnectListeners (bool connect);
     void TranslateClientXYToWindow (int *x, int *y);
     Window GetSubwindowAtPoint (int *x, int *y);
+    unsigned int DOMKeyCodeToKeySym (PRUint32 vkCode);
 };
 

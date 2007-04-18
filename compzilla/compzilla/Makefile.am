@@ -129,5 +129,6 @@ libcompzilla_la_SOURCES =				\
 	$(srcdir)/src/compzillaRenderingContext.h 	\
 	$(srcdir)/src/compzillaRenderingContext.cpp	\
 	$(srcdir)/src/compzillaWindow.h			\
-	$(srcdir)/src/compzillaWindow.cpp
+	$(srcdir)/src/compzillaWindow.cpp		\
+	$(srcdir)/src/nsKeycodes.h
 

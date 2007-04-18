@@ -29,7 +29,7 @@
 #endif
 
 
-#define DEBUG(format...) printf("   - " format)
+#define SPEW(format...) printf("   - " format)
 #define INFO(format...) printf(" *** " format)
 #define WARNING(format...) printf(" !!! " format)
 #define ERROR(format...) fprintf(stderr, format)
@@ -58,7 +58,7 @@ NS_METHOD
 compzillaRenderingContext::SetCanvasElement (nsICanvasElement* aParentCanvas)
 {
     mCanvasElement = aParentCanvas;
-    DEBUG ("SetCanvasElement: %p\n", mCanvasElement);
+    SPEW ("SetCanvasElement: %p\n", mCanvasElement);
     return NS_OK;
 }
 
@@ -66,7 +66,7 @@ compzillaRenderingContext::SetCanvasElement (nsICanvasElement* aParentCanvas)
 NS_METHOD 
 compzillaRenderingContext::SetDimensions (PRInt32 width, PRInt32 height)
 {
-    //    DEBUG ("SetDimensions (%d,%d)\n", width, height);
+    //    SPEW ("SetDimensions (%d,%d)\n", width, height);
 
 #if false
     // Check that the dimensions are sane
@@ -113,6 +113,7 @@ compzillaRenderingContext::Redraw (nsRect r)
         // nsIFrame::Invalidate is an internal non-virtual method,
         // so we basically recreate it here.  I would suggest
         // an InvalidateExternal for the trunk.
+#ifndef DEBUG
         nsIPresShell *shell = presctx->GetPresShell();
         if (shell) {
             PRBool suppressed = PR_FALSE;
@@ -120,6 +121,7 @@ compzillaRenderingContext::Redraw (nsRect r)
             if (suppressed)
                 return NS_OK;
         }
+#endif
 
         PRUint32 flags = NS_VMREFRESH_IMMEDIATE;
 #if ASYNC_UPDATE
@@ -157,7 +159,7 @@ compzillaRenderingContext::Render (nsIRenderingContext *rc)
     nsresult rv = NS_OK;
 
 #ifdef MOZ_CAIRO_GFX
-    //    DEBUG ("thebes\n");
+    //    SPEW ("thebes\n");
     gfxXlibSurface *xlib_surf = new gfxXlibSurface (mXDisplay, mXDrawable, mXVisual);
 
     gfxContext* ctx = (gfxContext*) rc->GetNativeGraphicData (

@@ -3,6 +3,7 @@
 #define MOZILLA_INTERNAL_API
 
 #include "compzillaWindow.h"
+#include "nsKeycodes.h"
 
 #include <nsIDOMEventTarget.h>
 #include <nsICanvasElement.h>
@@ -21,11 +22,12 @@ extern "C" {
 #include <X11/extensions/Xevie.h>
 #endif
 
+#include <gdk/gdkkeys.h>
 extern uint32 gtk_get_current_event_time (void);
 }
 
 
-#define DEBUG(format...) printf("   - " format)
+#define SPEW(format...) printf("   - " format)
 #define INFO(format...) printf(" *** " format)
 #define WARNING(format...) printf(" !!! " format)
 #define ERROR(format...) fprintf(stderr, format)
@@ -70,7 +72,7 @@ compzillaWindow::compzillaWindow(Display *display, Window win)
 
 compzillaWindow::~compzillaWindow()
 {
-    WARNING ("compzillaWindow::~compzillaWindow %p, xid=%p\n", this, mWindow);
+    SPEW ("compzillaWindow::~compzillaWindow %p, xid=%p\n", this, mWindow);
 
     // Don't send events
     // FIXME: This crashes for some reason
@@ -207,11 +209,57 @@ compzillaWindow::HandleEvent (nsIDOMEvent* aDOMEvent)
         nsCOMPtr<nsIDOMEventTarget> target;
         aDOMEvent->GetTarget (getter_AddRefs (target));
 
-        WARNING ("compzillaWindow::HandleEvent: unhandled type=%s, target=%p!!!\n", 
-                 cdata, target.get ());
+        SPEW ("compzillaWindow::HandleEvent: unhandled type=%s, target=%p!!!\n", 
+              cdata, target.get ());
     }
 
     return NS_OK;
+}
+
+
+/*
+ * Do the reverse of nsGtkEventHandler.cpp:nsPlatformToDOMKeyCode...
+ */
+unsigned int
+compzillaWindow::DOMKeyCodeToKeySym (PRUint32 vkCode)
+{
+    int i, length = 0;
+
+    // since X has different key symbols for upper and lowercase letters and
+    // mozilla does not, just use uppercase for now.
+    if (vkCode >= nsIDOMKeyEvent::DOM_VK_A && vkCode <= nsIDOMKeyEvent::DOM_VK_Z)
+        return vkCode - nsIDOMKeyEvent::DOM_VK_A + GDK_A;
+
+    // numbers
+    if (vkCode >= nsIDOMKeyEvent::DOM_VK_0 && vkCode <= nsIDOMKeyEvent::DOM_VK_9)
+        return vkCode - nsIDOMKeyEvent::DOM_VK_0 + GDK_0;
+
+    // keypad numbers
+    if (vkCode >= nsIDOMKeyEvent::DOM_VK_NUMPAD0 && vkCode <= nsIDOMKeyEvent::DOM_VK_NUMPAD9)
+        return vkCode - nsIDOMKeyEvent::DOM_VK_NUMPAD0 + GDK_KP_0;
+
+    // map Sun Keyboard special keysyms
+    if (IS_XSUN_XSERVER(mDisplay)) {
+        length = sizeof(nsSunKeycodes) / sizeof(struct nsKeyConverter);
+        for (i = 0; i < length; i++) {
+            if (nsSunKeycodes[i].vkCode == vkCode) {
+                return nsSunKeycodes[i].keysym;
+            }
+        }
+    }
+
+    // misc other things
+    length = sizeof(nsKeycodes) / sizeof(struct nsKeyConverter);
+    for (i = 0; i < length; i++) {
+        if (nsKeycodes[i].vkCode == vkCode) {
+            return nsKeycodes[i].keysym;
+        }
+    }
+
+    if (vkCode >= nsIDOMKeyEvent::DOM_VK_F1 && vkCode <= nsIDOMKeyEvent::DOM_VK_F24)
+        return vkCode - nsIDOMKeyEvent::DOM_VK_F1 + GDK_F1;
+
+    return 0;
 }
 
 
@@ -221,7 +269,6 @@ compzillaWindow::SendKeyEvent (int eventType, nsIDOMKeyEvent *keyEv)
     DOMTimeStamp timestamp;
     PRBool ctrl, shift, alt, meta;
     int state = 0;
-    PRUint32 keycode;
 
     keyEv->GetTimeStamp (&timestamp);
     if (!timestamp) {
@@ -246,7 +293,42 @@ compzillaWindow::SendKeyEvent (int eventType, nsIDOMKeyEvent *keyEv)
         state |= Mod2Mask;
     }
 
+    PRUint32 keycode;
     keyEv->GetKeyCode (&keycode);
+
+    unsigned int xkeysym = DOMKeyCodeToKeySym (keycode);
+    SPEW ("compzillaWindow::SendKeyEvent: DOMKeyCodeToKeySym keycode=%d, keysym=%d\n", 
+          keycode, xkeysym);
+
+#ifdef USE_GDK_KEYMAP
+    // FIXME: There's probably some annoying reason, like XKB, we need to use 
+    //        the GDK version.  But for now I'm in denial.
+    GdkKeymapKey *keys = NULL;
+    int n_keys = 0;
+    if (!gdk_keymap_get_entries_for_keyval (gdk_keymap_get_for_display (gdk_display_get_default ()),
+                                            xkeysym,
+                                            &keys,
+                                            &n_keys)) {
+        ERROR ("Unknown keyval '%d' ignored.", xkeysym);
+        return;
+    }
+
+    unsigned int xkeycode = 0;
+    for (int i = 0; i < n_keys; i++) {
+        if (keys [i].keycode) {
+            xkeycode = keys [i].keycode;
+            break;
+        }
+    }
+    g_free (keys);
+
+    SPEW ("compzillaWindow::SendKeyEvent: gdk_keymap_get_entries_for_keyval keysym=%p, "
+          "keycode=%p\n", xkeysym, xkeycode);
+#else
+    unsigned int xkeycode = XKeysymToKeycode (mDisplay, xkeysym);
+    SPEW ("compzillaWindow::SendKeyEvent: XKeysymToKeycode keysym=%d, keycode=%d\n", 
+          xkeysym, xkeycode);
+#endif
 
     // Build up the XEvent we will send
     XEvent xev = { 0 };
@@ -257,8 +339,7 @@ compzillaWindow::SendKeyEvent (int eventType, nsIDOMKeyEvent *keyEv)
     xev.xkey.root = mAttr.root;
     xev.xkey.time = timestamp;
     xev.xkey.state = state;
-    //xev.xkey.keycode = keycode;
-    xev.xkey.keycode = 42;
+    xev.xkey.keycode = xkeycode;
     xev.xkey.same_screen = True;
 
     // Figure out who to send to
@@ -276,9 +357,9 @@ compzillaWindow::SendKeyEvent (int eventType, nsIDOMKeyEvent *keyEv)
         return;
     }
 
-    WARNING ("compzillaWindow::SendKeyEvent: XSendEvent win=%p, child=%p, state=%p, "
-             "keycode=%u, timestamp=%d\n", 
-             mWindow, mWindow, state, keycode, timestamp);
+    SPEW ("compzillaWindow::SendKeyEvent: win=%p, child=%p, state=%p, keycode=%u, "
+          "timestamp=%d\n", 
+          mWindow, mWindow, state, xkeycode, timestamp);
 
     XSendEvent (mDisplay, mWindow, True, xevMask, &xev);
 
@@ -294,8 +375,6 @@ compzillaWindow::KeyDown (nsIDOMEvent* aDOMEvent)
     NS_ASSERTION (keyEv, "Invalid key event");
 
     SendKeyEvent (_KeyPress, keyEv);
-
-    WARNING ("compzillaWindow::KeyDown: Handled\n");
     return NS_OK;
 }
 
@@ -307,8 +386,6 @@ compzillaWindow::KeyUp (nsIDOMEvent* aDOMEvent)
     NS_ASSERTION (keyEv, "Invalid key event");
 
     SendKeyEvent (KeyRelease, keyEv);
-
-    WARNING ("compzillaWindow::KeyUp: Handled\n");
     return NS_OK;
 }
 
@@ -316,7 +393,7 @@ compzillaWindow::KeyUp (nsIDOMEvent* aDOMEvent)
 NS_IMETHODIMP
 compzillaWindow::KeyPress(nsIDOMEvent* aDOMEvent)
 {
-    WARNING ("compzillaWindow::KeyPress: Ignored!!!\n");
+    SPEW ("compzillaWindow::KeyPress: Ignored!!!\n");
     return NS_ERROR_NOT_IMPLEMENTED;
 }
 
@@ -329,7 +406,8 @@ compzillaWindow::TranslateClientXYToWindow (int *x, int *y)
 	return;
     }
 
-    // FIXME: This is probably broken and not robust
+    // FIXME: This is probably broken and not robust.  Need to adjust x,y for
+    //        current cairo transform.
 
     nsIFrame *frame;
     canvasElement->GetPrimaryCanvasFrame (&frame);
@@ -531,9 +609,11 @@ compzillaWindow::SendMouseEvent (int eventType, nsIDOMMouseEvent *mouseEv, bool 
 	return;
     }
 
-    DEBUG ("compzillaWindow::SendMouseEvent: XSendEvent win=%p, child=%p, x=%d, y=%d, state=%p, "
-           "button=%u, timestamp=%d\n", 
-	   mWindow, destChild, x, y, state, button + 1, timestamp);
+#if DEBUG
+    SPEW ("compzillaWindow::SendMouseEvent: win=%p, child=%p, x=%d, y=%d, state=%p, "
+          "button=%u, timestamp=%d\n", 
+          mWindow, destChild, x, y, state, button + 1, timestamp);
+#endif
 
     XSendEvent (mDisplay, destChild, True, xevMask, &xev);
     //XevieSendEvent(mDisplay, &xev, XEVIE_MODIFIED);
@@ -550,10 +630,9 @@ NS_IMETHODIMP
 compzillaWindow::MouseDown (nsIDOMEvent* aDOMEvent)
 {
     nsCOMPtr<nsIDOMMouseEvent> mouseEv = do_QueryInterface (aDOMEvent);
+    NS_ASSERTION (mouseEv, "Invalid mouse event");
+
     SendMouseEvent (ButtonPress, mouseEv);
-
-    WARNING ("compzillaWindow::MouseDown: Handled\n");
-
     return NS_OK;
 }
 
@@ -562,8 +641,9 @@ NS_IMETHODIMP
 compzillaWindow::MouseUp (nsIDOMEvent* aDOMEvent)
 {
     nsCOMPtr<nsIDOMMouseEvent> mouseEv = do_QueryInterface (aDOMEvent);
+    NS_ASSERTION (mouseEv, "Invalid mouse event");
+
     SendMouseEvent (ButtonRelease, mouseEv);
-    WARNING ("compzillaWindow::MouseUp: Handled\n");
     return NS_OK;
 }
 
@@ -571,7 +651,7 @@ compzillaWindow::MouseUp (nsIDOMEvent* aDOMEvent)
 NS_IMETHODIMP
 compzillaWindow::MouseClick (nsIDOMEvent* aDOMEvent)
 {
-    WARNING ("compzillaWindow::MouseClick: Ignored\n");
+    SPEW ("compzillaWindow::MouseClick: Ignored\n");
     return NS_ERROR_NOT_IMPLEMENTED;
 }
 
@@ -579,7 +659,7 @@ compzillaWindow::MouseClick (nsIDOMEvent* aDOMEvent)
 NS_IMETHODIMP
 compzillaWindow::MouseDblClick (nsIDOMEvent* aDOMEvent)
 {
-    WARNING ("compzillaWindow::MouseDblClick: Ignored\n");
+    SPEW ("compzillaWindow::MouseDblClick: Ignored\n");
     return NS_ERROR_NOT_IMPLEMENTED;
 }
 
@@ -588,8 +668,9 @@ NS_IMETHODIMP
 compzillaWindow::MouseOver (nsIDOMEvent* aDOMEvent)
 {
     nsCOMPtr<nsIDOMMouseEvent> mouseEv = do_QueryInterface (aDOMEvent);
+    NS_ASSERTION (mouseEv, "Invalid mouse event");
+
     SendMouseEvent (EnterNotify, mouseEv);
-    WARNING ("compzillaWindow::MouseOver: Handled\n");
     return NS_OK;
 }
 
@@ -598,8 +679,9 @@ NS_IMETHODIMP
 compzillaWindow::MouseOut (nsIDOMEvent* aDOMEvent)
 {
     nsCOMPtr<nsIDOMMouseEvent> mouseEv = do_QueryInterface (aDOMEvent);
+    NS_ASSERTION (mouseEv, "Invalid mouse event");
+
     SendMouseEvent (LeaveNotify, mouseEv);
-    WARNING ("compzillaWindow::MouseOut: Handled\n");
     return NS_OK;
 }
 
@@ -607,7 +689,7 @@ compzillaWindow::MouseOut (nsIDOMEvent* aDOMEvent)
 NS_IMETHODIMP
 compzillaWindow::Activate (nsIDOMEvent* aDOMEvent)
 {
-    WARNING ("compzillaWindow::Activate: W00T!!!\n");
+    SPEW ("compzillaWindow::Activate: W00T!!!\n");
     return NS_ERROR_NOT_IMPLEMENTED;
 }
 
@@ -615,7 +697,7 @@ compzillaWindow::Activate (nsIDOMEvent* aDOMEvent)
 NS_IMETHODIMP
 compzillaWindow::FocusIn (nsIDOMEvent* aDOMEvent)
 {
-    WARNING ("compzillaWindow::FocusIn: win=%p\n", mWindow);
+    SPEW ("compzillaWindow::FocusIn: win=%p\n", mWindow);
 
     XEvent xev = { 0 };
     xev.xfocus.type = _FocusIn;
@@ -635,7 +717,7 @@ compzillaWindow::FocusIn (nsIDOMEvent* aDOMEvent)
 NS_IMETHODIMP
 compzillaWindow::FocusOut (nsIDOMEvent* aDOMEvent)
 {
-    WARNING ("compzillaWindow::FocusOut: win=%p\n", mWindow);
+    SPEW ("compzillaWindow::FocusOut: win=%p\n", mWindow);
 
     XEvent xev = { 0 };
     xev.xfocus.type = _FocusOut;
@@ -656,9 +738,9 @@ void
 compzillaWindow::OnMouseMove (nsIDOMEvent *aDOMEvent)
 {
     nsCOMPtr<nsIDOMMouseEvent> mouseEv = do_QueryInterface (aDOMEvent);
-    SendMouseEvent (MotionNotify, mouseEv);
+    NS_ASSERTION (mouseEv, "Invalid mouse event");
 
-    WARNING ("compzillaWindow::OnMouseMove: mouseEv=%p\n", mouseEv.get());
+    SendMouseEvent (MotionNotify, mouseEv);
 }
 
 
@@ -666,8 +748,9 @@ void
 compzillaWindow::OnDOMMouseScroll (nsIDOMEvent *aDOMEvent)
 {
     nsCOMPtr<nsIDOMMouseEvent> mouseEv = do_QueryInterface (aDOMEvent);
+    NS_ASSERTION (mouseEv, "Invalid mouse event");
 
-    WARNING ("compzillaWindow::OnDOMMouseScroll: mouseEv=%p\n", mouseEv.get());
+    SPEW ("compzillaWindow::OnDOMMouseScroll: mouseEv=%p\n", mouseEv.get());
 
     // NOTE: We don't receive events if them if a modifier key is down with
     //       Mozilla 1.8.

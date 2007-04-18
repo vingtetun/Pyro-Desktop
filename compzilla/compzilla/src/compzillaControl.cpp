@@ -40,7 +40,7 @@ extern "C" {
 }
 
 
-#define DEBUG(format...) printf("   - " format)
+#define SPEW(format...) printf("   - " format)
 #define INFO(format...) printf(" *** " format)
 #define WARNING(format...) printf(" !!! " format)
 #define ERROR(format...) fprintf(stderr, format)
@@ -111,8 +111,8 @@ compzillaControl::GetNativeWindow(nsIDOMWindow *window)
         GdkWindow *iframe = (GdkWindow *)widget->GetNativeData (NS_NATIVE_WINDOW);
         GdkWindow *toplevel = gdk_window_get_toplevel (iframe);
 
-        DEBUG ("GetNativeWindow: toplevel=0x%0x, iframe=0x%0x\n", 
-               GDK_DRAWABLE_XID (toplevel), GDK_DRAWABLE_XID (iframe));
+        SPEW ("GetNativeWindow: toplevel=0x%0x, iframe=0x%0x\n", 
+              GDK_DRAWABLE_XID (toplevel), GDK_DRAWABLE_XID (iframe));
         return toplevel;
     }
 
@@ -177,7 +177,7 @@ compzillaControl::RegisterWindowManager(nsIDOMWindow *window, compzillaIWindowMa
     Display *dpy;
     nsresult rv = NS_OK;
 
-    DEBUG ("RegisterWindowManager\n");
+    SPEW ("RegisterWindowManager\n");
 
     mDOMWindow = window;
     mWM = wm;
@@ -225,7 +225,7 @@ compzillaControl::InternAtom (const char *property, PRUint32 *value)
 NS_IMETHODIMP
 compzillaControl::GetStringProperty (PRUint32 xid, PRUint32 prop, nsAString& value)
 {
-    DEBUG ("GetStringProperty (prop = %s)\n", XGetAtomName (mXDisplay, prop));
+    SPEW ("GetStringProperty (prop = %s)\n", XGetAtomName (mXDisplay, prop));
 
     Atom actual_type;
     int format;
@@ -243,7 +243,7 @@ compzillaControl::GetStringProperty (PRUint32 xid, PRUint32 prop, nsAString& val
     // property to utf8).
     value = NS_ConvertASCIItoUTF16 ((const char*)data);
 
-    DEBUG (" + %s\n", data);
+    SPEW (" + %s\n", data);
 
     return NS_OK;
 }
@@ -252,7 +252,7 @@ compzillaControl::GetStringProperty (PRUint32 xid, PRUint32 prop, nsAString& val
 NS_IMETHODIMP
 compzillaControl::GetAtomProperty (PRUint32 xid, PRUint32 prop, PRUint32* value)
 {
-    DEBUG ("GetAtomProperty (prop = %s)\n", XGetAtomName (mXDisplay, prop));
+    SPEW ("GetAtomProperty (prop = %s)\n", XGetAtomName (mXDisplay, prop));
 
     Atom actual_type;
     int format;
@@ -333,7 +333,7 @@ compzillaControl::InitWindowState ()
 bool
 compzillaControl::InitManagerWindow ()
 {
-    DEBUG ("InitManagerWindow\n");
+    SPEW ("InitManagerWindow\n");
 
     XSetWindowAttributes attrs;
 
@@ -633,7 +633,7 @@ compzillaControl::Filter (GdkXEvent *xevent, GdkEvent *event)
 
     switch (x11_event->type) {
     case CreateNotify: {
-        DEBUG ("CreateNotify: window=0x%0x, x=%d, y=%d, width=%d, height=%d, override=%d\n",
+        SPEW ("CreateNotify: window=0x%0x, x=%d, y=%d, width=%d, height=%d, override=%d\n",
                x11_event->xcreatewindow.window,
                x11_event->xcreatewindow.x,
                x11_event->xcreatewindow.y,
@@ -650,7 +650,7 @@ compzillaControl::Filter (GdkXEvent *xevent, GdkEvent *event)
         break;
     }
     case DestroyNotify: {
-        DEBUG ("DestroyNotify: window=0x%0x\n", x11_event->xdestroywindow.window);
+        SPEW ("DestroyNotify: window=0x%0x\n", x11_event->xdestroywindow.window);
 
         DestroyWindow (x11_event->xdestroywindow.window);
         break;
@@ -664,7 +664,7 @@ compzillaControl::Filter (GdkXEvent *xevent, GdkEvent *event)
                            x11_event->xconfigurerequest.height);
         break;
     case ConfigureNotify: {
-        DEBUG ("ConfigureNotify: window=%p, x=%d, y=%d, width=%d, height=%d, override=%d\n",
+        SPEW ("ConfigureNotify: window=%p, x=%d, y=%d, width=%d, height=%d, override=%d\n",
                x11_event->xconfigure.window,
                x11_event->xconfigure.x,
                x11_event->xconfigure.y,
@@ -689,7 +689,7 @@ compzillaControl::Filter (GdkXEvent *xevent, GdkEvent *event)
         break;
     }
     case ReparentNotify: {
-        DEBUG ("ReparentNotify: window=%p, parent=%p, x=%d, y=%d, override_redirect=%d\n",
+        SPEW ("ReparentNotify: window=%p, parent=%p, x=%d, y=%d, override_redirect=%d\n",
                 x11_event->xreparent.window,
                 x11_event->xreparent.parent,
                 x11_event->xreparent.x,
@@ -726,20 +726,20 @@ compzillaControl::Filter (GdkXEvent *xevent, GdkEvent *event)
         XMapRaised (mXDisplay, x11_event->xmaprequest.window);
         break;
     case MapNotify: {
-        DEBUG ("MapNotify: window=0x%0x, override=%d\n", x11_event->xmap.window, 
+        SPEW ("MapNotify: window=0x%0x, override=%d\n", x11_event->xmap.window, 
                x11_event->xmap.override_redirect);
 
         MapWindow (x11_event->xmap.window);
         break;
     }
     case UnmapNotify: {
-        DEBUG ("UnmapNotify: window=0x%0x\n", x11_event->xunmap.window);
+        SPEW ("UnmapNotify: window=0x%0x\n", x11_event->xunmap.window);
 
         UnmapWindow (x11_event->xunmap.window);
         break;
     }
     case PropertyNotify: {
-        DEBUG ("PropertyChange: window=0x%0x, atom=%s\n", 
+        SPEW ("PropertyChange: window=0x%0x, atom=%s\n", 
                x11_event->xproperty.window, 
                XGetAtomName(x11_event->xany.display, x11_event->xproperty.atom));
         PropertyChanged (x11_event->xproperty.window, x11_event->xproperty.atom);
@@ -752,26 +752,26 @@ compzillaControl::Filter (GdkXEvent *xevent, GdkEvent *event)
     case MotionNotify: {
         switch (x11_event->type) {
         case _KeyPress:
-            DEBUG ("KeyPress: window=0x%0x, state=%d, keycode=%d\n", 
+            SPEW ("KeyPress: window=0x%0x, state=%d, keycode=%d\n", 
                    x11_event->xkey.window, x11_event->xkey.state, x11_event->xkey.keycode);
             break;
         case KeyRelease:
-            DEBUG ("KeyRelease: window=0x%0x, state=%d, keycode=%d\n", 
+            SPEW ("KeyRelease: window=0x%0x, state=%d, keycode=%d\n", 
                    x11_event->xkey.window, x11_event->xkey.state, x11_event->xkey.keycode);
             break;
         case ButtonPress:
-            DEBUG ("ButtonPress: window=%p, x=%d, y=%d, x_root=%d, y_root=%d, button=%d\n", 
+            SPEW ("ButtonPress: window=%p, x=%d, y=%d, x_root=%d, y_root=%d, button=%d\n", 
                    x11_event->xbutton.window, x11_event->xbutton.x, x11_event->xbutton.y,
                    x11_event->xbutton.x_root, x11_event->xbutton.y_root,
                    x11_event->xbutton.button);
             break;
         case ButtonRelease:
-            DEBUG ("ButtonRelease: window=0x%0x, x=%d, y=%d, button=%d\n", 
+            SPEW ("ButtonRelease: window=0x%0x, x=%d, y=%d, button=%d\n", 
                    x11_event->xbutton.window, x11_event->xbutton.x, x11_event->xbutton.y,
                    x11_event->xbutton.button);
             break;
         case MotionNotify:
-            DEBUG ("MotionNotify: window=0x%0x, x=%d, y=%d, state=%d\n", 
+            SPEW ("MotionNotify: window=0x%0x, x=%d, y=%d, state=%d\n", 
                    x11_event->xmotion.window, x11_event->xmotion.x, x11_event->xmotion.y, 
                    x11_event->xmotion.state);
             break;
@@ -802,23 +802,25 @@ compzillaControl::Filter (GdkXEvent *xevent, GdkEvent *event)
         break;
     }
     case Expose:
-        NS_NOTREACHED ("Expose event");
+        ERROR ("Expose event win=%p\n", x11_event->xexpose.window);
         break;
     default:
         if (x11_event->type == damage_event + XDamageNotify) {
             XDamageNotifyEvent *damage_ev = (XDamageNotifyEvent *) x11_event;
 
-            DEBUG ("DAMAGE: drawable=%p, x=%d, y=%d, width=%d, height=%d\n", 
-                   damage_ev->drawable, damage_ev->area.x, damage_ev->area.y, 
-                   damage_ev->area.width, damage_ev->area.height);
+            SPEW ("DAMAGE: drawable=%p, x=%d, y=%d, width=%d, height=%d\n", 
+                  damage_ev->drawable, damage_ev->area.x, damage_ev->area.y, 
+                  damage_ev->area.width, damage_ev->area.height);
 
             WindowDamaged (damage_ev->drawable, &damage_ev->area);
+
+            return GDK_FILTER_REMOVE;
         }
         else if (x11_event->type == shape_event + ShapeNotify) {
             NS_NOTYETIMPLEMENTED ("ShapeNotify event");
         }
         else {
-            WARNING ("Unhandled window event %d\n", x11_event->type);
+            ERROR ("Unhandled window event %d\n", x11_event->type);
         }
         break;
     }
