@@ -7,7 +7,10 @@
 
 #include "compzillaIRenderingContext.h"
 
-#include "cairo.h"
+extern "C" {
+#include <cairo.h>
+#include <X11/Xlib.h>
+}
 
 
 // {fa62d345-f608-47eb-9401-533984cfd471}

@@ -57,7 +57,7 @@ var CompzillaState = {
 
 function Debug (str)
 {
-//   CompzillaState.debugContent.innerHTML += str + "<br>";
+   CompzillaState.debugContent.innerHTML = str + "<br>" + CompzillaState.debugContent.innerHTML;
 }
 
 function WindowStack ()
@@ -241,6 +241,8 @@ WindowStack.prototype =
 
     this.removeWindow (w);
     this.addWindowToLayer (w, l);
+
+    w.content.focus();
  },
 };
 
@@ -264,6 +266,7 @@ CompzillaWindowManager.prototype =
     var content = this.document.createElement ("canvas");
 
     content.className = "content";
+    content.tabIndex = "1";
 
     /* start out without a frame, we'll attach it in a sec */
     content.style.visibility = "hidden";
@@ -278,6 +281,8 @@ CompzillaWindowManager.prototype =
 
     this.MoveElementTo (content.chrome, x, y);
     this.ResizeElementTo (content.chrome, width, height);
+
+    content.focus();
 
     return content;
  },

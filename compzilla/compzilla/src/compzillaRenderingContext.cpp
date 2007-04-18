@@ -2,9 +2,6 @@
 
 #define MOZILLA_INTERNAL_API
 
-#include <X11/Xlib.h>
-#include <X11/extensions/Xrender.h>
-
 #include "prmem.h"
 #include "prlog.h"
 
@@ -87,11 +84,10 @@ compzillaRenderingContext::SetDimensions (PRInt32 width, PRInt32 height)
 nsIFrame*
 compzillaRenderingContext::GetCanvasLayoutFrame()
 {
-    if (!mCanvasElement)
-        return nsnull;
-
     nsIFrame *fr = nsnull;
-    mCanvasElement->GetPrimaryCanvasFrame(&fr);
+    if (mCanvasElement) {
+        mCanvasElement->GetPrimaryCanvasFrame(&fr);
+    }
     return fr;
 }
 

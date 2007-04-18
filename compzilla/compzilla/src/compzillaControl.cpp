@@ -30,6 +30,7 @@ extern "C" {
 #include <X11/Xatom.h>
 #include <X11/extensions/shape.h>
 #include <X11/extensions/Xcomposite.h>
+#include <X11/extensions/Xrender.h>
 
 #define HAVE_XEVIE 0
 #define HAVE_XEVIE_WRITEONLY 0
@@ -339,6 +340,9 @@ compzillaControl::InitManagerWindow ()
     attrs.override_redirect = True;
     attrs.event_mask = PropertyChangeMask;
   
+    // FIXME: Do this for each screen, and don't kill existing WMs.  See
+    //        compiz's display.c:addDisplay.
+
     mManagerWindow = XCreateWindow (mXDisplay,
                                     GDK_WINDOW_XID (mRoot),
                                     -100, -100, 1, 1,
@@ -398,6 +402,8 @@ compzillaControl::InitOutputWindow ()
 
     // Put the our window into the overlay
     XReparentWindow (mXDisplay, GDK_DRAWABLE_XID (mMainwin), mOverlay, 0, 0);
+
+    XSetInputFocus (mXDisplay, GDK_DRAWABLE_XID (mMainwin), RevertToPointerRoot, CurrentTime);
 
     ShowOutputWindow ();
 

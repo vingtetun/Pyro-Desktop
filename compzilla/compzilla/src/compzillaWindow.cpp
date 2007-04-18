@@ -15,6 +15,7 @@
 
 extern "C" {
 #include <stdio.h>
+#include <X11/extensions/shape.h>
 #include <X11/extensions/Xcomposite.h>
 #if HAVE_XEVIE
 #include <X11/extensions/Xevie.h>
@@ -59,9 +60,11 @@ compzillaWindow::compzillaWindow(Display *display, Window win)
     // Redirect output entirely
     XCompositeRedirectWindow (display, win, CompositeRedirectManual);
 
-    XSelectInput(display, win, (PropertyChangeMask | EnterWindowMask | FocusChangeMask));
+    // Compiz selects only these.  Need more?
+    XSelectInput (display, win, (PropertyChangeMask | EnterWindowMask | FocusChangeMask));
+    XShapeSelectInput (display, win, ShapeNotifyMask);
 
-    EnsurePixmap();
+    EnsurePixmap ();
 }
 
 
@@ -82,6 +85,15 @@ compzillaWindow::~compzillaWindow()
     if (mPixmap) {
         XFreePixmap(mDisplay, mPixmap);
     }
+
+    /* 
+     * This is the only case where a window is removed but not
+     * destroyed. We must remove our event mask and all passive
+     * grabs.  -- compiz
+     */
+    XSelectInput (mDisplay, mWindow, NoEventMask);
+    XShapeSelectInput (mDisplay, mWindow, NoEventMask);
+    XUngrabButton (mDisplay, AnyButton, AnyModifier, mWindow);
 }
 
 
@@ -109,7 +121,7 @@ compzillaWindow::ConnectListeners (bool connect)
 	// NOTE: These aren't delivered due to WM focus issues currently
 	"keydown",
 	"keyup",
-	"keypress",
+	//"keypress",
 
 	// nsIDOMMouseListener events
 	"mousedown",
@@ -117,11 +129,11 @@ compzillaWindow::ConnectListeners (bool connect)
 	"mouseover",
 	"mouseout",
 	"mousein",
-	"click",
-	"dblclick",
+	//"click",
+	//"dblclick",
 
 	// nsIDOMUIListener events
-	"activate",
+	//"activate",
 	"focusin",
 	"focusout",
         "DOMFocusIn",
@@ -129,11 +141,17 @@ compzillaWindow::ConnectListeners (bool connect)
         "resize",
 
 	// HandleEvent events
+	"focus",
+	"blur",
 	"mousemove",
 	"DOMMouseScroll",
 
 	NULL
     };
+
+    if (!mContent) {
+	return;
+    }
 
     nsCOMPtr<nsIDOMEventTarget> target = do_QueryInterface (mContent);
     nsCOMPtr<nsIDOMEventListener> listener = 
@@ -172,50 +190,133 @@ NS_IMETHODIMP
 compzillaWindow::HandleEvent (nsIDOMEvent* aDOMEvent)
 {
     nsString type;
-    const PRUnichar *widedata;
     aDOMEvent->GetType (type);
     NS_LossyConvertUTF16toASCII ctype(type);
     const char *cdata;
     NS_CStringGetData (ctype, &cdata);
 
-    nsCOMPtr<nsIDOMEventTarget> target;
-    aDOMEvent->GetTarget (getter_AddRefs (target));
-
     if (strcmp (cdata, "mousemove") == 0) {
-        nsCOMPtr<nsIDOMMouseEvent> mouseEv = do_QueryInterface (aDOMEvent);
-        SendMouseEvent (MotionNotify, mouseEv);
+        OnMouseMove (aDOMEvent);
+    } else if (strcmp (cdata, "DOMMouseScroll") == 0) {
+        OnDOMMouseScroll (aDOMEvent);
+    } else if (strcmp (cdata, "focus") == 0) {
+        FocusIn (aDOMEvent);
+    } else if (strcmp (cdata, "blur") == 0) {
+        FocusOut (aDOMEvent);
     } else {
-        WARNING ("compzillaWindow::HandleEvent: type=%s, target=%p!!!\n", cdata, target.get ());
+        nsCOMPtr<nsIDOMEventTarget> target;
+        aDOMEvent->GetTarget (getter_AddRefs (target));
+
+        WARNING ("compzillaWindow::HandleEvent: unhandled type=%s, target=%p!!!\n", 
+                 cdata, target.get ());
     }
 
-    // Eat DOMMouseScroll events
-    aDOMEvent->StopPropagation ();
-    aDOMEvent->PreventDefault ();
-
     return NS_OK;
+}
+
+
+void
+compzillaWindow::SendKeyEvent (int eventType, nsIDOMKeyEvent *keyEv)
+{
+    DOMTimeStamp timestamp;
+    PRBool ctrl, shift, alt, meta;
+    int state = 0;
+    PRUint32 keycode;
+
+    keyEv->GetTimeStamp (&timestamp);
+    if (!timestamp) {
+        timestamp = gtk_get_current_event_time (); // CurrentTime;
+    }
+
+    keyEv->GetAltKey (&alt);
+    keyEv->GetCtrlKey (&ctrl);
+    keyEv->GetShiftKey (&shift);
+    keyEv->GetMetaKey (&meta);
+
+    if (ctrl) {
+        state |= ControlMask;
+    }
+    if (shift) {
+        state |= ShiftMask;
+    }
+    if (alt) {
+        state |= Mod1Mask;
+    }
+    if (meta) {
+        state |= Mod2Mask;
+    }
+
+    keyEv->GetKeyCode (&keycode);
+
+    // Build up the XEvent we will send
+    XEvent xev = { 0 };
+    xev.xkey.type = eventType;
+    xev.xkey.serial = 0;
+    xev.xkey.display = mDisplay;
+    xev.xkey.window = mWindow;
+    xev.xkey.root = mAttr.root;
+    xev.xkey.time = timestamp;
+    xev.xkey.state = state;
+    //xev.xkey.keycode = keycode;
+    xev.xkey.keycode = 42;
+    xev.xkey.same_screen = True;
+
+    // Figure out who to send to
+    long xevMask;
+
+    switch (eventType) {
+    case _KeyPress:
+	xevMask = KeyPressMask;
+	break;
+    case KeyRelease:
+	xevMask = KeyReleaseMask;
+	break;
+    default:
+        NS_NOTREACHED ("Unknown eventType");
+        return;
+    }
+
+    WARNING ("compzillaWindow::SendKeyEvent: XSendEvent win=%p, child=%p, state=%p, "
+             "keycode=%u, timestamp=%d\n", 
+             mWindow, mWindow, state, keycode, timestamp);
+
+    XSendEvent (mDisplay, mWindow, True, xevMask, &xev);
+
+    keyEv->StopPropagation ();
+    keyEv->PreventDefault ();
 }
 
 
 NS_IMETHODIMP
 compzillaWindow::KeyDown (nsIDOMEvent* aDOMEvent)
 {
-    WARNING ("compzillaWindow::KeyDown: W00T!!!\n");
-    return NS_ERROR_NOT_IMPLEMENTED;
+    nsCOMPtr<nsIDOMKeyEvent> keyEv = do_QueryInterface (aDOMEvent);
+    NS_ASSERTION (keyEv, "Invalid key event");
+
+    SendKeyEvent (_KeyPress, keyEv);
+
+    WARNING ("compzillaWindow::KeyDown: Handled\n");
+    return NS_OK;
 }
 
 
 NS_IMETHODIMP
 compzillaWindow::KeyUp (nsIDOMEvent* aDOMEvent)
 {
-    WARNING ("compzillaWindow::KeyUp: W00T!!!\n");
-    return NS_ERROR_NOT_IMPLEMENTED;
+    nsCOMPtr<nsIDOMKeyEvent> keyEv = do_QueryInterface (aDOMEvent);
+    NS_ASSERTION (keyEv, "Invalid key event");
+
+    SendKeyEvent (KeyRelease, keyEv);
+
+    WARNING ("compzillaWindow::KeyUp: Handled\n");
+    return NS_OK;
 }
 
 
 NS_IMETHODIMP
 compzillaWindow::KeyPress(nsIDOMEvent* aDOMEvent)
 {
-    WARNING ("compzillaWindow::KeyPress: W00T!!!\n");
+    WARNING ("compzillaWindow::KeyPress: Ignored!!!\n");
     return NS_ERROR_NOT_IMPLEMENTED;
 }
 
@@ -264,7 +365,7 @@ compzillaWindow::GetSubwindowAtPoint (int *x, int *y)
 
 
 void
-compzillaWindow::SendMouseEvent (int eventType, nsIDOMMouseEvent *mouseEv)
+compzillaWindow::SendMouseEvent (int eventType, nsIDOMMouseEvent *mouseEv, bool isScroll)
 {
     DOMTimeStamp timestamp;
     PRUint16 button;
@@ -285,6 +386,21 @@ compzillaWindow::SendMouseEvent (int eventType, nsIDOMMouseEvent *mouseEv)
     TranslateClientXYToWindow (&x, &y);
 
     mouseEv->GetButton (&button);
+
+    if (isScroll) {
+        /* 
+         * For button down/up GetDetail is the number of clicks.  For
+         * DOMMouseScroll, it's the scroll amount as +3/-3.
+         */
+        PRInt32 evDetail = 0;
+        mouseEv->GetDetail (&evDetail);
+
+        if (evDetail < 0) {
+            button = 3; // Turns into button 4
+        } else if (evDetail > 0) {
+            button = 4; // Turns into button 5
+        }
+    }
 
     mouseEv->GetCtrlKey (&ctrl);
     mouseEv->GetShiftKey (&shift);
@@ -366,7 +482,7 @@ compzillaWindow::SendMouseEvent (int eventType, nsIDOMMouseEvent *mouseEv)
 	xev.xmotion.same_screen = True;
 	break;
     case EnterNotify:
-        XSetInputFocus (mDisplay, mWindow, RevertToParent, timestamp);
+        //XSetInputFocus (mDisplay, mWindow, RevertToParent, timestamp);
         // nobreak
     case LeaveNotify:
         xev.xcrossing.display = mDisplay;
@@ -383,7 +499,7 @@ compzillaWindow::SendMouseEvent (int eventType, nsIDOMMouseEvent *mouseEv)
 	xev.xcrossing.same_screen = True;
 	break;
     default:
-	ERROR ("compzillaWindow::SendMouseEvent: Unknown event type %d\n", eventType);
+        NS_NOTREACHED ("Unknown eventType");
 	return;
     }
 
@@ -410,6 +526,9 @@ compzillaWindow::SendMouseEvent (int eventType, nsIDOMMouseEvent *mouseEv)
     case LeaveNotify:
 	xevMask = LeaveWindowMask;
 	break;
+    default:
+        NS_NOTREACHED ("Unknown eventType");
+	return;
     }
 
     DEBUG ("compzillaWindow::SendMouseEvent: XSendEvent win=%p, child=%p, x=%d, y=%d, state=%p, "
@@ -420,8 +539,10 @@ compzillaWindow::SendMouseEvent (int eventType, nsIDOMMouseEvent *mouseEv)
     //XevieSendEvent(mDisplay, &xev, XEVIE_MODIFIED);
 
     // Stop processing event
-    mouseEv->StopPropagation ();
-    mouseEv->PreventDefault ();
+    if (eventType != MotionNotify) {
+        mouseEv->StopPropagation ();
+        mouseEv->PreventDefault ();
+    }
 }
 
 
@@ -450,7 +571,6 @@ compzillaWindow::MouseUp (nsIDOMEvent* aDOMEvent)
 NS_IMETHODIMP
 compzillaWindow::MouseClick (nsIDOMEvent* aDOMEvent)
 {
-    nsCOMPtr<nsIDOMMouseEvent> mouseEv = do_QueryInterface (aDOMEvent);
     WARNING ("compzillaWindow::MouseClick: Ignored\n");
     return NS_ERROR_NOT_IMPLEMENTED;
 }
@@ -459,7 +579,6 @@ compzillaWindow::MouseClick (nsIDOMEvent* aDOMEvent)
 NS_IMETHODIMP
 compzillaWindow::MouseDblClick (nsIDOMEvent* aDOMEvent)
 {
-    nsCOMPtr<nsIDOMMouseEvent> mouseEv = do_QueryInterface (aDOMEvent);
     WARNING ("compzillaWindow::MouseDblClick: Ignored\n");
     return NS_ERROR_NOT_IMPLEMENTED;
 }
@@ -496,14 +615,65 @@ compzillaWindow::Activate (nsIDOMEvent* aDOMEvent)
 NS_IMETHODIMP
 compzillaWindow::FocusIn (nsIDOMEvent* aDOMEvent)
 {
-    WARNING ("compzillaWindow::FocusIn: W00T!!!\n");
-    return NS_ERROR_NOT_IMPLEMENTED;
+    WARNING ("compzillaWindow::FocusIn: win=%p\n", mWindow);
+
+    XEvent xev = { 0 };
+    xev.xfocus.type = _FocusIn;
+    xev.xfocus.serial = 0;
+    xev.xfocus.display = mDisplay;
+    xev.xfocus.window = mWindow;
+    xev.xfocus.mode = NotifyNormal;
+    xev.xfocus.detail = NotifyAncestor;
+
+    // Send FocusIn (to toplevel, or child?)
+    XSendEvent (mDisplay, mWindow, True, FocusChangeMask, &xev);
+
+    return NS_OK;
 }
 
 
 NS_IMETHODIMP
 compzillaWindow::FocusOut (nsIDOMEvent* aDOMEvent)
 {
-    WARNING ("compzillaWindow::FocusOut: W00T!!!\n");
-    return NS_ERROR_NOT_IMPLEMENTED;
+    WARNING ("compzillaWindow::FocusOut: win=%p\n", mWindow);
+
+    XEvent xev = { 0 };
+    xev.xfocus.type = _FocusOut;
+    xev.xfocus.serial = 0;
+    xev.xfocus.display = mDisplay;
+    xev.xfocus.window = mWindow;
+    xev.xfocus.mode = NotifyNormal;
+    xev.xfocus.detail = NotifyAncestor;
+
+    // Send FocusOut (to toplevel, or child?)
+    XSendEvent (mDisplay, mWindow, True, FocusChangeMask, &xev);
+
+    return NS_OK;
+}
+
+
+void
+compzillaWindow::OnMouseMove (nsIDOMEvent *aDOMEvent)
+{
+    nsCOMPtr<nsIDOMMouseEvent> mouseEv = do_QueryInterface (aDOMEvent);
+    SendMouseEvent (MotionNotify, mouseEv);
+
+    WARNING ("compzillaWindow::OnMouseMove: mouseEv=%p\n", mouseEv.get());
+}
+
+
+void
+compzillaWindow::OnDOMMouseScroll (nsIDOMEvent *aDOMEvent)
+{
+    nsCOMPtr<nsIDOMMouseEvent> mouseEv = do_QueryInterface (aDOMEvent);
+
+    WARNING ("compzillaWindow::OnDOMMouseScroll: mouseEv=%p\n", mouseEv.get());
+
+    // NOTE: We don't receive events if them if a modifier key is down with
+    //       Mozilla 1.8.
+
+    SendMouseEvent (ButtonPress, mouseEv, true);
+
+    // DOMMouseScroll has no Release equivalent, so fake it.
+    SendMouseEvent (ButtonRelease, mouseEv, true);
 }

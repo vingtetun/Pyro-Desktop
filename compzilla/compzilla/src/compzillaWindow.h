@@ -1,6 +1,7 @@
 /* -*- mode: C++; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
 
 #include <nsCOMPtr.h>
+#include <nsIDOMKeyEvent.h>
 #include <nsIDOMKeyListener.h>
 #include <nsIDOMMouseEvent.h>
 #include <nsIDOMMouseListener.h>
@@ -9,7 +10,6 @@
 extern "C" {
 #include <X11/Xlib.h>
 #include <X11/extensions/Xdamage.h>
-#include <X11/extensions/Xrender.h>
 }
 
 
@@ -38,7 +38,6 @@ public:
 
     void EnsurePixmap ();
     void SetContent (nsCOMPtr<nsISupports> aContent);
-    void TranslateClientXYToWindow (int *x, int *y);
 
     // nsIDOMKeyListener
 
@@ -72,8 +71,12 @@ public:
     Window mLastEntered;
 
  private:
-    void SendMouseEvent (int eventType, nsIDOMMouseEvent *mouseEv);
+    void OnMouseMove (nsIDOMEvent* aDOMEvent);
+    void OnDOMMouseScroll (nsIDOMEvent* aDOMEvent);
+    void SendKeyEvent (int eventType, nsIDOMKeyEvent *keyEv);
+    void SendMouseEvent (int eventType, nsIDOMMouseEvent *mouseEv, bool isScroll = false);
     void ConnectListeners (bool connect);
+    void TranslateClientXYToWindow (int *x, int *y);
     Window GetSubwindowAtPoint (int *x, int *y);
 };
 
