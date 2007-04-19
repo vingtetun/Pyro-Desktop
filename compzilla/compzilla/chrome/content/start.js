@@ -13,6 +13,11 @@ function compzillaLoad()
    var desktop = document.getElementById ("desktop");
    wm.SetDocument (desktop.contentDocument);
 
+   var win = document.getElementById ("desktopWindow");
+
+   win.width = screen.width;
+   win.height = screen.height;
+
    // this will generates a call to compzillaWindowCreated for each window
    svc.RegisterWindowManager (window, wm);
 }

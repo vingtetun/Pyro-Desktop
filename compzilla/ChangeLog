@@ -1,3 +1,8 @@
+2007-04-19  Chris Toshok  <toshok@ximian.com>
+
+	* compzilla/chrome/content/start.js: resize the desktopWindow
+	element to the size of the screen.
+
 2007-04-18  Alex Graveley  <alex@beatniksoftware.com>
 
 	* compzilla/src/nsKeycodes.h: New file, copied nsKeycodes and
