@@ -9,8 +9,6 @@ body {
 
 .window {
 	position: absolute;
-	width: 10px;
-	height: 10px;
 	background: #777777;
 }
 
@@ -30,7 +28,7 @@ body {
 	background: #ffffff;
 	overflow: scroll;
 	font-family: Andale Mono, monospace;
-	font-size: 0.75em;
+	font-size: 0.50em;
 }
 
 .content {

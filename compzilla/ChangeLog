@@ -1,3 +1,64 @@
+2007-04-20  Chris Toshok  <toshok@ximian.com>
+
+	* compzilla/components/compzillaWindowManager.js (WindowCreated):
+	try to make sure the window is placed on screen, and deal with
+	windows which are already mapped when we find out about them.
+	(WindowConfigured): for the time being this is only ever called
+	from the ConfigureRequest handler, so we don't need to worry about
+	all the variety of cases metacity deals with in its horribly
+	overloaded window resize code.  Also, at the moment we honor all
+	requests, regardless of screen/window size.  So you can move
+	windows completely off the screen, resize them larger than the
+	screen, etc.  Since we're not changing the configure information,
+	we follow the ICCCM and send a synthetic ConfigureNotify back to
+	the client.
+	(DocumentMouseMove): since so many resize handles result in both
+	the window moving and resizing, make 1 call that does both (so we
+	can make 1 XConfigureWindow call in the native code instead of 2.)
+	(CreateWMChrome): clean this up a touch.  we don't need to both
+	removeChild/appendChild to reparent a dom element, appendChild
+	does both.
+	(MoveElementTo): send a real ConfigureNotify event.
+	(ResizeElementTo): same.
+	(ResizeElementBy): call MoveAndResizeElementBy with 0,0 for dx,dy.
+	(MoveElementBy): call MoveAndResizeElementBy with 0,0 for dw,dh.
+	(MoveAndResizeElementBy): both move and resize the element, and
+	generate 1 ConfigureNotify.
+
+	* compzilla/public/compzillaIWindowManager.idl: add a boolean
+	"mapped" arg to WindowCreated, so we can reflect the current state
+	of a window previously mapped (really only useful when adding
+	windows that were already created when we start up.)
+
+	* compzilla/src/compzillaControl.cpp: globally reindent the SPEW
+	lines.  Also, spew out the extension information as we query it.
+	(SendConfigureNotify): new interface implementation.  Send a
+	synthetic ConfigureNotify event.
+	(ConfigureWindow): new interface implementation.  Send a real
+	ConfigureNotify event.
+	(ShowOutputWindow): make our region the same size as the display.
+	(AddWindow): pass in a boolean telling the window manager if the
+	window is already mapped.
+	(Filter): we now do the WindowConfigured stuff in the
+	ConfigureRequest case, and ignore ConfigureNotify events.
+
+	* compzilla/public/compzillaIControl.idl: add two methods, one for
+	sending a synthetic ConfigureNotify (SendSyntheticNotify) and one
+	for actually configuring the window (ConfigureWindow).
+
+	* compzilla/chrome/skin/compzilla.css: remove the explicit
+	width/height from the .window class, and also make the debug spew
+	smaller.
+
+	* compzilla/src/compzillaWindow.cpp: add WITH_SPEW handling so we
+	can turn off the spew.
+
+	* compzilla/src/compzillaRenderingContext.cpp: add WITH_SPEW
+	handling so we can turn off the spew.
+
+	* compzilla/Makefile.am (libcompzilla_la_CPPFLAGS): add
+	-DWITH_SPEW.
+
 2007-04-19  Alex Graveley  <alex@beatniksoftware.com>
 
 	* compzilla/src/compzillaWindow.cpp (EnsurePixmap): Don't call

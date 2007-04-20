@@ -10,7 +10,8 @@ interface compzillaIWindowManager : nsISupports
                              in long x,
                              in long y,
                              in long width,
-                             in long height);
+                             in long height,
+                             in boolean mapped);
   void WindowDestroyed (in nsISupports win);
 
   void WindowMapped (in nsISupports win);

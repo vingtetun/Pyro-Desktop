@@ -26,12 +26,15 @@ extern "C" {
 extern uint32 gtk_get_current_event_time (void);
 }
 
-
+#if WITH_SPEW
 #define SPEW(format...) printf("   - " format)
+#else
+#define SPEW(format...)
+#endif
+
 #define INFO(format...) printf(" *** " format)
 #define WARNING(format...) printf(" !!! " format)
 #define ERROR(format...) fprintf(stderr, format)
-
 
 NS_IMPL_ADDREF(compzillaWindow)
 NS_IMPL_RELEASE(compzillaWindow)

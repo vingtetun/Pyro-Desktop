@@ -28,12 +28,15 @@
 #include "cairo-xlib-xrender.h"
 #endif
 
-
+#if WITH_SPEW
 #define SPEW(format...) printf("   - " format)
+#else
+#define SPEW(format...)
+#endif
+
 #define INFO(format...) printf(" *** " format)
 #define WARNING(format...) printf(" !!! " format)
 #define ERROR(format...) fprintf(stderr, format)
-
 
 NS_IMPL_ISUPPORTS3_CI (compzillaRenderingContext,
 		       compzillaIRenderingContext,
