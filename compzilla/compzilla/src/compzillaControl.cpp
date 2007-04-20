@@ -318,7 +318,14 @@ compzillaControl::SendConfigureNotify (PRUint32 xid,
     ev.xconfigure.above = None;
     ev.xconfigure.override_redirect = False; /* XXX */
 
-    SPEW ("SendConfigureNotify\n");
+    SPEW ("SendConfigureNotify (window=%p, x=%d, y=%d, width=%d, height=%d, border=%d, override=%d)\n",
+          ev.xconfigure.window,
+          ev.xconfigure.x,
+          ev.xconfigure.y,
+          ev.xconfigure.width,
+          ev.xconfigure.height,
+          ev.xconfigure.border_width,
+          ev.xconfigure.override_redirect);
 
     XSendEvent (mXDisplay, xid, False, StructureNotifyMask, &ev);
 }
@@ -776,12 +783,13 @@ compzillaControl::Filter (GdkXEvent *xevent, GdkEvent *event)
         break;
     }
     case ConfigureRequest: {
-        SPEW ("ConfigureRequest: window=%p, x=%d, y=%d, width=%d, height=%d, override=%d\n",
+        SPEW ("ConfigureRequest: window=%p, x=%d, y=%d, width=%d, height=%d, border=%d, override=%d\n",
               x11_event->xconfigure.window,
               x11_event->xconfigure.x,
               x11_event->xconfigure.y,
               x11_event->xconfigure.width,
               x11_event->xconfigure.height,
+              x11_event->xconfigure.border_width,
               x11_event->xconfigure.override_redirect);
 
         compzillaWindow *compwin = FindWindow (x11_event->xconfigure.window);

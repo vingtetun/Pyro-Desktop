@@ -316,11 +316,6 @@ CompzillaWindowManager.prototype =
 
     Debug ("window " + content.xid + " configured to " + width + ", " + height);
 
-    if (chrome_root != content) {
-       width += 2 * this.BorderSize + 2 * border;
-       height += 2 * this.BorderSize + 2 * border + this.TitleBarHeight + this.TitleContentGap;
-    }
-
     chrome_root.style.left = x;
     chrome_root.style.top = y;
 

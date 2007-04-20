@@ -1,5 +1,16 @@
 2007-04-20  Chris Toshok  <toshok@ximian.com>
 
+	* compzilla/src/compzillaControl.cpp (SendConfigureNotify): spew
+	out the configure info.
+	(Filter): print out the border_width of the request here too.
+
+	* compzilla/components/compzillaWindowManager.js:
+	(WindowConfigured): remove the addition to width/height here.
+	With it, gnome-terminal goes into an infinite loop requesting a
+	new size, growing all the time.  heh.
+
+2007-04-20  Chris Toshok  <toshok@ximian.com>
+
 	* compzilla/components/compzillaWindowManager.js (WindowCreated):
 	try to make sure the window is placed on screen, and deal with
 	windows which are already mapped when we find out about them.
