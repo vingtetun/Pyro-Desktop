@@ -61,13 +61,11 @@ public:
     NS_IMETHOD FocusOut (nsIDOMEvent* aDOMEvent);
 
     nsCOMPtr<nsISupports> mContent;
-    Window mWindow;
     Display *mDisplay;
+    Window mWindow;
     XWindowAttributes mAttr;
-    Damage mDamage;
     Pixmap mPixmap;
-    compzillaWindow *mFrame;
-
+    Damage mDamage;
     Window mLastEntered;
 
  private:

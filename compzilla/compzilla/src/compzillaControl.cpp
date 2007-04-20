@@ -49,6 +49,18 @@ NS_IMPL_ISUPPORTS1_CI(compzillaControl, compzillaIControl);
 
 
 int compzillaControl::sErrorCnt;
+int compzillaControl::composite_event;
+int compzillaControl::composite_error;
+int compzillaControl::xevie_event;
+int compzillaControl::xevie_error;
+int compzillaControl::damage_event;
+int compzillaControl::damage_error;
+int compzillaControl::xfixes_event;
+int compzillaControl::xfixes_error;
+int compzillaControl::shape_event;
+int compzillaControl::shape_error;
+int compzillaControl::render_event;
+int compzillaControl::render_error;
 
 
 compzillaControl::compzillaControl()
@@ -403,7 +415,8 @@ compzillaControl::InitOutputWindow ()
     // Put the our window into the overlay
     XReparentWindow (mXDisplay, GDK_DRAWABLE_XID (mMainwin), mOverlay, 0, 0);
 
-    XSetInputFocus (mXDisplay, GDK_DRAWABLE_XID (mMainwin), RevertToPointerRoot, CurrentTime);
+    // FIXME: This causes BadMatch errors, because we aren't mapped yet.
+    //XSetInputFocus (mXDisplay, GDK_DRAWABLE_XID (mMainwin), RevertToPointerRoot, CurrentTime);
 
     ShowOutputWindow ();
 
@@ -480,10 +493,51 @@ compzillaControl::HideOutputWindow()
 
 
 int 
-compzillaControl::ErrorHandler (Display *, XErrorEvent *)
+compzillaControl::ErrorHandler (Display *dpy, XErrorEvent *err)
 {
     sErrorCnt++;
-    ERROR ("\nGOT AN ERROR!!\n\n");
+
+    char str[128];
+    char *name = 0;
+    int  o;
+
+    XGetErrorDatabaseText (dpy, "XlibMessage", "XError", "", str, 128);
+    ERROR ("%s", str);
+
+    o = err->error_code - damage_error;
+    switch (o) {
+    case BadDamage:
+	name = "BadDamage";
+	break;
+    default:
+	break;
+    }
+
+    if (name) {
+        ERROR (": %s\n  ", name);
+    } else {
+	XGetErrorText (dpy, err->error_code, str, 128);
+	ERROR (": %s\n  ", str);
+    }
+
+    XGetErrorDatabaseText (dpy, "XlibMessage", "ResourceID", "%d", str, 128);
+    ERROR (str, err->resourceid);
+    ERROR ("\n  ");
+
+    XGetErrorDatabaseText (dpy, "XlibMessage", "MajorCode", "%d", str, 128);
+    ERROR (str, err->request_code);
+
+    sprintf (str, "%d", err->request_code);
+    XGetErrorDatabaseText (dpy, "XRequest", str, "", str, 128);
+    if (strcmp (str, "") != 0) {
+	ERROR (" (%s)", str);
+    }
+    ERROR ("\n  ");
+
+    XGetErrorDatabaseText (dpy, "XlibMessage", "MinorCode", "%d", str, 128);
+    ERROR (str, err->minor_code);
+    ERROR ("\n");
+
     return 0;
 }
 
@@ -808,9 +862,11 @@ compzillaControl::Filter (GdkXEvent *xevent, GdkEvent *event)
         if (x11_event->type == damage_event + XDamageNotify) {
             XDamageNotifyEvent *damage_ev = (XDamageNotifyEvent *) x11_event;
 
+#if 0
             SPEW ("DAMAGE: drawable=%p, x=%d, y=%d, width=%d, height=%d\n", 
                   damage_ev->drawable, damage_ev->area.x, damage_ev->area.y, 
                   damage_ev->area.width, damage_ev->area.height);
+#endif
 
             WindowDamaged (damage_ev->drawable, &damage_ev->area);
 

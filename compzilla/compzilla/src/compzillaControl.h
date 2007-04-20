@@ -72,10 +72,10 @@ private:
     nsCOMPtr<compzillaIWindowManager> mWM;
     nsClassHashtable<nsUint32HashKey, compzillaWindow> mWindowMap;
 
-    int		composite_event, composite_error;
-    int		xevie_event, xevie_error;
-    int		damage_event, damage_error;
-    int		xfixes_event, xfixes_error;
-    int		shape_event, shape_error;
-    int		render_event, render_error;
+    static int composite_event, composite_error;
+    static int xevie_event, xevie_error;
+    static int damage_event, damage_error;
+    static int xfixes_event, xfixes_error;
+    static int shape_event, shape_error;
+    static int render_event, render_error;
 };

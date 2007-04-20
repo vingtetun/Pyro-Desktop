@@ -1,3 +1,13 @@
+2007-04-19  Alex Graveley  <alex@beatniksoftware.com>
+
+	* compzilla/src/compzillaWindow.cpp (EnsurePixmap): Don't call
+	XDamageCreate until here, since it'll fail if we aren't mapped yet.
+
+	* compzilla/src/compzillaControl.cpp (ErrorHandler): Print error
+	info to the console.  This is mostly ripped from compiz.  Make the
+	X extension event and error results static so we can access them
+	from here.
+
 2007-04-19  Chris Toshok  <toshok@ximian.com>
 
 	* compzilla/chrome/content/start.js: resize the desktopWindow

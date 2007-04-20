@@ -48,16 +48,11 @@ compzillaWindow::compzillaWindow(Display *display, Window win)
     : mContent(),
       mDisplay(display),
       mWindow(win),
-      mPixmap(nsnull)
+      mPixmap(0),
+      mDamage(0),
+      mLastEntered(0)
 {
     NS_INIT_ISUPPORTS();
-
-    /* 
-     * Set up damage notification.  RawRectangles gives us smaller grain
-     * changes, versus NonEmpty which seems to always include the entire
-     * contents.
-     */
-    mDamage = XDamageCreate (display, win, XDamageReportRawRectangles);
 
     // Redirect output entirely
     XCompositeRedirectWindow (display, win, CompositeRedirectManual);
@@ -102,16 +97,26 @@ compzillaWindow::~compzillaWindow()
 void
 compzillaWindow::EnsurePixmap()
 {
-    if (!mPixmap) {
-        XGrabServer (mDisplay);
-
-        XGetWindowAttributes(mDisplay, mWindow, &mAttr);
-        if (mAttr.map_state == IsViewable) {
-            mPixmap = XCompositeNameWindowPixmap (mDisplay, mWindow);
-        }
-
-        XUngrabServer (mDisplay);
+    if (mPixmap) {
+        return;
     }
+
+    XGrabServer (mDisplay);
+
+    XGetWindowAttributes(mDisplay, mWindow, &mAttr);
+    if (mAttr.map_state == IsViewable) {
+        // Set up persistent offscreen window contents pixmap.
+        mPixmap = XCompositeNameWindowPixmap (mDisplay, mWindow);
+
+        /* 
+         * Set up damage notification.  RawRectangles gives us smaller grain
+         * changes, versus NonEmpty which seems to always include the entire
+         * contents.
+         */
+        mDamage = XDamageCreate (mDisplay, mWindow, XDamageReportRawRectangles);
+    }
+
+    XUngrabServer (mDisplay);
 }
 
 
@@ -297,8 +302,6 @@ compzillaWindow::SendKeyEvent (int eventType, nsIDOMKeyEvent *keyEv)
     keyEv->GetKeyCode (&keycode);
 
     unsigned int xkeysym = DOMKeyCodeToKeySym (keycode);
-    SPEW ("compzillaWindow::SendKeyEvent: DOMKeyCodeToKeySym keycode=%d, keysym=%d\n", 
-          keycode, xkeysym);
 
 #ifdef USE_GDK_KEYMAP
     // FIXME: There's probably some annoying reason, like XKB, we need to use 
@@ -326,8 +329,6 @@ compzillaWindow::SendKeyEvent (int eventType, nsIDOMKeyEvent *keyEv)
           "keycode=%p\n", xkeysym, xkeycode);
 #else
     unsigned int xkeycode = XKeysymToKeycode (mDisplay, xkeysym);
-    SPEW ("compzillaWindow::SendKeyEvent: XKeysymToKeycode keysym=%d, keycode=%d\n", 
-          xkeysym, xkeycode);
 #endif
 
     // Build up the XEvent we will send
@@ -415,6 +416,9 @@ compzillaWindow::TranslateClientXYToWindow (int *x, int *y)
 	return;
     }
 
+    // roc says GetScreenRect is an X server roundtrip, though I can't see why.
+    // "Instead, I guess you still need to do the adding up of offsets up the
+    // frame tree, and appunits->pixels conversion"
     nsIntRect screenRect = frame->GetScreenRectExternal ();
     *x = *x - screenRect.x;
     *y = *y - screenRect.y;
