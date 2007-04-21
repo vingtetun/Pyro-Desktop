@@ -25,15 +25,31 @@ body {
 
 .debugContent {
 	position: absolute;
-	background: #ffffff;
-	overflow: scroll;
 	font-family: Andale Mono, monospace;
 	font-size: 0.50em;
+}
+
+.debugLog {
+	background: #ffffff;
+	overflow: scroll;
+	width: 100%;
+	height: 90%;
+	display: block;
+}
+
+.debugClear {
+	display: block;
 }
 
 .content {
 	position: absolute;
 	background: #ffffff;
+}
+
+.override_content {
+	position: absolute;
+	background: #ffffff;
+	opacity: 0.8;
 }
 
 #overlay {

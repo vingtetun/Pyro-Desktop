@@ -46,7 +46,7 @@ var ResizeHandle = {
 };
 
 var CompzillaState = {
-  debugContent: null,
+  debugLog: null,
   dragWindow: null,
   mousePosition: new Object (),
   resizeHandle: ResizeHandle.None,
@@ -57,7 +57,7 @@ var CompzillaState = {
 
 function Debug (str)
 {
-   CompzillaState.debugContent.innerHTML = str + "<br>" + CompzillaState.debugContent.innerHTML;
+   CompzillaState.debugLog.innerHTML = str + "<br>" + CompzillaState.debugLog.innerHTML;
 }
 
 function WindowStack ()
@@ -112,7 +112,7 @@ WindowStack.prototype =
  },
 
  addWindowToLayer : function (w, l) {
-    Debug ("adding window " + w.xid + " to layer " + l);
+    //Debug ("adding window " + w.xid + " to layer " + l);
     this.layers[l].push (w);
     w.layer = l;
     this.restackFromLayer (l);
@@ -155,7 +155,7 @@ WindowStack.prototype =
  },
 
  restackFromLayer : function (l) {
-    Debug ("restack from layer " + l);
+    //Debug ("restack from layer " + l);
 
     var z = -1;
     if (l == 0) {
@@ -174,7 +174,7 @@ WindowStack.prototype =
 
     for (var i = l; i < this.layers.length; i ++) {
        for (var j = 0; j < this.layers[i].length; j ++) {
-	  Debug ("setting window zIndex to " + this.layers[i][j].style.zIndex);
+	  //Debug ("setting window zIndex to " + this.layers[i][j].style.zIndex);
 	  this.layers[i][j].style.zIndex = z++;
        }
     }
@@ -202,8 +202,7 @@ WindowStack.prototype =
     if (w.layer == undefined)
        return;
 
-    Debug ("removing window from layer " + w.layer);
-    Debug ("layer 2 has " + this.layers[2].length + " elements");
+    //Debug ("removing window from layer " + w.layer);
     var w_idx = this.layers[w.layer].indexOf (w);
 
     for (var i = w_idx; i < this.layers[w.layer].length-1; i ++) {
@@ -261,23 +260,28 @@ CompzillaWindowManager.prototype =
  /* compzillaIWindowManager methods */
  WindowCreated : function(xid, override, x, y, width, height, mapped) {
 
-    Debug ("creating window " + xid + ", " + (mapped ? "mapped" : "unmapped") + " " + width + "x" + height);
+    Debug ("creating window " + xid + ", " + (mapped ? "mapped" : "unmapped") + " " + x + "," + y + " / " + width + "x" + height);
 
     var content = this.document.createElement ("canvas");
 
-    content.className = "content";
     content.tabIndex = "1";
 
     /* start out without a frame, we'll attach it in a sec */
-    content.visibility = mapped ? "visible" : "hidden" ;
     content.chrome = content;
+
+    /* also start with the canvas hidden, we'll show it if we need to below */
+    content.style.visibility = "hidden";
+
     content.xid = xid;
     this.document.body.appendChild (content);
 
-    if (override)
-       content.style.opacity = "0.8";
-    else
+    if (override) {
+       content.className = "override_content";
+    }
+    else {
+       content.className = "content";
        this.CreateWMChrome (content);
+    }
 
     var min_x = this.BorderSize;
     var min_y = this.BorderSize + this.TitleBarHeight + this.TitleContentGap;
@@ -285,6 +289,9 @@ CompzillaWindowManager.prototype =
                         min_x > x ? min_x : x,
                         min_y > y ? min_y : y);
     this.ResizeElementTo (content.chrome, width, height);
+
+    if (mapped)
+       content.style.visibility = "visible";
 
     content.focus();
 
@@ -301,14 +308,16 @@ CompzillaWindowManager.prototype =
     var chrome_root = content.chrome;
     CompzillaState.windowStack.addWindow (content.chrome);
     content.chrome.style.visibility = "visible";
-    Debug ("window + " + content.chrome.xid + " mapped");
+    content.style.visibility = "visible";
+    //Debug ("window + " + content.chrome.xid + " mapped");
  },
 
  WindowUnmapped : function(content) {
     var chrome_root = content.chrome;
     CompzillaState.windowStack.removeWindow (chrome_root);
     content.chrome.style.visibility = "hidden";
-    Debug ("window + " + content.chrome.xid + " unmapped");
+    content.style.visibility = "hidden";
+    //Debug ("window + " + content.chrome.xid + " unmapped");
  },
 
  WindowConfigured : function(content, x, y, width, height, border, above) {
@@ -359,7 +368,7 @@ CompzillaWindowManager.prototype =
 	  chrome_root.titlespan.innerHTML = CompzillaState.svc.GetStringProperty (chrome_root.xid, Atoms._NET_WM_NAME());
     }
     else if (prop == Atoms._NET_WM_WINDOW_TYPE()) {
-       Debug ("window type set");
+       Debug ("window " + content.xid + " type set");
        // XXX _NET_WM_WINDOW_TYPE is actually an array of atoms, not just 1.
        var type = CompzillaState.svc.GetAtomProperty (chrome_root.xid, Atoms._NET_WM_WINDOW_TYPE());
 
@@ -390,15 +399,8 @@ CompzillaWindowManager.prototype =
     CompzillaState.svc = cls.getService(Components.interfaces.compzillaIControl);
 
     // add a debug window
-    CompzillaState.debugContent = this.document.createElement ("div");
-    CompzillaState.debugContent.className = "debugContent";
+    this.CreateDebugWindow ();
     
-    var debugChrome = this.CreateWMChrome (CompzillaState.debugContent);
-    this.MoveElementTo (debugChrome, 500, 50);
-    this.ResizeElementTo (debugChrome, 300, 500);
-    debugChrome.titlespan.innerHTML = "debug window";
-    debugChrome.style.zIndex = 10000; // always on top
-
     // create the overlay window
     CompzillaState.overlay = this.document.getElementById ("overlay");
     Debug ("overlay = " + (CompzillaState.overlay == null ? "null!" : "not null!"));
@@ -535,6 +537,28 @@ CompzillaWindowManager.prototype =
  // ****************************************************
  // window manager frame related stuff
  //
+
+ CreateDebugWindow : function () {
+    var debugContent = this.document.createElement ("div");
+    var debugClear = this.document.createElement ("button");
+
+    debugContent.className = "debugContent";
+
+    CompzillaState.debugLog = this.document.createElement ("div");
+    CompzillaState.debugLog.className = "debugLog";
+
+    debugClear.value = "Clear";
+    debugClear.onclick = function (event) { CompzillaState.debugLog.innerHTML = ""; };
+
+    debugContent.appendChild (CompzillaState.debugLog);
+    debugContent.appendChild (debugClear);
+
+    var debugChrome = this.CreateWMChrome (debugContent);
+    this.MoveElementTo (debugChrome, 200, 50);
+    this.ResizeElementTo (debugChrome, 400, 300);
+    debugChrome.titlespan.innerHTML = "debug window";
+    debugChrome.style.zIndex = 10000; // always on top
+ },
 
  CreateWMChrome : function (content) {
     if (content.chrome != null && content.chrome != content)

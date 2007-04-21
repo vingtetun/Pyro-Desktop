@@ -1,3 +1,29 @@
+2007-04-21  Chris Toshok  <toshok@ximian.com>
+
+	* compzilla/chrome/skin/compzilla.css: debug style changes (since
+	we now have debugContent and debugLog).  Also, add the
+	override_content class style.
+
+	* compzilla/components/compzillaWindowManager.js: comment out some
+	of the debug spew that was causing some operations to slow wayyy
+	down.
+
+	deal with the override_redirect window styling in a more css
+	compliant way by setting override redirect content's CSS class to
+	"override_content" instead of "content".  Move the opacity
+	assignment to the stylesheet.
+
+	Fix the weird windows showing up at startup (and when you opened
+	certain applications like gedit or gnome-terminal.).  Turns out
+	that we have to set the visibility on both the canvas and the wm
+	frame to "hidden" for unmapped windows, or else the contents is
+	displayed.  we were just hidding the wm frame.  firefox bug?
+
+	factor out the creation of the debug window, and add a "Clear"
+	button, which is horribly placed to be mostly obscured by the
+	debug log.  Not sure why, but clicking on the part that *is*
+	visible clears the log.
+
 2007-04-20  Chris Toshok  <toshok@ximian.com>
 
 	* compzilla/src/compzillaControl.cpp (SendConfigureNotify): spew
