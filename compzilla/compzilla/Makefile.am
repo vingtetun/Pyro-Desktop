@@ -124,6 +124,8 @@ nodist_libcompzilla_la_SOURCES = $(IDL_H_FILES)
 libcompzilla_la_SOURCES =				\
 	$(srcdir)/src/compzillaExtension.cpp		\
 	$(srcdir)/src/compzillaExtension.h		\
+	$(srcdir)/src/compzillaEventManager.cpp		\
+	$(srcdir)/src/compzillaEventManager.h		\
 	$(srcdir)/src/compzillaControl.cpp		\
 	$(srcdir)/src/compzillaControl.h		\
 	$(srcdir)/src/compzillaModule.cpp		\
