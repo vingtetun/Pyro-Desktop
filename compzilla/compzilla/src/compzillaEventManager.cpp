@@ -6,7 +6,7 @@
 #include <jsapi.h>
 #include <nsIJSContextStack.h>
 #include <nsServiceManagerUtils.h>
-
+#include <nsDOMJSUtils.h>
 
 #include "compzillaEventManager.h"
 
