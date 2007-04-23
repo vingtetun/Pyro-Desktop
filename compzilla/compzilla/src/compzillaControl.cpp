@@ -68,8 +68,8 @@ int compzillaControl::render_error;
 
 
 compzillaControl::compzillaControl()
-    : mWindowCreateEvMgr ("windowcreate", this),
-      mWindowDestroyEvMgr ("windowdestroy", this)
+    : mWindowCreateEvMgr ("windowcreate"),
+      mWindowDestroyEvMgr ("windowdestroy")
 {
     mWindowMap.Init(50);
 }

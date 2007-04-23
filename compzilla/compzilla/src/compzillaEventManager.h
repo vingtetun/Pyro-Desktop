@@ -15,13 +15,15 @@
 class compzillaEventManager
 {
 public:
-    compzillaEventManager (const char *eventName, nsIDOMEventTarget *target);
+    compzillaEventManager (const char *eventName);
     virtual ~compzillaEventManager ();
     
     // This creates a trusted event, which is not cancelable and doesn't
     // bubble. Don't call this if we have no event listeners, since this may
     // use our script context, which is not set in that case.
-    nsresult CreateEvent(const nsAString& aType, nsIDOMEvent** domevent);
+    nsresult CreateEvent(const nsAString& aType, 
+			 nsIDOMEventTarget *aEventTarget,
+			 nsIDOMEvent** domevent);
     
     void NotifyEventListeners(nsIDOMEvent* aEvent);
 
@@ -36,7 +38,6 @@ public:
 private:
     static nsIScriptContext *GetCurrentContext ();
 
-    nsIDOMEventTarget *mEventTarget;
     nsString mEventName;
     nsCOMArray<nsIDOMEventListener> mListeners;
     nsCOMPtr<nsIScriptContext> mScriptContext;

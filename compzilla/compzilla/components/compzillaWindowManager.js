@@ -57,7 +57,10 @@ var CompzillaState = {
 
 function Debug (str)
 {
-   CompzillaState.debugLog.innerHTML = str + "<br>" + CompzillaState.debugLog.innerHTML;
+    if (CompzillaState.debugLog) {
+        CompzillaState.debugLog.innerHTML = str + "<br>" + 
+	    CompzillaState.debugLog.innerHTML;
+    }
 }
 
 function WindowStack ()

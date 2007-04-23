@@ -56,11 +56,11 @@ compzillaWindow::compzillaWindow(Display *display, Window win)
       mPixmap(0),
       mDamage(0),
       mLastEntered(0),
-      mDestroyEvMgr("destroy", this),
-      mMoveResizeEvMgr("moveresize", this),
-      mShowEvMgr("show", this),
-      mHideEvMgr("hide", this),
-      mPropertyChangeEvMgr("propertyChange", this)
+      mDestroyEvMgr("destroy"),
+      mMoveResizeEvMgr("moveresize"),
+      mShowEvMgr("show"),
+      mHideEvMgr("hide"),
+      mPropertyChangeEvMgr("propertyChange")
 {
     NS_INIT_ISUPPORTS();
 

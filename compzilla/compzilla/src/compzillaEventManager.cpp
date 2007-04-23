@@ -16,10 +16,8 @@
  * there's not a mozilla utility for this already...
  */
 
-compzillaEventManager::compzillaEventManager (const char *eventName, 
-                                              nsIDOMEventTarget *target)
-    : mEventTarget(target),
-      mEventName(NS_ConvertASCIItoUTF16 (eventName))
+compzillaEventManager::compzillaEventManager (const char *eventName)
+    : mEventName(NS_ConvertASCIItoUTF16 (eventName))
 {
 }
 
@@ -33,6 +31,7 @@ compzillaEventManager::~compzillaEventManager ()
 
 nsresult 
 compzillaEventManager::CreateEvent (const nsAString& aType, 
+                                    nsIDOMEventTarget *aEventTarget,
 				    nsIDOMEvent** aDOMEvent)
 {
     nsresult rv = NS_NewDOMEvent (aDOMEvent, NULL, NULL);
@@ -50,9 +49,9 @@ compzillaEventManager::CreateEvent (const nsAString& aType,
         (*aDOMEvent)->InitEvent(aType, PR_FALSE, PR_FALSE);
     }
 
-    privevent->SetTarget(mEventTarget);
-    privevent->SetCurrentTarget(mEventTarget);
-    privevent->SetOriginalTarget(mEventTarget);
+    privevent->SetTarget(aEventTarget);
+    privevent->SetCurrentTarget(aEventTarget);
+    privevent->SetOriginalTarget(aEventTarget);
 
     // We assume anyone who managed to call CreateEvent is trusted
     privevent->SetTrusted(PR_TRUE);
