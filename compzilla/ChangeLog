@@ -1,5 +1,11 @@
 2007-04-23  Chris Toshok  <toshok@ximian.com>
 
+	* compzilla/Makefile.am (IDL_FILES): add compzillaIWindow.idl
+
+	* compzilla/public/compzillaIWindow.idl: new interface.
+
+2007-04-23  Chris Toshok  <toshok@ximian.com>
+
 	* compzilla/components/compzillaWindowManager.js: rework the
 	property change stuff to take the property.
 

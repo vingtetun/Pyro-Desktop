@@ -59,6 +59,7 @@ XPIDL_INCLUDES =				\
 IDL_FILES =						\
 	$(srcdir)/public/compzillaIExtension.idl	\
 	$(srcdir)/public/compzillaIControl.idl		\
+	$(srcdir)/public/compzillaIWindow.idl    \
 	$(srcdir)/public/compzillaIWindowManager.idl    \
 	$(srcdir)/public/compzillaIRenderingContext.idl
 

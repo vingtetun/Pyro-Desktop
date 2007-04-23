@@ -1,0 +1,18 @@
+/* -*- mode: IDL; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
+#include "nsISupports.idl"
+#include "nsIDOMHTMLCanvasElement.idl"
+
+[scriptable, uuid(95aa8ead-40a9-41c6-a643-e3dd531e0afd)]
+interface compzillaIWindow : nsISupports
+{
+    void AddContentNode (in nsIDOMHTMLCanvasElement content);
+    void RemoveContentNode (in nsIDOMHTMLCanvasElement content);
+};
+
+
+%{ C++
+#define COMPZILLA_WINDOW_CID \
+  { 0x95aa8ead, 0x40a9, 0x41c6, \
+      { 0xa6, 0x43, 0xe3, 0xdd, 0x53, 0x1e, 0x0a, 0xfd } }
+#define COMPZILLA_WINDOW_CONTRACTID "@beatniksoftware.com/compzillaWindow"
+%}
