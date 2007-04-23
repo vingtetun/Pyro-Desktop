@@ -1,3 +1,12 @@
+2007-04-23  Chris Toshok  <toshok@ximian.com>
+
+	* compzilla/components/compzillaWindowManager.js: rework the
+	property change stuff to take the property.
+
+	* compzilla/src/compzillaControl.cpp: put the window property
+	stuff here for now.  Use a property bag to communicate arguments
+	to the js.
+
 2007-04-23  Alex Graveley  <alex@beatniksoftware.com>
 
 	* compzilla/src/compzillaControl.cpp (AddEventListener,

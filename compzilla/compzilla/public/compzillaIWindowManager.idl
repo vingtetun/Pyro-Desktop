@@ -2,6 +2,7 @@
 #include "nsISupports.idl"
 #include "nsIDOMWindow.idl"
 #include "nsIDOMEventTarget.idl"
+#include "nsIPropertyBag2.idl"
 
 [scriptable, uuid(38054e08-223b-4eea-adcf-442c58945704)]
 interface compzillaIWindowManager : nsISupports
@@ -25,7 +26,7 @@ interface compzillaIWindowManager : nsISupports
                          in long border,
                          in nsISupports above);
 
-  void PropertyChanged (in nsISupports win, in long atom);
+  void PropertyChanged (in nsISupports win, in long atom, in nsIPropertyBag2 bag);
 
   void SetDocument (in nsISupports doc);
 };

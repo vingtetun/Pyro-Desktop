@@ -8,6 +8,8 @@
 #include "nsIScriptContext.h"
 #include "jsapi.h"
 
+#include "nsHashPropertyBag.h"
+
 #include "compzillaControl.h"
 #include "compzillaIRenderingContext.h"
 #include "compzillaRenderingContext.h"
@@ -117,6 +119,8 @@ compzillaControl::RegisterWindowManager(nsIDOMWindow *window, compzillaIWindowMa
 
     // Just ignore errors for now
     XSetErrorHandler (ErrorHandler);
+
+    InitXAtoms ();
 
     // Check extension versions
     if (!InitXExtensions ()) {
@@ -342,6 +346,97 @@ compzillaControl::GetNativeWindow(nsIDOMWindow *window)
     return NULL;
 }
 
+
+bool
+compzillaControl::InitXAtoms ()
+{
+    char *atom_names[] = {
+        "_NET_ACTIVE_WINDOW",
+        "_NET_CLIENT_LIST",
+        "_NET_CLOSE_WINDOW",
+        "_NET_CURRENT_DESKTOP",
+        "_NET_DESKTOP_GEOMETRY",
+        "_NET_DESKTOP_LAYOUT",
+        "_NET_DESKTOP_NAMES",
+        "_NET_DESKTOP_VIEWPORT",
+        "_NET_FRAME_EXTENTS",
+        "_NET_MOVERESIZE_WINDOW",
+        "_NET_NUMBER_OF_DESKTOPS",
+        "_NET_REQUEST_FRAME_EXTENTS",
+        "_NET_RESTACK_WINDOW",
+        "_NET_SHOWING_DESKTOP",
+        "_NET_SUPPORTED",
+        "_NET_SUPPORTING_WM_CHECK",
+        "_NET_VIRTUAL_ROOTS",
+        "_NET_WM_ALLOWED_ACTIONS",
+        "_NET_WM_DESKTOP",
+        "_NET_WM_HANDLED_ICONS",
+        "_NET_WM_ICON",
+        "_NET_WM_ICON_GEOMETRY",
+        "_NET_WM_ICON_NAME",
+        "_NET_WM_MOVERESIZE",
+        "_NET_WM_NAME",
+        "_NET_WM_PID",
+        "_NET_WM_PING",
+        "_NET_WM_STATE",
+        "_NET_WM_STRUT",
+        "_NET_WM_STRUT_PARTIAL",
+        "_NET_WM_SYNC_REQUEST",
+        "_NET_WM_USER_TIME",
+        "_NET_WM_VISIBLE_ICON_NAME",
+        "_NET_WM_VISIBLE_NAME",
+        "_NET_WM_WINDOW_TYPE",
+        "_NET_WORKAREA",
+        "WM_COLORMAP_WINDOWS",
+        "WM_PROTOCOLS"
+    };
+    Atom a [sizeof (atom_names) / sizeof (atom_names[0])];
+
+    XInternAtoms (mXDisplay, atom_names, sizeof (atom_names) / sizeof (atom_names[0]), False, a);
+
+    // this needs to match the order of the strings above
+    int i = 0;
+    atoms._NET_ACTIVE_WINDOW = a[i++];
+    atoms._NET_CLIENT_LIST = a[i++];
+    atoms._NET_CLOSE_WINDOW = a[i++];
+    atoms._NET_CURRENT_DESKTOP = a[i++];
+    atoms._NET_DESKTOP_GEOMETRY = a[i++];
+    atoms._NET_DESKTOP_LAYOUT = a[i++];
+    atoms._NET_DESKTOP_NAMES = a[i++];
+    atoms._NET_DESKTOP_VIEWPORT = a[i++];
+    atoms._NET_FRAME_EXTENTS = a[i++];
+    atoms._NET_MOVERESIZE_WINDOW = a[i++];
+    atoms._NET_NUMBER_OF_DESKTOPS = a[i++];
+    atoms._NET_REQUEST_FRAME_EXTENTS = a[i++];
+    atoms._NET_RESTACK_WINDOW = a[i++];
+    atoms._NET_SHOWING_DESKTOP = a[i++];
+    atoms._NET_SUPPORTED = a[i++];
+    atoms._NET_SUPPORTING_WM_CHECK = a[i++];
+    atoms._NET_VIRTUAL_ROOTS = a[i++];
+    atoms._NET_WM_ALLOWED_ACTIONS = a[i++];
+    atoms._NET_WM_DESKTOP = a[i++];
+    atoms._NET_WM_HANDLED_ICONS = a[i++];
+    atoms._NET_WM_ICON = a[i++];
+    atoms._NET_WM_ICON_GEOMETRY = a[i++];
+    atoms._NET_WM_ICON_NAME = a[i++];
+    atoms._NET_WM_MOVERESIZE = a[i++];
+    atoms._NET_WM_NAME = a[i++];
+    atoms._NET_WM_PID = a[i++];
+    atoms._NET_WM_PING = a[i++];
+    atoms._NET_WM_STATE = a[i++];
+    atoms._NET_WM_STRUT = a[i++];
+    atoms._NET_WM_STRUT_PARTIAL = a[i++];
+    atoms._NET_WM_SYNC_REQUEST = a[i++];
+    atoms._NET_WM_USER_TIME = a[i++];
+    atoms._NET_WM_VISIBLE_ICON_NAME = a[i++];
+    atoms._NET_WM_VISIBLE_NAME = a[i++];
+    atoms._NET_WM_WINDOW_TYPE = a[i++];
+    atoms._NET_WORKAREA = a[i++];
+    atoms.WM_COLORMAP_WINDOWS = a[i++];
+    atoms.WM_PROTOCOLS = a[i++];
+
+    return true;
+}
 
 bool
 compzillaControl::InitXExtensions ()
@@ -764,14 +859,164 @@ compzillaControl::UnmapWindow (Window win)
     }
 }
 
-
 void
 compzillaControl::PropertyChanged (Window win, Atom prop)
 {
     compzillaWindow *compwin = FindWindow (win);
-    if (compwin && compwin->mContent) {
-        mWM->PropertyChanged (compwin->mContent, (PRUint32)prop);
+    if (!compwin || !compwin->mContent)
+        return;
+
+    nsIWritablePropertyBag *wbag;
+
+    /* XXX check return value */
+    NS_NewHashPropertyBag (&wbag);
+
+    nsCOMPtr<nsIWritablePropertyBag2> wbag2 = do_QueryInterface(wbag);
+    nsCOMPtr<nsIPropertyBag2> bag2 = do_QueryInterface(wbag);
+
+
+    switch (prop) {
+        // ICCCM properties
+
+    case XA_WM_NAME:
+    case XA_WM_ICON_NAME: {
+        // XXX this is missing some massaging, since the WM_NAME
+        // property isn't in utf8, but in some locale character set
+        // (latin1?  who knows).  Check the gtk+ source on how to
+        // handle this.
+        nsString str;
+        GetStringProperty (win, prop, str);
+        wbag2->SetPropertyAsAString (NS_LITERAL_STRING (".text"), str);
+        break;
     }
+
+    case XA_WM_HINTS: {
+        XWMHints *wmHints;
+
+        wmHints = XGetWMHints (mXDisplay, win);
+
+        wbag2->SetPropertyAsInt32  (NS_LITERAL_STRING ("wmHints.flags"), wmHints->flags);
+        wbag2->SetPropertyAsBool   (NS_LITERAL_STRING ("wmHints.input"), wmHints->input);
+        wbag2->SetPropertyAsInt32  (NS_LITERAL_STRING ("wmHints.initialState"), wmHints->initial_state);
+        wbag2->SetPropertyAsUint32 (NS_LITERAL_STRING ("wmHints.iconPixmap"), wmHints->icon_pixmap);
+        wbag2->SetPropertyAsUint32 (NS_LITERAL_STRING ("wmHints.iconWindow"), wmHints->icon_window);
+        wbag2->SetPropertyAsInt32  (NS_LITERAL_STRING ("wmHints.iconX"), wmHints->icon_x);
+        wbag2->SetPropertyAsInt32  (NS_LITERAL_STRING ("wmHints.iconY"), wmHints->icon_y);
+        wbag2->SetPropertyAsUint32 (NS_LITERAL_STRING ("wmHints.iconMask"), wmHints->icon_mask);
+        wbag2->SetPropertyAsUint32 (NS_LITERAL_STRING ("wmHints.windowGroup"), wmHints->window_group);
+
+        XFree (wmHints);
+        break;
+    }
+
+    case XA_WM_NORMAL_HINTS: {
+        XSizeHints sizeHints;
+        long supplied;
+
+        // XXX check return value
+        XGetWMNormalHints (mXDisplay, win, &sizeHints, &supplied);
+
+        wbag2->SetPropertyAsInt32 (NS_LITERAL_STRING ("sizeHints.flags"), sizeHints.flags);
+
+        wbag2->SetPropertyAsInt32 (NS_LITERAL_STRING ("sizeHints.x"), sizeHints.x);
+        wbag2->SetPropertyAsInt32 (NS_LITERAL_STRING ("sizeHints.y"), sizeHints.y);
+        wbag2->SetPropertyAsInt32 (NS_LITERAL_STRING ("sizeHints.width"), sizeHints.width);
+        wbag2->SetPropertyAsInt32 (NS_LITERAL_STRING ("sizeHints.height"), sizeHints.height);
+
+        wbag2->SetPropertyAsInt32 (NS_LITERAL_STRING ("sizeHints.minWidth"), sizeHints.min_width);
+        wbag2->SetPropertyAsInt32 (NS_LITERAL_STRING ("sizeHints.minHeight"), sizeHints.min_height);
+
+        wbag2->SetPropertyAsInt32 (NS_LITERAL_STRING ("sizeHints.maxWidth"), sizeHints.max_width);
+        wbag2->SetPropertyAsInt32 (NS_LITERAL_STRING ("sizeHints.maxHeight"), sizeHints.max_height);
+
+        wbag2->SetPropertyAsInt32 (NS_LITERAL_STRING ("sizeHints.widthInc"), sizeHints.width_inc);
+        wbag2->SetPropertyAsInt32 (NS_LITERAL_STRING ("sizeHints.heightInc"), sizeHints.height_inc);
+
+        wbag2->SetPropertyAsInt32 (NS_LITERAL_STRING ("sizeHints.minAspect.x"), sizeHints.min_aspect.x);
+        wbag2->SetPropertyAsInt32 (NS_LITERAL_STRING ("sizeHints.minAspect.y"), sizeHints.min_aspect.y);
+
+        wbag2->SetPropertyAsInt32 (NS_LITERAL_STRING ("sizeHints.maxAspect.x"), sizeHints.max_aspect.x);
+        wbag2->SetPropertyAsInt32 (NS_LITERAL_STRING ("sizeHints.maxAspect.y"), sizeHints.max_aspect.y);
+
+        if ((supplied & (PBaseSize|PWinGravity)) != 0) {
+            wbag2->SetPropertyAsInt32 (NS_LITERAL_STRING ("sizeHints.baseWidth"), sizeHints.base_width);
+            wbag2->SetPropertyAsInt32 (NS_LITERAL_STRING ("sizeHints.baseHeight"), sizeHints.base_height);
+
+            wbag2->SetPropertyAsInt32 (NS_LITERAL_STRING ("sizeHints.winGravity"), sizeHints.win_gravity);
+        }
+    }
+    case XA_WM_CLASS: {
+        // 2 strings, separated by a \0
+        break;
+    }
+    case XA_WM_TRANSIENT_FOR: {
+        // the parent X window's canvas element
+        break;
+    }
+    case XA_WM_CLIENT_MACHINE: {
+        nsString str;
+        GetStringProperty (win, prop, str);
+        wbag2->SetPropertyAsAString (NS_LITERAL_STRING (".text"), str);
+    }
+    default:
+        // ICCCM properties which don't have predefined atoms
+
+        if (prop == atoms.WM_COLORMAP_WINDOWS) {
+            // if we ever support this, shoot me..
+        }
+        else if (prop == atoms.WM_PROTOCOLS) {
+            // an array of Atoms.
+        }
+
+        // non - ICCCM properties go here
+
+        // EWMH properties
+
+        else if (prop == atoms._NET_WM_NAME
+                 || prop == atoms._NET_WM_VISIBLE_NAME
+                 || prop == atoms._NET_WM_ICON_NAME
+                 || prop == atoms._NET_WM_VISIBLE_ICON_NAME) {
+            // utf8 encoded string
+            nsString str;
+            GetStringProperty (win, prop, str);
+            wbag2->SetPropertyAsAString (NS_LITERAL_STRING (".text"), str);
+        }
+        else if (prop == atoms._NET_WM_DESKTOP) {
+        }
+        else if (prop == atoms._NET_WM_WINDOW_TYPE) {
+            // XXX _NET_WM_WINDOW_TYPE is actually an array of atoms, not just 1.
+            // this also needs fixing in the JS.
+            PRUint32 atom;
+            GetAtomProperty (win, prop, &atom);
+            wbag2->SetPropertyAsUint32 (NS_LITERAL_STRING (".atom"), atom);
+        }
+        else if (prop == atoms._NET_WM_STATE) {
+        }
+        else if (prop == atoms._NET_WM_ALLOWED_ACTIONS) {
+        }
+        else if (prop == atoms._NET_WM_STRUT) {
+        }
+        else if (prop == atoms._NET_WM_STRUT_PARTIAL) {
+        }
+        else if (prop == atoms._NET_WM_ICON_GEOMETRY) {
+        }
+        else if (prop == atoms._NET_WM_ICON) {
+        }
+        else if (prop == atoms._NET_WM_PID) {
+        }
+        else if (prop == atoms._NET_WM_HANDLED_ICONS) {
+        }
+        else if (prop == atoms._NET_WM_USER_TIME) {
+        }
+        else if (prop == atoms._NET_FRAME_EXTENTS) {
+        }
+
+        break;
+    }
+
+    mWM->PropertyChanged (compwin->mContent, (PRUint32)prop, bag2);
+
+    NS_RELEASE (wbag);
 }
 
 
