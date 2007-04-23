@@ -49,7 +49,7 @@ extern "C" {
 #define WARNING(format...) printf(" !!! " format)
 #define ERROR(format...) fprintf(stderr, format)
 
-NS_IMPL_ISUPPORTS1_CI(compzillaControl, compzillaIControl);
+NS_IMPL_ISUPPORTS2_CI(compzillaControl, compzillaIControl, nsIDOMEventTarget);
 
 
 int compzillaControl::sErrorCnt;
@@ -68,6 +68,8 @@ int compzillaControl::render_error;
 
 
 compzillaControl::compzillaControl()
+    : mWindowCreateEvMgr ("windowcreate", this),
+      mWindowDestroyEvMgr ("windowdestroy", this)
 {
     mWindowMap.Init(50);
 }
@@ -88,6 +90,210 @@ compzillaControl::~compzillaControl()
 #endif
 }
 
+
+/*
+ *
+ * compzillaIControl Implementation...
+ *
+ */
+
+NS_IMETHODIMP
+compzillaControl::RegisterWindowManager(nsIDOMWindow *window, compzillaIWindowManager* wm)
+{
+    Display *dpy;
+    nsresult rv = NS_OK;
+
+    SPEW ("RegisterWindowManager\n");
+
+    mDOMWindow = window;
+    mWM = wm;
+
+    mRoot = gdk_get_default_root_window();
+    mDisplay = gdk_display_get_default ();
+    mXDisplay = GDK_DISPLAY_XDISPLAY (mDisplay);
+
+    // Get ALL events for ALL windows
+    gdk_window_add_filter (NULL, gdk_filter_func, this);
+
+    // Just ignore errors for now
+    XSetErrorHandler (ErrorHandler);
+
+    // Check extension versions
+    if (!InitXExtensions ()) {
+        ERROR ("InitXExtensions failed");
+        exit (1); // return NS_ERROR_UNEXPECTED;
+    }
+
+    // Take over drawing
+    if (!InitOutputWindow ()) {
+        ERROR ("InitOutputWindow failed");
+        exit (1); // return NS_ERROR_UNEXPECTED;
+    }
+
+    // Register as window manager
+    if (!InitWindowState ()) {
+        ERROR ("InitWindowState failed");
+        exit (1); // return NS_ERROR_UNEXPECTED;
+    }
+
+    return rv;
+}
+
+
+NS_IMETHODIMP
+compzillaControl::InternAtom (const char *property, PRUint32 *value)
+{
+    *value = (PRUint32) XInternAtom (mXDisplay, property, FALSE);
+    return NS_OK;
+}
+
+
+NS_IMETHODIMP
+compzillaControl::GetStringProperty (PRUint32 xid, PRUint32 prop, nsAString& value)
+{
+    SPEW ("GetStringProperty (prop = %s)\n", XGetAtomName (mXDisplay, prop));
+
+    Atom actual_type;
+    int format;
+    unsigned long nitems;
+    unsigned long bytes_after_return;
+    unsigned char *data;
+
+    XGetWindowProperty (mXDisplay, xid, (Atom) prop,
+                        0, BUFSIZ, false, XA_STRING, 
+                        &actual_type, &format, &nitems, &bytes_after_return, 
+                        &data);
+
+    // XXX this is wrong - it's not always ASCII.  look at metacity's
+    // handling of it (it calls a gdk function to convert the text
+    // property to utf8).
+    value = NS_ConvertASCIItoUTF16 ((const char*)data);
+
+    SPEW (" + %s\n", data);
+
+    return NS_OK;
+}
+
+
+NS_IMETHODIMP
+compzillaControl::GetAtomProperty (PRUint32 xid, PRUint32 prop, PRUint32* value)
+{
+    SPEW ("GetAtomProperty (prop = %s)\n", XGetAtomName (mXDisplay, prop));
+
+    Atom actual_type;
+    int format;
+    unsigned long nitems;
+    unsigned long bytes_after_return;
+    unsigned char *data;
+
+    XGetWindowProperty (mXDisplay, xid, (Atom)prop,
+                        0, BUFSIZ, false, XA_ATOM,
+                        &actual_type, &format, &nitems, &bytes_after_return, 
+                        &data);
+
+    *value = *(PRUint32*)data;
+
+    return NS_OK;
+}
+
+
+NS_IMETHODIMP
+compzillaControl::SendConfigureNotify (PRUint32 xid,
+                                       PRUint32 x, PRUint32 y,
+                                       PRUint32 width, PRUint32 height,
+                                       PRUint32 border)
+{
+    XEvent ev;
+
+    memset (&ev, 0, sizeof (ev));
+
+    ev.type = ConfigureNotify;
+    ev.xconfigure.display = mXDisplay;
+    ev.xconfigure.window = xid;
+    ev.xconfigure.event = xid;
+    ev.xconfigure.x = x;
+    ev.xconfigure.y = y;
+    ev.xconfigure.width = width;
+    ev.xconfigure.height = height;
+    ev.xconfigure.border_width = border;
+    ev.xconfigure.above = None;
+    ev.xconfigure.override_redirect = False; /* XXX */
+
+    SPEW ("SendConfigureNotify (window=%p, x=%d, y=%d, width=%d, height=%d, border=%d, override=%d)\n",
+          ev.xconfigure.window,
+          ev.xconfigure.x,
+          ev.xconfigure.y,
+          ev.xconfigure.width,
+          ev.xconfigure.height,
+          ev.xconfigure.border_width,
+          ev.xconfigure.override_redirect);
+
+    XSendEvent (mXDisplay, xid, False, StructureNotifyMask, &ev);
+}
+
+
+NS_IMETHODIMP
+compzillaControl::ConfigureWindow (PRUint32 xid,
+                                   PRUint32 x, PRUint32 y,
+                                   PRUint32 width, PRUint32 height,
+                                   PRUint32 border)
+{
+    XWindowChanges changes;
+
+    changes.x = x;
+    changes.y = y;
+    changes.width = width;
+    changes.height = height;
+    changes.border_width = border;
+
+    XConfigureWindow (mXDisplay, xid,
+                      (CWX | CWY | CWWidth | CWHeight | CWBorderWidth),
+                      &changes);
+}
+
+
+/*
+ * 
+ * nsIDOMEventTarget Implementation...
+ *
+ */
+
+NS_IMETHODIMP
+compzillaControl::AddEventListener (const nsAString & type, 
+                                    nsIDOMEventListener *listener, 
+                                    PRBool useCapture)
+{
+    if (type.EqualsLiteral ("windowcreate")) {
+        return mWindowCreateEvMgr.AddEventListener (type, listener);
+    }
+    return NS_ERROR_INVALID_ARG;
+}
+
+
+NS_IMETHODIMP
+compzillaControl::RemoveEventListener (const nsAString & type, 
+                                       nsIDOMEventListener *listener, 
+                                       PRBool useCapture)
+{
+    if (type.EqualsLiteral ("windowcreate")) {
+        return mWindowCreateEvMgr.RemoveEventListener (type, listener);
+    }
+    return NS_ERROR_INVALID_ARG;
+}
+
+
+NS_IMETHODIMP
+compzillaControl::DispatchEvent (nsIDOMEvent *evt, PRBool *_retval)
+{
+    return NS_ERROR_NOT_IMPLEMENTED;
+}
+
+
+/*
+ *
+ * Private methods...
+ *
+ */
 
 GdkFilterReturn
 compzillaControl::gdk_filter_func (GdkXEvent *xevent, GdkEvent *event, gpointer data)
@@ -196,159 +402,6 @@ compzillaControl::InitXExtensions ()
     return true;
 }
 
-
-NS_IMETHODIMP
-compzillaControl::RegisterWindowManager(nsIDOMWindow *window, compzillaIWindowManager* wm)
-{
-    Display *dpy;
-    nsresult rv = NS_OK;
-
-    SPEW ("RegisterWindowManager\n");
-
-    mDOMWindow = window;
-    mWM = wm;
-
-    mRoot = gdk_get_default_root_window();
-    mDisplay = gdk_display_get_default ();
-    mXDisplay = GDK_DISPLAY_XDISPLAY (mDisplay);
-
-    // Get ALL events for ALL windows
-    gdk_window_add_filter (NULL, gdk_filter_func, this);
-
-    // Just ignore errors for now
-    XSetErrorHandler (ErrorHandler);
-
-    // Check extension versions
-    if (!InitXExtensions ()) {
-        ERROR ("InitXExtensions failed");
-        exit (1); // return NS_ERROR_UNEXPECTED;
-    }
-
-    // Take over drawing
-    if (!InitOutputWindow ()) {
-        ERROR ("InitOutputWindow failed");
-        exit (1); // return NS_ERROR_UNEXPECTED;
-    }
-
-    // Register as window manager
-    if (!InitWindowState ()) {
-        ERROR ("InitWindowState failed");
-        exit (1); // return NS_ERROR_UNEXPECTED;
-    }
-
-    return rv;
-}
-
-
-NS_IMETHODIMP
-compzillaControl::InternAtom (const char *property, PRUint32 *value)
-{
-    *value = (PRUint32) XInternAtom (mXDisplay, property, FALSE);
-    return NS_OK;
-}
-
-
-NS_IMETHODIMP
-compzillaControl::GetStringProperty (PRUint32 xid, PRUint32 prop, nsAString& value)
-{
-    SPEW ("GetStringProperty (prop = %s)\n", XGetAtomName (mXDisplay, prop));
-
-    Atom actual_type;
-    int format;
-    unsigned long nitems;
-    unsigned long bytes_after_return;
-    unsigned char *data;
-
-    XGetWindowProperty (mXDisplay, xid, (Atom) prop,
-                        0, BUFSIZ, false, XA_STRING, 
-                        &actual_type, &format, &nitems, &bytes_after_return, 
-                        &data);
-
-    // XXX this is wrong - it's not always ASCII.  look at metacity's
-    // handling of it (it calls a gdk function to convert the text
-    // property to utf8).
-    value = NS_ConvertASCIItoUTF16 ((const char*)data);
-
-    SPEW (" + %s\n", data);
-
-    return NS_OK;
-}
-
-
-NS_IMETHODIMP
-compzillaControl::GetAtomProperty (PRUint32 xid, PRUint32 prop, PRUint32* value)
-{
-    SPEW ("GetAtomProperty (prop = %s)\n", XGetAtomName (mXDisplay, prop));
-
-    Atom actual_type;
-    int format;
-    unsigned long nitems;
-    unsigned long bytes_after_return;
-    unsigned char *data;
-
-    XGetWindowProperty (mXDisplay, xid, (Atom)prop,
-                        0, BUFSIZ, false, XA_ATOM,
-                        &actual_type, &format, &nitems, &bytes_after_return, 
-                        &data);
-
-    *value = *(PRUint32*)data;
-
-    return NS_OK;
-}
-
-NS_IMETHODIMP
-compzillaControl::SendConfigureNotify (PRUint32 xid,
-                                       PRUint32 x, PRUint32 y,
-                                       PRUint32 width, PRUint32 height,
-                                       PRUint32 border)
-{
-    XEvent ev;
-
-    memset (&ev, 0, sizeof (ev));
-
-    ev.type = ConfigureNotify;
-    ev.xconfigure.display = mXDisplay;
-    ev.xconfigure.window = xid;
-    ev.xconfigure.event = xid;
-    ev.xconfigure.x = x;
-    ev.xconfigure.y = y;
-    ev.xconfigure.width = width;
-    ev.xconfigure.height = height;
-    ev.xconfigure.border_width = border;
-    ev.xconfigure.above = None;
-    ev.xconfigure.override_redirect = False; /* XXX */
-
-    SPEW ("SendConfigureNotify (window=%p, x=%d, y=%d, width=%d, height=%d, border=%d, override=%d)\n",
-          ev.xconfigure.window,
-          ev.xconfigure.x,
-          ev.xconfigure.y,
-          ev.xconfigure.width,
-          ev.xconfigure.height,
-          ev.xconfigure.border_width,
-          ev.xconfigure.override_redirect);
-
-    XSendEvent (mXDisplay, xid, False, StructureNotifyMask, &ev);
-}
-
-
-NS_IMETHODIMP
-compzillaControl::ConfigureWindow (PRUint32 xid,
-                                   PRUint32 x, PRUint32 y,
-                                   PRUint32 width, PRUint32 height,
-                                   PRUint32 border)
-{
-    XWindowChanges changes;
-
-    changes.x = x;
-    changes.y = y;
-    changes.width = width;
-    changes.height = height;
-    changes.border_width = border;
-
-    XConfigureWindow (mXDisplay, xid,
-                      (CWX | CWY | CWWidth | CWHeight | CWBorderWidth),
-                      &changes);
-}
 
 bool
 compzillaControl::InitWindowState ()
@@ -949,6 +1002,3 @@ compzillaControl::Filter (GdkXEvent *xevent, GdkEvent *event)
 
     return GDK_FILTER_CONTINUE;
 }
-
-
-

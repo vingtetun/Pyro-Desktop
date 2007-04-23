@@ -1,6 +1,7 @@
 /* -*- mode: C++; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
 
 #include <nsCOMPtr.h>
+#include <nsIDOMEventTarget.h>
 #include <nsIDOMKeyEvent.h>
 #include <nsIDOMKeyListener.h>
 #include <nsIDOMMouseEvent.h>
@@ -11,6 +12,9 @@ extern "C" {
 #include <X11/Xlib.h>
 #include <X11/extensions/Xdamage.h>
 }
+
+
+#include "compzillaEventManager.h"
 
 
 // From X.h
@@ -27,11 +31,13 @@ extern "C" {
 class compzillaWindow
     : public nsIDOMKeyListener,
       public nsIDOMMouseListener,
-      public nsIDOMUIListener
+      public nsIDOMUIListener,
+      public nsIDOMEventTarget
 {
 public:
     NS_DECL_ISUPPORTS
     NS_DECL_NSIDOMEVENTLISTENER
+    NS_DECL_NSIDOMEVENTTARGET
 
     compzillaWindow (Display *display, Window window);
     virtual ~compzillaWindow ();
@@ -67,6 +73,12 @@ public:
     Pixmap mPixmap;
     Damage mDamage;
     Window mLastEntered;
+
+    compzillaEventManager mDestroyEvMgr;
+    compzillaEventManager mMoveResizeEvMgr;
+    compzillaEventManager mShowEvMgr;
+    compzillaEventManager mHideEvMgr;
+    compzillaEventManager mPropertyChangeEvMgr;
 
  private:
     void OnMouseMove (nsIDOMEvent* aDOMEvent);

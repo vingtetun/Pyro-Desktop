@@ -163,10 +163,10 @@ compzillaRenderingContext::Render (nsIRenderingContext *rc)
 
 #ifdef MOZ_CAIRO_GFX
     //    SPEW ("thebes\n");
-    gfxXlibSurface *xlib_surf = new gfxXlibSurface (mXDisplay, mXDrawable, mXVisual);
-
     gfxContext* ctx = (gfxContext*) rc->GetNativeGraphicData (
         nsIRenderingContext::NATIVE_THEBES_CONTEXT);
+
+    gfxXlibSurface *xlib_surf = new gfxXlibSurface (mXDisplay, mXDrawable, mXVisual);
     nsRefPtr<gfxPattern> pat = new gfxPattern (xlib_surf);
 
     // XXX I don't want to use PixelSnapped here, but layout doesn't guarantee

@@ -24,6 +24,8 @@ extern "C" {
 
 #include <gdk/gdkkeys.h>
 extern uint32 gtk_get_current_event_time (void);
+#include <gdk/gdkevents.h>
+extern GdkEvent *gtk_get_current_event (void);
 }
 
 #if WITH_SPEW
@@ -39,7 +41,7 @@ extern uint32 gtk_get_current_event_time (void);
 NS_IMPL_ADDREF(compzillaWindow)
 NS_IMPL_RELEASE(compzillaWindow)
 NS_INTERFACE_MAP_BEGIN(compzillaWindow)
-    NS_INTERFACE_MAP_ENTRY_AMBIGUOUS(nsISupports, nsIDOMKeyListener)
+    NS_INTERFACE_MAP_ENTRY_AMBIGUOUS(nsISupports, nsIDOMEventTarget)
     NS_INTERFACE_MAP_ENTRY_AMBIGUOUS(nsIDOMEventListener, nsIDOMKeyListener)
     NS_INTERFACE_MAP_ENTRY(nsIDOMKeyListener)
     NS_INTERFACE_MAP_ENTRY(nsIDOMMouseListener)
@@ -53,7 +55,12 @@ compzillaWindow::compzillaWindow(Display *display, Window win)
       mWindow(win),
       mPixmap(0),
       mDamage(0),
-      mLastEntered(0)
+      mLastEntered(0),
+      mDestroyEvMgr("destroy", this),
+      mMoveResizeEvMgr("moveresize", this),
+      mShowEvMgr("show", this),
+      mHideEvMgr("hide", this),
+      mPropertyChangeEvMgr("propertyChange", this)
 {
     NS_INIT_ISUPPORTS();
 
@@ -361,8 +368,10 @@ compzillaWindow::SendKeyEvent (int eventType, nsIDOMKeyEvent *keyEv)
         return;
     }
 
-    SPEW ("compzillaWindow::SendKeyEvent: win=%p, child=%p, state=%p, keycode=%u, "
+    SPEW ("compzillaWindow::SendKeyEvent: %s%s win=%p, child=%p, state=%p, keycode=%u, "
           "timestamp=%d\n", 
+          eventType == _KeyPress ? "PRESS" : "", 
+          eventType == KeyRelease ? "RELEASE" : "", 
           mWindow, mWindow, state, xkeycode, timestamp);
 
     XSendEvent (mDisplay, mWindow, True, xevMask, &xev);
@@ -370,6 +379,53 @@ compzillaWindow::SendKeyEvent (int eventType, nsIDOMKeyEvent *keyEv)
     keyEv->StopPropagation ();
     keyEv->PreventDefault ();
 }
+
+
+#if USE_GDK_KEY_EVENTING
+void
+compzillaWindow::SendKeyEvent (int eventType, nsIDOMKeyEvent *keyEv)
+{
+    GdkEvent *gdkev = gtk_get_current_event ();
+
+    // Build up the XEvent we will send
+    XEvent xev = { 0 };
+    xev.xkey.type = eventType;
+    xev.xkey.serial = 0;
+    xev.xkey.display = mDisplay;
+    xev.xkey.window = mWindow;
+    xev.xkey.root = mAttr.root;
+    xev.xkey.time = gdkev->key.time;
+    xev.xkey.state = gdkev->key.state;
+    xev.xkey.keycode = gdkev->key.hardware_keycode;
+    xev.xkey.same_screen = True;
+
+    // Figure out who to send to
+    long xevMask;
+
+    switch (eventType) {
+    case _KeyPress:
+	xevMask = KeyPressMask;
+	break;
+    case KeyRelease:
+	xevMask = KeyReleaseMask;
+	break;
+    default:
+        NS_NOTREACHED ("Unknown eventType");
+        return;
+    }
+
+    SPEW ("compzillaWindow::SendKeyEvent: %s%s win=%p, child=%p, state=%p, keycode=%u, "
+          "timestamp=%d\n", 
+          eventType == _KeyPress ? "PRESS" : "", 
+          eventType == KeyRelease ? "RELEASE" : "", 
+          mWindow, mWindow, gdkev->key.state, gdkev->key.hardware_keycode, gdkev->key.time);
+
+    XSendEvent (mDisplay, mWindow, True, xevMask, &xev);
+
+    keyEv->StopPropagation ();
+    keyEv->PreventDefault ();
+}
+#endif
 
 
 NS_IMETHODIMP
@@ -767,3 +823,57 @@ compzillaWindow::OnDOMMouseScroll (nsIDOMEvent *aDOMEvent)
     // DOMMouseScroll has no Release equivalent, so fake it.
     SendMouseEvent (ButtonRelease, mouseEv, true);
 }
+
+
+/*
+ * 
+ * nsIDOMEventTarget Implementation...
+ *
+ */
+
+NS_IMETHODIMP
+compzillaWindow::AddEventListener (const nsAString & type, 
+                                   nsIDOMEventListener *listener, 
+                                   PRBool useCapture)
+{
+    if (type.EqualsLiteral ("destroy")) {
+        return mDestroyEvMgr.AddEventListener (type, listener);
+    } else if (type.EqualsLiteral ("moveresize")) {
+        return mMoveResizeEvMgr.AddEventListener (type, listener);
+    } else if (type.EqualsLiteral ("show")) {
+        return mShowEvMgr.AddEventListener (type, listener);
+    } else if (type.EqualsLiteral ("hide")) {
+        return mHideEvMgr.AddEventListener (type, listener);
+    } else if (type.EqualsLiteral ("propertychange")) {
+        return mPropertyChangeEvMgr.AddEventListener (type, listener);
+    } 
+    return NS_ERROR_INVALID_ARG;
+}
+
+
+NS_IMETHODIMP
+compzillaWindow::RemoveEventListener (const nsAString & type, 
+                                      nsIDOMEventListener *listener, 
+                                      PRBool useCapture)
+{
+    if (type.EqualsLiteral ("destroy")) {
+        return mDestroyEvMgr.RemoveEventListener (type, listener);
+    } else if (type.EqualsLiteral ("moveresize")) {
+        return mMoveResizeEvMgr.RemoveEventListener (type, listener);
+    } else if (type.EqualsLiteral ("show")) {
+        return mShowEvMgr.RemoveEventListener (type, listener);
+    } else if (type.EqualsLiteral ("hide")) {
+        return mHideEvMgr.RemoveEventListener (type, listener);
+    } else if (type.EqualsLiteral ("propertychange")) {
+        return mPropertyChangeEvMgr.RemoveEventListener (type, listener);
+    } 
+    return NS_ERROR_INVALID_ARG;
+}
+
+
+NS_IMETHODIMP
+compzillaWindow::DispatchEvent (nsIDOMEvent *evt, PRBool *_retval)
+{
+    return NS_ERROR_NOT_IMPLEMENTED;
+}
+

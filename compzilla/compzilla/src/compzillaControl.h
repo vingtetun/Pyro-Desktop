@@ -4,9 +4,11 @@
 #define MOZILLA_INTERNAL_API
 #include <nsClassHashtable.h>
 #undef MOZILLA_INTERNAL_API
-#include "nsIWidget.h"
+#include <nsIDOMEventTarget.h>
+#include <nsIWidget.h>
 
 #include "compzillaIControl.h"
+#include "compzillaEventManager.h"
 #include "compzillaWindow.h"
 
 extern "C" {
@@ -16,11 +18,13 @@ extern "C" {
 
 
 class compzillaControl
-    : public compzillaIControl
+    : public compzillaIControl,
+      public nsIDOMEventTarget
 {
 public:
     NS_DECL_ISUPPORTS
     NS_DECL_COMPZILLAICONTROL
+    NS_DECL_NSIDOMEVENTTARGET
 
     compzillaControl ();
     virtual ~compzillaControl ();
@@ -71,6 +75,9 @@ private:
     nsCOMPtr<nsIDOMWindow> mDOMWindow;
     nsCOMPtr<compzillaIWindowManager> mWM;
     nsClassHashtable<nsUint32HashKey, compzillaWindow> mWindowMap;
+
+    compzillaEventManager mWindowCreateEvMgr;
+    compzillaEventManager mWindowDestroyEvMgr;
 
     static int composite_event, composite_error;
     static int xevie_event, xevie_error;
