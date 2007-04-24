@@ -11,8 +11,6 @@
 #include "nsHashPropertyBag.h"
 
 #include "compzillaControl.h"
-#include "compzillaIRenderingContext.h"
-#include "compzillaRenderingContext.h"
 
 // These headers are used for finding the GdkWindow for a DOM window
 #include "nsIBaseWindow.h"
@@ -22,6 +20,8 @@
 #include "nsPIDOMWindow.h"
 #endif
 #include "nsIWidget.h"
+
+#include "XAtoms.h"
 
 extern "C" {
 #include <gdk/gdkx.h>
@@ -68,6 +68,8 @@ int compzillaControl::shape_error;
 int compzillaControl::render_event;
 int compzillaControl::render_error;
 
+
+XAtoms atoms;
 
 compzillaControl::compzillaControl()
     : mWindowCreateEvMgr ("windowcreate"),
@@ -148,55 +150,6 @@ NS_IMETHODIMP
 compzillaControl::InternAtom (const char *property, PRUint32 *value)
 {
     *value = (PRUint32) XInternAtom (mXDisplay, property, FALSE);
-    return NS_OK;
-}
-
-
-NS_IMETHODIMP
-compzillaControl::GetStringProperty (PRUint32 xid, PRUint32 prop, nsAString& value)
-{
-    SPEW ("GetStringProperty (prop = %s)\n", XGetAtomName (mXDisplay, prop));
-
-    Atom actual_type;
-    int format;
-    unsigned long nitems;
-    unsigned long bytes_after_return;
-    unsigned char *data;
-
-    XGetWindowProperty (mXDisplay, xid, (Atom) prop,
-                        0, BUFSIZ, false, XA_STRING, 
-                        &actual_type, &format, &nitems, &bytes_after_return, 
-                        &data);
-
-    // XXX this is wrong - it's not always ASCII.  look at metacity's
-    // handling of it (it calls a gdk function to convert the text
-    // property to utf8).
-    value = NS_ConvertASCIItoUTF16 ((const char*)data);
-
-    SPEW (" + %s\n", data);
-
-    return NS_OK;
-}
-
-
-NS_IMETHODIMP
-compzillaControl::GetAtomProperty (PRUint32 xid, PRUint32 prop, PRUint32* value)
-{
-    SPEW ("GetAtomProperty (prop = %s)\n", XGetAtomName (mXDisplay, prop));
-
-    Atom actual_type;
-    int format;
-    unsigned long nitems;
-    unsigned long bytes_after_return;
-    unsigned char *data;
-
-    XGetWindowProperty (mXDisplay, xid, (Atom)prop,
-                        0, BUFSIZ, false, XA_ATOM,
-                        &actual_type, &format, &nitems, &bytes_after_return, 
-                        &data);
-
-    *value = *(PRUint32*)data;
-
     return NS_OK;
 }
 
@@ -350,90 +303,7 @@ compzillaControl::GetNativeWindow(nsIDOMWindow *window)
 bool
 compzillaControl::InitXAtoms ()
 {
-    char *atom_names[] = {
-        "_NET_ACTIVE_WINDOW",
-        "_NET_CLIENT_LIST",
-        "_NET_CLOSE_WINDOW",
-        "_NET_CURRENT_DESKTOP",
-        "_NET_DESKTOP_GEOMETRY",
-        "_NET_DESKTOP_LAYOUT",
-        "_NET_DESKTOP_NAMES",
-        "_NET_DESKTOP_VIEWPORT",
-        "_NET_FRAME_EXTENTS",
-        "_NET_MOVERESIZE_WINDOW",
-        "_NET_NUMBER_OF_DESKTOPS",
-        "_NET_REQUEST_FRAME_EXTENTS",
-        "_NET_RESTACK_WINDOW",
-        "_NET_SHOWING_DESKTOP",
-        "_NET_SUPPORTED",
-        "_NET_SUPPORTING_WM_CHECK",
-        "_NET_VIRTUAL_ROOTS",
-        "_NET_WM_ALLOWED_ACTIONS",
-        "_NET_WM_DESKTOP",
-        "_NET_WM_HANDLED_ICONS",
-        "_NET_WM_ICON",
-        "_NET_WM_ICON_GEOMETRY",
-        "_NET_WM_ICON_NAME",
-        "_NET_WM_MOVERESIZE",
-        "_NET_WM_NAME",
-        "_NET_WM_PID",
-        "_NET_WM_PING",
-        "_NET_WM_STATE",
-        "_NET_WM_STRUT",
-        "_NET_WM_STRUT_PARTIAL",
-        "_NET_WM_SYNC_REQUEST",
-        "_NET_WM_USER_TIME",
-        "_NET_WM_VISIBLE_ICON_NAME",
-        "_NET_WM_VISIBLE_NAME",
-        "_NET_WM_WINDOW_TYPE",
-        "_NET_WORKAREA",
-        "WM_COLORMAP_WINDOWS",
-        "WM_PROTOCOLS"
-    };
-    Atom a [sizeof (atom_names) / sizeof (atom_names[0])];
-
-    XInternAtoms (mXDisplay, atom_names, sizeof (atom_names) / sizeof (atom_names[0]), False, a);
-
-    // this needs to match the order of the strings above
-    int i = 0;
-    atoms._NET_ACTIVE_WINDOW = a[i++];
-    atoms._NET_CLIENT_LIST = a[i++];
-    atoms._NET_CLOSE_WINDOW = a[i++];
-    atoms._NET_CURRENT_DESKTOP = a[i++];
-    atoms._NET_DESKTOP_GEOMETRY = a[i++];
-    atoms._NET_DESKTOP_LAYOUT = a[i++];
-    atoms._NET_DESKTOP_NAMES = a[i++];
-    atoms._NET_DESKTOP_VIEWPORT = a[i++];
-    atoms._NET_FRAME_EXTENTS = a[i++];
-    atoms._NET_MOVERESIZE_WINDOW = a[i++];
-    atoms._NET_NUMBER_OF_DESKTOPS = a[i++];
-    atoms._NET_REQUEST_FRAME_EXTENTS = a[i++];
-    atoms._NET_RESTACK_WINDOW = a[i++];
-    atoms._NET_SHOWING_DESKTOP = a[i++];
-    atoms._NET_SUPPORTED = a[i++];
-    atoms._NET_SUPPORTING_WM_CHECK = a[i++];
-    atoms._NET_VIRTUAL_ROOTS = a[i++];
-    atoms._NET_WM_ALLOWED_ACTIONS = a[i++];
-    atoms._NET_WM_DESKTOP = a[i++];
-    atoms._NET_WM_HANDLED_ICONS = a[i++];
-    atoms._NET_WM_ICON = a[i++];
-    atoms._NET_WM_ICON_GEOMETRY = a[i++];
-    atoms._NET_WM_ICON_NAME = a[i++];
-    atoms._NET_WM_MOVERESIZE = a[i++];
-    atoms._NET_WM_NAME = a[i++];
-    atoms._NET_WM_PID = a[i++];
-    atoms._NET_WM_PING = a[i++];
-    atoms._NET_WM_STATE = a[i++];
-    atoms._NET_WM_STRUT = a[i++];
-    atoms._NET_WM_STRUT_PARTIAL = a[i++];
-    atoms._NET_WM_SYNC_REQUEST = a[i++];
-    atoms._NET_WM_USER_TIME = a[i++];
-    atoms._NET_WM_VISIBLE_ICON_NAME = a[i++];
-    atoms._NET_WM_VISIBLE_NAME = a[i++];
-    atoms._NET_WM_WINDOW_TYPE = a[i++];
-    atoms._NET_WORKAREA = a[i++];
-    atoms.WM_COLORMAP_WINDOWS = a[i++];
-    atoms.WM_PROTOCOLS = a[i++];
+    XInternAtoms (mXDisplay, atom_names, sizeof (atom_names) / sizeof (atom_names[0]), False, atoms.a);
 
     return true;
 }
@@ -775,36 +645,31 @@ compzillaControl::AddWindow (Window win)
 {
     INFO ("AddWindow for window %p\n", win);
 
-    nsAutoPtr<compzillaWindow> compwin(new compzillaWindow(mXDisplay, win));
+    compzillaWindow *compwin = new compzillaWindow(mXDisplay, win, mWM);
+    nsCOMPtr<compzillaIWindow> iwin = do_QueryInterface (NS_ISUPPORTS_CAST (compzillaIWindow*, compwin));
 
     if (compwin->mAttr.c_class == InputOnly) {
         WARNING ("AddWindow ignoring InputOnly window %p\n", win);
         return;
     }
 
-    nsCOMPtr<nsISupports> domContent;
-    mWM->WindowCreated (win, 
+    mWM->WindowCreated (iwin,
+                        win, 
                         compwin->mAttr.override_redirect != 0,
                         compwin->mAttr.x,
                         compwin->mAttr.y,
                         compwin->mAttr.width,
                         compwin->mAttr.height,
-                        compwin->mAttr.map_state == IsViewable,
-                        getter_AddRefs(domContent));
+                        compwin->mAttr.map_state == IsViewable);
 
-    INFO ("WindowCreated returned %p\n", domContent.get());
+    mWindowMap.Put (win, compwin);
 
-    if (domContent) {
-        compwin->SetContent (domContent);
-        mWindowMap.Put (win, compwin);
-
-        if (compwin->mAttr.map_state == IsViewable) {
-            MapWindow (win);
-        }
-
-        // Stored the compwin in mWindowMap, so don't delete it now.
-        compwin.forget();
+    if (compwin->mAttr.map_state == IsViewable) {
+        MapWindow (win);
     }
+
+    // Stored the compwin in mWindowMap, so don't delete it now.
+    //compwin.forget();
 }
 
 
@@ -813,9 +678,7 @@ compzillaControl::DestroyWindow (Window win)
 {
     compzillaWindow *compwin = FindWindow (win);
     if (compwin) {
-        if (compwin->mContent) {
-            mWM->WindowDestroyed (compwin->mContent);
-        }
+        compwin->DestroyWindow ();
 
         // Damage is not valid if the window is already destroyed
         compwin->mDamage = 0;
@@ -829,10 +692,7 @@ compzillaControl::ForgetWindow (Window win)
 {
     compzillaWindow *compwin = FindWindow (win);
     if (compwin) {
-        if (compwin->mContent) {
-            mWM->WindowDestroyed (compwin->mContent);
-        }
-
+        compwin->DestroyWindow ();
         mWindowMap.Remove (win);
     }
 }
@@ -842,10 +702,10 @@ void
 compzillaControl::MapWindow (Window win)
 {
     compzillaWindow *compwin = FindWindow (win);
-    if (compwin && compwin->mContent) {
+    if (compwin) {
         // Make sure we've got a handle to the content
         compwin->EnsurePixmap ();
-        mWM->WindowMapped (compwin->mContent);
+        compwin->MapWindow ();
     }
 }
 
@@ -854,8 +714,8 @@ void
 compzillaControl::UnmapWindow (Window win)
 {
     compzillaWindow *compwin = FindWindow (win);
-    if (compwin && compwin->mContent) {
-        mWM->WindowUnmapped (compwin->mContent);
+    if (compwin) {
+        compwin->UnmapWindow ();
     }
 }
 
@@ -863,160 +723,8 @@ void
 compzillaControl::PropertyChanged (Window win, Atom prop)
 {
     compzillaWindow *compwin = FindWindow (win);
-    if (!compwin || !compwin->mContent)
-        return;
-
-    nsIWritablePropertyBag *wbag;
-
-    /* XXX check return value */
-    NS_NewHashPropertyBag (&wbag);
-
-    nsCOMPtr<nsIWritablePropertyBag2> wbag2 = do_QueryInterface(wbag);
-    nsCOMPtr<nsIPropertyBag2> bag2 = do_QueryInterface(wbag);
-
-
-    switch (prop) {
-        // ICCCM properties
-
-    case XA_WM_NAME:
-    case XA_WM_ICON_NAME: {
-        // XXX this is missing some massaging, since the WM_NAME
-        // property isn't in utf8, but in some locale character set
-        // (latin1?  who knows).  Check the gtk+ source on how to
-        // handle this.
-        nsString str;
-        GetStringProperty (win, prop, str);
-        wbag2->SetPropertyAsAString (NS_LITERAL_STRING (".text"), str);
-        break;
-    }
-
-    case XA_WM_HINTS: {
-        XWMHints *wmHints;
-
-        wmHints = XGetWMHints (mXDisplay, win);
-
-        wbag2->SetPropertyAsInt32  (NS_LITERAL_STRING ("wmHints.flags"), wmHints->flags);
-        wbag2->SetPropertyAsBool   (NS_LITERAL_STRING ("wmHints.input"), wmHints->input);
-        wbag2->SetPropertyAsInt32  (NS_LITERAL_STRING ("wmHints.initialState"), wmHints->initial_state);
-        wbag2->SetPropertyAsUint32 (NS_LITERAL_STRING ("wmHints.iconPixmap"), wmHints->icon_pixmap);
-        wbag2->SetPropertyAsUint32 (NS_LITERAL_STRING ("wmHints.iconWindow"), wmHints->icon_window);
-        wbag2->SetPropertyAsInt32  (NS_LITERAL_STRING ("wmHints.iconX"), wmHints->icon_x);
-        wbag2->SetPropertyAsInt32  (NS_LITERAL_STRING ("wmHints.iconY"), wmHints->icon_y);
-        wbag2->SetPropertyAsUint32 (NS_LITERAL_STRING ("wmHints.iconMask"), wmHints->icon_mask);
-        wbag2->SetPropertyAsUint32 (NS_LITERAL_STRING ("wmHints.windowGroup"), wmHints->window_group);
-
-        XFree (wmHints);
-        break;
-    }
-
-    case XA_WM_NORMAL_HINTS: {
-        XSizeHints sizeHints;
-        long supplied;
-
-        // XXX check return value
-        XGetWMNormalHints (mXDisplay, win, &sizeHints, &supplied);
-
-        wbag2->SetPropertyAsInt32 (NS_LITERAL_STRING ("sizeHints.flags"), sizeHints.flags);
-
-        wbag2->SetPropertyAsInt32 (NS_LITERAL_STRING ("sizeHints.x"), sizeHints.x);
-        wbag2->SetPropertyAsInt32 (NS_LITERAL_STRING ("sizeHints.y"), sizeHints.y);
-        wbag2->SetPropertyAsInt32 (NS_LITERAL_STRING ("sizeHints.width"), sizeHints.width);
-        wbag2->SetPropertyAsInt32 (NS_LITERAL_STRING ("sizeHints.height"), sizeHints.height);
-
-        wbag2->SetPropertyAsInt32 (NS_LITERAL_STRING ("sizeHints.minWidth"), sizeHints.min_width);
-        wbag2->SetPropertyAsInt32 (NS_LITERAL_STRING ("sizeHints.minHeight"), sizeHints.min_height);
-
-        wbag2->SetPropertyAsInt32 (NS_LITERAL_STRING ("sizeHints.maxWidth"), sizeHints.max_width);
-        wbag2->SetPropertyAsInt32 (NS_LITERAL_STRING ("sizeHints.maxHeight"), sizeHints.max_height);
-
-        wbag2->SetPropertyAsInt32 (NS_LITERAL_STRING ("sizeHints.widthInc"), sizeHints.width_inc);
-        wbag2->SetPropertyAsInt32 (NS_LITERAL_STRING ("sizeHints.heightInc"), sizeHints.height_inc);
-
-        wbag2->SetPropertyAsInt32 (NS_LITERAL_STRING ("sizeHints.minAspect.x"), sizeHints.min_aspect.x);
-        wbag2->SetPropertyAsInt32 (NS_LITERAL_STRING ("sizeHints.minAspect.y"), sizeHints.min_aspect.y);
-
-        wbag2->SetPropertyAsInt32 (NS_LITERAL_STRING ("sizeHints.maxAspect.x"), sizeHints.max_aspect.x);
-        wbag2->SetPropertyAsInt32 (NS_LITERAL_STRING ("sizeHints.maxAspect.y"), sizeHints.max_aspect.y);
-
-        if ((supplied & (PBaseSize|PWinGravity)) != 0) {
-            wbag2->SetPropertyAsInt32 (NS_LITERAL_STRING ("sizeHints.baseWidth"), sizeHints.base_width);
-            wbag2->SetPropertyAsInt32 (NS_LITERAL_STRING ("sizeHints.baseHeight"), sizeHints.base_height);
-
-            wbag2->SetPropertyAsInt32 (NS_LITERAL_STRING ("sizeHints.winGravity"), sizeHints.win_gravity);
-        }
-    }
-    case XA_WM_CLASS: {
-        // 2 strings, separated by a \0
-        break;
-    }
-    case XA_WM_TRANSIENT_FOR: {
-        // the parent X window's canvas element
-        break;
-    }
-    case XA_WM_CLIENT_MACHINE: {
-        nsString str;
-        GetStringProperty (win, prop, str);
-        wbag2->SetPropertyAsAString (NS_LITERAL_STRING (".text"), str);
-    }
-    default:
-        // ICCCM properties which don't have predefined atoms
-
-        if (prop == atoms.WM_COLORMAP_WINDOWS) {
-            // if we ever support this, shoot me..
-        }
-        else if (prop == atoms.WM_PROTOCOLS) {
-            // an array of Atoms.
-        }
-
-        // non - ICCCM properties go here
-
-        // EWMH properties
-
-        else if (prop == atoms._NET_WM_NAME
-                 || prop == atoms._NET_WM_VISIBLE_NAME
-                 || prop == atoms._NET_WM_ICON_NAME
-                 || prop == atoms._NET_WM_VISIBLE_ICON_NAME) {
-            // utf8 encoded string
-            nsString str;
-            GetStringProperty (win, prop, str);
-            wbag2->SetPropertyAsAString (NS_LITERAL_STRING (".text"), str);
-        }
-        else if (prop == atoms._NET_WM_DESKTOP) {
-        }
-        else if (prop == atoms._NET_WM_WINDOW_TYPE) {
-            // XXX _NET_WM_WINDOW_TYPE is actually an array of atoms, not just 1.
-            // this also needs fixing in the JS.
-            PRUint32 atom;
-            GetAtomProperty (win, prop, &atom);
-            wbag2->SetPropertyAsUint32 (NS_LITERAL_STRING (".atom"), atom);
-        }
-        else if (prop == atoms._NET_WM_STATE) {
-        }
-        else if (prop == atoms._NET_WM_ALLOWED_ACTIONS) {
-        }
-        else if (prop == atoms._NET_WM_STRUT) {
-        }
-        else if (prop == atoms._NET_WM_STRUT_PARTIAL) {
-        }
-        else if (prop == atoms._NET_WM_ICON_GEOMETRY) {
-        }
-        else if (prop == atoms._NET_WM_ICON) {
-        }
-        else if (prop == atoms._NET_WM_PID) {
-        }
-        else if (prop == atoms._NET_WM_HANDLED_ICONS) {
-        }
-        else if (prop == atoms._NET_WM_USER_TIME) {
-        }
-        else if (prop == atoms._NET_FRAME_EXTENTS) {
-        }
-
-        break;
-    }
-
-    mWM->PropertyChanged (compwin->mContent, (PRUint32)prop, bag2);
-
-    NS_RELEASE (wbag);
+    if (compwin)
+        compwin->PropertyChanged (win, prop);
 }
 
 
@@ -1024,18 +732,8 @@ void
 compzillaControl::WindowDamaged (Window win, XRectangle *rect)
 {
     compzillaWindow *compwin = FindWindow (win);
-    if (compwin && compwin->mContent) {        
-        nsCOMPtr<nsIDOMHTMLCanvasElement> canvas = do_QueryInterface (compwin->mContent);
-        nsCOMPtr<compzillaIRenderingContextInternal> internal;
-        nsresult rv = canvas->GetContext (NS_LITERAL_STRING ("compzilla"), 
-                                          getter_AddRefs (internal));
-
-        if (NS_SUCCEEDED (rv)) {
-            compwin->EnsurePixmap ();
-            internal->SetDrawable (mXDisplay, compwin->mPixmap, compwin->mAttr.visual);
-            internal->Redraw (nsRect (rect->x, rect->y, rect->width, rect->height));
-        }
-    }
+    if (compwin)
+        compwin->WindowDamaged (rect);
 }
 
 
@@ -1068,7 +766,7 @@ compzillaControl::Filter (GdkXEvent *xevent, GdkEvent *event)
             return GDK_FILTER_REMOVE;
         }
 
-        AddWindow(x11_event->xcreatewindow.window);
+        AddWindow (x11_event->xcreatewindow.window);
         break;
     }
     case DestroyNotify: {
@@ -1092,16 +790,15 @@ compzillaControl::Filter (GdkXEvent *xevent, GdkEvent *event)
 
         compzillaWindow *compwin = FindWindow (x11_event->xconfigure.window);
 
-        if (compwin && compwin->mContent) {
+        if (compwin) {
             compzillaWindow *abovewin = FindWindow (x11_event->xconfigure.above);
 
-            mWM->WindowConfigured (compwin->mContent,
-                                   x11_event->xconfigure.x,
-                                   x11_event->xconfigure.y,
-                                   x11_event->xconfigure.width,
-                                   x11_event->xconfigure.height,
-                                   x11_event->xconfigure.border_width,
-                                   abovewin ? abovewin->mContent : NULL);
+            compwin->WindowConfigured (x11_event->xconfigure.x,
+                                       x11_event->xconfigure.y,
+                                       x11_event->xconfigure.width,
+                                       x11_event->xconfigure.height,
+                                       x11_event->xconfigure.border_width,
+                                       abovewin);
         }
 
         break;

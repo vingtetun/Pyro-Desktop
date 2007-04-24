@@ -27,5 +27,6 @@ stamp-h1
 *.rej
 compzillaIControl.h
 compzillaIExtension.h
+compzillaIWindow.h
 compzillaIWindowManager.h
 compzillaIRenderingContext.h

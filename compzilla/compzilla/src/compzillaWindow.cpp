@@ -3,6 +3,8 @@
 #define MOZILLA_INTERNAL_API
 
 #include "compzillaWindow.h"
+#include "compzillaIRenderingContext.h"
+#include "compzillaRenderingContext.h"
 #include "nsKeycodes.h"
 
 #include <nsIDOMEventTarget.h>
@@ -13,14 +15,18 @@
 #else
 #include <nsXPCOMStrings.h>
 #endif
+#include "nsHashPropertyBag.h"
 
 extern "C" {
 #include <stdio.h>
+#include <X11/Xatom.h>
 #include <X11/extensions/shape.h>
 #include <X11/extensions/Xcomposite.h>
 #if HAVE_XEVIE
 #include <X11/extensions/Xevie.h>
 #endif
+
+#include "XAtoms.h"
 
 #include <gdk/gdkkeys.h>
 extern uint32 gtk_get_current_event_time (void);
@@ -46,11 +52,13 @@ NS_INTERFACE_MAP_BEGIN(compzillaWindow)
     NS_INTERFACE_MAP_ENTRY(nsIDOMKeyListener)
     NS_INTERFACE_MAP_ENTRY(nsIDOMMouseListener)
     NS_INTERFACE_MAP_ENTRY(nsIDOMUIListener)
+    NS_INTERFACE_MAP_ENTRY(compzillaIWindow)
 NS_INTERFACE_MAP_END
 
+extern XAtoms atoms;
 
-compzillaWindow::compzillaWindow(Display *display, Window win)
-    : mContent(),
+compzillaWindow::compzillaWindow(Display *display, Window win, compzillaIWindowManager* wm)
+    : mWM(wm),
       mDisplay(display),
       mWindow(win),
       mPixmap(0),
@@ -101,6 +109,8 @@ compzillaWindow::~compzillaWindow()
     XSelectInput (mDisplay, mWindow, NoEventMask);
     XShapeSelectInput (mDisplay, mWindow, NoEventMask);
     XUngrabButton (mDisplay, AnyButton, AnyModifier, mWindow);
+
+    mContentNodes.Clear();
 }
 
 
@@ -131,7 +141,7 @@ compzillaWindow::EnsurePixmap()
 
 
 void
-compzillaWindow::ConnectListeners (bool connect)
+compzillaWindow::ConnectListeners (bool connect, nsCOMPtr<nsISupports> aContent)
 {
     const char *events[] = {
 	// nsIDOMKeyListener events
@@ -166,11 +176,7 @@ compzillaWindow::ConnectListeners (bool connect)
 	NULL
     };
 
-    if (!mContent) {
-	return;
-    }
-
-    nsCOMPtr<nsIDOMEventTarget> target = do_QueryInterface (mContent);
+    nsCOMPtr<nsIDOMEventTarget> target = do_QueryInterface (aContent);
     nsCOMPtr<nsIDOMEventListener> listener = 
 	do_QueryInterface (NS_ISUPPORTS_CAST (nsIDOMKeyListener *, this));
 
@@ -189,14 +195,75 @@ compzillaWindow::ConnectListeners (bool connect)
 }
 
 
-void 
-compzillaWindow::SetContent (nsCOMPtr<nsISupports> aContent)
+NS_IMETHODIMP
+compzillaWindow::AddContentNode (nsISupports* aContent)
 {
-    // FIXME: This crashes for some reason
-    //ConnectListeners (false);
+    mContentNodes.AppendObject (aContent);
+    ConnectListeners (true, aContent);
 
-    mContent = aContent;
-    ConnectListeners (true);
+    return NS_OK;
+}
+
+NS_IMETHODIMP
+compzillaWindow::RemoveContentNode (nsISupports* aContent)
+{
+    // Allow a caller to remove O(N^2) behavior by removing end-to-start.
+    for (PRUint32 i = mContentNodes.Count() - 1; i != PRUint32(-1); --i) {
+        if (mContentNodes.ObjectAt(i) == aContent) {
+            mContentNodes.RemoveObjectAt (i);
+            ConnectListeners (false, aContent);
+            return NS_OK;
+        }
+    }
+
+    return NS_ERROR_FAILURE;
+}
+
+NS_IMETHODIMP
+compzillaWindow::GetStringProperty (PRUint32 prop, nsAString& value)
+{
+    SPEW ("GetStringProperty (prop = %s)\n", XGetAtomName (mDisplay, prop));
+
+    Atom actual_type;
+    int format;
+    unsigned long nitems;
+    unsigned long bytes_after_return;
+    unsigned char *data;
+
+    XGetWindowProperty (mDisplay, mWindow, (Atom) prop,
+                        0, BUFSIZ, false, XA_STRING, 
+                        &actual_type, &format, &nitems, &bytes_after_return, 
+                        &data);
+
+    // XXX this is wrong - it's not always ASCII.  look at metacity's
+    // handling of it (it calls a gdk function to convert the text
+    // property to utf8).
+    value = NS_ConvertASCIItoUTF16 ((const char*)data);
+
+    SPEW (" + %s\n", data);
+
+    return NS_OK;
+}
+
+NS_IMETHODIMP
+compzillaWindow::GetAtomProperty (PRUint32 prop, PRUint32* value)
+{
+    SPEW ("GetAtomProperty (prop = %s)\n", XGetAtomName (mDisplay, prop));
+
+    Atom actual_type;
+    int format;
+    unsigned long nitems;
+    unsigned long bytes_after_return;
+    unsigned char *data;
+
+    XGetWindowProperty (mDisplay, mWindow, (Atom)prop,
+                        0, BUFSIZ, false, XA_ATOM,
+                        &actual_type, &format, &nitems, &bytes_after_return, 
+                        &data);
+
+    *value = *(PRUint32*)data;
+
+    return NS_OK;
 }
 
 
@@ -459,9 +526,9 @@ compzillaWindow::KeyPress(nsIDOMEvent* aDOMEvent)
 
 
 void
-compzillaWindow::TranslateClientXYToWindow (int *x, int *y)
+compzillaWindow::TranslateClientXYToWindow (int *x, int *y, nsIDOMEventTarget *target)
 {
-    nsCOMPtr<nsICanvasElement> canvasElement = do_QueryInterface (mContent);
+    nsCOMPtr<nsICanvasElement> canvasElement = do_QueryInterface (target);
     if (!canvasElement) {
 	return;
     }
@@ -524,7 +591,10 @@ compzillaWindow::SendMouseEvent (int eventType, nsIDOMMouseEvent *mouseEv, bool 
     mouseEv->GetScreenY (&y_root);
     mouseEv->GetClientX (&x);
     mouseEv->GetClientY (&y);
-    TranslateClientXYToWindow (&x, &y);
+
+    nsIDOMEventTarget *target;
+    mouseEv->GetCurrentTarget (&target);
+    TranslateClientXYToWindow (&x, &y, target);
 
     mouseEv->GetButton (&button);
 
@@ -877,3 +947,221 @@ compzillaWindow::DispatchEvent (nsIDOMEvent *evt, PRBool *_retval)
     return NS_ERROR_NOT_IMPLEMENTED;
 }
 
+void
+compzillaWindow::DestroyWindow ()
+{
+    for (PRUint32 i = mContentNodes.Count() - 1; i != PRUint32(-1); --i)
+        mWM->WindowDestroyed (mContentNodes.ObjectAt(i));
+}
+
+void
+compzillaWindow::MapWindow ()
+{
+    for (PRUint32 i = mContentNodes.Count() - 1; i != PRUint32(-1); --i)
+        mWM->WindowMapped (mContentNodes.ObjectAt(i));
+}
+
+void
+compzillaWindow::UnmapWindow ()
+{
+    for (PRUint32 i = mContentNodes.Count() - 1; i != PRUint32(-1); --i)
+        mWM->WindowUnmapped (mContentNodes.ObjectAt(i));
+}
+
+void
+compzillaWindow::PropertyChanged (Window win, Atom prop)
+{
+
+    nsIWritablePropertyBag *wbag;
+
+    /* XXX check return value */
+    NS_NewHashPropertyBag (&wbag);
+
+    nsCOMPtr<nsIWritablePropertyBag2> wbag2 = do_QueryInterface(wbag);
+    nsCOMPtr<nsIPropertyBag2> bag2 = do_QueryInterface(wbag);
+
+
+    switch (prop) {
+        // ICCCM properties
+
+    case XA_WM_NAME:
+    case XA_WM_ICON_NAME: {
+        // XXX this is missing some massaging, since the WM_NAME
+        // property isn't in utf8, but in some locale character set
+        // (latin1?  who knows).  Check the gtk+ source on how to
+        // handle this.
+        nsString str;
+        GetStringProperty (prop, str);
+        wbag2->SetPropertyAsAString (NS_LITERAL_STRING (".text"), str);
+        break;
+    }
+
+    case XA_WM_HINTS: {
+        XWMHints *wmHints;
+
+        wmHints = XGetWMHints (mDisplay, win);
+
+        wbag2->SetPropertyAsInt32  (NS_LITERAL_STRING ("wmHints.flags"), wmHints->flags);
+        wbag2->SetPropertyAsBool   (NS_LITERAL_STRING ("wmHints.input"), wmHints->input);
+        wbag2->SetPropertyAsInt32  (NS_LITERAL_STRING ("wmHints.initialState"), wmHints->initial_state);
+        wbag2->SetPropertyAsUint32 (NS_LITERAL_STRING ("wmHints.iconPixmap"), wmHints->icon_pixmap);
+        wbag2->SetPropertyAsUint32 (NS_LITERAL_STRING ("wmHints.iconWindow"), wmHints->icon_window);
+        wbag2->SetPropertyAsInt32  (NS_LITERAL_STRING ("wmHints.iconX"), wmHints->icon_x);
+        wbag2->SetPropertyAsInt32  (NS_LITERAL_STRING ("wmHints.iconY"), wmHints->icon_y);
+        wbag2->SetPropertyAsUint32 (NS_LITERAL_STRING ("wmHints.iconMask"), wmHints->icon_mask);
+        wbag2->SetPropertyAsUint32 (NS_LITERAL_STRING ("wmHints.windowGroup"), wmHints->window_group);
+
+        XFree (wmHints);
+        break;
+    }
+
+    case XA_WM_NORMAL_HINTS: {
+        XSizeHints sizeHints;
+        long supplied;
+
+        // XXX check return value
+        XGetWMNormalHints (mDisplay, win, &sizeHints, &supplied);
+
+        wbag2->SetPropertyAsInt32 (NS_LITERAL_STRING ("sizeHints.flags"), sizeHints.flags);
+
+        wbag2->SetPropertyAsInt32 (NS_LITERAL_STRING ("sizeHints.x"), sizeHints.x);
+        wbag2->SetPropertyAsInt32 (NS_LITERAL_STRING ("sizeHints.y"), sizeHints.y);
+        wbag2->SetPropertyAsInt32 (NS_LITERAL_STRING ("sizeHints.width"), sizeHints.width);
+        wbag2->SetPropertyAsInt32 (NS_LITERAL_STRING ("sizeHints.height"), sizeHints.height);
+
+        wbag2->SetPropertyAsInt32 (NS_LITERAL_STRING ("sizeHints.minWidth"), sizeHints.min_width);
+        wbag2->SetPropertyAsInt32 (NS_LITERAL_STRING ("sizeHints.minHeight"), sizeHints.min_height);
+
+        wbag2->SetPropertyAsInt32 (NS_LITERAL_STRING ("sizeHints.maxWidth"), sizeHints.max_width);
+        wbag2->SetPropertyAsInt32 (NS_LITERAL_STRING ("sizeHints.maxHeight"), sizeHints.max_height);
+
+        wbag2->SetPropertyAsInt32 (NS_LITERAL_STRING ("sizeHints.widthInc"), sizeHints.width_inc);
+        wbag2->SetPropertyAsInt32 (NS_LITERAL_STRING ("sizeHints.heightInc"), sizeHints.height_inc);
+
+        wbag2->SetPropertyAsInt32 (NS_LITERAL_STRING ("sizeHints.minAspect.x"), sizeHints.min_aspect.x);
+        wbag2->SetPropertyAsInt32 (NS_LITERAL_STRING ("sizeHints.minAspect.y"), sizeHints.min_aspect.y);
+
+        wbag2->SetPropertyAsInt32 (NS_LITERAL_STRING ("sizeHints.maxAspect.x"), sizeHints.max_aspect.x);
+        wbag2->SetPropertyAsInt32 (NS_LITERAL_STRING ("sizeHints.maxAspect.y"), sizeHints.max_aspect.y);
+
+        if ((supplied & (PBaseSize|PWinGravity)) != 0) {
+            wbag2->SetPropertyAsInt32 (NS_LITERAL_STRING ("sizeHints.baseWidth"), sizeHints.base_width);
+            wbag2->SetPropertyAsInt32 (NS_LITERAL_STRING ("sizeHints.baseHeight"), sizeHints.base_height);
+
+            wbag2->SetPropertyAsInt32 (NS_LITERAL_STRING ("sizeHints.winGravity"), sizeHints.win_gravity);
+        }
+    }
+    case XA_WM_CLASS: {
+        // 2 strings, separated by a \0
+        break;
+    }
+    case XA_WM_TRANSIENT_FOR: {
+        // the parent X window's canvas element
+        break;
+    }
+    case XA_WM_CLIENT_MACHINE: {
+        nsString str;
+        GetStringProperty (prop, str);
+        wbag2->SetPropertyAsAString (NS_LITERAL_STRING (".text"), str);
+    }
+    default:
+        // ICCCM properties which don't have predefined atoms
+
+        if (prop == atoms.x.WM_COLORMAP_WINDOWS) {
+            // if we ever support this, shoot me..
+        }
+        else if (prop == atoms.x.WM_PROTOCOLS) {
+            // an array of Atoms.
+        }
+
+        // non - ICCCM properties go here
+
+        // EWMH properties
+
+        else if (prop == atoms.x._NET_WM_NAME
+                 || prop == atoms.x._NET_WM_VISIBLE_NAME
+                 || prop == atoms.x._NET_WM_ICON_NAME
+                 || prop == atoms.x._NET_WM_VISIBLE_ICON_NAME) {
+            // utf8 encoded string
+            nsString str;
+            GetStringProperty (prop, str);
+            wbag2->SetPropertyAsAString (NS_LITERAL_STRING (".text"), str);
+        }
+        else if (prop == atoms.x._NET_WM_DESKTOP) {
+        }
+        else if (prop == atoms.x._NET_WM_WINDOW_TYPE) {
+            // XXX _NET_WM_WINDOW_TYPE is actually an array of atoms, not just 1.
+            // this also needs fixing in the JS.
+            PRUint32 atom;
+            GetAtomProperty (prop, &atom);
+            wbag2->SetPropertyAsUint32 (NS_LITERAL_STRING (".atom"), atom);
+        }
+        else if (prop == atoms.x._NET_WM_STATE) {
+        }
+        else if (prop == atoms.x._NET_WM_ALLOWED_ACTIONS) {
+        }
+        else if (prop == atoms.x._NET_WM_STRUT) {
+        }
+        else if (prop == atoms.x._NET_WM_STRUT_PARTIAL) {
+        }
+        else if (prop == atoms.x._NET_WM_ICON_GEOMETRY) {
+        }
+        else if (prop == atoms.x._NET_WM_ICON) {
+        }
+        else if (prop == atoms.x._NET_WM_PID) {
+        }
+        else if (prop == atoms.x._NET_WM_HANDLED_ICONS) {
+        }
+        else if (prop == atoms.x._NET_WM_USER_TIME) {
+        }
+        else if (prop == atoms.x._NET_FRAME_EXTENTS) {
+        }
+
+        break;
+    }
+
+    // XXX this might be wrong - it's a writable property bag, so
+    // perhaps we need to re-initialize the property bag each time
+    // through the loop?
+    for (PRUint32 i = mContentNodes.Count() - 1; i != PRUint32(-1); --i)
+        mWM->PropertyChanged (mContentNodes.ObjectAt(i), (PRUint32)prop, bag2);
+
+    NS_RELEASE (wbag);
+}
+
+void
+compzillaWindow::WindowDamaged (XRectangle *rect)
+{
+    for (PRUint32 i = mContentNodes.Count() - 1; i != PRUint32(-1); --i) {
+        nsCOMPtr<nsIDOMHTMLCanvasElement> canvas = do_QueryInterface (mContentNodes.ObjectAt(i));
+
+        nsCOMPtr<compzillaIRenderingContextInternal> internal;
+        nsresult rv = canvas->GetContext (NS_LITERAL_STRING ("compzilla"), 
+                                          getter_AddRefs (internal));
+
+        if (NS_SUCCEEDED (rv)) {
+            EnsurePixmap ();
+            internal->SetDrawable (mDisplay, mPixmap, mAttr.visual);
+            internal->Redraw (nsRect (rect->x, rect->y, rect->width, rect->height));
+        }
+    }
+}
+
+void
+compzillaWindow::WindowConfigured (PRInt32 x, PRInt32 y,
+                                   PRInt32 width, PRInt32 height,
+                                   PRInt32 border,
+                                   compzillaWindow *abovewin)
+{
+    for (PRUint32 i = mContentNodes.Count() - 1; i != PRUint32(-1); --i) {
+        mWM->WindowConfigured (mContentNodes.ObjectAt(i),
+                               x, y,
+                               width, height,
+                               border,
+                               // this doesn't work given that abovewin has a list of content nodes..
+                               // but really, we shouldn't have to worry about this, as you *can't* reliably
+                               // specify a window to raise/lower above/below, since clients can't depend
+                               // on the fact that other topevel windows are siblings of each other.
+                               /*abovewin ? abovewin->mContent : */NULL);
+    }
+}

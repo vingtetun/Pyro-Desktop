@@ -260,11 +260,13 @@ CompzillaWindowManager.prototype = {
     },
 
     /* compzillaIWindowManager methods */
-    WindowCreated : function(xid, override, x, y, width, height, mapped) {
+    WindowCreated : function(window, xid, override, x, y, width, height, mapped) {
 
 	Debug ("creating window " + xid + ", " + (mapped ? "mapped" : "unmapped") + " " + x + "," + y + " / " + width + "x" + height);
 
 	var content = this.document.createElement ("canvas");
+
+	window.AddContentNode (content);
 
 	content.tabIndex = "1";
 
@@ -296,8 +298,6 @@ CompzillaWindowManager.prototype = {
 	    content.style.visibility = "visible";
 
 	content.focus();
-
-	return content;
     },
 
     WindowDestroyed : function(content) {

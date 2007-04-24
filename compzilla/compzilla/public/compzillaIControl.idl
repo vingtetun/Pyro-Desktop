@@ -11,10 +11,6 @@ interface compzillaIControl : nsISupports
     // @property is just an atom name, which is ascii.
     PRUint32 InternAtom (in string property);
 
-    // window property accessors
-    DOMString GetStringProperty (in PRUint32 xid, in PRUint32 prop);
-    PRUint32 GetAtomProperty (in PRUint32 xid, in PRUint32 prop);
-
     void SendConfigureNotify (in PRUint32 xid, in PRUint32 x, in PRUint32 y, in PRUint32 width, in PRUint32 height, in PRUint32 border);
     void ConfigureWindow (in PRUint32 xid, in PRUint32 x, in PRUint32 y, in PRUint32 width, in PRUint32 height, in PRUint32 border);
 };

@@ -1,3 +1,36 @@
+2007-04-24  Chris Toshok  <toshok@ximian.com>
+
+	* compzilla/src/compzillaWindow.cpp: add the methods from
+	compzillaControl here, and also extend this class to allow
+	multiple content nodes.
+
+	* compzilla/src/compzillaControl.h: move the atoms stuff out of
+	here.
+
+	* compzilla/src/compzillaControl.cpp: move many of the methods
+	from here to compzillaWindow (everything that did a FindWin
+	followed by an operation, basically, like UnmapWindow, MapWindow,
+	WindowDestroyed, etc).
+
+	* compzilla/public/compzillaIWindowManager.idl: add the
+	compzillaIWindow parameter to WindowCreated, and remove the return
+	type.
+
+	* compzilla/public/compzillaIWindow.idl: add
+	Get{String,Atom}Property methods.
+
+	* compzilla/public/compzillaIControl.idl: we don't need
+	Get{String,Atom}Property anymore.  they're in compzillaIWindow.idl
+
+	* compzilla/components/compzillaWindowManager.js (WindowCreated):
+	call compzillaIWindow.AddContentNodehere instead of returning the
+	canvas element.
+
+	* compzilla/Makefile.am (libcompzilla_la_SOURCES): add XAtoms.h
+
+	* compzilla/src/XAtoms.h: new file.  check out that awesome union,
+	yo.
+
 2007-04-23  Chris Toshok  <toshok@ximian.com>
 
 	* compzilla/Makefile.am (IDL_FILES): add compzillaIWindow.idl

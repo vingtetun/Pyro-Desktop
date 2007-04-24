@@ -1,5 +1,6 @@
 /* -*- mode: IDL; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
 #include "nsISupports.idl"
+#include "compzillaIWindow.idl"
 #include "nsIDOMWindow.idl"
 #include "nsIDOMEventTarget.idl"
 #include "nsIPropertyBag2.idl"
@@ -7,12 +8,13 @@
 [scriptable, uuid(38054e08-223b-4eea-adcf-442c58945704)]
 interface compzillaIWindowManager : nsISupports
 {
-  nsISupports WindowCreated (in long xid, in boolean override,
-                             in long x,
-                             in long y,
-                             in long width,
-                             in long height,
-                             in boolean mapped);
+  void WindowCreated (in compzillaIWindow window,
+                      in long xid, in boolean override,
+                      in long x,
+                      in long y,
+                      in long width,
+                      in long height,
+                      in boolean mapped);
   void WindowDestroyed (in nsISupports win);
 
   void WindowMapped (in nsISupports win);
