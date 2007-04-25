@@ -2,6 +2,12 @@
 
 #define MOZILLA_INTERNAL_API
 
+#if MOZILLA_1_8_BRANCH
+#include <nsStringAPI.h>
+#else
+#include <nsXPCOMStrings.h>
+#endif
+
 #include "compzillaWindow.h"
 #include "compzillaIRenderingContext.h"
 #include "compzillaRenderingContext.h"
@@ -10,11 +16,6 @@
 #include <nsIDOMEventTarget.h>
 #include <nsICanvasElement.h>
 #include <nsISupportsUtils.h>
-#if MOZILLA_1_8_BRANCH
-#include <nsStringAPI.h>
-#else
-#include <nsXPCOMStrings.h>
-#endif
 #include "nsHashPropertyBag.h"
 
 extern "C" {
@@ -34,6 +35,9 @@ extern uint32 gtk_get_current_event_time (void);
 extern GdkEvent *gtk_get_current_event (void);
 }
 
+extern XAtoms atoms;
+
+
 #if WITH_SPEW
 #define SPEW(format...) printf("   - " format)
 #else
@@ -43,6 +47,7 @@ extern GdkEvent *gtk_get_current_event (void);
 #define INFO(format...) printf(" *** " format)
 #define WARNING(format...) printf(" !!! " format)
 #define ERROR(format...) fprintf(stderr, format)
+
 
 NS_IMPL_ADDREF(compzillaWindow)
 NS_IMPL_RELEASE(compzillaWindow)
@@ -55,7 +60,6 @@ NS_INTERFACE_MAP_BEGIN(compzillaWindow)
     NS_INTERFACE_MAP_ENTRY(compzillaIWindow)
 NS_INTERFACE_MAP_END
 
-extern XAtoms atoms;
 
 compzillaWindow::compzillaWindow(Display *display, Window win, compzillaIWindowManager* wm)
     : mWM(wm),
@@ -204,6 +208,7 @@ compzillaWindow::AddContentNode (nsISupports* aContent)
     return NS_OK;
 }
 
+
 NS_IMETHODIMP
 compzillaWindow::RemoveContentNode (nsISupports* aContent)
 {
@@ -218,6 +223,7 @@ compzillaWindow::RemoveContentNode (nsISupports* aContent)
 
     return NS_ERROR_FAILURE;
 }
+
 
 NS_IMETHODIMP
 compzillaWindow::GetStringProperty (PRUint32 prop, nsAString& value)
@@ -244,6 +250,7 @@ compzillaWindow::GetStringProperty (PRUint32 prop, nsAString& value)
 
     return NS_OK;
 }
+
 
 NS_IMETHODIMP
 compzillaWindow::GetAtomProperty (PRUint32 prop, PRUint32* value)
@@ -947,12 +954,14 @@ compzillaWindow::DispatchEvent (nsIDOMEvent *evt, PRBool *_retval)
     return NS_ERROR_NOT_IMPLEMENTED;
 }
 
+
 void
 compzillaWindow::DestroyWindow ()
 {
     for (PRUint32 i = mContentNodes.Count() - 1; i != PRUint32(-1); --i)
         mWM->WindowDestroyed (mContentNodes.ObjectAt(i));
 }
+
 
 void
 compzillaWindow::MapWindow ()
@@ -961,6 +970,7 @@ compzillaWindow::MapWindow ()
         mWM->WindowMapped (mContentNodes.ObjectAt(i));
 }
 
+
 void
 compzillaWindow::UnmapWindow ()
 {
@@ -968,10 +978,10 @@ compzillaWindow::UnmapWindow ()
         mWM->WindowUnmapped (mContentNodes.ObjectAt(i));
 }
 
+
 void
 compzillaWindow::PropertyChanged (Window win, Atom prop)
 {
-
     nsIWritablePropertyBag *wbag;
 
     /* XXX check return value */
@@ -979,7 +989,6 @@ compzillaWindow::PropertyChanged (Window win, Atom prop)
 
     nsCOMPtr<nsIWritablePropertyBag2> wbag2 = do_QueryInterface(wbag);
     nsCOMPtr<nsIPropertyBag2> bag2 = do_QueryInterface(wbag);
-
 
     switch (prop) {
         // ICCCM properties
@@ -1129,23 +1138,30 @@ compzillaWindow::PropertyChanged (Window win, Atom prop)
     NS_RELEASE (wbag);
 }
 
+
 void
 compzillaWindow::WindowDamaged (XRectangle *rect)
 {
+    EnsurePixmap ();
+
     for (PRUint32 i = mContentNodes.Count() - 1; i != PRUint32(-1); --i) {
         nsCOMPtr<nsIDOMHTMLCanvasElement> canvas = do_QueryInterface (mContentNodes.ObjectAt(i));
+        if (!canvas) {
+            ERROR ("Content node %p is not a nsIDOMHTMLCanvasElement\n", mContentNodes.ObjectAt(i));
+            continue;
+        }
 
         nsCOMPtr<compzillaIRenderingContextInternal> internal;
         nsresult rv = canvas->GetContext (NS_LITERAL_STRING ("compzilla"), 
                                           getter_AddRefs (internal));
 
         if (NS_SUCCEEDED (rv)) {
-            EnsurePixmap ();
             internal->SetDrawable (mDisplay, mPixmap, mAttr.visual);
             internal->Redraw (nsRect (rect->x, rect->y, rect->width, rect->height));
         }
     }
 }
+
 
 void
 compzillaWindow::WindowConfigured (PRInt32 x, PRInt32 y,

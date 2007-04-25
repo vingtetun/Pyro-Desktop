@@ -1,3 +1,14 @@
+2007-04-25  Alex Graveley  <alex@beatniksoftware.com>
+
+	* compzilla/src/compzillaControl.cpp (AddWindow): No need to cast
+	to compzillaIWindow before passing to WindowCreated.
+
+	* compzilla/src/compzillaEventManager.cpp: nsDOMJSUtils.h doesn't
+	exist in mozilla1.8.
+
+	* compzilla/src/compzillaWindow.cpp (WindowDamaged): Don't crash
+	if a content node isn't a nsIDOMHTMLCanvasElement.
+
 2007-04-24  Chris Toshok  <toshok@ximian.com>
 
 	* compzilla/src/compzillaWindow.cpp: add the methods from

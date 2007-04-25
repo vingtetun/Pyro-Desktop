@@ -176,7 +176,8 @@ compzillaControl::SendConfigureNotify (PRUint32 xid,
     ev.xconfigure.above = None;
     ev.xconfigure.override_redirect = False; /* XXX */
 
-    SPEW ("SendConfigureNotify (window=%p, x=%d, y=%d, width=%d, height=%d, border=%d, override=%d)\n",
+    SPEW ("SendConfigureNotify (window=%p, x=%d, y=%d, width=%d, height=%d, "
+          "border=%d, override=%d)\n",
           ev.xconfigure.window,
           ev.xconfigure.x,
           ev.xconfigure.y,
@@ -646,14 +647,13 @@ compzillaControl::AddWindow (Window win)
     INFO ("AddWindow for window %p\n", win);
 
     compzillaWindow *compwin = new compzillaWindow(mXDisplay, win, mWM);
-    nsCOMPtr<compzillaIWindow> iwin = do_QueryInterface (NS_ISUPPORTS_CAST (compzillaIWindow*, compwin));
 
     if (compwin->mAttr.c_class == InputOnly) {
         WARNING ("AddWindow ignoring InputOnly window %p\n", win);
         return;
     }
 
-    mWM->WindowCreated (iwin,
+    mWM->WindowCreated (compwin,
                         win, 
                         compwin->mAttr.override_redirect != 0,
                         compwin->mAttr.x,
@@ -723,8 +723,9 @@ void
 compzillaControl::PropertyChanged (Window win, Atom prop)
 {
     compzillaWindow *compwin = FindWindow (win);
-    if (compwin)
+    if (compwin) {
         compwin->PropertyChanged (win, prop);
+    }
 }
 
 
@@ -732,8 +733,9 @@ void
 compzillaControl::WindowDamaged (Window win, XRectangle *rect)
 {
     compzillaWindow *compwin = FindWindow (win);
-    if (compwin)
+    if (compwin) {
         compwin->WindowDamaged (rect);
+    }
 }
 
 

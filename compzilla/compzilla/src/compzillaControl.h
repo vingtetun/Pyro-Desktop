@@ -16,6 +16,7 @@ extern "C" {
 #include <X11/Xlib.h>
 }
 
+
 class compzillaControl
     : public compzillaIControl,
       public nsIDOMEventTarget

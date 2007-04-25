@@ -13,9 +13,9 @@ extern "C" {
 #include <X11/extensions/Xdamage.h>
 }
 
+#include "compzillaEventManager.h"
 #include "compzillaIWindowManager.h"
 #include "compzillaIWindow.h"
-#include "compzillaEventManager.h"
 
 
 // From X.h

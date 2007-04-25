@@ -6,7 +6,9 @@
 #include <jsapi.h>
 #include <nsIJSContextStack.h>
 #include <nsServiceManagerUtils.h>
+#ifndef MOZILLA_1_8_BRANCH
 #include <nsDOMJSUtils.h>
+#endif
 
 #include "compzillaEventManager.h"
 
