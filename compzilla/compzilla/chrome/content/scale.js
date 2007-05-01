@@ -68,8 +68,8 @@ function layoutSlots () {
 
     var x1 = 0;
     var y1 = 0;
-    var x2 = 800;
-    var y2 = 600;;
+    var x2 = 1024;
+    var y2 = 768;;
 
     y      = y1 + ss.spacing;
     height = ((y2 - y1) - (lines + 1) * ss.spacing) / lines;
@@ -317,7 +317,7 @@ function scaleStep (msSinceLastStep) {
 		var sw = ss.windows[swi];
 
 		if (sw.adjust) {
-		    sw.adjust = adjustScaleVelocity (w);
+		    sw.adjust = adjustScaleVelocity (sw);
 
 		    ss.moreAdjust |= sw.adjust;
 
@@ -334,10 +334,8 @@ function scaleStep (msSinceLastStep) {
 		}
 	    }
 
-	    if (!ss.moreAdjust) {
-		//alert ("done");
+	    if (!ss.moreAdjust)
 		break;
-	    }
 	}
     }
 
@@ -466,6 +464,7 @@ function bodyLoaded () {
     ss.speed = 1.5;
     ss.timestep = 1.2;
 
+    addWindow (document.getElementById ("4"));
     addWindow (document.getElementById ("3"));
     addWindow (document.getElementById ("2"));
     addWindow (document.getElementById ("1"));

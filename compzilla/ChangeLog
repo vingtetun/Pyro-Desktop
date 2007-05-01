@@ -1,3 +1,10 @@
+2007-05-01  Chris Toshok  <toshok@ximian.com>
+
+	* compzilla/chrome/content/scale.js: resize the test area from
+	800x600 to 1024x768.  fix a typo that was causing all scales
+	(except for the first window) to be 1.0, causing bizarre shrinkage
+	problems.  add the fourth test div.
+
 2007-05-01  Alex Graveley  <alex@beatniksoftware.com>
 
 	* compzilla/src/compzillaWindowEvents.cpp: Add
