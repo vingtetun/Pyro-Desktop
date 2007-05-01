@@ -2,7 +2,6 @@
 #include "nsISupports.idl"
 #include "compzillaIWindow.idl"
 #include "nsIDOMWindow.idl"
-#include "nsIDOMEventTarget.idl"
 #include "nsIPropertyBag2.idl"
 
 [scriptable, uuid(38054e08-223b-4eea-adcf-442c58945704)]

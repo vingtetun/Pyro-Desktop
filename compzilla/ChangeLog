@@ -1,3 +1,27 @@
+2007-05-01  Alex Graveley  <alex@beatniksoftware.com>
+
+	* compzilla/src/compzillaWindowEvents.cpp: Add
+	compzillaWindowEvent, a single impl of all the new window event
+	ifaces.  Use the NS_FORWARD_NSIDOMEVENT macro to forward to an
+	inner nsIDOMEvent.
+
+	* compzilla/public/compzillaIWindowEvents.idl: Add
+	compzillaIWindowEvent, compzillaIWindowConfigureEvent,
+	compzillaIWindowPropertyEvent interfaces passed to
+	compzillaIWindow event listeners.
+
+	* compzilla/src/compzillaWindow.cpp (DestroyWindow): Emit
+	"destroy" events.
+	(MapWindow): Emit "show" events.
+	(UnmapWindow): Emit "hide" events.
+	(PropertyChanged): Emit "propertyChange" events.  Use SET_PROP
+	macro to make this a bit less verbose.
+	(WindowConfigured): Emit "moveResize" without coord data yet.
+	(SendWindowEvent): Aggregates a compzillaWindowEvent with a newly
+	created nsIDOMEvent and calls NotifyEventListeners with it.
+
+	* compzilla/src/compzillaEventManager.cpp: Add HasEventListeners.
+
 2007-04-25  Alex Graveley  <alex@beatniksoftware.com>
 
 	* compzilla/src/compzillaControl.cpp (AddWindow): No need to cast

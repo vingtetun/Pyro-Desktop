@@ -16,6 +16,7 @@ extern "C" {
 #include "compzillaEventManager.h"
 #include "compzillaIWindowManager.h"
 #include "compzillaIWindow.h"
+#include "compzillaWindowEvents.h"
 
 
 // From X.h
@@ -103,5 +104,9 @@ public:
     void TranslateClientXYToWindow (int *x, int *y, nsIDOMEventTarget *target);
     Window GetSubwindowAtPoint (int *x, int *y);
     unsigned int DOMKeyCodeToKeySym (PRUint32 vkCode);
+
+    nsresult SendWindowEvent (const nsAString& type, 
+                              compzillaWindowEvent *winEvent,
+                              compzillaEventManager& eventMgr);
 };
 

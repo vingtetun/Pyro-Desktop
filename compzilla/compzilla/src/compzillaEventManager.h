@@ -35,6 +35,8 @@ public:
 
     void ClearEventListeners();
 
+    bool HasEventListeners ();
+
 private:
     static nsIScriptContext *GetCurrentContext ();
 

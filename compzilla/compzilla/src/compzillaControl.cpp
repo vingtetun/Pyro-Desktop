@@ -304,8 +304,10 @@ compzillaControl::GetNativeWindow(nsIDOMWindow *window)
 bool
 compzillaControl::InitXAtoms ()
 {
-    XInternAtoms (mXDisplay, atom_names, sizeof (atom_names) / sizeof (atom_names[0]), False, atoms.a);
-
+    XInternAtoms (mXDisplay, 
+                  atom_names, sizeof (atom_names) / sizeof (atom_names[0]), 
+                  False, 
+                  atoms.a);
     return true;
 }
 
@@ -718,6 +720,7 @@ compzillaControl::UnmapWindow (Window win)
         compwin->UnmapWindow ();
     }
 }
+
 
 void
 compzillaControl::PropertyChanged (Window win, Atom prop)

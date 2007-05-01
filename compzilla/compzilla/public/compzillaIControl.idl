@@ -3,6 +3,7 @@
 #include "nsIDOMWindow.idl"
 #include "compzillaIWindowManager.idl"
 
+
 [scriptable, uuid(8bf6de0a-ed8f-47af-8757-41551542d196)]
 interface compzillaIControl : nsISupports
 {
@@ -11,8 +12,14 @@ interface compzillaIControl : nsISupports
     // @property is just an atom name, which is ascii.
     PRUint32 InternAtom (in string property);
 
-    void SendConfigureNotify (in PRUint32 xid, in PRUint32 x, in PRUint32 y, in PRUint32 width, in PRUint32 height, in PRUint32 border);
-    void ConfigureWindow (in PRUint32 xid, in PRUint32 x, in PRUint32 y, in PRUint32 width, in PRUint32 height, in PRUint32 border);
+    void SendConfigureNotify (in PRUint32 xid, 
+                              in PRUint32 x, in PRUint32 y, 
+                              in PRUint32 width, in PRUint32 height, 
+                              in PRUint32 border);
+    void ConfigureWindow (in PRUint32 xid, 
+                          in PRUint32 x, in PRUint32 y, 
+                          in PRUint32 width, in PRUint32 height, 
+                          in PRUint32 border);
 };
 
 

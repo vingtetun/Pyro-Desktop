@@ -1,6 +1,6 @@
 /* -*- mode: IDL; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
 #include "nsISupports.idl"
-#include "nsIDOMHTMLCanvasElement.idl"
+
 
 [scriptable, uuid(95aa8ead-40a9-41c6-a643-e3dd531e0afd)]
 interface compzillaIWindow : nsISupports

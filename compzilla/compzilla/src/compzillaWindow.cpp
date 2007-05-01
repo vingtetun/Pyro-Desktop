@@ -74,7 +74,7 @@ compzillaWindow::compzillaWindow(Display *display, Window win, compzillaIWindowM
       mHideEvMgr("hide"),
       mPropertyChangeEvMgr("propertyChange")
 {
-    NS_INIT_ISUPPORTS();
+    NS_INIT_ISUPPORTS ();
 
     // Redirect output entirely
     XCompositeRedirectWindow (display, win, CompositeRedirectManual);
@@ -958,24 +958,42 @@ compzillaWindow::DispatchEvent (nsIDOMEvent *evt, PRBool *_retval)
 void
 compzillaWindow::DestroyWindow ()
 {
-    for (PRUint32 i = mContentNodes.Count() - 1; i != PRUint32(-1); --i)
+    if (mDestroyEvMgr.HasEventListeners ()) {
+        compzillaWindowEvent *ev = new compzillaWindowEvent (this);
+        SendWindowEvent (NS_LITERAL_STRING ("destroy"), ev, mDestroyEvMgr);
+    }
+
+    for (PRUint32 i = mContentNodes.Count() - 1; i != PRUint32(-1); --i) {
         mWM->WindowDestroyed (mContentNodes.ObjectAt(i));
+    }
 }
 
 
 void
 compzillaWindow::MapWindow ()
 {
-    for (PRUint32 i = mContentNodes.Count() - 1; i != PRUint32(-1); --i)
+    if (mShowEvMgr.HasEventListeners ()) {
+        compzillaWindowEvent *ev = new compzillaWindowEvent (this);
+        SendWindowEvent (NS_LITERAL_STRING ("show"), ev, mShowEvMgr);
+    }
+
+    for (PRUint32 i = mContentNodes.Count() - 1; i != PRUint32(-1); --i) {
         mWM->WindowMapped (mContentNodes.ObjectAt(i));
+    }
 }
 
 
 void
 compzillaWindow::UnmapWindow ()
 {
-    for (PRUint32 i = mContentNodes.Count() - 1; i != PRUint32(-1); --i)
+    if (mHideEvMgr.HasEventListeners ()) {
+        compzillaWindowEvent *ev = new compzillaWindowEvent (this);
+        SendWindowEvent (NS_LITERAL_STRING ("hide"), ev, mHideEvMgr);
+    }
+
+    for (PRUint32 i = mContentNodes.Count() - 1; i != PRUint32(-1); --i) {
         mWM->WindowUnmapped (mContentNodes.ObjectAt(i));
+    }
 }
 
 
@@ -983,12 +1001,16 @@ void
 compzillaWindow::PropertyChanged (Window win, Atom prop)
 {
     nsIWritablePropertyBag *wbag;
-
-    /* XXX check return value */
-    NS_NewHashPropertyBag (&wbag);
+    nsresult rv = NS_NewHashPropertyBag (&wbag);
+    if (NS_FAILED(rv)) {
+        return;
+    }
 
     nsCOMPtr<nsIWritablePropertyBag2> wbag2 = do_QueryInterface(wbag);
     nsCOMPtr<nsIPropertyBag2> bag2 = do_QueryInterface(wbag);
+
+#define SET_PROP(_bag, _type, _key, _val) \
+    (_bag)->SetPropertyAs##_type (NS_LITERAL_STRING (_key), _val)
 
     switch (prop) {
         // ICCCM properties
@@ -1001,7 +1023,7 @@ compzillaWindow::PropertyChanged (Window win, Atom prop)
         // handle this.
         nsString str;
         GetStringProperty (prop, str);
-        wbag2->SetPropertyAsAString (NS_LITERAL_STRING (".text"), str);
+        SET_PROP(wbag2, AString, ".text", str);
         break;
     }
 
@@ -1010,15 +1032,15 @@ compzillaWindow::PropertyChanged (Window win, Atom prop)
 
         wmHints = XGetWMHints (mDisplay, win);
 
-        wbag2->SetPropertyAsInt32  (NS_LITERAL_STRING ("wmHints.flags"), wmHints->flags);
-        wbag2->SetPropertyAsBool   (NS_LITERAL_STRING ("wmHints.input"), wmHints->input);
-        wbag2->SetPropertyAsInt32  (NS_LITERAL_STRING ("wmHints.initialState"), wmHints->initial_state);
-        wbag2->SetPropertyAsUint32 (NS_LITERAL_STRING ("wmHints.iconPixmap"), wmHints->icon_pixmap);
-        wbag2->SetPropertyAsUint32 (NS_LITERAL_STRING ("wmHints.iconWindow"), wmHints->icon_window);
-        wbag2->SetPropertyAsInt32  (NS_LITERAL_STRING ("wmHints.iconX"), wmHints->icon_x);
-        wbag2->SetPropertyAsInt32  (NS_LITERAL_STRING ("wmHints.iconY"), wmHints->icon_y);
-        wbag2->SetPropertyAsUint32 (NS_LITERAL_STRING ("wmHints.iconMask"), wmHints->icon_mask);
-        wbag2->SetPropertyAsUint32 (NS_LITERAL_STRING ("wmHints.windowGroup"), wmHints->window_group);
+        SET_PROP(wbag2, Int32, "wmHints.flags", wmHints->flags);
+        SET_PROP(wbag2, Bool, "wmHints.input", wmHints->input);
+        SET_PROP(wbag2, Int32, "wmHints.initialState", wmHints->initial_state);
+        SET_PROP(wbag2, Uint32, "wmHints.iconPixmap", wmHints->icon_pixmap);
+        SET_PROP(wbag2, Uint32, "wmHints.iconWindow", wmHints->icon_window);
+        SET_PROP(wbag2, Int32, "wmHints.iconX", wmHints->icon_x);
+        SET_PROP(wbag2, Int32, "wmHints.iconY", wmHints->icon_y);
+        SET_PROP(wbag2, Uint32, "wmHints.iconMask", wmHints->icon_mask);
+        SET_PROP(wbag2, Uint32, "wmHints.windowGroup", wmHints->window_group);
 
         XFree (wmHints);
         break;
@@ -1031,33 +1053,33 @@ compzillaWindow::PropertyChanged (Window win, Atom prop)
         // XXX check return value
         XGetWMNormalHints (mDisplay, win, &sizeHints, &supplied);
 
-        wbag2->SetPropertyAsInt32 (NS_LITERAL_STRING ("sizeHints.flags"), sizeHints.flags);
+        SET_PROP(wbag2, Int32, "sizeHints.flags", sizeHints.flags);
 
-        wbag2->SetPropertyAsInt32 (NS_LITERAL_STRING ("sizeHints.x"), sizeHints.x);
-        wbag2->SetPropertyAsInt32 (NS_LITERAL_STRING ("sizeHints.y"), sizeHints.y);
-        wbag2->SetPropertyAsInt32 (NS_LITERAL_STRING ("sizeHints.width"), sizeHints.width);
-        wbag2->SetPropertyAsInt32 (NS_LITERAL_STRING ("sizeHints.height"), sizeHints.height);
+        SET_PROP(wbag2, Int32, "sizeHints.x", sizeHints.x);
+        SET_PROP(wbag2, Int32, "sizeHints.y", sizeHints.y);
+        SET_PROP(wbag2, Int32, "sizeHints.width", sizeHints.width);
+        SET_PROP(wbag2, Int32, "sizeHints.height", sizeHints.height);
 
-        wbag2->SetPropertyAsInt32 (NS_LITERAL_STRING ("sizeHints.minWidth"), sizeHints.min_width);
-        wbag2->SetPropertyAsInt32 (NS_LITERAL_STRING ("sizeHints.minHeight"), sizeHints.min_height);
+        SET_PROP(wbag2, Int32, "sizeHints.minWidth", sizeHints.min_width);
+        SET_PROP(wbag2, Int32, "sizeHints.minHeight", sizeHints.min_height);
 
-        wbag2->SetPropertyAsInt32 (NS_LITERAL_STRING ("sizeHints.maxWidth"), sizeHints.max_width);
-        wbag2->SetPropertyAsInt32 (NS_LITERAL_STRING ("sizeHints.maxHeight"), sizeHints.max_height);
+        SET_PROP(wbag2, Int32, "sizeHints.maxWidth", sizeHints.max_width);
+        SET_PROP(wbag2, Int32, "sizeHints.maxHeight", sizeHints.max_height);
 
-        wbag2->SetPropertyAsInt32 (NS_LITERAL_STRING ("sizeHints.widthInc"), sizeHints.width_inc);
-        wbag2->SetPropertyAsInt32 (NS_LITERAL_STRING ("sizeHints.heightInc"), sizeHints.height_inc);
+        SET_PROP(wbag2, Int32, "sizeHints.widthInc", sizeHints.width_inc);
+        SET_PROP(wbag2, Int32, "sizeHints.heightInc", sizeHints.height_inc);
 
-        wbag2->SetPropertyAsInt32 (NS_LITERAL_STRING ("sizeHints.minAspect.x"), sizeHints.min_aspect.x);
-        wbag2->SetPropertyAsInt32 (NS_LITERAL_STRING ("sizeHints.minAspect.y"), sizeHints.min_aspect.y);
+        SET_PROP(wbag2, Int32, "sizeHints.minAspect.x", sizeHints.min_aspect.x);
+        SET_PROP(wbag2, Int32, "sizeHints.minAspect.y", sizeHints.min_aspect.y);
 
-        wbag2->SetPropertyAsInt32 (NS_LITERAL_STRING ("sizeHints.maxAspect.x"), sizeHints.max_aspect.x);
-        wbag2->SetPropertyAsInt32 (NS_LITERAL_STRING ("sizeHints.maxAspect.y"), sizeHints.max_aspect.y);
+        SET_PROP(wbag2, Int32, "sizeHints.maxAspect.x", sizeHints.max_aspect.x);
+        SET_PROP(wbag2, Int32, "sizeHints.maxAspect.y", sizeHints.max_aspect.y);
 
         if ((supplied & (PBaseSize|PWinGravity)) != 0) {
-            wbag2->SetPropertyAsInt32 (NS_LITERAL_STRING ("sizeHints.baseWidth"), sizeHints.base_width);
-            wbag2->SetPropertyAsInt32 (NS_LITERAL_STRING ("sizeHints.baseHeight"), sizeHints.base_height);
+            SET_PROP(wbag2, Int32, "sizeHints.baseWidth", sizeHints.base_width);
+            SET_PROP(wbag2, Int32, "sizeHints.baseHeight", sizeHints.base_height);
 
-            wbag2->SetPropertyAsInt32 (NS_LITERAL_STRING ("sizeHints.winGravity"), sizeHints.win_gravity);
+            SET_PROP(wbag2, Int32, "sizeHints.winGravity", sizeHints.win_gravity);
         }
     }
     case XA_WM_CLASS: {
@@ -1071,7 +1093,7 @@ compzillaWindow::PropertyChanged (Window win, Atom prop)
     case XA_WM_CLIENT_MACHINE: {
         nsString str;
         GetStringProperty (prop, str);
-        wbag2->SetPropertyAsAString (NS_LITERAL_STRING (".text"), str);
+        SET_PROP(wbag2, AString, ".text", str);
     }
     default:
         // ICCCM properties which don't have predefined atoms
@@ -1094,7 +1116,7 @@ compzillaWindow::PropertyChanged (Window win, Atom prop)
             // utf8 encoded string
             nsString str;
             GetStringProperty (prop, str);
-            wbag2->SetPropertyAsAString (NS_LITERAL_STRING (".text"), str);
+            SET_PROP(wbag2, AString, ".text", str);
         }
         else if (prop == atoms.x._NET_WM_DESKTOP) {
         }
@@ -1103,7 +1125,7 @@ compzillaWindow::PropertyChanged (Window win, Atom prop)
             // this also needs fixing in the JS.
             PRUint32 atom;
             GetAtomProperty (prop, &atom);
-            wbag2->SetPropertyAsUint32 (NS_LITERAL_STRING (".atom"), atom);
+            SET_PROP(wbag2, Uint32, ".atom", atom);
         }
         else if (prop == atoms.x._NET_WM_STATE) {
         }
@@ -1129,11 +1151,19 @@ compzillaWindow::PropertyChanged (Window win, Atom prop)
         break;
     }
 
+#undef SET_PROP
+
+    if (mPropertyChangeEvMgr.HasEventListeners ()) {
+        compzillaWindowEvent *ev = new compzillaWindowEvent (this, prop, false, bag2);
+        SendWindowEvent (NS_LITERAL_STRING ("propertyChange"), ev, mPropertyChangeEvMgr);
+    }
+
     // XXX this might be wrong - it's a writable property bag, so
     // perhaps we need to re-initialize the property bag each time
     // through the loop?
-    for (PRUint32 i = mContentNodes.Count() - 1; i != PRUint32(-1); --i)
+    for (PRUint32 i = mContentNodes.Count() - 1; i != PRUint32(-1); --i) {
         mWM->PropertyChanged (mContentNodes.ObjectAt(i), (PRUint32)prop, bag2);
+    }
 
     NS_RELEASE (wbag);
 }
@@ -1169,15 +1199,38 @@ compzillaWindow::WindowConfigured (PRInt32 x, PRInt32 y,
                                    PRInt32 border,
                                    compzillaWindow *abovewin)
 {
+    if (mMoveResizeEvMgr.HasEventListeners ()) {
+        compzillaWindowEvent *ev = new compzillaWindowEvent (this);
+        SendWindowEvent (NS_LITERAL_STRING ("moveResize"), ev, mMoveResizeEvMgr);
+    }
+
     for (PRUint32 i = mContentNodes.Count() - 1; i != PRUint32(-1); --i) {
+        // abovewin doesn't work given that abovewin has a list of content
+        // nodes...  but really, we shouldn't have to worry about this, as you
+        // *can't* reliably specify a window to raise/lower above/below, since
+        // clients can't depend on the fact that other topevel windows are
+        // siblings of each other.
+        
         mWM->WindowConfigured (mContentNodes.ObjectAt(i),
                                x, y,
                                width, height,
                                border,
-                               // this doesn't work given that abovewin has a list of content nodes..
-                               // but really, we shouldn't have to worry about this, as you *can't* reliably
-                               // specify a window to raise/lower above/below, since clients can't depend
-                               // on the fact that other topevel windows are siblings of each other.
-                               /*abovewin ? abovewin->mContent : */NULL);
+                               /*abovewin ? abovewin->mContent : */ NULL);
     }
+}
+
+
+nsresult
+compzillaWindow::SendWindowEvent (const nsAString& type, 
+                                  compzillaWindowEvent *winEvent,
+                                  compzillaEventManager& eventMgr)
+{
+    nsCOMPtr<nsIDOMEvent> event;
+    nsresult rv = eventMgr.CreateEvent (type, this, getter_AddRefs (event));
+    NS_ENSURE_SUCCESS (rv, rv);
+
+    winEvent->SetInner (event);
+
+    eventMgr.NotifyEventListeners (NS_REINTERPRET_CAST (compzillaIWindowPropertyEvent *, winEvent));
+    return NS_OK;
 }
