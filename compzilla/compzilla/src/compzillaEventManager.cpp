@@ -14,7 +14,7 @@
 
 
 /*
- * This is entirely ripped off from nsXMLHTTPRequest.cpp.  I'm surprised 
+ * This is entirely ripped off from nsXMLHttpRequest.cpp.  I'm surprised 
  * there's not a mozilla utility for this already...
  */
 
@@ -105,6 +105,13 @@ void
 compzillaEventManager::ClearEventListeners ()
 {
     mListeners.Clear();
+}
+
+
+bool 
+compzillaEventManager::HasEventListeners ()
+{
+    return mListeners.Count() > 0;
 }
 
 
