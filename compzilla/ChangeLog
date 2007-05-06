@@ -1,3 +1,13 @@
+2007-05-06  Alex Graveley  <alex@beatniksoftware.com>
+
+	* compzilla/src/compzillaWindowEvents.cpp (Send): New, renamed
+	from compzillaWindow::SendWindowEvent.
+
+	* compzilla/src/compzillaControl.cpp: Call
+	compzillaWindowEvents::Send instead of SendWindowEvent.
+	(Filter): Pass deleted to PropertyChanged.
+	(AddWindow): Send "windowCreate" and "windowDestroy" events.
+
 2007-05-01  Chris Toshok  <toshok@ximian.com>
 
 	* compzilla/chrome/content/scale.js: resize the test area from
