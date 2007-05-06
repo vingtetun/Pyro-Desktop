@@ -13,6 +13,7 @@
 
 #include "compzillaIWindow.h"
 #include "compzillaIWindowEvents.h"
+#include "compzillaEventManager.h"
 
 
 // FIXME: Should split this into multiple implementations to save space, but I'm too
@@ -46,6 +47,10 @@ public:
                          nsIPropertyBag2 *bag);
 
     void SetInner(nsIDOMEvent *inner);
+
+    nsresult Send(const nsString& type, 
+                  nsIDOMEventTarget *eventTarget,
+                  compzillaEventManager& eventMgr);
 
 private:
     ~compzillaWindowEvent();

@@ -960,7 +960,7 @@ compzillaWindow::DestroyWindow ()
 {
     if (mDestroyEvMgr.HasEventListeners ()) {
         compzillaWindowEvent *ev = new compzillaWindowEvent (this);
-        SendWindowEvent (NS_LITERAL_STRING ("destroy"), ev, mDestroyEvMgr);
+        ev->Send (NS_LITERAL_STRING ("destroy"), this, mDestroyEvMgr);
     }
 
     for (PRUint32 i = mContentNodes.Count() - 1; i != PRUint32(-1); --i) {
@@ -974,7 +974,7 @@ compzillaWindow::MapWindow ()
 {
     if (mShowEvMgr.HasEventListeners ()) {
         compzillaWindowEvent *ev = new compzillaWindowEvent (this);
-        SendWindowEvent (NS_LITERAL_STRING ("show"), ev, mShowEvMgr);
+        ev->Send (NS_LITERAL_STRING ("show"), this, mShowEvMgr);
     }
 
     for (PRUint32 i = mContentNodes.Count() - 1; i != PRUint32(-1); --i) {
@@ -988,7 +988,7 @@ compzillaWindow::UnmapWindow ()
 {
     if (mHideEvMgr.HasEventListeners ()) {
         compzillaWindowEvent *ev = new compzillaWindowEvent (this);
-        SendWindowEvent (NS_LITERAL_STRING ("hide"), ev, mHideEvMgr);
+        ev->Send (NS_LITERAL_STRING ("hide"), this, mHideEvMgr);
     }
 
     for (PRUint32 i = mContentNodes.Count() - 1; i != PRUint32(-1); --i) {
@@ -998,7 +998,7 @@ compzillaWindow::UnmapWindow ()
 
 
 void
-compzillaWindow::PropertyChanged (Window win, Atom prop)
+compzillaWindow::PropertyChanged (Window win, Atom prop, bool deleted)
 {
     nsIWritablePropertyBag *wbag;
     nsresult rv = NS_NewHashPropertyBag (&wbag);
@@ -1154,8 +1154,8 @@ compzillaWindow::PropertyChanged (Window win, Atom prop)
 #undef SET_PROP
 
     if (mPropertyChangeEvMgr.HasEventListeners ()) {
-        compzillaWindowEvent *ev = new compzillaWindowEvent (this, prop, false, bag2);
-        SendWindowEvent (NS_LITERAL_STRING ("propertyChange"), ev, mPropertyChangeEvMgr);
+        compzillaWindowEvent *ev = new compzillaWindowEvent (this, prop, deleted, bag2);
+        ev->Send (NS_LITERAL_STRING ("propertyChange"), this, mPropertyChangeEvMgr);
     }
 
     // XXX this might be wrong - it's a writable property bag, so
@@ -1197,11 +1197,17 @@ void
 compzillaWindow::WindowConfigured (PRInt32 x, PRInt32 y,
                                    PRInt32 width, PRInt32 height,
                                    PRInt32 border,
-                                   compzillaWindow *abovewin)
+                                   compzillaWindow *aboveWin)
 {
     if (mMoveResizeEvMgr.HasEventListeners ()) {
-        compzillaWindowEvent *ev = new compzillaWindowEvent (this);
-        SendWindowEvent (NS_LITERAL_STRING ("moveResize"), ev, mMoveResizeEvMgr);
+        compzillaWindowEvent *ev = new compzillaWindowEvent (this,
+                                                             mAttr.map_state == IsViewable,
+                                                             mAttr.override_redirect != 0,
+                                                             x, y,
+                                                             width, height,
+                                                             border,
+                                                             aboveWin);
+        ev->Send (NS_LITERAL_STRING ("moveResize"), this, mMoveResizeEvMgr);
     }
 
     for (PRUint32 i = mContentNodes.Count() - 1; i != PRUint32(-1); --i) {
@@ -1217,20 +1223,4 @@ compzillaWindow::WindowConfigured (PRInt32 x, PRInt32 y,
                                border,
                                /*abovewin ? abovewin->mContent : */ NULL);
     }
-}
-
-
-nsresult
-compzillaWindow::SendWindowEvent (const nsAString& type, 
-                                  compzillaWindowEvent *winEvent,
-                                  compzillaEventManager& eventMgr)
-{
-    nsCOMPtr<nsIDOMEvent> event;
-    nsresult rv = eventMgr.CreateEvent (type, this, getter_AddRefs (event));
-    NS_ENSURE_SUCCESS (rv, rv);
-
-    winEvent->SetInner (event);
-
-    eventMgr.NotifyEventListeners (NS_REINTERPRET_CAST (compzillaIWindowPropertyEvent *, winEvent));
-    return NS_OK;
 }

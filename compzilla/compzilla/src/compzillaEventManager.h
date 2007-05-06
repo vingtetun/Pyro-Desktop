@@ -4,7 +4,9 @@
 #define compzillaEventManager_h__
 
 
+#define MOZILLA_INTERNAL_API
 #include <nsCOMArray.h>
+#undef MOZILLA_INTERNAL_API
 #include <nsCOMPtr.h>
 #include <nsIDOMEvent.h>
 #include <nsIDOMEventListener.h>

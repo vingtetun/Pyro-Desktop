@@ -45,6 +45,22 @@ compzillaWindowEvent::SetInner(nsIDOMEvent *inner)
 }
 
 
+nsresult 
+compzillaWindowEvent::Send(const nsString& type, 
+                           nsIDOMEventTarget *eventTarget,
+                           compzillaEventManager& eventMgr)
+{
+    nsCOMPtr<nsIDOMEvent> event;
+    nsresult rv = eventMgr.CreateEvent (type, eventTarget, getter_AddRefs (event));
+    NS_ENSURE_SUCCESS (rv, rv);
+
+    SetInner (event);
+
+    eventMgr.NotifyEventListeners (NS_REINTERPRET_CAST (compzillaIWindowPropertyEvent *, this));
+    return NS_OK;
+}
+
+
 //
 // compzillaIWindowConfigureEvent implementation...
 //

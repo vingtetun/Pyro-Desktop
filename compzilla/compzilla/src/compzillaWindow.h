@@ -80,12 +80,12 @@ public:
     void DestroyWindow ();
     void MapWindow ();
     void UnmapWindow ();
-    void PropertyChanged (Window win, Atom prop);
+    void PropertyChanged (Window win, Atom prop, bool deleted);
     void WindowDamaged (XRectangle *rect);
     void WindowConfigured (PRInt32 x, PRInt32 y,
                            PRInt32 width, PRInt32 height,
                            PRInt32 border,
-                           compzillaWindow *abovewin);
+                           compzillaWindow *aboveWin);
 
     compzillaEventManager mDestroyEvMgr;
     compzillaEventManager mMoveResizeEvMgr;
@@ -104,9 +104,5 @@ public:
     void TranslateClientXYToWindow (int *x, int *y, nsIDOMEventTarget *target);
     Window GetSubwindowAtPoint (int *x, int *y);
     unsigned int DOMKeyCodeToKeySym (PRUint32 vkCode);
-
-    nsresult SendWindowEvent (const nsAString& type, 
-                              compzillaWindowEvent *winEvent,
-                              compzillaEventManager& eventMgr);
 };
 

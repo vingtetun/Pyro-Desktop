@@ -37,7 +37,7 @@ private:
     void ForgetWindow (Window win);
     void MapWindow (Window win);
     void UnmapWindow (Window win);
-    void PropertyChanged (Window win, Atom prop);
+    void PropertyChanged (Window win, Atom prop, bool deleted);
     void WindowDamaged (Window win, XRectangle *rect);
 
     GdkWindow *GetNativeWindow(nsIDOMWindow *window);

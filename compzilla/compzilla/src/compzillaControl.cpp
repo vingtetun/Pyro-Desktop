@@ -666,6 +666,11 @@ compzillaControl::AddWindow (Window win)
 
     mWindowMap.Put (win, compwin);
 
+    if (mWindowCreateEvMgr.HasEventListeners ()) {
+        compzillaWindowEvent *ev = new compzillaWindowEvent (compwin);
+        ev->Send (NS_LITERAL_STRING ("windowCreate"), this, mWindowCreateEvMgr);
+    }
+
     if (compwin->mAttr.map_state == IsViewable) {
         MapWindow (win);
     }
@@ -681,6 +686,11 @@ compzillaControl::DestroyWindow (Window win)
     compzillaWindow *compwin = FindWindow (win);
     if (compwin) {
         compwin->DestroyWindow ();
+
+        if (mWindowDestroyEvMgr.HasEventListeners ()) {
+            compzillaWindowEvent *ev = new compzillaWindowEvent (compwin);
+            ev->Send (NS_LITERAL_STRING ("windowDestroy"), this, mWindowDestroyEvMgr);
+        }
 
         // Damage is not valid if the window is already destroyed
         compwin->mDamage = 0;
@@ -723,11 +733,11 @@ compzillaControl::UnmapWindow (Window win)
 
 
 void
-compzillaControl::PropertyChanged (Window win, Atom prop)
+compzillaControl::PropertyChanged (Window win, Atom prop, bool deleted)
 {
     compzillaWindow *compwin = FindWindow (win);
     if (compwin) {
-        compwin->PropertyChanged (win, prop);
+        compwin->PropertyChanged (win, prop, deleted);
     }
 }
 
@@ -862,7 +872,9 @@ compzillaControl::Filter (GdkXEvent *xevent, GdkEvent *event)
         SPEW ("PropertyChange: window=0x%0x, atom=%s\n", 
               x11_event->xproperty.window, 
               XGetAtomName(x11_event->xany.display, x11_event->xproperty.atom));
-        PropertyChanged (x11_event->xproperty.window, x11_event->xproperty.atom);
+        PropertyChanged (x11_event->xproperty.window, 
+                         x11_event->xproperty.atom, 
+                         x11_event->xproperty.state == PropertyDelete);
         break;
     }
     case _KeyPress:
