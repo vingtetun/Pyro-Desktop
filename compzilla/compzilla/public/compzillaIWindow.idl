@@ -18,5 +18,5 @@ interface compzillaIWindow : nsISupports
 #define COMPZILLA_WINDOW_CID \
   { 0x95aa8ead, 0x40a9, 0x41c6, \
       { 0xa6, 0x43, 0xe3, 0xdd, 0x53, 0x1e, 0x0a, 0xfd } }
-#define COMPZILLA_WINDOW_CONTRACTID "@beatniksoftware.com/compzillaWindow"
+#define COMPZILLA_WINDOW_CONTRACTID "@pyrodesktop.org/compzillaWindow"
 %}

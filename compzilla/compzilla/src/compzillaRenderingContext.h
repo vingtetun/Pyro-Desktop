@@ -33,6 +33,9 @@ public:
     NS_IMETHOD SetDrawable (Display *dpy, Drawable drawable, Visual *visual) = 0;
 };
 
+#ifndef MOZILLA_1_8_BRANCH
+NS_DEFINE_STATIC_IID_ACCESSOR(compzillaIRenderingContextInternal, COMPZILLA_RENDERING_CONTEXT_INTERNAL_IID)
+#endif
 
 class compzillaRenderingContext :
     public compzillaIRenderingContext,

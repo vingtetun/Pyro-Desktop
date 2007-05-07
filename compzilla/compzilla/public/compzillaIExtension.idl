@@ -13,6 +13,6 @@ interface compzillaIExtension : nsISupports
 #define COMPZILLA_EXTENSION_CID                                 \
         { 0xb3255c2c, 0x0222, 0x4d6b,                           \
           { 0xac, 0x38, 0x14, 0x39, 0x0a, 0xb1, 0x4e, 0xc2 } }
-#define COMPZILLA_EXTENSION_CONTRACTID "@beatniksoftware.com/compzillaExtension"
+#define COMPZILLA_EXTENSION_CONTRACTID "@pyrodesktop.org/compzillaExtension"
 %}
 

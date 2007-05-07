@@ -4,10 +4,10 @@ const compzillaIWindowManager = Components.interfaces.compzillaIWindowManager;
 
 function compzillaLoad()
 {
-   svccls = Components.classes['@beatniksoftware.com/compzillaService'];
+   svccls = Components.classes['@pyrodesktop.org/compzillaService'];
    svc = svccls.getService(compzillaIControl);
 
-   wmcls = Components.classes['@beatniksoftware.com/compzillaWindowManager'];
+   wmcls = Components.classes['@pyrodesktop.org/compzillaWindowManager'];
    wm = wmcls.createInstance(compzillaIWindowManager);
 
    var desktop = document.getElementById ("desktop");

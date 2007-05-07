@@ -1,7 +1,7 @@
 /* -*- mode: javascript; c-basic-offset: 4; indent-tabs-mode: t; -*- */
 
 const CLSID        = Components.ID('{38054e08-223b-4eea-adcf-442c58945704}');
-const CONTRACTID   = "@beatniksoftware.com/compzillaWindowManager";
+const CONTRACTID   = "@pyrodesktop.org/compzillaWindowManager";
 const nsISupports  = Components.interfaces.nsISupports;
 const nsIComponentRegistrar        = Components.interfaces.nsIComponentRegistrar;
 const compzillaIWindowManager      = Components.interfaces.compzillaIWindowManager;
@@ -399,7 +399,7 @@ CompzillaWindowManager.prototype = {
 	CompzillaState.windowStack = new WindowStack ();
 	CompzillaState.windowStack.init ();
 
-	cls = Components.classes['@beatniksoftware.com/compzillaService'];
+	cls = Components.classes['@pyrodesktop.org/compzillaService'];
 	CompzillaState.svc = cls.getService(Components.interfaces.compzillaIControl);
 
 	// add a debug window

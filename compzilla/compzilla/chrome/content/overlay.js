@@ -9,10 +9,10 @@ window.addEventListener("onload", compzillaLoad, true);
 
 function compzillaLoad()
 {
-	cls = Components.classes['@beatniksoftware.com/compzillaService'];
+	cls = Components.classes['@pyrodesktop.org/compzillaService'];
 	svc = cls.getService(Components.interfaces.compzillaIControl);
 
-	wmcls = Components.classes['@beatniksoftware.com/compzillaWindowManager'];
+	wmcls = Components.classes['@pyrodesktop.org/compzillaWindowManager'];
 	wm = wmcls.createInstance(Components.interfaces.compzillaIWindowManager);
 
 	// this next call will generated a call to compzillaWindowCreated for each window

@@ -1,6 +1,6 @@
 
 
-extensiondir = $(GECKO_LIBDIR)/extensions/compzilla@beatniksoftware.com
+extensiondir = $(GECKO_LIBDIR)/extensions/compzilla@pyrodesktop.org
 EXTENSION_SRCDIR=$(srcdir)
 extension_DATA =				\
 	$(EXTENSION_SRCDIR)/chrome.manifest	\
@@ -86,7 +86,7 @@ GFX_LIBS=-lgkgfx
 endif
 
 libcompzilla_la_LDFLAGS = -avoid-version -module
-libcompzilla_la_LIBADD = $(XEXTENSIONS_LIBS) -L$(GECKO_LIBDIR) $(GFX_LIBS)
+libcompzilla_la_LIBADD = $(XEXTENSIONS_LIBS) -L$(GECKO_LIBDIR) $(GFX_LIBS) -lxpcom_core
 
 libcompzilla_la_CPPFLAGS =			\
 	-DWITH_SPEW				\

@@ -1,5 +1,5 @@
 
-AC_INIT(compzilla, 0.1, alex@beatniksoftware.com)
+AC_INIT(compzilla, 0.1, compzilla-bugs@pyrodesktop.org)
 
 AC_CONFIG_SRCDIR(compzilla/install.rdf)
 AC_CONFIG_HEADERS(config.h)
