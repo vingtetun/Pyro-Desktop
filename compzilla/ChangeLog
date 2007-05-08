@@ -1,5 +1,15 @@
 2007-05-08  Chris Toshok  <toshok@hungry.com>
 
+	* compzilla/chrome/content/atoms.js: new file, split out the atoms
+	stuff from compzillaWindowManager.js here, and dangle the object
+	off the desktop element so different scripts can gain access to
+	it.
+
+	* compzilla/chrome/content/windowStack.js: reindent this - my
+	modeline was ignored.
+	
+2007-05-08  Chris Toshok  <toshok@hungry.com>
+
 	* compzilla/chrome/content/windowStack.js: document this a little
 	bit, fix up some incorrect args to stackWindow, and only dangle
 	off the windowStack element those methods which are public.
