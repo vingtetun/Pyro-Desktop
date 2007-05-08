@@ -16,7 +16,7 @@ function compzillaLoad()
 	wm = wmcls.createInstance(Components.interfaces.compzillaIWindowManager);
 
 	// this next call will generated a call to compzillaWindowCreated for each window
-	svc.RegisterWindowManager(wm)
+	svc.RegisterWindowManager(wm);
 }
 
 compzillaLoad ();
