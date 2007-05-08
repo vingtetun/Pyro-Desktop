@@ -1,3 +1,10 @@
+2007-05-08  Chris Toshok  <toshok@hungry.com>
+
+	* compzilla/chrome/content/windowStack.js: first pass at the new
+	windowstack code.  I've split it out from
+	compzillaWindowManager.js but it can't be used until we get the
+	mousethrough behavior fixed in mozilla.
+
 2007-05-06  Alex Graveley  <alex@beatniksoftware.com>
 
 	* compzilla/src/compzillaWindowEvents.cpp (Send): New, renamed
