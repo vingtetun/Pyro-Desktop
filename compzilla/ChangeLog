@@ -1,5 +1,12 @@
 2007-05-08  Chris Toshok  <toshok@hungry.com>
 
+	* compzilla/chrome/content/windowStack.js: document this a little
+	bit, fix up some incorrect args to stackWindow, and only dangle
+	off the windowStack element those methods which are public.
+	Private ones are defined in the local file scope.
+
+2007-05-08  Chris Toshok  <toshok@hungry.com>
+
 	* compzilla/chrome/content/windowStack.js: first pass at the new
 	windowstack code.  I've split it out from
 	compzillaWindowManager.js but it can't be used until we get the
