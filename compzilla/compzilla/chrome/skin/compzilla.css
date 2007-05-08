@@ -21,6 +21,7 @@ body {
 
 .windowtitle {
 	font-weight: bold;
+	-moz-user-select: none;
 }
 
 .debugContent {
@@ -44,6 +45,7 @@ body {
 .content {
 	position: absolute;
 	background: #ffffff;
+	-moz-user-select: none;
 }
 
 .override_content {
@@ -59,4 +61,23 @@ body {
 	visibility: hidden;
 	opacity: 0.85;
 	z-index: 65535;
+}
+
+#compzillaWindowStack {
+}
+
+#compzillaWindowFrame {
+	background: #000000;
+	position: absolute;
+	visibility: hidden;
+}
+
+#compzillaDockFrame {
+	opacity: 0.8;
+}
+
+#compzillaWindowContent {
+	visibility: hidden;
+	background: #ffffff;
+	tabindex: 1;
 }

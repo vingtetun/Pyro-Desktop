@@ -2,31 +2,30 @@
 
 #define MOZILLA_INTERNAL_API
 
-#include "nspr.h"
-#include "nsCOMPtr.h"
-#include "nsXPCOMCID.h"
+#include <nspr.h>
+#include <nsCOMPtr.h>
+#include <nsXPCOMCID.h>
 
-#include "nsICategoryManager.h"
-#include "nsIGenericFactory.h"
-#include "nsIScriptNameSpaceManager.h"
-#include "nsIServiceManager.h"
-#include "nsISupportsUtils.h"
-#include "nsServiceManagerUtils.h"
+#include <nsICategoryManager.h>
+#include <nsIGenericFactory.h>
+#include <nsIScriptNameSpaceManager.h>
+#include <nsIServiceManager.h>
+#include <nsISupportsUtils.h>
+#include <nsServiceManagerUtils.h>
 
 #include "compzillaControl.h"
 #include "compzillaRenderingContext.h"
-#include "compzillaExtension.h"
+#include "compzillaWindowEvents.h"
 
-#include "compzillaIRenderingContext.h"
-
-
-NS_GENERIC_FACTORY_CONSTRUCTOR(compzillaExtension);
 
 NS_GENERIC_FACTORY_CONSTRUCTOR(compzillaControl);
 NS_DECL_CLASSINFO(compzillaControl);
 
 NS_GENERIC_FACTORY_CONSTRUCTOR(compzillaRenderingContext);
 NS_DECL_CLASSINFO(compzillaRenderingContext)
+
+NS_DECL_CLASSINFO(compzillaWindow)
+NS_DECL_CLASSINFO(compzillaWindowEvent)
 
 
 static NS_METHOD 
@@ -78,11 +77,25 @@ static const nsModuleComponentInfo components[] = {
         nsIClassInfo::DOM_OBJECT
     },
     {
-        "Compzilla Extension",
-        COMPZILLA_EXTENSION_CID,
-        COMPZILLA_EXTENSION_CONTRACTID,
-        compzillaExtensionConstructor
-    }
+        "Compzilla Native Window",
+        COMPZILLA_WINDOW_CID,
+        COMPZILLA_WINDOW_CONTRACTID,
+        nsnull, nsnull, nsnull, nsnull,
+        NS_CI_INTERFACE_GETTER_NAME(compzillaWindow),
+        nsnull,
+        &NS_CLASSINFO_NAME(compzillaWindow),
+        nsIClassInfo::PLUGIN_OBJECT
+    },
+    {
+        "Compzilla Native Window Event",
+        COMPZILLA_WINDOW_EVENT_CID,
+        COMPZILLA_WINDOW_EVENT_CONTRACTID,
+        nsnull, nsnull, nsnull, nsnull,
+        NS_CI_INTERFACE_GETTER_NAME(compzillaWindowEvent),
+        nsnull,
+        &NS_CLASSINFO_NAME(compzillaWindowEvent),
+        nsIClassInfo::PLUGIN_OBJECT
+    },
 };
 
 

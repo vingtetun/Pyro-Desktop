@@ -1,0 +1,98 @@
+<?xml version="1.0"?>
+<?xml-stylesheet href="chrome://compzilla/skin/compzilla.css" type="text/css"?>
+
+<!DOCTYPE window SYSTEM "chrome://compzilla/locale/start.dtd">
+
+<window id="desktopWindow"
+        xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
+	xmlns:html="http://www.w3.org/1999/xhtml"
+        xmlns:xbl="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
+	title="compzilla"
+	onload="compzillaLoad()" 
+	width="640" height="480">
+
+    <script type="application/x-javascript" src="chrome://compzilla/content/atoms.js" />
+    <script type="application/x-javascript" src="chrome://compzilla/content/windowStack.js" />
+    <script type="application/x-javascript" src="chrome://compzilla/content/start.js" />
+
+    <!--<iframe id="desktop" src="chrome://compzilla/skin/desktop.html" flex="1" />-->
+
+    <html:body id="desktop" xmlns="http://www.w3.org/1999/xhtml" flex="1">
+
+    <div id="compzillaWindowFrame">
+        <commandset id="compzillaWindowCommandSet">
+            <command id="cmd_minimizeWindow" oncommand="compzilla.minimizeWindow();" />
+            <command id="cmd_restoreWindow" oncommand="compzilla.restoreWindow();" />
+            <command id="cmd_maximizeWindow" oncommand="compzilla.maximizeWindow();" />
+            <command id="cmd_closeWindow" oncommand="compzilla.closeWindow();" />
+        </commandset>
+
+        <keyset id="compzillaWindowKeyset">
+            <key id="key_minimizeWindow" 
+                 keycode="VK_F9" modifiers="alt"
+                 command="cmd_minimizeWindow" />
+            <key id="key_maximizeWindow" 
+                 keycode="VK_F10" modifiers="alt"
+                 command="cmd_maximizeWindow" />
+            <key id="key_closeWindow" 
+                 keycode="VK_F4" modifiers="alt"
+                 command="cmd_closeWindow" />
+        </keyset>
+
+        <menupopup id="compzillaWindowMenu">
+            <menuitem id="menu_minimizeWindow" 
+                      label="&minimizeWindow.label;" 
+                      command="cmd_minimizeWindow" />
+            <menuitem id="menu_maximizeWindow" 
+                      label="&maximizeWindow.label;" 
+                      command="cmd_maximizeWindow" />
+            <menuitem id="menu_closeWindow" 
+                      label="&closeWindow.label;" 
+                      command="cmd_closeWindow" />
+        </menupopup>
+
+        <hbox id="compzillaWindowTitleBox">
+            <image id="compzillaWindowIcon" 
+                   tooltiptext="&windowMenu.label;" 
+                   popup="compzillaWindowMenu" />
+
+            <label id="compzillaWindowTitle" flex="1" />
+
+            <image id="compzillaWindowMinimize"
+                   src="chrome://compzilla/skin/minimize.png"
+                   tooltiptext="&minimizeWindow.label;" 
+                   onclick="goDoCommand('cmd_minimizeWindow');" />
+            <image id="compzillaWindowMaximize"
+                   src="chrome://compzilla/skin/maximize.png"
+                   tooltiptext="&maximizeWindow.label;" 
+                   onclick="goDoCommand('cmd_maximizeWindow');" />
+            <image id="compzillaWindowClose"
+                   src="chrome://compzilla/skin/close.png"
+                   tooltiptext="&closeWindow.label;" 
+                   onclick="goDoCommand('cmd_closeWindow');" />
+        </hbox>
+
+	<img src="http://www.beatniksoftware.com/img/alexgotchi.png" />
+	bar
+	fooo
+    </div>
+
+        <canvas id="compzillaWindowContent" />
+
+	<div id="compzillaWindowStack">
+		This is the window stack
+        </div>
+        <div id="overlay">
+		This is the overlay
+        </div>
+	This is the desktop...
+    </html:body>
+
+    <commandset id="compzillaDesktopCommandSet">
+        <command id="cmd_showDesktop" oncommand="compzilla.showDesktop();" />
+    </commandset>
+
+    <vbox id="compzillaDockFrame" hidden="true">
+        <html:canvas id="compzillaDockContent" xbl:flex="1" />
+    </vbox>
+</window>

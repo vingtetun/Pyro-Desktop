@@ -11,12 +11,12 @@
 #include <nsRect.h>
 
 
+#include "compzillaEventManager.h"
 #include "compzillaIWindow.h"
 #include "compzillaIWindowEvents.h"
-#include "compzillaEventManager.h"
 
 
-// FIXME: Should split this into multiple implementations to save space, but I'm too
+// FIXME: Should split this into multiple implementations, but I'm too
 //        lazy for now...
 
 class compzillaWindowEvent 
@@ -26,10 +26,10 @@ class compzillaWindowEvent
 {
 public:
     NS_DECL_ISUPPORTS
+    NS_DECL_NSIDOMEVENT
     NS_DECL_COMPZILLAIWINDOWEVENT
     NS_DECL_COMPZILLAIWINDOWCONFIGUREEVENT
     NS_DECL_COMPZILLAIWINDOWPROPERTYEVENT
-    NS_FORWARD_NSIDOMEVENT(mInner->)
 
     compzillaWindowEvent(compzillaIWindow *window);
     compzillaWindowEvent(compzillaIWindow *window,
@@ -46,8 +46,6 @@ public:
                          bool deleted,
                          nsIPropertyBag2 *bag);
 
-    void SetInner(nsIDOMEvent *inner);
-
     nsresult Send(const nsString& type, 
                   nsIDOMEventTarget *eventTarget,
                   compzillaEventManager& eventMgr);
@@ -57,7 +55,7 @@ private:
 
 protected:
     nsCOMPtr<compzillaIWindow> mWindow;
-    nsCOMPtr<nsIDOMEvent> mInner;
+    nsCOMPtr<nsIDOMEventTarget> mTarget;
 
     bool mMapped;
     bool mOverrideRedirect;

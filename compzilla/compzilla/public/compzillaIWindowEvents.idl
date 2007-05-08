@@ -13,6 +13,14 @@ interface compzillaIWindowEvent : nsIDOMEvent
 };
 
 
+%{ C++
+#define COMPZILLA_WINDOW_EVENT_CID \
+  { 0x6797a12f, 0x37a3, 0x4ef4, \
+      { 0x87, 0x44, 0x5b, 0xef, 0x35, 0x47, 0x42, 0x40 } }
+#define COMPZILLA_WINDOW_EVENT_CONTRACTID "@beatniksoftware.com/compzillaWindowEvent"
+%}
+
+
 [scriptable, uuid(620e5545-81d8-4393-8e8b-b835d128bdf8)]
 interface compzillaIWindowConfigureEvent : compzillaIWindowEvent
 {

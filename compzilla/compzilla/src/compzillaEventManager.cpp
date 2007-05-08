@@ -1,8 +1,8 @@
 /* -*- mode: C++; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
 
-#define MOZILLA_INTERNAL_API
+#include "compzillaEventManager.h"
+
 #include <nsIPrivateDOMEvent.h>
-#define MOZILLA_INTERNAL_API
 #include <jsapi.h>
 #include <nsIJSContextStack.h>
 #include <nsServiceManagerUtils.h>
@@ -10,7 +10,11 @@
 #include <nsDOMJSUtils.h>
 #endif
 
-#include "compzillaEventManager.h"
+#include <nsIDOMDocument.h>
+#include <nsIDOMDocumentEvent.h>
+#include <nsIDOMWindow.h>
+#include <nsIWindowWatcher.h>
+
 
 
 /*
@@ -36,10 +40,38 @@ compzillaEventManager::CreateEvent (const nsAString& aType,
                                     nsIDOMEventTarget *aEventTarget,
 				    nsIDOMEvent** aDOMEvent)
 {
+    // Comedy of errors...
+
+    /* No Window */
+    /*
+    nsCOMPtr<nsIWindowWatcher> wwatcher(
+       do_GetService("@mozilla.org/embedcomp/window-watcher;1"));
+    nsCOMPtr<nsIDOMWindow> window;
+    nsCOMPtr<nsIDOMDocument> doc;
+    nsCOMPtr<nsIDOMEventTarget> windowTarget;
+
+    wwatcher->GetActiveWindow (getter_AddRefs (window));
+    window->GetDocument (getter_AddRefs (doc));
+
+    nsCOMPtr<nsIDOMDocumentEvent> docEvent = do_QueryInterface (doc);
+    docEvent->CreateEvent (NS_LITERAL_STRING ("nsDOMMyEvent"), aDOMEvent);
+    */
+
+    /* NS_NewDOMEvent not exposed in FF2.0 */
+    /*
     nsresult rv = NS_NewDOMEvent (aDOMEvent, NULL, NULL);
     if (NS_FAILED(rv)) {
         return rv;
     }
+    */
+
+    /* nsEventDispatcher only in Minefield */
+    /*
+    nsEventDispatcher::CreateEvent (NULL, NULL, aType, aDOMEvent);
+    if (NS_FAILED(rv)) {
+        return rv;
+    }
+    */
 
     nsCOMPtr<nsIPrivateDOMEvent> privevent(do_QueryInterface(*aDOMEvent));
     if (!privevent) {
@@ -89,7 +121,7 @@ compzillaEventManager::NotifyEventListeners (nsIDOMEvent* aEvent)
 
     PRInt32 count = listeners.Count();
     for (PRInt32 index = 0; index < count; ++index) {
-        nsIDOMEventListener* listener = listeners[index];
+        nsIDOMEventListener *listener = listeners[index];
         if (listener) {
             listener->HandleEvent(aEvent);
         }

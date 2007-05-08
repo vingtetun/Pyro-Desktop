@@ -1,3 +1,16 @@
+2007-05-08  Alex Graveley  <alex@beatniksoftware.com>
+
+	* compzilla/src/compzillaModule.cpp: Expose compzillaWindow and
+	compzillaWindowEvent to JS by calling NS_DECL_CLASSINFO.
+
+	* compzilla/src/compzillaWindowEvents.cpp: Make
+	compzillaWindowEvents implement nsIDOMEvent, since the call
+	NS_NewDOMEvent used by mozilla-internal event creators is not
+	exposed.  Expose classinfo so JS can access members easily.
+
+	* chrome/content/start2.js/xul: Add these xul document alternative
+	versions of start.xul/js
+
 2007-05-08  Chris Toshok  <toshok@hungry.com>
 
 	* compzilla/chrome/content/atoms.js: new file, split out the atoms

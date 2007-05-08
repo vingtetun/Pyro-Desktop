@@ -12,7 +12,13 @@ content_DATA =					\
 	$(CONTENT_SRCDIR)/overlay.js		\
 	$(CONTENT_SRCDIR)/overlay.xul		\
 	$(CONTENT_SRCDIR)/start.js		\
-	$(CONTENT_SRCDIR)/start.xul
+	$(CONTENT_SRCDIR)/start.xul		\
+	$(CONTENT_SRCDIR)/start2.js		\
+	$(CONTENT_SRCDIR)/start2.xul		\
+	$(CONTENT_SRCDIR)/atoms.js		\
+	$(CONTENT_SRCDIR)/debug.js		\
+	$(CONTENT_SRCDIR)/windowStack.js
+
 
 skindir=$(extensiondir)/chrome/skin
 SKIN_SRCDIR=$(EXTENSION_SRCDIR)/chrome/skin
@@ -23,7 +29,9 @@ skin_DATA =					\
 
 endir=$(extensiondir)/chrome/locale/en-US
 EN_SRCDIR=$(EXTENSION_SRCDIR)/chrome/locale/en-US
-en_DATA = $(EN_SRCDIR)/overlay.dtd
+en_DATA = 				\
+	$(EN_SRCDIR)/overlay.dtd	\
+	$(EN_SRCDIR)/start.dtd
 
 prefsdir = $(extensiondir)/defaults/preferences
 PREFS_SRCDIR = $(EXTENSION_SRCDIR)/defaults/preferences
@@ -57,7 +65,6 @@ XPIDL_INCLUDES =				\
 	$(XPIDL) $(XPIDL_INCLUDES)  -m typelib -e $@ $<
 
 IDL_FILES =						\
-	$(srcdir)/public/compzillaIExtension.idl	\
 	$(srcdir)/public/compzillaIControl.idl		\
 	$(srcdir)/public/compzillaIWindow.idl		\
 	$(srcdir)/public/compzillaIWindowEvents.idl	\
@@ -124,8 +131,6 @@ libcompzilla_la_CPPFLAGS =			\
 nodist_libcompzilla_la_SOURCES = $(IDL_H_FILES)
 
 libcompzilla_la_SOURCES =				\
-	$(srcdir)/src/compzillaExtension.cpp		\
-	$(srcdir)/src/compzillaExtension.h		\
 	$(srcdir)/src/compzillaEventManager.cpp		\
 	$(srcdir)/src/compzillaEventManager.h		\
 	$(srcdir)/src/compzillaControl.cpp		\
@@ -135,6 +140,8 @@ libcompzilla_la_SOURCES =				\
 	$(srcdir)/src/compzillaRenderingContext.cpp	\
 	$(srcdir)/src/compzillaWindow.h			\
 	$(srcdir)/src/compzillaWindow.cpp		\
+	$(srcdir)/src/compzillaWindowEvents.h		\
+	$(srcdir)/src/compzillaWindowEvents.cpp		\
 	$(srcdir)/src/nsKeycodes.h			\
 	$(srcdir)/src/XAtoms.h
 

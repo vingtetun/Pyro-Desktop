@@ -1,0 +1,5 @@
+
+<!ENTITY minimizeWindow.label "Minimize">
+<!ENTITY maximizeWindow.label "Maximize">
+<!ENTITY closeWindow.label "Close">
+<!ENTITY windowMenu.label "Window Menu">

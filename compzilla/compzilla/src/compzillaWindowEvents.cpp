@@ -12,7 +12,13 @@ NS_INTERFACE_MAP_BEGIN(compzillaWindowEvent)
     NS_INTERFACE_MAP_ENTRY_AMBIGUOUS(compzillaIWindowEvent, compzillaIWindowPropertyEvent)
     NS_INTERFACE_MAP_ENTRY(compzillaIWindowConfigureEvent)
     NS_INTERFACE_MAP_ENTRY(compzillaIWindowPropertyEvent)
+    NS_IMPL_QUERY_CLASSINFO(compzillaWindowEvent)
 NS_INTERFACE_MAP_END
+NS_IMPL_CI_INTERFACE_GETTER4(compzillaWindowEvent, 
+                             nsIDOMEvent,
+                             compzillaIWindowEvent,
+                             compzillaIWindowConfigureEvent,
+                             compzillaIWindowPropertyEvent)
 
 
 compzillaWindowEvent::~compzillaWindowEvent()
@@ -38,24 +44,12 @@ compzillaWindowEvent::GetWindow(compzillaIWindow **aWindow)
 }
 
 
-void 
-compzillaWindowEvent::SetInner(nsIDOMEvent *inner)
-{
-    mInner = inner;
-}
-
-
 nsresult 
 compzillaWindowEvent::Send(const nsString& type, 
                            nsIDOMEventTarget *eventTarget,
                            compzillaEventManager& eventMgr)
 {
-    nsCOMPtr<nsIDOMEvent> event;
-    nsresult rv = eventMgr.CreateEvent (type, eventTarget, getter_AddRefs (event));
-    NS_ENSURE_SUCCESS (rv, rv);
-
-    SetInner (event);
-
+    mTarget = eventTarget;
     eventMgr.NotifyEventListeners (NS_REINTERPRET_CAST (compzillaIWindowPropertyEvent *, this));
     return NS_OK;
 }
@@ -184,5 +178,88 @@ NS_IMETHODIMP
 compzillaWindowEvent::GetValue(nsIPropertyBag2 **aValue)
 {
     *aValue = mBag;
+    return NS_OK;
+}
+
+
+//
+// nsIDOMEvent implementation...
+//
+
+NS_IMETHODIMP
+compzillaWindowEvent::GetType (nsAString &aType) 
+{
+    aType = NS_LITERAL_STRING ("Events"); 
+    return NS_OK; 
+}
+
+
+NS_IMETHODIMP
+compzillaWindowEvent::GetTarget (nsIDOMEventTarget **aTarget) 
+{
+    *aTarget = mTarget; 
+    return NS_OK;
+}
+
+
+NS_IMETHODIMP
+compzillaWindowEvent::GetCurrentTarget (nsIDOMEventTarget **aCurrentTarget) 
+{
+    *aCurrentTarget = mTarget; 
+    return NS_OK;
+}
+
+
+NS_IMETHODIMP
+compzillaWindowEvent::GetEventPhase (PRUint16 *aEventPhase) 
+{
+    *aEventPhase = BUBBLING_PHASE;
+    return NS_OK; 
+}
+
+
+NS_IMETHODIMP
+compzillaWindowEvent::GetBubbles (PRBool *aBubbles) 
+{
+    *aBubbles = true;
+    return NS_OK;
+}
+
+
+NS_IMETHODIMP
+compzillaWindowEvent::GetCancelable (PRBool *aCancelable) 
+{
+    *aCancelable = false;
+    return NS_OK;
+}
+
+
+NS_IMETHODIMP
+compzillaWindowEvent::GetTimeStamp (DOMTimeStamp *aTimeStamp) 
+{ 
+    *aTimeStamp = 0;
+    return NS_OK;
+}
+
+
+NS_IMETHODIMP
+compzillaWindowEvent::StopPropagation(void)
+{ 
+    return NS_ERROR_NOT_IMPLEMENTED;
+}
+
+
+NS_IMETHODIMP
+compzillaWindowEvent::PreventDefault(void) 
+{ 
+    return NS_ERROR_NOT_IMPLEMENTED;
+}
+
+
+NS_IMETHODIMP
+compzillaWindowEvent::InitEvent(const nsAString & eventTypeArg, 
+                                PRBool canBubbleArg, 
+                                PRBool cancelableArg) 
+{
     return NS_OK;
 }
