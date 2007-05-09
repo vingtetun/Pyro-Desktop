@@ -1,30 +1,34 @@
+/* -*- mode: javascript; c-basic-offset: 4; indent-tabs-mode: t; -*- */
 
 const compzillaIControl = Components.interfaces.compzillaIControl;
 
+var windowStack;
+
+// make a local version of our global Debug function, so we can use it
+// without specifying a object every time.
+var Debug;
 
 function ShowListener2 (frame, content) {
-	this.frame = frame;
-	this.content = content;
+    this.frame = frame;
+    this.content = content;
 }
 ShowListener2.prototype.handleEvent = function (ev) {
-	this.frame.style.visibility = "visible";
-	this.content.style.visibility = "visible";
+    this.frame.style.visibility = "visible";
+    this.content.style.visibility = "visible";
 
-	stack = document.getElementById ("compzillaWindowStack");
-	stack.innerHTML = "SHOW2 " + stack.innerHTML;
+    Debug ("SHOW2");
 }
 
 
 function HideListener2 (frame, content) { 
-	this.frame = frame; 
-	this.content = content;
+    this.frame = frame; 
+    this.content = content;
 }
 HideListener2.prototype.handleEvent = function (ev) { 
-	this.frame.style.visibility = "hidden";
-	this.content.style.visibility = "hidden";
+    this.frame.style.visibility = "hidden";
+    this.content.style.visibility = "hidden";
 
-	stack = document.getElementById ("compzillaWindowStack");
-	stack.innerHTML = "HIDE2 " + stack.innerHTML;
+    Debug ("HIDE2");
 }
 
 
@@ -45,129 +49,126 @@ PropertyChangeListener.prototype.handleEvent = function (ev) { this.frame.proper
 
 
 function CompzillaWindowFrame (nativewin) {
-	this._nativewin = nativewin;
-	this._makeFrameNode ();
+    this._nativewin = nativewin;
+    this._makeFrameNode ();
 
-	//this._commands = new CompzillaCommands (this);
+    //this._commands = new CompzillaCommands (this);
 
-	this._nativewin.addEventListener ("destroy", new DestroyListener (this), true);
-	this._nativewin.addEventListener ("moveresize", new MoveResizeListener (this), true);
-	this._nativewin.addEventListener ("show", new ShowListener (this), true);
-	this._nativewin.addEventListener ("hide", new HideListener (this), true);
-	this._nativewin.addEventListener ("propertychange", new PropertyChangeListener (this), 
-					  true);
+    this._nativewin.addEventListener ("destroy", new DestroyListener (this), true);
+    this._nativewin.addEventListener ("moveresize", new MoveResizeListener (this), true);
+    this._nativewin.addEventListener ("show", new ShowListener (this), true);
+    this._nativewin.addEventListener ("hide", new HideListener (this), true);
+    this._nativewin.addEventListener ("propertychange", new PropertyChangeListener (this), 
+				      true);
 };
 CompzillaWindowFrame.prototype = {
-	_nativewin: null,
-	_frame: null,
-	_content: null,
-	_commands: null,
+    _nativewin: null,
+    _frame: null,
+    _content: null,
+    _commands: null,
 
-	get frame () { return this._frame; },
-	set frame (aFrame) { this._frame = aFrame; },
+    get frame () { return this._frame; },
+    set frame (aFrame) { this._frame = aFrame; },
 
-	get content () { return this._content; },
-	set content (aContent) { this._content = aContent; },
+    get content () { return this._content; },
+    set content (aContent) { this._content = aContent; },
 
-	get commands () { return this._commands; },
-	set commands (aCommands) { this._commands = aCommands; },
+    get commands () { return this._commands; },
+    set commands (aCommands) { this._commands = aCommands; },
 
-	_makeFrameNode: function () {
-		this._frame = document.getElementById ("compzillaWindowFrame").cloneNode (true);
-		this._content = 
-			document.getElementById ("compzillaWindowContent").cloneNode (true);
-		this._frame.appendChild (this._content);
-		this._nativewin.AddContentNode (this._content);
-        },
+    _makeFrameNode: function () {
+	this._frame = document.getElementById ("compzillaWindowFrame").cloneNode (true);
+	this._content = 
+	    document.getElementById ("compzillaWindowContent").cloneNode (true);
+	this._frame.appendChild (this._content);
+	this._nativewin.AddContentNode (this._content);
+    },
 
-	windowDestroy: function (ev) {
-		if (this._frame && this._frame.parentNode) {
-			this._frame.parentNode.removeChild (this._frame);
-		}
+    windowDestroy: function (ev) {
+	if (this._frame && this._frame.parentNode) {
+	    this._frame.parentNode.removeChild (this._frame);
+	}
 
-		stack = document.getElementById ("compzillaWindowStack");
-		stack.innerHTML = "DESTROY " + stack.innerHTML;
-        },
+	Debug ("DESTROY");
+    },
 
-	moveResize: function (ev) {
-		if (this._content.offsetWidth != ev.width) {
-			this._content.style.width = ev.width + "px";
-		}
-		if (this._content.offsetHeight != ev.height) {
-			this._content.style.height = ev.height + "px";
-		}
-		if (this._frame.offsetLeft != ev.x) {
-			this._frame.style.left = ev.x + "px";
-		}
-		if (this._frame.offsetTop != ev.y) {
-			this._frame.style.top = ev.y + "px";
-		}
+    moveResize: function (ev) {
+	if (this._content.offsetWidth != ev.width) {
+	    this._content.style.width = ev.width + "px";
+	}
+	if (this._content.offsetHeight != ev.height) {
+	    this._content.style.height = ev.height + "px";
+	}
+	if (this._frame.offsetLeft != ev.x) {
+	    this._frame.style.left = ev.x + "px";
+	}
+	if (this._frame.offsetTop != ev.y) {
+	    this._frame.style.top = ev.y + "px";
+	}
 
-		stack = document.getElementById ("compzillaWindowStack");
-		stack.innerHTML = "MOVE " + stack.innerHTML;
-	},
+	Debug ("MOVERESIZE");
+    },
 
-	show: function (ev) {
-		this._frame.style.visibility = "visible";
-		this._content.style.visibility = "visible";
+    show: function (ev) {
+	this._frame.style.visibility = "visible";
+	this._content.style.visibility = "visible";
 
-		stack = document.getElementById ("compzillaWindowStack");
-		stack.innerHTML = "SHOW " + stack.innerHTML;
-	},
+	Debug ("SHOW");
+    },
 
-	hide: function (ev) {
-		this._frame.style.visibility = "hidden";
-		this._content.style.visibility = "hidden";
+    hide: function (ev) {
+	this._frame.style.visibility = "hidden";
+	this._content.style.visibility = "hidden";
 
-		stack = document.getElementById ("compzillaWindowStack");
-		stack.innerHTML = "HIDE " + stack.innerHTML;
-	},
+	Debug ("HIDE");
+    },
 
-	propertyChange: function (ev) {
-		stack = document.getElementById ("compzillaWindowStack");
-		stack.innerHTML = "PROPERTY " + stack.innerHTML;
-	},
+    propertyChange: function (ev) {
+
+	Debug ("PROPERTYCHANGE");
+    },
 };
 
 
 function compzillaLoad()
 {
-   var xulwin = document.getElementById ("desktopWindow");
-   xulwin.width = screen.width;
-   xulwin.height = screen.height;
+    var xulwin = document.getElementById ("desktopWindow");
+    xulwin.width = screen.width;
+    xulwin.height = screen.height;
 
-   svccls = Components.classes['@pyrodesktop.org/compzillaService'];
-   svc = svccls.getService(compzillaIControl);
+    windowStack = document.getElementById ("compzillaWindowStack");
 
-   svc.addEventListener (
-	"windowcreate", 
-	{
-	    handleEvent: function (ev) {
-		// NOTE: Be careful to not do anything which will create a new
-		//       toplevel window, to avoid an infinite loop.
+    Debug = document.getElementById ("desktop").Debug;
 
-		stack = document.getElementById ("compzillaWindowStack");
+    svccls = Components.classes['@pyrodesktop.org/compzillaService'];
+    svc = svccls.getService(compzillaIControl);
 
-		frame = new CompzillaWindowFrame (ev.window);
+    svc.addEventListener (
+		  "windowcreate", {
+		      handleEvent: function (ev) {
+			  // NOTE: Be careful to not do anything which will create a new
+			  //       toplevel window, to avoid an infinite loop.
 
-		// ev is a compzillaIWindowConfigureEvent
-		frame.moveResize (ev);
-		if (ev.mapped) {
-			frame.show (ev);
-		}
+			  frame = new CompzillaWindowFrame (ev.window);
 
-		//frame.style.visibility = "visible";
-		//content.style.visibility = "visible";
+			  // ev is a compzillaIWindowConfigureEvent
+			  frame.moveResize (ev);
 
-		stack = document.getElementById ("compzillaWindowStack");
-    		stack.appendChild (frame);
-	    }
-        },
-	true);
+			  windowStack.stackWindow (frame);
 
-   alert("Calling RegisterWindowManager!");
+			  if (ev.mapped) {
+			      frame.show (ev);
+			  }
 
-   // Register as the window manager and generate windowcreate events for
-   // existing windows.
-   svc.RegisterWindowManager (window);
+			  //frame.style.visibility = "visible";
+			  //content.style.visibility = "visible";
+		      }
+		  },
+		  true);
+
+    alert("Calling RegisterWindowManager!");
+
+    // Register as the window manager and generate windowcreate events for
+    // existing windows.
+    svc.RegisterWindowManager (window);
 }
