@@ -1,5 +1,10 @@
 2007-05-09  Chris Toshok  <toshok@hungry.com>
 
+	* compzilla/src/compzillaWindowEvents.cpp: we need to include
+	nsMemory.h here to fix compilation errors.
+
+2007-05-09  Chris Toshok  <toshok@hungry.com>
+
 	* compzilla/src/compzillaWindow.h: add prototype for
 	CZ_NewCompzillaWindow.
 
