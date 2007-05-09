@@ -15,77 +15,108 @@
     <script type="application/x-javascript" src="chrome://compzilla/content/windowStack.js" />
     <script type="application/x-javascript" src="chrome://compzilla/content/start.js" />
 
-    <!--<iframe id="desktop" src="chrome://compzilla/skin/desktop.html" flex="1" />-->
-
     <html:body id="desktop" xmlns="http://www.w3.org/1999/xhtml" flex="1">
 
-    <div id="compzillaWindowFrame">
-        <commandset id="compzillaWindowCommandSet">
-            <command id="cmd_minimizeWindow" oncommand="compzilla.minimizeWindow();" />
-            <command id="cmd_restoreWindow" oncommand="compzilla.restoreWindow();" />
-            <command id="cmd_maximizeWindow" oncommand="compzilla.maximizeWindow();" />
-            <command id="cmd_closeWindow" oncommand="compzilla.closeWindow();" />
-        </commandset>
+        <div id="compzillaWindowStack">
 
-        <keyset id="compzillaWindowKeyset">
-            <key id="key_minimizeWindow" 
-                 keycode="VK_F9" modifiers="alt"
-                 command="cmd_minimizeWindow" />
-            <key id="key_maximizeWindow" 
-                 keycode="VK_F10" modifiers="alt"
-                 command="cmd_maximizeWindow" />
-            <key id="key_closeWindow" 
-                 keycode="VK_F4" modifiers="alt"
-                 command="cmd_closeWindow" />
-        </keyset>
+            <!-- these are the EWMH spec'ed logical window layers -->
 
-        <menupopup id="compzillaWindowMenu">
-            <menuitem id="menu_minimizeWindow" 
-                      label="&minimizeWindow.label;" 
-                      command="cmd_minimizeWindow" />
-            <menuitem id="menu_maximizeWindow" 
-                      label="&maximizeWindow.label;" 
-                      command="cmd_maximizeWindow" />
-            <menuitem id="menu_closeWindow" 
-                      label="&closeWindow.label;" 
-                      command="cmd_closeWindow" />
-        </menupopup>
+            <div id="desktopLayer"    class="windowLayer" mousethrough="always"></div>
+	    <div id="belowLayer"      class="windowLayer" mousethrough="always"></div>
+            <div id="normalLayer"     class="windowLayer" mousethrough="always"></div>
+            <div id="dockLayer"       class="windowLayer" mousethrough="always"></div>
+            <div id="fullscreenLayer" class="windowLayer" mousethrough="always"></div>
 
-        <hbox id="compzillaWindowTitleBox">
-            <image id="compzillaWindowIcon" 
-                   tooltiptext="&windowMenu.label;" 
-                   popup="compzillaWindowMenu" />
+            <!-- these layers are special purpose and are generally hidden.
+	         are never added to them.
 
-            <label id="compzillaWindowTitle" flex="1" />
+		 exposeLayer is for the OSX expose-like functionality
 
-            <image id="compzillaWindowMinimize"
-                   src="chrome://compzilla/skin/minimize.png"
-                   tooltiptext="&minimizeWindow.label;" 
-                   onclick="goDoCommand('cmd_minimizeWindow');" />
-            <image id="compzillaWindowMaximize"
-                   src="chrome://compzilla/skin/maximize.png"
-                   tooltiptext="&maximizeWindow.label;" 
-                   onclick="goDoCommand('cmd_maximizeWindow');" />
-            <image id="compzillaWindowClose"
-                   src="chrome://compzilla/skin/close.png"
-                   tooltiptext="&closeWindow.label;" 
-                   onclick="goDoCommand('cmd_closeWindow');" />
-        </hbox>
+		 pickerLayer is for the alt-tab functionality
 
-	<img src="http://www.beatniksoftware.com/img/alexgotchi.png" />
-	bar
-	fooo
-    </div>
+		 overlayLayer is for desktop widgets.
+	    -->
+
+	    <div id="exposeLayer"  class="windowLayer" mousethrough="always"></div>
+	    <div id="pickerLayer"  class="windowLayer" mousethrough="always"></div>
+	    <div id="overlayLayer" class="windowLayer" mousethrough="always"></div>
+
+	    <!-- another special purpose layer, always on top of everything.
+	         used for our debug log (and firebug?) -->
+
+	    <div id="debugLayer"   class="windowLayer" mousethrough="always"></div>
+
+	</div>
+
+
+        <!-- this is the contents of the debug window.  it is reparented into the chrome we create for it -->
+
+        <div id="debugContent">
+            <div id="debugLog"></div>
+            <br clear="all" />
+            <button id="debugClear" value="Clear">Clear</button>
+        </div>
+
+        <div id="compzillaWindowFrame">
+            <commandset id="compzillaWindowCommandSet">
+                <command id="cmd_minimizeWindow" oncommand="compzilla.minimizeWindow();" />
+                <command id="cmd_restoreWindow" oncommand="compzilla.restoreWindow();" />
+                <command id="cmd_maximizeWindow" oncommand="compzilla.maximizeWindow();" />
+                <command id="cmd_closeWindow" oncommand="compzilla.closeWindow();" />
+            </commandset>
+
+            <keyset id="compzillaWindowKeyset">
+                <key id="key_minimizeWindow" 
+                     keycode="VK_F9" modifiers="alt"
+                     command="cmd_minimizeWindow" />
+                <key id="key_maximizeWindow" 
+                     keycode="VK_F10" modifiers="alt"
+                     command="cmd_maximizeWindow" />
+                <key id="key_closeWindow" 
+                     keycode="VK_F4" modifiers="alt"
+                     command="cmd_closeWindow" />
+            </keyset>
+
+            <menupopup id="compzillaWindowMenu">
+                <menuitem id="menu_minimizeWindow" 
+                          label="&minimizeWindow.label;" 
+                          command="cmd_minimizeWindow" />
+                <menuitem id="menu_maximizeWindow" 
+                          label="&maximizeWindow.label;" 
+                          command="cmd_maximizeWindow" />
+                <menuitem id="menu_closeWindow" 
+                          label="&closeWindow.label;" 
+                          command="cmd_closeWindow" />
+            </menupopup>
+
+            <hbox id="compzillaWindowTitleBox">
+                <image id="compzillaWindowIcon" 
+                       tooltiptext="&windowMenu.label;" 
+                       popup="compzillaWindowMenu" />
+
+                <label id="compzillaWindowTitle" flex="1" />
+
+                <image id="compzillaWindowMinimize"
+                       src="chrome://compzilla/skin/minimize.png"
+                       tooltiptext="&minimizeWindow.label;" 
+                       onclick="goDoCommand('cmd_minimizeWindow');" />
+                <image id="compzillaWindowMaximize"
+                       src="chrome://compzilla/skin/maximize.png"
+                       tooltiptext="&maximizeWindow.label;" 
+                       onclick="goDoCommand('cmd_maximizeWindow');" />
+                <image id="compzillaWindowClose"
+                       src="chrome://compzilla/skin/close.png"
+                       tooltiptext="&closeWindow.label;" 
+                       onclick="goDoCommand('cmd_closeWindow');" />
+            </hbox>
+
+            <img src="http://www.beatniksoftware.com/img/alexgotchi.png" />
+	    bar
+            fooo
+        </div>
 
         <canvas id="compzillaWindowContent" />
 
-	<div id="compzillaWindowStack">
-		This is the window stack
-        </div>
-        <div id="overlay">
-		This is the overlay
-        </div>
-	This is the desktop...
     </html:body>
 
     <commandset id="compzillaDesktopCommandSet">
