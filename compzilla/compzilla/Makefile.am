@@ -58,10 +58,12 @@ XPIDL_INCLUDES =				\
 	-I$(GECKO_IDLDIR)			\
 	-I$(srcdir)/public
 
-.h: .idl
+SUFFIXES= .idl .xpt
+
+.idl.h:
 	$(XPIDL) $(XPIDL_INCLUDES) -m header -e $@ $<
 
-.xpt: .idl
+.idl.xpt:
 	$(XPIDL) $(XPIDL_INCLUDES)  -m typelib -e $@ $<
 
 IDL_FILES =						\

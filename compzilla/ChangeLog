@@ -1,3 +1,8 @@
+2007-05-09  Chris Toshok  <toshok@ximian.com>
+
+	* compzilla/Makefile.am: I am an idiot.  fix the rules the right
+	way.
+
 2007-05-09  Chris Toshok  <toshok@hungry.com>
 
 	* compzilla/src/compzillaControl.cpp (AddWindow): use
