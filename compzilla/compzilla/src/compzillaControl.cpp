@@ -3,6 +3,7 @@
 #define MOZILLA_INTERNAL_API
 
 #include "nspr.h"
+#include "nsMemory.h"
 #include "nsIObserverService.h"
 
 #include "nsIScriptContext.h"
@@ -648,10 +649,14 @@ compzillaControl::AddWindow (Window win)
 {
     INFO ("AddWindow for window %p\n", win);
 
-    compzillaWindow *compwin = new compzillaWindow(mXDisplay, win, mWM);
+    compzillaWindow *compwin;
+
+    if (NS_OK != CZ_NewCompzillaWindow (mXDisplay, win, mWM, &compwin))
+        return;
 
     if (compwin->mAttr.c_class == InputOnly) {
         WARNING ("AddWindow ignoring InputOnly window %p\n", win);
+        NS_RELEASE (compwin);
         return;
     }
 
@@ -674,9 +679,6 @@ compzillaControl::AddWindow (Window win)
     if (compwin->mAttr.map_state == IsViewable) {
         MapWindow (win);
     }
-
-    // Stored the compwin in mWindowMap, so don't delete it now.
-    //compwin.forget();
 }
 
 

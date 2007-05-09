@@ -1,5 +1,11 @@
 2007-05-09  Chris Toshok  <toshok@hungry.com>
 
+	* compzilla/src/compzillaControl.cpp (AddWindow): use
+	CZ_NewCompzillaWindow and NS_RELEASE (when needed).  This fixes
+	the random crashes after a JS GC I've been seeing.
+
+2007-05-09  Chris Toshok  <toshok@hungry.com>
+
 	* compzilla/src/compzillaWindowEvents.cpp: we need to include
 	nsMemory.h here to fix compilation errors.
 
