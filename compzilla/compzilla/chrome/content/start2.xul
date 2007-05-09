@@ -11,13 +11,6 @@
 	onload="compzillaLoad()" 
 	width="640" height="480">
 
-    <script type="application/x-javascript" src="chrome://compzilla/content/frame.js" />
-    <script type="application/x-javascript" src="chrome://compzilla/content/content.js" />
-    <script type="application/x-javascript" src="chrome://compzilla/content/debug.js" />
-    <script type="application/x-javascript" src="chrome://compzilla/content/atoms.js" />
-    <script type="application/x-javascript" src="chrome://compzilla/content/windowStack.js" />
-    <script type="application/x-javascript" src="chrome://compzilla/content/start2.js" />
-
     <html:body id="desktop" xmlns="http://www.w3.org/1999/xhtml" flex="1">
 
         <div id="windowStack" mousethrough="never">
@@ -122,6 +115,13 @@
         <canvas id="windowContent" />
 
     </html:body>
+
+    <script type="application/x-javascript" src="chrome://compzilla/content/windowStack.js" />
+    <script type="application/x-javascript" src="chrome://compzilla/content/frame.js" />
+    <script type="application/x-javascript" src="chrome://compzilla/content/content.js" />
+    <script type="application/x-javascript" src="chrome://compzilla/content/debug.js" />
+    <script type="application/x-javascript" src="chrome://compzilla/content/atoms.js" />
+    <script type="application/x-javascript" src="chrome://compzilla/content/start2.js" />
 
     <commandset id="compzillaDesktopCommandSet">
         <command id="cmd_showDesktop" oncommand="compzilla.showDesktop();" />
