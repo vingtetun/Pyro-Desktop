@@ -3,12 +3,63 @@
 
 <window id="desktopWindow"
         xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
+        xmlns:xbl="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
+	xmlns:html="http://www.w3.org/1999/xhtml"
 	title="compzilla"
-	onload="compzillaLoad()" 
-	width="640" height="480">
+	onload="compzillaLoad()"
+	left="0px" top="0px"
+	width="640px" height="480px">
 
-  <iframe id="desktop" src="chrome://compzilla/skin/desktop.html" flex="1" />
 
-  <script type="application/x-javascript" src="chrome://compzilla/content/start.js" />
+  <html:link type="text/css" href="chrome://compzilla/skin/compzilla.css" rel="stylesheet" />
+
+
+  <html:body id="desktop" flex="1">
+
+
+    <html:div id="compzillaWindowStack">
+
+      <!-- these are the EWMH spec'ed logical window layers -->
+
+      <html:div id="desktopLayer"    class="windowLayer" mousethrough="always"></html:div>
+      <html:div id="belowLayer"      class="windowLayer" mousethrough="always"></html:div>
+      <html:div id="normalLayer"     class="windowLayer" mousethrough="always"></html:div>
+      <html:div id="dockLayer"       class="windowLayer" mousethrough="always"></html:div>
+      <html:div id="fullscreenLayer" class="windowLayer" mousethrough="always"></html:div>
+
+      <!-- these layers are special purpose and are generally hidden.
+           are never added to them.
+
+           exposeLayer is for the OSX expose-like functionality
+
+	   pickerLayer is for the alt-tab functionality
+
+	   overlayLayer is for desktop widgets.
+        -->
+
+      <div id="exposeLayer"  class="windowLayer" mousethrough="always"></div>
+      <div id="pickerLayer"  class="windowLayer" mousethrough="always"></div>
+      <div id="overlayLayer" class="windowLayer" mousethrough="always"></div>
+
+      <!-- another special purpose layer, always on top of everything.
+           used for our debug log (and firebug?) -->
+
+      <div id="debugLayer"   class="windowLayer" mousethrough="always"></div>
+
+      <html:script type="application/x-javascript" src="chrome://compzilla/content/windowStack.js" />
+    </html:div>
+
+    <html:script type="application/x-javascript" src="chrome://compzilla/content/atoms.js" />
+    <html:script type="application/x-javascript" src="chrome://compzilla/content/start.js" />
+
+
+    <!-- this is the contents of the debug window.  it is reparented into the chrome we create for it -->
+
+    <html:div id="debugContent">
+      <html:div id="debugLog"></html:div>
+      <html:br clear="all" />
+      <html:button id="debugClear" value="Clear">Clear</html:button>
+    </html:div>
+  </html:body>
 
 </window>
