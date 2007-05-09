@@ -2,22 +2,30 @@
 
 
 function CompzillaFrame (content) {
-    frame = document.getElementById ("windowFrame").cloneNode (true);
+    var frame = document.getElementById ("windowFrame").cloneNode (true);
+    frame.appendChild (content);
 
     frame._content = content;
     frame.getContent = function () { return frame._content; }
-    frame.appendChild (content);
 
-    frame.setTitle = function (title) {
-	//frame.getElement()
+    frame.destroy = function () {
+	if (content.destroy) {
+	    content.destroy ();
+	}
+	windowStack.removeWindow (frame);
     }
+
+    frame._title = frame.getElementsByTagName("label")[0];
+    frame.setTitle = function (title) { frame._title.value = title; }
 
     frame.moveResize = function (width, height, x, y) {
 	if (content.offsetWidth != width) {
 	    content.style.width = width + "px";
+	    frame.style.width = width + "px";
 	}
 	if (content.offsetHeight != height) {
 	    content.style.height = height + "px";
+	    frame.style.width = width + "px";
 	}
 	if (frame.offsetLeft != x) {
 	    frame.style.left = x + "px";
@@ -25,26 +33,27 @@ function CompzillaFrame (content) {
 	if (frame.offsetTop != y) {
 	    frame.style.top = y + "px";
 	}
-    }
+    };
 
     frame.show = function () {
 	frame.style.visibility = "visible";
 	content.style.visibility = "visible";
-    }
+    };
 
     frame.hide = function () {
 	frame.style.visibility = "hidden";
 	content.style.visibility = "hidden";
-    }
+    };
 
-    if (content.getNativeWin) {
-	nativewin = content.getNativeWin ();
+    if (content.getNativeWindow) {
+	var nativewin = content.getNativeWindow ();
+
 	nativewin.addEventListener (
 	    "destroy", 
 	    { 
 		frame: frame, 
 	        handleEvent: function (ev) {
-		    windowDestroy (this.frame);
+		    frame.destroy ();
 		}
 	    },
 	    true);
@@ -80,7 +89,10 @@ function CompzillaFrame (content) {
 	    { 
 		frame: frame, 
 	        handleEvent: function (ev) {
-		    // Nothing yet.
+		    if (ev.atom == Atoms.WM_NAME () ||
+			ev.atom == Atoms._NET_WM_NAME ()) {
+			frame.setTitle (ev.value.getPropertyAsAString (".text"));
+		    }
 		}
 	    },
 	    true);

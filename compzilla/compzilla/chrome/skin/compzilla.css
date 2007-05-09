@@ -46,9 +46,6 @@ html {
 	height: 90%;
 }
 
-#debugLog {
-}
-
 .content {
 	position: absolute;
 	background: #ffffff;
@@ -61,7 +58,7 @@ html {
 	opacity: 0.8;
 }
 
-#compzillaWindowStack {
+#windowStack {
 	position: absolute;
 	left: 0px;
 	top: 0px;
@@ -124,18 +121,25 @@ html {
 	z-index: 65533;
 }
 
-#compzillaWindowFrame {
+#windowFrame {
 	background: #000000;
 	position: absolute;
 	visibility: hidden;
 }
 
-#compzillaDockFrame {
+#dockFrame {
+	background: #000000;
+	position: absolute;
+	visibility: hidden;
 	opacity: 0.8;
 }
 
-#compzillaWindowContent {
+#windowContent {
 	visibility: hidden;
 	background: #ffffff;
 	tab-index: 1;
+}
+
+#windowTitleBox {
+	background: grey;
 }

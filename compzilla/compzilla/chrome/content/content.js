@@ -4,7 +4,10 @@
 function CompzillaWindowContent (nativewin) {
     content = document.getElementById ("windowContent").cloneNode (true);
 
-    content.getNativeWin = function () { return nativewin; }
+    content._nativewin = nativewin;
+    content.getNativeWindow = function () { return content._nativewin; }
+
+    content.destroy = function () { content._nativewin.RemoveContentNode (content); }
 
     nativewin.AddContentNode (content);
     return content;

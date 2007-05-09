@@ -37,8 +37,9 @@
 // These are accessed from here by "windowStack.parentNode.Debug" and
 // "windowStack.parentNode.Atoms".
 
-var desktop = document.getElementById ("desktop");
+
 var windowStack = document.getElementById ("windowStack");
+
 
 windowStack.stackWindow = function (w) {
     var l = determineLayer (w);
@@ -195,6 +196,6 @@ function determineLayer (w) {
 
 function Debug (str)
 {
-    if (desktop.Debug != null)
-	desktop.Debug (str);
+    if (document.Debug)
+	document.Debug (str);
 }

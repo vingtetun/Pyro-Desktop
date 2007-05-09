@@ -23,9 +23,9 @@ function compzillaLoad()
 		frame = CompzillaFrame (content);
 
 		// ev is a compzillaIWindowConfigureEvent
-		frame.moveResize (ev);
+		frame.moveResize (ev.width, ev.height, ev.x, ev.y);
 		if (ev.mapped) {
-		    frame.show (ev);
+		    frame.show ();
 		}
 
 		stack = document.getElementById ("windowStack");
