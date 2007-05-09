@@ -8,9 +8,9 @@ function compzillaLoad()
     var xulwin = document.getElementById ("desktopWindow");
     xulwin.width = screen.width;
     xulwin.height = screen.height;
-    
+
     svccls = Components.classes['@pyrodesktop.org/compzillaService'];
-    svc = svccls.getService(compzillaIControl);
+    svc = svccls.getService (compzillaIControl);
 
     svc.addEventListener (
 	"windowcreate", 

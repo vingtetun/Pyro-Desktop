@@ -16,11 +16,11 @@
     <script type="application/x-javascript" src="chrome://compzilla/content/debug.js" />
     <script type="application/x-javascript" src="chrome://compzilla/content/atoms.js" />
     <script type="application/x-javascript" src="chrome://compzilla/content/windowStack.js" />
-    <script type="application/x-javascript" src="chrome://compzilla/content/start.js" />
+    <script type="application/x-javascript" src="chrome://compzilla/content/start2.js" />
 
     <html:body id="desktop" xmlns="http://www.w3.org/1999/xhtml" flex="1">
 
-        <div id="compzillaWindowStack" mousethrough="never">
+        <div id="windowStack" mousethrough="never">
 
             <!-- these are the EWMH spec'ed logical window layers -->
 
@@ -61,7 +61,7 @@
 		    onclick="this.previousSibling.innerHTML='';">Clear</button>
         </div>
 
-        <div id="compzillaWindowFrame" mousethrough="never">
+        <div id="windowFrame" mousethrough="never">
             <commandset id="compzillaWindowCommandSet">
                 <command id="cmd_minimizeWindow" oncommand="compzilla.minimizeWindow();" />
                 <command id="cmd_restoreWindow" oncommand="compzilla.restoreWindow();" />

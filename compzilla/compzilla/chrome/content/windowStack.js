@@ -37,7 +37,7 @@
 // These are accessed from here by "windowStack.parentNode.Debug" and
 // "windowStack.parentNode.Atoms".
 
-var windowStack = document.getElementById ("compzillaWindowStack");
+var windowStack = document.getElementById ("windowStack");
 
 windowStack.stackWindow = function (w) {
     var l = determineLayer (w);
