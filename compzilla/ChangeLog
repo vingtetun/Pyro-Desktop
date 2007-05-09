@@ -1,4 +1,4 @@
-2007-05-09  Chris Toshok  <toshok@ximian.com>
+2007-05-09  Chris Toshok  <toshok@hungry.com>
 
 	* compzilla/Makefile.am: I am an idiot.  fix the rules the right
 	way.
