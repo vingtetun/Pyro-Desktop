@@ -11,7 +11,7 @@ function compzillaLoad()
    wm = wmcls.createInstance(compzillaIWindowManager);
 
    var desktop = document.getElementById ("desktop");
-   wm.SetDocument (desktop.contentDocument);
+   wm.SetDocument (document);
 
    var win = document.getElementById ("desktopWindow");
 
