@@ -102,17 +102,24 @@
                            tooltiptext="&closeWindow.label;" 
                            onclick="goDoCommand('cmd_closeWindow');" />
             </div>
+
+            <div id="windowContentBox">
+                <!-- The content node will be inserted here. -->
+            </div>
         </div>
 
         <canvas id="windowContent" mousethrough="never" />
 
-	<div id="dockFrame" mousethrough="never"></div>
+	<div id="dockFrame" mousethrough="never">
+	    <!-- The content node will be inserted here. -->
+	</div>
 
         <!-- Contents of the debug window. Manually reparented into a window
              frame we create for it in debug.js	-->
 
         <div id="debugContent">
             <div id="debugLog" />
+            <input type="text" value="Debug..." /><button>Eval</button>
             <button id="debugClear" onclick="clearDebugLog();">Clear</button>
         </div>
 
