@@ -37,7 +37,7 @@
 // These are accessed from here by "windowStack.parentNode.Debug" and
 // "windowStack.parentNode.Atoms".
 
-var windowStack = document.getElementById ('windowStack');
+var windowStack = document.getElementById ("compzillaWindowStack");
 
 windowStack.stackWindow = function (w) {
     var l = determineLayer (w);
@@ -111,20 +111,14 @@ windowStack.moveToTop = function(w) {
 
 
 windowStack.toggleDesktop = function () {
-    if (showingDesktop) {
-	// hide everything above the desktop layer
-	for (var i = 1; i < layers.length; i ++) {
-	    layers[i].style.display = "block";
-	}
-    }
-    else {
-	// hide everything above the desktop layer
-	for (var i = 1; i < layers.length; i ++) {
-	    layers[i].style.display = "none";
-	}
+    Debug ("toggling the desktop display");
+    for (var i = 1; i < layers.length; i ++) {
+	if (i == 8)
+	    continue;
+	layers[i].style.display = showingDesktop ? "block" : "none";
     }
 
-    showingDesktop = !windowStack.showingDesktop;
+    showingDesktop = !showingDesktop;
 }
 
 
@@ -133,16 +127,17 @@ windowStack.toggleDesktop = function () {
 var showingDesktop = false;
 var layers = new Array ();
 
+// XXX this is inflexible and needs rethinking.  maybe we should just look them up by name?
 for (var el = windowStack.firstChild; el != null; el = el.nextSibling) {
-    if (el.id == "desktop-layer")         layers[0] = el;
-    else if (el.id == "below-layer")      layers[1] = el;
-    else if (el.id == "normal-layer")     layers[2] = el;
-    else if (el.id == "dock-layer")       layers[3] = el;
-    else if (el.id == "fullscreen-layer") layers[4] = el;
-    else if (el.id == "expose-layer")     layers[5] = el;
-    else if (el.id == "picker-layer")     layers[6] = el;
-    else if (el.id == "overlay-layer")    layers[7] = el;
-    else if (el.id == "debug-layer")      layers[8] = el;
+    if (el.id == "desktopLayer")         layers[0] = el;
+    else if (el.id == "belowLayer")      layers[1] = el;
+    else if (el.id == "normalLayer")     layers[2] = el;
+    else if (el.id == "dockLayer")       layers[3] = el;
+    else if (el.id == "fullscreenLayer") layers[4] = el;
+    else if (el.id == "exposeLayer")     layers[5] = el;
+    else if (el.id == "pickerLayer")     layers[6] = el;
+    else if (el.id == "overlayLayer")    layers[7] = el;
+    else if (el.id == "debugLayer")      layers[8] = el;
 }
 
 // private methods
@@ -179,6 +174,12 @@ function determineLayer (w) {
        *    windows having state _NET_WM_STATE_ABOVE
        * 4: focused windows having state _NET_WM_STATE_FULLSCREEN
        */
+
+    // XXX we really need to think how we're going to assign layers to
+    // different types of windows.  what about html content that needs
+    // to go in the overlay?  are we going to require a special CSS
+    // class for overlay widgets?
+
     if (w.content != null && w.content.id == "debugContent") // special case for the debug window, which sits above everything
 	return layers[8];
     if (w._net_wm_window_type == windowStack.parentNode.Atoms._NET_WM_WINDOW_TYPE_DESKTOP())
