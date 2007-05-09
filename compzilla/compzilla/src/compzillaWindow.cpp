@@ -54,38 +54,36 @@ NS_IMPL_ADDREF(compzillaWindow)
 NS_IMPL_RELEASE(compzillaWindow)
 NS_INTERFACE_MAP_BEGIN(compzillaWindow)
     NS_INTERFACE_MAP_ENTRY_AMBIGUOUS(nsISupports, nsIDOMEventTarget)
+    NS_INTERFACE_MAP_ENTRY(compzillaIWindow)
+    NS_INTERFACE_MAP_ENTRY(nsIDOMEventTarget)
     NS_INTERFACE_MAP_ENTRY_AMBIGUOUS(nsIDOMEventListener, nsIDOMKeyListener)
     NS_INTERFACE_MAP_ENTRY(nsIDOMKeyListener)
     NS_INTERFACE_MAP_ENTRY(nsIDOMMouseListener)
     NS_INTERFACE_MAP_ENTRY(nsIDOMUIListener)
-    NS_INTERFACE_MAP_ENTRY(compzillaIWindow)
     NS_IMPL_QUERY_CLASSINFO(compzillaWindow)
 NS_INTERFACE_MAP_END
-NS_IMPL_CI_INTERFACE_GETTER6(compzillaWindow,
-                             nsISupports,
-                             nsIDOMEventListener,
-                             nsIDOMKeyListener,
-                             nsIDOMMouseListener,
-                             nsIDOMUIListener,
-                             compzillaIWindow)
+NS_IMPL_CI_INTERFACE_GETTER3(compzillaWindow, 
+                             compzillaIWindow,
+                             nsIDOMEventTarget,
+                             nsIDOMEventListener)
+
 
 nsresult
-CZ_NewCompzillaWindow(Display *display, Window win, compzillaIWindowManager* wm,
-                      compzillaWindow * *_retval)
+CZ_NewCompzillaWindow(Display *display, Window win, compzillaWindow** retval)
 {
-    compzillaWindow *window = new compzillaWindow (display, win, wm);
+    compzillaWindow *window = new compzillaWindow (display, win);
     if (!window)
         return NS_ERROR_OUT_OF_MEMORY;
 
     NS_ADDREF(window);
 
-    *_retval = window;
+    *retval = window;
     return NS_OK;
 }
 
-compzillaWindow::compzillaWindow(Display *display, Window win, compzillaIWindowManager* wm)
-    : mWM(wm),
-      mDisplay(display),
+
+compzillaWindow::compzillaWindow(Display *display, Window win)
+    : mDisplay(display),
       mWindow(win),
       mPixmap(None),
       mDamage(0),
@@ -94,7 +92,7 @@ compzillaWindow::compzillaWindow(Display *display, Window win, compzillaIWindowM
       mMoveResizeEvMgr("moveresize"),
       mShowEvMgr("show"),
       mHideEvMgr("hide"),
-      mPropertyChangeEvMgr("propertyChange")
+      mPropertyChangeEvMgr("propertychange")
 {
     NS_INIT_ISUPPORTS ();
 
@@ -989,10 +987,6 @@ compzillaWindow::DestroyWindow ()
         compzillaWindowEvent *ev = new compzillaWindowEvent (this);
         ev->Send (NS_LITERAL_STRING ("destroy"), this, mDestroyEvMgr);
     }
-
-    for (PRUint32 i = mContentNodes.Count() - 1; i != PRUint32(-1); --i) {
-        mWM->WindowDestroyed (mContentNodes.ObjectAt(i));
-    }
 }
 
 
@@ -1003,10 +997,6 @@ compzillaWindow::MapWindow ()
         compzillaWindowEvent *ev = new compzillaWindowEvent (this);
         ev->Send (NS_LITERAL_STRING ("show"), this, mShowEvMgr);
     }
-
-    for (PRUint32 i = mContentNodes.Count() - 1; i != PRUint32(-1); --i) {
-        mWM->WindowMapped (mContentNodes.ObjectAt(i));
-    }
 }
 
 
@@ -1016,10 +1006,6 @@ compzillaWindow::UnmapWindow ()
     if (mHideEvMgr.HasEventListeners ()) {
         compzillaWindowEvent *ev = new compzillaWindowEvent (this);
         ev->Send (NS_LITERAL_STRING ("hide"), this, mHideEvMgr);
-    }
-
-    for (PRUint32 i = mContentNodes.Count() - 1; i != PRUint32(-1); --i) {
-        mWM->WindowUnmapped (mContentNodes.ObjectAt(i));
     }
 }
 
@@ -1184,14 +1170,7 @@ compzillaWindow::PropertyChanged (Window win, Atom prop, bool deleted)
 
     if (mPropertyChangeEvMgr.HasEventListeners ()) {
         compzillaWindowEvent *ev = new compzillaWindowEvent (this, prop, deleted, bag2);
-        ev->Send (NS_LITERAL_STRING ("propertyChange"), this, mPropertyChangeEvMgr);
-    }
-
-    // XXX this might be wrong - it's a writable property bag, so
-    // perhaps we need to re-initialize the property bag each time
-    // through the loop?
-    for (PRUint32 i = mContentNodes.Count() - 1; i != PRUint32(-1); --i) {
-        mWM->PropertyChanged (mContentNodes.ObjectAt(i), (PRUint32)prop, bag2);
+        ev->Send (NS_LITERAL_STRING ("propertychange"), this, mPropertyChangeEvMgr);
     }
 
     NS_RELEASE (wbag);
@@ -1204,9 +1183,11 @@ compzillaWindow::WindowDamaged (XRectangle *rect)
     EnsurePixmap ();
 
     for (PRUint32 i = mContentNodes.Count() - 1; i != PRUint32(-1); --i) {
-        nsCOMPtr<nsIDOMHTMLCanvasElement> canvas = do_QueryInterface (mContentNodes.ObjectAt(i));
+        nsCOMPtr<nsIDOMHTMLCanvasElement> canvas = 
+            do_QueryInterface (mContentNodes.ObjectAt(i));
         if (!canvas) {
-            ERROR ("Content node %p is not a nsIDOMHTMLCanvasElement\n", mContentNodes.ObjectAt(i));
+            ERROR ("Content node %p is not a nsIDOMHTMLCanvasElement\n", 
+                   mContentNodes.ObjectAt(i));
             continue;
         }
 
@@ -1236,6 +1217,11 @@ compzillaWindow::WindowConfigured (PRInt32 x, PRInt32 y,
     }
 
     if (mMoveResizeEvMgr.HasEventListeners ()) {
+        // abovewin doesn't work given that abovewin has a list of content
+        // nodes...  but really, we shouldn't have to worry about this, as you
+        // *can't* reliably specify a window to raise/lower above/below, since
+        // clients can't depend on the fact that other topevel windows are
+        // siblings of each other.
         compzillaWindowEvent *ev = new compzillaWindowEvent (this,
                                                              mAttr.map_state == IsViewable,
                                                              mAttr.override_redirect != 0,
@@ -1243,20 +1229,6 @@ compzillaWindow::WindowConfigured (PRInt32 x, PRInt32 y,
                                                              width, height,
                                                              border,
                                                              aboveWin);
-        ev->Send (NS_LITERAL_STRING ("moveResize"), this, mMoveResizeEvMgr);
-    }
-
-    for (PRUint32 i = mContentNodes.Count() - 1; i != PRUint32(-1); --i) {
-        // abovewin doesn't work given that abovewin has a list of content
-        // nodes...  but really, we shouldn't have to worry about this, as you
-        // *can't* reliably specify a window to raise/lower above/below, since
-        // clients can't depend on the fact that other topevel windows are
-        // siblings of each other.
-        
-        mWM->WindowConfigured (mContentNodes.ObjectAt(i),
-                               x, y,
-                               width, height,
-                               border,
-                               /*abovewin ? abovewin->mContent : */ NULL);
+        ev->Send (NS_LITERAL_STRING ("moveresize"), this, mMoveResizeEvMgr);
     }
 }

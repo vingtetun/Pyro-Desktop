@@ -1,27 +1,19 @@
 /* -*- mode: C++; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
 
+#include <nspr.h>
+#include <jsapi.h>
 #define MOZILLA_INTERNAL_API
-
-#include "nspr.h"
-#include "nsMemory.h"
-#include "nsIObserverService.h"
-
-#include "nsIScriptContext.h"
-#include "jsapi.h"
-
-#include "nsHashPropertyBag.h"
+#include <nsHashPropertyBag.h>
+#undef MOZILLA_INTERNAL_API
+#include <nsIBaseWindow.h>
+#include <nsIDocShell.h>
+#include <nsIScriptGlobalObject.h>
+#ifndef MOZILLA_1_8_BRANCH
+#include <nsPIDOMWindow.h>
+#endif
+#include <nsIWidget.h>
 
 #include "compzillaControl.h"
-
-// These headers are used for finding the GdkWindow for a DOM window
-#include "nsIBaseWindow.h"
-#include "nsIDocShell.h"
-#include "nsIScriptGlobalObject.h"
-#ifndef MOZILLA_1_8_BRANCH
-#include "nsPIDOMWindow.h"
-#endif
-#include "nsIWidget.h"
-
 #include "XAtoms.h"
 
 extern "C" {
@@ -41,6 +33,7 @@ extern "C" {
 #include <X11/extensions/Xevie.h>
 #endif
 }
+
 
 #if WITH_SPEW
 #define SPEW(format...) printf("   - " format)
@@ -103,7 +96,7 @@ compzillaControl::~compzillaControl()
  */
 
 NS_IMETHODIMP
-compzillaControl::RegisterWindowManager(nsIDOMWindow *window, compzillaIWindowManager* wm)
+compzillaControl::RegisterWindowManager(nsIDOMWindow *window)
 {
     Display *dpy;
     nsresult rv = NS_OK;
@@ -111,7 +104,6 @@ compzillaControl::RegisterWindowManager(nsIDOMWindow *window, compzillaIWindowMa
     SPEW ("RegisterWindowManager\n");
 
     mDOMWindow = window;
-    mWM = wm;
 
     mRoot = gdk_get_default_root_window();
     mDisplay = gdk_display_get_default ();
@@ -312,6 +304,7 @@ compzillaControl::InitXAtoms ()
     return true;
 }
 
+
 bool
 compzillaControl::InitXExtensions ()
 {
@@ -418,11 +411,13 @@ compzillaControl::InitWindowState ()
                     &children, 
                     &nchildren);
 
+        /*
         for (int i = 0; i < nchildren; i++) {
             if (children[i] != mOverlay
                 && children[i] != GDK_WINDOW_XID (mMainwin))
             AddWindow (children[i]);
         }
+        */
 
         XFree (children);
     }
@@ -651,7 +646,7 @@ compzillaControl::AddWindow (Window win)
 
     compzillaWindow *compwin;
 
-    if (NS_OK != CZ_NewCompzillaWindow (mXDisplay, win, mWM, &compwin))
+    if (NS_OK != CZ_NewCompzillaWindow (mXDisplay, win, &compwin))
         return;
 
     if (compwin->mAttr.c_class == InputOnly) {
@@ -660,20 +655,18 @@ compzillaControl::AddWindow (Window win)
         return;
     }
 
-    mWM->WindowCreated (compwin,
-                        win, 
-                        compwin->mAttr.override_redirect != 0,
-                        compwin->mAttr.x,
-                        compwin->mAttr.y,
-                        compwin->mAttr.width,
-                        compwin->mAttr.height,
-                        compwin->mAttr.map_state == IsViewable);
-
     mWindowMap.Put (win, compwin);
 
     if (mWindowCreateEvMgr.HasEventListeners ()) {
-        compzillaWindowEvent *ev = new compzillaWindowEvent (compwin);
-        ev->Send (NS_LITERAL_STRING ("windowCreate"), this, mWindowCreateEvMgr);
+        compzillaWindowEvent *ev = 
+            new compzillaWindowEvent (compwin,
+                                      compwin->mAttr.map_state == IsViewable,
+                                      compwin->mAttr.override_redirect != 0,
+                                      compwin->mAttr.x, compwin->mAttr.y,
+                                      compwin->mAttr.width, compwin->mAttr.height,
+                                      compwin->mAttr.border_width,
+                                      NULL);
+        ev->Send (NS_LITERAL_STRING ("windowcreate"), this, mWindowCreateEvMgr);
     }
 
     if (compwin->mAttr.map_state == IsViewable) {
@@ -691,7 +684,7 @@ compzillaControl::DestroyWindow (Window win)
 
         if (mWindowDestroyEvMgr.HasEventListeners ()) {
             compzillaWindowEvent *ev = new compzillaWindowEvent (compwin);
-            ev->Send (NS_LITERAL_STRING ("windowDestroy"), this, mWindowDestroyEvMgr);
+            ev->Send (NS_LITERAL_STRING ("windowdestroy"), this, mWindowDestroyEvMgr);
         }
 
         // Damage is not valid if the window is already destroyed

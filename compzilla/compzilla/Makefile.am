@@ -17,7 +17,9 @@ content_DATA =					\
 	$(CONTENT_SRCDIR)/start2.js		\
 	$(CONTENT_SRCDIR)/start2.xul		\
 	$(CONTENT_SRCDIR)/atoms.js		\
+	$(CONTENT_SRCDIR)/content.js		\
 	$(CONTENT_SRCDIR)/debug.js		\
+	$(CONTENT_SRCDIR)/frame.js		\
 	$(CONTENT_SRCDIR)/windowStack.js
 
 skindir=$(extensiondir)/chrome/skin

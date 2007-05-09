@@ -11,13 +11,16 @@
 	onload="compzillaLoad()" 
 	width="640" height="480">
 
+    <script type="application/x-javascript" src="chrome://compzilla/content/frame.js" />
+    <script type="application/x-javascript" src="chrome://compzilla/content/content.js" />
+    <script type="application/x-javascript" src="chrome://compzilla/content/debug.js" />
     <script type="application/x-javascript" src="chrome://compzilla/content/atoms.js" />
     <script type="application/x-javascript" src="chrome://compzilla/content/windowStack.js" />
     <script type="application/x-javascript" src="chrome://compzilla/content/start.js" />
 
     <html:body id="desktop" xmlns="http://www.w3.org/1999/xhtml" flex="1">
 
-        <div id="compzillaWindowStack">
+        <div id="compzillaWindowStack" mousethrough="never">
 
             <!-- these are the EWMH spec'ed logical window layers -->
 
@@ -54,10 +57,11 @@
         <div id="debugContent">
             <div id="debugLog"></div>
             <br clear="all" />
-            <button id="debugClear" value="Clear">Clear</button>
+            <button id="debugClear" value="Clear" 
+		    onclick="this.previousSibling.innerHTML='';">Clear</button>
         </div>
 
-        <div id="compzillaWindowFrame">
+        <div id="compzillaWindowFrame" mousethrough="never">
             <commandset id="compzillaWindowCommandSet">
                 <command id="cmd_minimizeWindow" oncommand="compzilla.minimizeWindow();" />
                 <command id="cmd_restoreWindow" oncommand="compzilla.restoreWindow();" />
@@ -115,7 +119,7 @@
             fooo
         </div>
 
-        <canvas id="compzillaWindowContent" />
+        <canvas id="windowContent" />
 
     </html:body>
 

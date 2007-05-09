@@ -74,7 +74,6 @@ private:
     bool mIsCompositor;
 
     nsCOMPtr<nsIDOMWindow> mDOMWindow;
-    nsCOMPtr<compzillaIWindowManager> mWM;
     nsClassHashtable<nsUint32HashKey, compzillaWindow> mWindowMap;
 
     compzillaEventManager mWindowCreateEvMgr;

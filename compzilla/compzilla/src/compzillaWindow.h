@@ -14,7 +14,6 @@ extern "C" {
 }
 
 #include "compzillaEventManager.h"
-#include "compzillaIWindowManager.h"
 #include "compzillaIWindow.h"
 #include "compzillaWindowEvents.h"
 
@@ -31,19 +30,19 @@ extern "C" {
 
 
 class compzillaWindow
-    : public nsIDOMKeyListener,
-      public nsIDOMMouseListener,
-      public nsIDOMUIListener,
+    : public compzillaIWindow,
       public nsIDOMEventTarget,
-      public compzillaIWindow
+      public nsIDOMKeyListener,
+      public nsIDOMMouseListener,
+      public nsIDOMUIListener
 {
 public:
     NS_DECL_ISUPPORTS
-    NS_DECL_NSIDOMEVENTLISTENER
-    NS_DECL_NSIDOMEVENTTARGET
     NS_DECL_COMPZILLAIWINDOW
+    NS_DECL_NSIDOMEVENTTARGET
+    NS_DECL_NSIDOMEVENTLISTENER
 
-    compzillaWindow (Display *display, Window window, compzillaIWindowManager* wm);
+    compzillaWindow (Display *display, Window window);
     virtual ~compzillaWindow ();
 
     void EnsurePixmap ();
@@ -69,14 +68,6 @@ public:
     NS_IMETHOD FocusIn (nsIDOMEvent* aDOMEvent);
     NS_IMETHOD FocusOut (nsIDOMEvent* aDOMEvent);
 
-    nsCOMArray<nsISupports> mContentNodes;
-    Display *mDisplay;
-    Window mWindow;
-    XWindowAttributes mAttr;
-    Pixmap mPixmap;
-    Damage mDamage;
-    Window mLastEntered;
-
     void DestroyWindow ();
     void MapWindow ();
     void UnmapWindow ();
@@ -87,15 +78,10 @@ public:
                            PRInt32 border,
                            compzillaWindow *aboveWin);
 
-    compzillaEventManager mDestroyEvMgr;
-    compzillaEventManager mMoveResizeEvMgr;
-    compzillaEventManager mShowEvMgr;
-    compzillaEventManager mHideEvMgr;
-    compzillaEventManager mPropertyChangeEvMgr;
+    XWindowAttributes mAttr;
+    Damage mDamage;
 
  private:
-    compzillaIWindowManager* mWM;
-
     void OnMouseMove (nsIDOMEvent* aDOMEvent);
     void OnDOMMouseScroll (nsIDOMEvent* aDOMEvent);
     void SendKeyEvent (int eventType, nsIDOMKeyEvent *keyEv);
@@ -104,7 +90,19 @@ public:
     void TranslateClientXYToWindow (int *x, int *y, nsIDOMEventTarget *target);
     Window GetSubwindowAtPoint (int *x, int *y);
     unsigned int DOMKeyCodeToKeySym (PRUint32 vkCode);
+
+    nsCOMArray<nsISupports> mContentNodes;
+    Display *mDisplay;
+    Window mWindow;
+    Pixmap mPixmap;
+    Window mLastEntered;
+
+    compzillaEventManager mDestroyEvMgr;
+    compzillaEventManager mMoveResizeEvMgr;
+    compzillaEventManager mShowEvMgr;
+    compzillaEventManager mHideEvMgr;
+    compzillaEventManager mPropertyChangeEvMgr;
 };
 
-nsresult CZ_NewCompzillaWindow(Display *display, Window win, compzillaIWindowManager* wm, compzillaWindow * *_retval);
+nsresult CZ_NewCompzillaWindow(Display *display, Window win, compzillaWindow **retval);
 
