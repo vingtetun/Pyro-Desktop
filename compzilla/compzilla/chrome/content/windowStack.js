@@ -43,7 +43,7 @@ var windowStack = document.getElementById ("windowStack");
 
 windowStack.stackWindow = function (w) {
     var l = determineLayer (w);
-    Debug ("adding window '" + w.getContent().id + "' to layer '" + l.id + "'");
+    Debug ("adding window '" + w.getTitle () + "' to layer '" + l.id + "'");
     l.appendChild (w);
     w.layer = l;
     restackLayer (l);
@@ -59,7 +59,12 @@ windowStack.replaceWindow = function (w1, w2) {
 	w2.zIndex= w1.nzIndex;
 	try {
 	    w1.layer.replaceChild (w2, w1);
-	} catch (ex) { /* swallow any exception raised here.  it should only raise one if w1.layer doesn't contain w1, which shouldn't ever happen. */ }
+	} catch (ex) { 
+	    /* 
+	     * swallow any exception raised here.  it should only raise one if
+	     * w1.layer doesn't contain w1, which shouldn't ever happen. 
+	     */ 
+	}
 	w2.layer = w1.layer;
 	w1.layer = undefined;
     }
@@ -87,7 +92,9 @@ windowStack.removeWindow = function(w) {
 
     try {
 	w.layer.removeChild (w);
-    } catch (ex) { /* swallow any exception raised here */ }
+    } catch (ex) { 
+	/* swallow any exception raised here */ 
+    }
     w.layer = undefined;
 }
 
@@ -182,20 +189,14 @@ function determineLayer (w) {
     // to go in the overlay?  are we going to require a special CSS
     // class for overlay widgets?
 
-    if (w.getContent() != null && w.getContent().id == "debugContent") // special case for the debug window, which sits above everything
+    if (w.getContent() != null && w.getContent().id == "debugContent") 
+	// special case for the debug window, which sits above everything
 	return layers[8];
-    if (w._net_wm_window_type == windowStack.parentNode.Atoms._NET_WM_WINDOW_TYPE_DESKTOP())
+    if (w._net_wm_window_type == Atoms._NET_WM_WINDOW_TYPE_DESKTOP())
 	return layers[0];
-    else if (w._net_wm_window_type == windowStack.parentNode.Atoms._NET_WM_WINDOW_TYPE_DOCK())
+    else if (w._net_wm_window_type == Atoms._NET_WM_WINDOW_TYPE_DOCK())
 	return layers[3];
     /* XXX we need cases 1 and 4 here */
     else
 	return layers[2];
-}
-
-
-function Debug (str)
-{
-    if (document.Debug)
-	document.Debug (str);
 }

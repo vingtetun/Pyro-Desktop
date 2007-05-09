@@ -1,8 +1,7 @@
 /* -*- mode: javascript; c-basic-offset: 4; indent-tabs-mode: t; -*- */
 
-var desktop = document.getElementById ("desktop");
 
-desktop.Atoms = {
+Atoms = {
     svc: null,
     cache : new Object (),
 
@@ -27,3 +26,5 @@ desktop.Atoms = {
     _NET_WM_WINDOW_TYPE_DESKTOP : function () { return this.Get ("_NET_WM_WINDOW_TYPE_DESKTOP"); },
     _NET_WM_WINDOW_TYPE_SPLASH : function () { return this.Get ("_NET_WM_WINDOW_TYPE_SPLASH"); },
 }
+
+document.Atoms = Atoms;

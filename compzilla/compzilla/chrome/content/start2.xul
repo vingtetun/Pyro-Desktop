@@ -6,20 +6,19 @@
 <window id="desktopWindow"
         xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
 	xmlns:html="http://www.w3.org/1999/xhtml"
-        xmlns:xbl="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
+        xmlns:xul="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
 	title="compzilla"
 	onload="compzillaLoad()" 
 	width="640" height="480">
 
     <html:body id="desktop" xmlns="http://www.w3.org/1999/xhtml" flex="1">
-
         <div id="windowStack" mousethrough="never">
 
             <!-- these are the EWMH spec'ed logical window layers -->
 
             <div id="desktopLayer"    class="windowLayer" mousethrough="always"></div>
 	    <div id="belowLayer"      class="windowLayer" mousethrough="always"></div>
-            <div id="normalLayer"     class="windowLayer" mousethrough="always"></div>
+            <div id="normalLayer"     class="windowLayer" mousethrough="always">Normal Layer</div>
             <div id="dockLayer"       class="windowLayer" mousethrough="always"></div>
             <div id="fullscreenLayer" class="windowLayer" mousethrough="always"></div>
 
@@ -40,94 +39,93 @@
 	    <!-- another special purpose layer, always on top of everything.
 	         used for our debug log (and firebug?) -->
 
-	    <div id="debugLayer"   class="windowLayer" mousethrough="always"></div>
+	    <div id="debugLayer"   class="windowLayer" mousethrough="always">Debug Layer</div>
 
 	</div>
 
 
-        <!-- this is the contents of the debug window.  it is reparented into the chrome we create for it -->
-
-        <div id="debugContent">
-            <div id="debugLog"></div>
-            <br clear="all" />
-            <button id="debugClear" value="Clear" 
-		    onclick="this.previousSibling.innerHTML='';">Clear</button>
-        </div>
+	<!-- Window frame template, which is cloned for each created window, and
+	     the content reparented inside.  Done using CompzillaFrame. -->
 
         <div id="windowFrame" mousethrough="never">
-            <commandset id="compzillaWindowCommandSet">
-                <command id="cmd_minimizeWindow" oncommand="compzilla.minimizeWindow();" />
-                <command id="cmd_restoreWindow" oncommand="compzilla.restoreWindow();" />
-                <command id="cmd_maximizeWindow" oncommand="compzilla.maximizeWindow();" />
-                <command id="cmd_closeWindow" oncommand="compzilla.closeWindow();" />
-            </commandset>
+            <xul:commandset id="compzillaWindowCommandSet">
+                <xul:command id="cmd_minimizeWindow" oncommand="compzilla.minimizeWindow();" />
+                <xul:command id="cmd_restoreWindow" oncommand="compzilla.restoreWindow();" />
+                <xul:command id="cmd_maximizeWindow" oncommand="compzilla.maximizeWindow();" />
+                <xul:command id="cmd_closeWindow" oncommand="compzilla.closeWindow();" />
+            </xul:commandset>
 
-            <keyset id="compzillaWindowKeyset">
-                <key id="key_minimizeWindow" 
-                     keycode="VK_F9" modifiers="alt"
-                     command="cmd_minimizeWindow" />
-                <key id="key_maximizeWindow" 
-                     keycode="VK_F10" modifiers="alt"
-                     command="cmd_maximizeWindow" />
-                <key id="key_closeWindow" 
-                     keycode="VK_F4" modifiers="alt"
-                     command="cmd_closeWindow" />
-            </keyset>
+            <xul:keyset id="compzillaWindowKeyset">
+                <xul:key id="key_minimizeWindow" 
+                         keycode="VK_F9" modifiers="alt"
+                         command="cmd_minimizeWindow" />
+                <xul:key id="key_maximizeWindow" 
+                         keycode="VK_F10" modifiers="alt"
+                         command="cmd_maximizeWindow" />
+                <xul:key id="key_closeWindow" 
+                         keycode="VK_F4" modifiers="alt"
+                         command="cmd_closeWindow" />
+            </xul:keyset>
 
-            <menupopup id="compzillaWindowMenu">
-                <menuitem id="menu_minimizeWindow" 
-                          label="&minimizeWindow.label;" 
-                          command="cmd_minimizeWindow" />
-                <menuitem id="menu_maximizeWindow" 
-                          label="&maximizeWindow.label;" 
-                          command="cmd_maximizeWindow" />
-                <menuitem id="menu_closeWindow" 
-                          label="&closeWindow.label;" 
-                          command="cmd_closeWindow" />
-            </menupopup>
+            <xul:menupopup id="compzillaWindowMenu">
+                <xul:menuitem id="menu_minimizeWindow" 
+                              label="&minimizeWindow.label;" 
+                              command="cmd_minimizeWindow" />
+                <xul:menuitem id="menu_maximizeWindow" 
+                              label="&maximizeWindow.label;" 
+                              command="cmd_maximizeWindow" />
+                <xul:menuitem id="menu_closeWindow" 
+                              label="&closeWindow.label;" 
+                              command="cmd_closeWindow" />
+            </xul:menupopup>
 
-            <hbox id="compzillaWindowTitleBox">
-                <image id="compzillaWindowIcon" 
-                       tooltiptext="&windowMenu.label;" 
-                       popup="compzillaWindowMenu" />
+            <div id="windowTitleBox">
+	        <img src="http://www.beatniksoftware.com/img/alexgotchi.png" 
+                     width="24" height="24"/>
 
-                <label id="compzillaWindowTitle" flex="1" />
+                <xul:image id="compzillaWindowIcon" 
+                           tooltiptext="&windowMenu.label;" 
+                           popup="compzillaWindowMenu" />
 
-                <image id="compzillaWindowMinimize"
-                       src="chrome://compzilla/skin/minimize.png"
-                       tooltiptext="&minimizeWindow.label;" 
-                       onclick="goDoCommand('cmd_minimizeWindow');" />
-                <image id="compzillaWindowMaximize"
-                       src="chrome://compzilla/skin/maximize.png"
-                       tooltiptext="&maximizeWindow.label;" 
-                       onclick="goDoCommand('cmd_maximizeWindow');" />
-                <image id="compzillaWindowClose"
-                       src="chrome://compzilla/skin/close.png"
-                       tooltiptext="&closeWindow.label;" 
-                       onclick="goDoCommand('cmd_closeWindow');" />
-            </hbox>
+                <xul:label id="windowTitle" flex="1" value="Unknown" />
 
-            <img src="http://www.beatniksoftware.com/img/alexgotchi.png" />
-	    bar
-            fooo
+                <xul:image id="compzillaWindowMinimize"
+                           src="chrome://compzilla/skin/minimize.png"
+                           tooltiptext="&minimizeWindow.label;" 
+                           onclick="goDoCommand('cmd_minimizeWindow');" />
+                <xul:image id="compzillaWindowMaximize"
+                           src="chrome://compzilla/skin/maximize.png"
+                           tooltiptext="&maximizeWindow.label;" 
+                           onclick="goDoCommand('cmd_maximizeWindow');" />
+                <xul:image id="compzillaWindowClose"
+                           src="chrome://compzilla/skin/close.png"
+                           tooltiptext="&closeWindow.label;" 
+                           onclick="goDoCommand('cmd_closeWindow');" />
+            </div>
         </div>
 
-        <canvas id="windowContent" />
+        <canvas id="windowContent" mousethrough="never" />
+
+	<div id="dockFrame" mousethrough="never"></div>
+
+        <!-- Contents of the debug window. Manually reparented into a window
+             frame we create for it in debug.js	-->
+
+        <div id="debugContent">
+            <div id="debugLog" />
+            <button id="debugClear" onclick="clearDebugLog();">Clear</button>
+        </div>
 
     </html:body>
 
+    <script type="application/x-javascript" src="chrome://compzilla/content/atoms.js" />
     <script type="application/x-javascript" src="chrome://compzilla/content/windowStack.js" />
     <script type="application/x-javascript" src="chrome://compzilla/content/frame.js" />
     <script type="application/x-javascript" src="chrome://compzilla/content/content.js" />
     <script type="application/x-javascript" src="chrome://compzilla/content/debug.js" />
-    <script type="application/x-javascript" src="chrome://compzilla/content/atoms.js" />
     <script type="application/x-javascript" src="chrome://compzilla/content/start2.js" />
 
     <commandset id="compzillaDesktopCommandSet">
         <command id="cmd_showDesktop" oncommand="compzilla.showDesktop();" />
     </commandset>
-
-    <vbox id="compzillaDockFrame" hidden="true">
-        <html:canvas id="compzillaDockContent" xbl:flex="1" />
-    </vbox>
 </window>

@@ -1172,8 +1172,6 @@ compzillaWindow::PropertyChanged (Window win, Atom prop, bool deleted)
         compzillaWindowEvent *ev = new compzillaWindowEvent (this, prop, deleted, bag2);
         ev->Send (NS_LITERAL_STRING ("propertychange"), this, mPropertyChangeEvMgr);
     }
-
-    NS_RELEASE (wbag);
 }
 
 
