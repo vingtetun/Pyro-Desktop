@@ -13,6 +13,7 @@
 #include "compzillaRenderingContext.h"
 #include "nsKeycodes.h"
 
+#include "nsMemory.h"
 #include <nsIDOMEventTarget.h>
 #include <nsICanvasElement.h>
 #include <nsISupportsUtils.h>
@@ -58,14 +59,35 @@ NS_INTERFACE_MAP_BEGIN(compzillaWindow)
     NS_INTERFACE_MAP_ENTRY(nsIDOMMouseListener)
     NS_INTERFACE_MAP_ENTRY(nsIDOMUIListener)
     NS_INTERFACE_MAP_ENTRY(compzillaIWindow)
+    NS_IMPL_QUERY_CLASSINFO(compzillaWindow)
 NS_INTERFACE_MAP_END
+NS_IMPL_CI_INTERFACE_GETTER6(compzillaWindow,
+                             nsISupports,
+                             nsIDOMEventListener,
+                             nsIDOMKeyListener,
+                             nsIDOMMouseListener,
+                             nsIDOMUIListener,
+                             compzillaIWindow)
 
+nsresult
+CZ_NewCompzillaWindow(Display *display, Window win, compzillaIWindowManager* wm,
+                      compzillaWindow * *_retval)
+{
+    compzillaWindow *window = new compzillaWindow (display, win, wm);
+    if (!window)
+        return NS_ERROR_OUT_OF_MEMORY;
+
+    NS_ADDREF(window);
+
+    *_retval = window;
+    return NS_OK;
+}
 
 compzillaWindow::compzillaWindow(Display *display, Window win, compzillaIWindowManager* wm)
     : mWM(wm),
       mDisplay(display),
       mWindow(win),
-      mPixmap(0),
+      mPixmap(None),
       mDamage(0),
       mLastEntered(0),
       mDestroyEvMgr("destroy"),
@@ -82,6 +104,8 @@ compzillaWindow::compzillaWindow(Display *display, Window win, compzillaIWindowM
     // Compiz selects only these.  Need more?
     XSelectInput (display, win, (PropertyChangeMask | EnterWindowMask | FocusChangeMask));
     XShapeSelectInput (display, win, ShapeNotifyMask);
+
+    memset (&mAttr, 0, sizeof (XWindowAttributes));
 
     EnsurePixmap ();
 }
@@ -131,6 +155,10 @@ compzillaWindow::EnsurePixmap()
     if (mAttr.map_state == IsViewable) {
         // Set up persistent offscreen window contents pixmap.
         mPixmap = XCompositeNameWindowPixmap (mDisplay, mWindow);
+
+        if (mPixmap == None) {
+            ERROR ("unable to get backing pixmap for window %p\n", mWindow);
+        }
 
         /* 
          * Set up damage notification.  RawRectangles gives us smaller grain
@@ -301,7 +329,6 @@ compzillaWindow::HandleEvent (nsIDOMEvent* aDOMEvent)
         SPEW ("compzillaWindow::HandleEvent: unhandled type=%s, target=%p!!!\n", 
               cdata, target.get ());
     }
-
     return NS_OK;
 }
 
@@ -1032,17 +1059,19 @@ compzillaWindow::PropertyChanged (Window win, Atom prop, bool deleted)
 
         wmHints = XGetWMHints (mDisplay, win);
 
-        SET_PROP(wbag2, Int32, "wmHints.flags", wmHints->flags);
-        SET_PROP(wbag2, Bool, "wmHints.input", wmHints->input);
-        SET_PROP(wbag2, Int32, "wmHints.initialState", wmHints->initial_state);
-        SET_PROP(wbag2, Uint32, "wmHints.iconPixmap", wmHints->icon_pixmap);
-        SET_PROP(wbag2, Uint32, "wmHints.iconWindow", wmHints->icon_window);
-        SET_PROP(wbag2, Int32, "wmHints.iconX", wmHints->icon_x);
-        SET_PROP(wbag2, Int32, "wmHints.iconY", wmHints->icon_y);
-        SET_PROP(wbag2, Uint32, "wmHints.iconMask", wmHints->icon_mask);
-        SET_PROP(wbag2, Uint32, "wmHints.windowGroup", wmHints->window_group);
+        if (wmHints) {
+            SET_PROP(wbag2, Int32, "wmHints.flags", wmHints->flags);
+            SET_PROP(wbag2, Bool, "wmHints.input", wmHints->input);
+            SET_PROP(wbag2, Int32, "wmHints.initialState", wmHints->initial_state);
+            SET_PROP(wbag2, Uint32, "wmHints.iconPixmap", wmHints->icon_pixmap);
+            SET_PROP(wbag2, Uint32, "wmHints.iconWindow", wmHints->icon_window);
+            SET_PROP(wbag2, Int32, "wmHints.iconX", wmHints->icon_x);
+            SET_PROP(wbag2, Int32, "wmHints.iconY", wmHints->icon_y);
+            SET_PROP(wbag2, Uint32, "wmHints.iconMask", wmHints->icon_mask);
+            SET_PROP(wbag2, Uint32, "wmHints.windowGroup", wmHints->window_group);
 
-        XFree (wmHints);
+            XFree (wmHints);
+        }
         break;
     }
 
@@ -1199,6 +1228,13 @@ compzillaWindow::WindowConfigured (PRInt32 x, PRInt32 y,
                                    PRInt32 border,
                                    compzillaWindow *aboveWin)
 {
+    if (mPixmap) {
+        if (mAttr.width != width || mAttr.height != height) {
+            XFreePixmap (mDisplay, mPixmap);
+            mPixmap = None;
+        }
+    }
+
     if (mMoveResizeEvMgr.HasEventListeners ()) {
         compzillaWindowEvent *ev = new compzillaWindowEvent (this,
                                                              mAttr.map_state == IsViewable,

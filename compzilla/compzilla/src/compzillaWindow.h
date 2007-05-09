@@ -106,3 +106,5 @@ public:
     unsigned int DOMKeyCodeToKeySym (PRUint32 vkCode);
 };
 
+nsresult CZ_NewCompzillaWindow(Display *display, Window win, compzillaIWindowManager* wm, compzillaWindow * *_retval);
+

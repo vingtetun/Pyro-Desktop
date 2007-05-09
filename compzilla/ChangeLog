@@ -1,10 +1,31 @@
 2007-05-09  Chris Toshok  <toshok@hungry.com>
 
+	* compzilla/src/compzillaWindow.h: add prototype for
+	CZ_NewCompzillaWindow.
+
+	* compzilla/src/compzillaWindow.cpp: #include nsMemory or else we
+	get undefined nsMemory::Clone symbols in trunk mozilla.
+
+	add NS_IMPL_CI_INTERFACE_GETTER for compzillaWindow to fix
+	undefined symbols when we run.
+
+	add CZ_NewCompzillaWindow function to be used instead of "new
+	compzillaWindow".
+
+	(EnsurePixmap): spew an error if we fail to get the backing pixmap
+	for a window.
+	
+	(PropertyChanged): XGetWMHints can return NULL.
+
+	(WindowConfigured): if the window is resized the backing pixmap
+	becomes invalid.  make sure we free our old one and set mPixmap to
+	null so we'll refetch it the next time EnsurePixmap is called.
+
+2007-05-09  Chris Toshok  <toshok@hungry.com>
+
 	* compzilla/Makefile.am: add compzilla script installation to
 	bindir, and quiet down automake 1.10 (it complains about gmake
 	specific rules.)
-
-2007-05-09  Chris Toshok  <toshok@hungry.com>
 
 	* configure.in: add compzilla script generation.
 
