@@ -1,0 +1,1 @@
+@GECKO_EXEC_PREFIX@/bin/firefox -chrome chrome://compzilla/content/start.xul

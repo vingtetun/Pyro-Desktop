@@ -22,6 +22,7 @@ FIREFOX_XPCOM="firefox-xpcom >= 1.5.0"
 GECKO_IDLDIR=`$PKG_CONFIG --variable=idldir "$FIREFOX_XPCOM"`
 GECKO_LIBDIR=`$PKG_CONFIG --variable=libdir "$FIREFOX_XPCOM"`
 GECKO_INCLUDEDIR=`$PKG_CONFIG --variable=includedir "$FIREFOX_XPCOM"`
+GECKO_EXEC_PREFIX=`$PKG_CONFIG --variable=exec_prefix "$FIREFOX_XPCOM"`
 
 XPIDL="$GECKO_LIBDIR"/xpidl
 if ! test -f "$XPIDL"; then
@@ -31,6 +32,7 @@ fi
 AC_SUBST(GECKO_IDLDIR)
 AC_SUBST(GECKO_LIBDIR)
 AC_SUBST(GECKO_INCLUDEDIR)
+AC_SUBST(GECKO_EXEC_PREFIX)
 AC_SUBST(XPIDL)
 
 
@@ -58,6 +60,7 @@ PKG_CHECK_MODULES(XEXTENSIONS, xcomposite xdamage)
 AC_OUTPUT([
 Makefile
 compzilla/Makefile
+compzilla/compzilla
 ])
 
 

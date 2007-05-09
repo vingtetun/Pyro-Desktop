@@ -1,3 +1,16 @@
+2007-05-09  Chris Toshok  <toshok@hungry.com>
+
+	* compzilla/Makefile.am: add compzilla script installation to
+	bindir, and quiet down automake 1.10 (it complains about gmake
+	specific rules.)
+
+2007-05-09  Chris Toshok  <toshok@hungry.com>
+
+	* configure.in: add compzilla script generation.
+
+	* compzilla/compzilla.in: new conveience script which runs the
+	firefox binary with our chrome.
+	
 2007-05-08  Alex Graveley  <alex@beatniksoftware.com>
 
 	* compzilla/src/compzillaModule.cpp: Expose compzillaWindow and
@@ -10,6 +23,16 @@
 
 	* chrome/content/start2.js/xul: Add these xul document alternative
 	versions of start.xul/js
+
+2007-05-08  Chris Toshok  <toshok@hungry.com>
+
+	* compzilla/chrome/content/windowStack.js: soptimize
+	toggleDesktop, and add some XXX comments.
+
+2007-05-08  Chris Toshok  <toshok@hungry.com>
+
+	* compzilla/Makefile.am (content_DATA): add atoms.js and
+	windowStack.js
 
 2007-05-08  Chris Toshok  <toshok@hungry.com>
 

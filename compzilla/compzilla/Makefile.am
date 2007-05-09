@@ -1,4 +1,5 @@
 
+bin_SCRIPTS=compzilla
 
 extensiondir = $(GECKO_LIBDIR)/extensions/compzilla@pyrodesktop.org
 EXTENSION_SRCDIR=$(srcdir)
@@ -18,7 +19,6 @@ content_DATA =					\
 	$(CONTENT_SRCDIR)/atoms.js		\
 	$(CONTENT_SRCDIR)/debug.js		\
 	$(CONTENT_SRCDIR)/windowStack.js
-
 
 skindir=$(extensiondir)/chrome/skin
 SKIN_SRCDIR=$(EXTENSION_SRCDIR)/chrome/skin
@@ -58,10 +58,10 @@ XPIDL_INCLUDES =				\
 	-I$(GECKO_IDLDIR)			\
 	-I$(srcdir)/public
 
-%.h: %.idl
+.h: .idl
 	$(XPIDL) $(XPIDL_INCLUDES) -m header -e $@ $<
 
-%.xpt: %.idl
+.xpt: .idl
 	$(XPIDL) $(XPIDL_INCLUDES)  -m typelib -e $@ $<
 
 IDL_FILES =						\
