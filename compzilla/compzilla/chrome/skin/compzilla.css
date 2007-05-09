@@ -2,14 +2,18 @@ html {
 	overflow: hidden;
 }
 
-body {
-	background: url(chrome://compzilla/skin/desktop-background.jpg);
+#desktop {
 	margin: 0px;
 }
 
 .window {
 	position: absolute;
 	background: #777777;
+	left: 0px;
+	top: 0px;
+	width: 0px;
+	height: 0px;
+	overflow: hidden;
 }
 
 .titlebar {
@@ -17,6 +21,10 @@ body {
 	background: #cccccc;
 	cursor: default;
 	overflow: hidden;
+	left: 0px;
+	top: 0px;
+	width: 0px;
+	height: 0px;
 }
 
 .windowtitle {
@@ -24,22 +32,21 @@ body {
 	-moz-user-select: none;
 }
 
-.debugContent {
+#debugContent {
 	position: absolute;
 	font-family: Andale Mono, monospace;
-	font-size: 0.50em;
+	font-size: 0.80em;
+	visibility: hidden;
 }
 
-.debugLog {
+#debugLog {
 	background: #ffffff;
 	overflow: scroll;
 	width: 100%;
 	height: 90%;
-	display: block;
 }
 
-.debugClear {
-	display: block;
+#debugLog {
 }
 
 .content {
@@ -48,22 +55,73 @@ body {
 	-moz-user-select: none;
 }
 
-.override_content {
+.override-content {
 	position: absolute;
 	background: #ffffff;
 	opacity: 0.8;
 }
 
-#overlay {
+#compzillaWindowStack {
+	position: absolute;
+	left: 0px;
+	top: 0px;
+	width: 100%;
+	height: 100%;
+	margin: 0px;
+	visibility: visible;
+}
+
+.windowLayer {
 	position: absolute;
 	background: #000000;
 	overflow: hidden;
-	visibility: hidden;
-	opacity: 0.85;
+	visibility: visible;
+	margin: 0px;
+	width: 100%;
+	height: 100%;
+	background-color: transparent;
+}
+
+#desktopLayer {
+	background: url(chrome://compzilla/skin/desktop-background.jpg);
+	z-index: 0;
+}
+
+#belowLayer {
+	z-index: 1;
+}
+
+#normalLayer {
+	z-index: 2;
+}
+
+#dockLayer {
+	z-index: 3;
+}
+
+#fullscreenLayer {
+	z-index: 4;
+}
+
+
+#debugLayer {
 	z-index: 65535;
 }
 
-#compzillaWindowStack {
+#overlayLayer {
+	overflow: hidden;
+	visibility: hidden;
+	background-color: #000000;
+	opacity: 0.85;
+	z-index: 65534;
+}
+
+#exposeLayer {
+	overflow: hidden;
+	visibility: hidden;
+	background-color: #000000;
+	opacity: 0.85;
+	z-index: 65533;
 }
 
 #compzillaWindowFrame {
