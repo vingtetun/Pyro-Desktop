@@ -217,10 +217,6 @@ CompzillaWindowManager.prototype = {
 	cls = Components.classes['@pyrodesktop.org/compzillaService'];
 	CompzillaState.svc = cls.getService(Components.interfaces.compzillaIControl);
 
-	// create the overlay window
-	CompzillaState.overlay = this.document.getElementById ("overlay-layer");
-	Debug ("overlay = " + (CompzillaState.overlay == null ? "null!" : "not null!"));
-
  	this.document.addEventListener ("mouseup", this.DocumentMouseUpListener, true);
  	this.document.addEventListener ("mousemove", this.DocumentMouseMoveListener, true);
  	this.document.addEventListener ("keypress", this.DocumentKeyPressListener, true);
@@ -242,7 +238,7 @@ CompzillaWindowManager.prototype = {
 	    }
 	    else if (event.keyCode == event.DOM_VK_F11 && event.ctrlKey) {
 		// toggle the overlay
-		var overlay = CompzillaState.overlay;
+		var overlay = CompzillaState.wm.document.getElementById ("overlay-layer");
 
 		if (overlay == null)
 		    return;
