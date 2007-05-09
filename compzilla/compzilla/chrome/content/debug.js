@@ -19,7 +19,7 @@ var debugLog = document.getElementById ("debugLog");
 
 // Make a frame for the debug window
 var debugFrame = CompzillaFrame (debugContent);
-debugFrame.moveResize (300, 400, 200, 50);
+debugFrame.moveResize (300, 300, 200, 50);
 debugFrame.setTitle ("Debug Window");
 debugFrame.show ();
 

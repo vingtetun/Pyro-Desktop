@@ -4,10 +4,12 @@
 function CompzillaFrame (content) 
 {
     var frame = document.getElementById ("windowFrame").cloneNode (true);
-    frame.appendChild (content);
 
     frame._content = content;
     frame.getContent = function () { return frame._content; }
+
+    contentBox = frame.getElementsByTagNameNS ("http://www.w3.org/1999/xhtml", "div")[1];
+    contentBox.appendChild (content);
 
     frame.destroy = function () {
 	Debug ("frame.destroy");
@@ -18,28 +20,27 @@ function CompzillaFrame (content)
 	windowStack.removeWindow (frame);
     }
 
-    frame._title = frame.getElementsByTagNameNS ("http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul", "label")[0];
+    frame._title = frame.getElementsByTagNameNS (
+        "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul", "label")[0];
     frame.setTitle = function (title) { frame._title.value = title; }
     frame.getTitle = function () { return frame._title.value; }
 
     frame.moveResize = function (width, height, x, y) {
 	Debug ("frame.moveResize: w=" + width + ", h=" + height);
 
-	if (content.offsetWidth != width) {
-	    content.style.width = width + "px";
-	    frame.style.width = width + "px";
+	if (contentBox.style.width != width) {
+	    contentBox.style.width = width + "px";
+	    content.width = width;
 	}
-	if (content.offsetHeight != height) {
-	    content.style.height = height + "px";
-	    frame.style.width = width + "px";
+	if (contentBox.style.height != height) {
+	    contentBox.style.height = height + "px";
+	    content.height = height;
 	}
 	if (frame.offsetLeft != x) {
 	    frame.style.left = x + "px";
-	    //content.style.left = x + "px";
 	}
 	if (frame.offsetTop != y) {
 	    frame.style.top = y + "px";
-	    //content.style.top = y + "px";
 	}
     };
 
