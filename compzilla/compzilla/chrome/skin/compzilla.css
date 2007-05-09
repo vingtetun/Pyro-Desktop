@@ -137,5 +137,5 @@ html {
 #compzillaWindowContent {
 	visibility: hidden;
 	background: #ffffff;
-	tabindex: 1;
+	tab-index: 1;
 }
