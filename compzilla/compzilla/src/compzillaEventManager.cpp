@@ -13,7 +13,7 @@
 #include <nsIDOMDocument.h>
 #include <nsIDOMDocumentEvent.h>
 #include <nsIDOMWindow.h>
-#include <nsIWindowWatcher.h>
+//#include <nsIWindowWatcher.h>
 
 
 
