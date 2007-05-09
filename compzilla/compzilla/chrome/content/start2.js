@@ -20,10 +20,7 @@ function compzillaLoad()
 		//       toplevel window, to avoid an infinite loop.
 
 		content = CompzillaWindowContent (ev.window);
-		Debug ("content == " + content);
-
 		frame = CompzillaFrame (content);
-		Debug ("frame == " + frame);
 
 		// ev is a compzillaIWindowConfigureEvent
 		frame.moveResize (ev.width, ev.height, ev.x, ev.y);
@@ -32,8 +29,6 @@ function compzillaLoad()
 		}
 
 		stack = document.getElementById ("windowStack");
-		Debug ("stack == " + stack);
-
     		stack.stackWindow (frame);
 	    }
         },
