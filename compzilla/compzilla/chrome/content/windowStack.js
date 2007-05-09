@@ -37,11 +37,12 @@
 // These are accessed from here by "windowStack.parentNode.Debug" and
 // "windowStack.parentNode.Atoms".
 
+var desktop = document.getElementById ("desktop");
 var windowStack = document.getElementById ("windowStack");
 
 windowStack.stackWindow = function (w) {
     var l = determineLayer (w);
-    Debug ("adding window '" + w.content.id + "' to layer '" + l.id + "'");
+    Debug ("adding window '" + w.getContent().id + "' to layer '" + l.id + "'");
     l.appendChild (w);
     w.layer = l;
     restackLayer (l);
@@ -180,7 +181,7 @@ function determineLayer (w) {
     // to go in the overlay?  are we going to require a special CSS
     // class for overlay widgets?
 
-    if (w.content != null && w.content.id == "debugContent") // special case for the debug window, which sits above everything
+    if (w.getContent() != null && w.getContent().id == "debugContent") // special case for the debug window, which sits above everything
 	return layers[8];
     if (w._net_wm_window_type == windowStack.parentNode.Atoms._NET_WM_WINDOW_TYPE_DESKTOP())
 	return layers[0];
@@ -194,5 +195,6 @@ function determineLayer (w) {
 
 function Debug (str)
 {
-    windowStack.parentNode.Debug (str);
+    if (desktop.Debug != null)
+	desktop.Debug (str);
 }

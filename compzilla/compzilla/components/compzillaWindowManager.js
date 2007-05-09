@@ -347,51 +347,8 @@ CompzillaWindowManager.prototype = {
     //
 
     ToggleDebugWindow : function () {
-
-	if (CompzillaState.debugLog == null) {
-
-	    var debugContent = this.document.getElementById ("debugContent");
-	    if (debugContent == null)
-		throw "could not find debugContent node in start.xul";
-
-	    var debugLog;
-	    var debugClear;
-
-	    for (var el = debugContent.firstChild; el != null; el = el.nextSibling) {
-		if (el.id == "debugLog")
-		    debugLog = el;
-		else if (el.id == "debugClear")
-		    debugClear = el;
-	    }
-
-	    if (debugLog == null || debugClear == null)
-		throw "invalid debugContent structure.  you must define a node with id='debugLog' and a node with id='debugClear'";
-
-	    debugLog.content = debugContent;
-	    CompzillaState.debugLog = debugLog;
-
-	    debugClear.onclick = function (event) { CompzillaState.debugLog.innerHTML = ""; };
-
-	    // this reparents the debugContent into debugChrome
-	    var debugChrome = this.CreateWMChrome (debugContent);
-
-	    this.MoveAndResizeElementTo (debugChrome,
-					 200, 50,
-					 300, 400);
-
-	    debugChrome.titlespan.innerHTML = "debug window";
-	    debugChrome.style.zIndex = 10000; // always on top
-	}
-
-	var content = CompzillaState.debugLog.content;
-	if (content.style.visibility == "visible") {
-	    content.chrome.style.visibility = "hidden";
-	    content.style.visibility = "hidden";
-	}
-	else {
-	    content.chrome.style.visibility = "visible";
-	    content.style.visibility = "visible";
-	}
+	var frame = CompzillaState.desktop.debugFrame;
+	frame.style.visibility = frame.style.visibility == "hidden" ? "visible" : "hidden";
     },
 
     CreateWMChrome : function (content) {
