@@ -18,7 +18,7 @@ function CompzillaFrame (content)
 	windowStack.removeWindow (frame);
     }
 
-    frame._title = frame.getElementsByTagName("label")[0];
+    frame._title = frame.getElementsByTagNameNS ("http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul", "label")[0];
     frame.setTitle = function (title) { frame._title.value = title; }
     frame.getTitle = function () { return frame._title.value; }
 
