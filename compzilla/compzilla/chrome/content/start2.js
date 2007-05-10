@@ -27,7 +27,7 @@ function compzillaLoad()
 		    frame = CompzillaFrame (content);
 
 		// ev is a compzillaIWindowConfigureEvent
-		frame.moveResize (ev.width, ev.height, ev.x, ev.y);
+		frame.moveResize (ev.x, ev.y, ev.width, ev.height);
 		if (ev.mapped) {
 		    frame.show ();
 		}

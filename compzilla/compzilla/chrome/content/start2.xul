@@ -79,7 +79,7 @@
                               command="cmd_closeWindow" />
             </xul:menupopup>
 
-            <div id="windowTitleBox">
+            <xul:hbox id="windowTitleBox">
                 <xul:image id="compzillaWindowIcon"
 		           src="chrome://compzilla/skin/icon.png"
                            tooltiptext="&windowMenu.label;" 
@@ -99,7 +99,7 @@
                            src="chrome://compzilla/skin/close.png"
                            tooltiptext="&closeWindow.label;" 
                            onclick="goDoCommand('cmd_closeWindow');" />
-            </div>
+            </xul:hbox>
 
             <div id="windowContentBox">
                 <!-- The content node will be inserted here. -->

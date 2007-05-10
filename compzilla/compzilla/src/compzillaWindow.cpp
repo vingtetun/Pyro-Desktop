@@ -89,9 +89,9 @@ compzillaWindow::compzillaWindow(Display *display, Window win)
       mDamage(0),
       mLastEntered(0),
       mDestroyEvMgr("destroy"),
-      mMoveResizeEvMgr("moveresize"),
-      mShowEvMgr("show"),
-      mHideEvMgr("hide"),
+      mMoveResizeEvMgr("configure"),
+      mShowEvMgr("map"),
+      mHideEvMgr("unmap"),
       mPropertyChangeEvMgr("propertychange")
 {
     NS_INIT_ISUPPORTS ();
@@ -948,11 +948,11 @@ compzillaWindow::AddEventListener (const nsAString & type,
 {
     if (type.EqualsLiteral ("destroy")) {
         return mDestroyEvMgr.AddEventListener (type, listener);
-    } else if (type.EqualsLiteral ("moveresize")) {
+    } else if (type.EqualsLiteral ("configure")) {
         return mMoveResizeEvMgr.AddEventListener (type, listener);
-    } else if (type.EqualsLiteral ("show")) {
+    } else if (type.EqualsLiteral ("map")) {
         return mShowEvMgr.AddEventListener (type, listener);
-    } else if (type.EqualsLiteral ("hide")) {
+    } else if (type.EqualsLiteral ("unmap")) {
         return mHideEvMgr.AddEventListener (type, listener);
     } else if (type.EqualsLiteral ("propertychange")) {
         return mPropertyChangeEvMgr.AddEventListener (type, listener);
@@ -968,11 +968,11 @@ compzillaWindow::RemoveEventListener (const nsAString & type,
 {
     if (type.EqualsLiteral ("destroy")) {
         return mDestroyEvMgr.RemoveEventListener (type, listener);
-    } else if (type.EqualsLiteral ("moveresize")) {
+    } else if (type.EqualsLiteral ("configure")) {
         return mMoveResizeEvMgr.RemoveEventListener (type, listener);
-    } else if (type.EqualsLiteral ("show")) {
+    } else if (type.EqualsLiteral ("map")) {
         return mShowEvMgr.RemoveEventListener (type, listener);
-    } else if (type.EqualsLiteral ("hide")) {
+    } else if (type.EqualsLiteral ("unmap")) {
         return mHideEvMgr.RemoveEventListener (type, listener);
     } else if (type.EqualsLiteral ("propertychange")) {
         return mPropertyChangeEvMgr.RemoveEventListener (type, listener);
@@ -1003,7 +1003,7 @@ compzillaWindow::MapWindow ()
 {
     if (mShowEvMgr.HasEventListeners ()) {
         compzillaWindowEvent *ev = new compzillaWindowEvent (this);
-        ev->Send (NS_LITERAL_STRING ("show"), this, mShowEvMgr);
+        ev->Send (NS_LITERAL_STRING ("map"), this, mShowEvMgr);
     }
 }
 
@@ -1013,7 +1013,7 @@ compzillaWindow::UnmapWindow ()
 {
     if (mHideEvMgr.HasEventListeners ()) {
         compzillaWindowEvent *ev = new compzillaWindowEvent (this);
-        ev->Send (NS_LITERAL_STRING ("hide"), this, mHideEvMgr);
+        ev->Send (NS_LITERAL_STRING ("unmap"), this, mHideEvMgr);
     }
 }
 
@@ -1235,6 +1235,6 @@ compzillaWindow::WindowConfigured (PRInt32 x, PRInt32 y,
                                                              width, height,
                                                              border,
                                                              aboveWin);
-        ev->Send (NS_LITERAL_STRING ("moveresize"), this, mMoveResizeEvMgr);
+        ev->Send (NS_LITERAL_STRING ("configure"), this, mMoveResizeEvMgr);
     }
 }

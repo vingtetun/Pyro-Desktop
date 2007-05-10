@@ -19,7 +19,7 @@ var debugLog = document.getElementById ("debugLog");
 
 // Make a frame for the debug window
 var debugFrame = CompzillaFrame (debugContent);
-debugFrame.moveResize (300, 300, 200, 50);
+debugFrame.moveResize (200, 50, 300, 300);
 debugFrame.setTitle ("Debug Window");
 debugFrame.show ();
 
@@ -27,10 +27,11 @@ var windowStack = document.getElementById ("windowStack");
 windowStack.stackWindow (debugFrame);
 
 
-function toggleDebugWindow ()
+// should we hide the window, or the entire layer?
+function debugToggleWindow ()
 {
-    debugFrame.style.visibility = (debugFrame.style.visibility == "hidden") ? 
-	"visible" : "hidden";
+    debugFrame.style.display = (debugFrame.style.display == "none") ? 
+	"block" : "none";
 }
 
 
@@ -80,3 +81,12 @@ function debugListWindows ()
     }
     return "";
 }
+
+// XXX until we get commands working in the .xul file
+document.addEventListener("keypress", {
+                              handleEvent: function (event) {
+				  if (event.keyCode == event.DOM_VK_F10 && event.ctrlKey) {
+				      toggleDebugWindow ();
+				  }
+			      } },
+			      true);

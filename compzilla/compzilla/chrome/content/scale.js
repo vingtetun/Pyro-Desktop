@@ -68,8 +68,8 @@ function layoutSlots () {
 
     var x1 = 0;
     var y1 = 0;
-    var x2 = 1024;
-    var y2 = 768;;
+    var x2 = windowStack.offsetWidth;
+    var y2 = windowStack.offsetHeight;
 
     y      = y1 + ss.spacing;
     height = ((y2 - y1) - (lines + 1) * ss.spacing) / lines;
@@ -445,28 +445,30 @@ function addWindow (w) {
     ss.reverseWindows.push (w);
 }
 
-function bodyLoaded () {
-    document.addEventListener("keypress", {
+function scaleStart () {
+    for (var el = layers[2].firstChild; el != null; el = el.nextSibling) {
+	if (el.className == "windowFrame")
+	    addWindow (el);
+    }
+
+    scaleInitiateAll ();
+}
+
+ss.state = "none";
+ss.spacing = 10;
+ss.opacity = 0.75;
+ss.reverseWindows = new Array ();
+ss.speed = 1.5;
+ss.timestep = 1.2;
+
+
+document.addEventListener("keypress", {
                               handleEvent: function (event) {
 				  if (event.keyCode == event.DOM_VK_F11 && event.ctrlKey) {
 				      if (ss.state == "none")
-					  scaleInitiateAll ();
+					  scaleStart ();
 				      else
 					  scaleTerminate ();
 				  }
 			      } },
 			      true);
-
-    ss.state = "none";
-    ss.spacing = 10;
-    ss.opacity = 0.75;
-    ss.reverseWindows = new Array ();
-    ss.speed = 1.5;
-    ss.timestep = 1.2;
-
-    addWindow (document.getElementById ("4"));
-    addWindow (document.getElementById ("3"));
-    addWindow (document.getElementById ("2"));
-    addWindow (document.getElementById ("1"));
-}
-

@@ -1,3 +1,32 @@
+2007-05-10  Chris Toshok  <toshok@hungry.com>
+
+	* compzilla/src/compzillaWindow.cpp: rename the events we raise to
+	be more indicative of the X event.  show => map, hide => unmap,
+	moveresize => configure.  there's no reason to add confusion by
+	inventing another name.  seeing those strings in the js makes it a
+	little more clear you're dealing with X-land as opposed to
+	dom-land, too.
+
+	* compzilla/chrome/content/frame.js: send synthetic and real
+	ConfigureNotify events at the appropriate times.  X windows now
+	move to match their content elements again.  Resize the window
+	title box width-wise along with the content box.  this makes the
+	window titlebars look right(er).  Also, track the change in event
+	names on compzillaWindow.  lastly, reorder the args for moveResize
+	to be x,y,w,h.  it's moveResize, not resizeMove.
+
+	* compzilla/chrome/content/start2.js: track moveResize arg change.
+
+	* compzilla/chrome/content/debug.js: track moveResize arg change.
+	Use display = "none"/"block" instead of visibility in
+	debugToggleWindow, and add a hacky Ctrl-F10 keypress to the
+	document to toggle the debug window.  This should arguably be a
+	command on the document.
+	
+	* compzilla/chrome/content/start2.xul: use an hbox instead of a
+	div for the titlebox.  this + the width setting on resize in
+	frame.js makes the button layout a little more sane.
+
 2007-05-10  Alex Graveley  <alex@beatniksoftware.com>
 
 	* compzilla/chrome/content/windowStack.js: Fix click to raise for
