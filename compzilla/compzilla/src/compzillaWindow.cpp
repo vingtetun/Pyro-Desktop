@@ -225,6 +225,14 @@ compzillaWindow::ConnectListeners (bool connect, nsCOMPtr<nsISupports> aContent)
 }
 
 
+NS_IMETHODIMP 
+compzillaWindow::GetNativeWindowId (PRInt32 *aId)
+{
+    *aId = mWindow;
+    return NS_OK;
+}
+
+
 NS_IMETHODIMP
 compzillaWindow::AddContentNode (nsISupports* aContent)
 {

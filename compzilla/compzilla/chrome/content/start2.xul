@@ -47,7 +47,7 @@
 	<!-- Window frame template, which is cloned for each created window, and
 	     the content reparented inside.  Done using CompzillaFrame. -->
 
-        <div id="windowFrame" mousethrough="never">
+        <div id="windowFrame" class="windowFrame" mousethrough="never">
             <xul:commandset id="compzillaWindowCommandSet">
                 <xul:command id="cmd_minimizeWindow" oncommand="compzilla.minimizeWindow();" />
                 <xul:command id="cmd_restoreWindow" oncommand="compzilla.restoreWindow();" />

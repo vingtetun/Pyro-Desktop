@@ -8,6 +8,8 @@ interface compzillaIWindow : nsISupports
     void AddContentNode (in nsISupports content);
     void RemoveContentNode (in nsISupports content);
 
+    readonly attribute long nativeWindowId;
+
     // window property accessors
     DOMString GetStringProperty (in PRUint32 prop);
     PRUint32 GetAtomProperty (in PRUint32 prop);

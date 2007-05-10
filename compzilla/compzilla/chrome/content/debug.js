@@ -57,13 +57,26 @@ function debugEval ()
 function debugListWindows ()
 {
     for (var i = 0; i < layers.length; i ++) {
-	res = "Layer" + i + ": ";
 	for (var el = layers[i].firstChild; el != null; el = el.nextSibling) {
-	    if (el.getTitle) {
-		res += "[Title: " + el.getTitle() + "]";
+	    if (el.className != "windowFrame") {
+		continue;
 	    }
+
+	    res = "Layer" + i + ": [";
+	    if (el.getTitle) {
+		res += "Title:" + el.getTitle() + ", ";
+	    }
+	    if (el.getContent) {
+		content = el.getContent();
+		if (content.getNativeWindow) {
+		    res += "XID:" + content.getNativeWindow().nativeWindowId + ", ";
+		}
+	    }
+	    res += "Rect: (x:" + el.offsetLeft + " y:" + el.offsetTop + 
+		" w:" + el.offsetWidth + " h:" + el.offsetHeight + ")";
+	    res += "]";
+	    Debug (res);
 	}
-	Debug (res);
     }
     return "";
 }

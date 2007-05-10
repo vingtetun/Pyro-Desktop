@@ -1,3 +1,10 @@
+2007-05-10  Alex Graveley  <alex@beatniksoftware.com>
+
+	* compzilla/chrome/content/debug.js (debugListWindows): Print the
+	XID and frame rect.
+
+	* compzilla/public/compzillaIWindow.idl: Add nativeWindowId accessor.
+
 2007-05-09  Chris Toshok  <toshok@hungry.com>
 
 	* compzilla/Makefile.am: I am an idiot.  fix the rules the right
