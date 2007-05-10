@@ -33,7 +33,7 @@ var windowStack = document.getElementById ("windowStack");
 
 windowStack.stackWindow = function (w) {
     var l = determineLayer (w);
-    Debug ("adding window '" + w.getTitle () + "' to layer '" + l.id + "'");
+    Debug ("adding window '" + w.id + "' to layer '" + l.id + "'");
     l.appendChild (w);
     w.layer = l;
     restackLayer (l);

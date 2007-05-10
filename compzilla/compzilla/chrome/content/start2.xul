@@ -85,7 +85,7 @@
                            tooltiptext="&windowMenu.label;" 
                            popup="compzillaWindowMenu" />
 
-                <xul:label id="windowTitle" flex="1" value="Unknown" />
+                <xul:label id="windowTitle" class="windowTitle" flex="1" value="Unknown" />
 
                 <xul:image id="compzillaWindowMinimize"
                            src="chrome://compzilla/skin/minimize.png"
@@ -108,7 +108,7 @@
 
         <canvas id="windowContent" mousethrough="never" />
 
-	<div id="dockFrame" mousethrough="never">
+	<div id="dockFrame" class="dockFrame" mousethrough="never">
             <div id="windowContentBox">
                 <!-- The content node will be inserted here. -->
             </div>

@@ -1,5 +1,45 @@
 2007-05-10  Chris Toshok  <toshok@hungry.com>
 
+	* compzilla/chrome/content/frame.js: add a new function,
+	addCachedEventListener (this should really be a method added to
+	nativewin) which does the idempotent "if registered, unregister
+	then register" thing.  This is so we can just call CompzillaFrame
+	or CompzillaDockFrame multiple times on the same content element
+	(which we need to be able to do to support WINDOW_TYPE property
+	changes) and have it not keep adding event handlers.  Make use of
+	this method in _connectNativeWindowListeners.
+
+	Also, port the wm.js propertychange support for
+	_NET_WM_WINDOW_TYPE over.  This makes panels come up with the the
+	window manager frame (nautilus desktop windows too).
+
+	Also, only resize the titlebox if there is one.  fixes js errors
+	on resizing dock frames.
+	
+	* compzilla/chrome/skin/compzilla.css: make the debug window a
+	little prettier (smaller font), and fix up the titlebar font a bit
+	as well.  also, track class changes in start2.xul.
+
+	* compzilla/chrome/content/start2.xul: add some class's for things
+	which make sense (the dock frame, since in both windowFrame and
+	dockFrame we expect the user to change the id), and to the
+	windowTitle.
+
+	* compzilla/chrome/content/windowStack.js (stackWindow): use w.id
+	instead of w.getTitle() since it might not be set by the time the
+	window is added to the stack (and will almost never be set if the
+	window is an override window).
+
+	* compzilla/chrome/content/start2.js: set the frame's id to "XID:"
+	+ native x id.
+
+	* compzilla/chrome/content/debug.js: since it's a singleton, let's
+	set the frame's id.  also, just always show the frame's id in
+	debugListWindows.  this gets us the XID in the X case, and
+	whatever the user specifies in the non-X case.
+
+2007-05-10  Chris Toshok  <toshok@hungry.com>
+
 	* compzilla/src/compzillaWindow.cpp: rename the events we raise to
 	be more indicative of the X event.  show => map, hide => unmap,
 	moveresize => configure.  there's no reason to add confusion by

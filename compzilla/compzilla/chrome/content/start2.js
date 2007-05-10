@@ -26,6 +26,8 @@ function compzillaLoad()
 		else
 		    frame = CompzillaFrame (content);
 
+		frame.id = "XID:" + content.getNativeWindow().nativeWindowId;
+
 		// ev is a compzillaIWindowConfigureEvent
 		frame.moveResize (ev.x, ev.y, ev.width, ev.height);
 		if (ev.mapped) {

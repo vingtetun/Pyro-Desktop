@@ -19,13 +19,14 @@ var debugLog = document.getElementById ("debugLog");
 
 // Make a frame for the debug window
 var debugFrame = CompzillaFrame (debugContent);
-debugFrame.moveResize (200, 50, 300, 300);
+
+debugFrame.id = "debugFrame";
 debugFrame.setTitle ("Debug Window");
+debugFrame.moveResize (200, 50, 300, 300);
 debugFrame.show ();
 
 var windowStack = document.getElementById ("windowStack");
 windowStack.stackWindow (debugFrame);
-
 
 // should we hide the window, or the entire layer?
 function debugToggleWindow ()
@@ -65,14 +66,9 @@ function debugListWindows ()
 
 	    res = "Layer" + i + ": [";
 	    if (el.getTitle) {
-		res += "Title:" + el.getTitle() + ", ";
+		res += "Title: " + el.getTitle() + ", ";
 	    }
-	    if (el.getContent) {
-		content = el.getContent();
-		if (content.getNativeWindow) {
-		    res += "XID:" + content.getNativeWindow().nativeWindowId + ", ";
-		}
-	    }
+	    res += "ID: " + el.id + ", ";
 	    res += "Rect: (x:" + el.offsetLeft + " y:" + el.offsetTop + 
 		" w:" + el.offsetWidth + " h:" + el.offsetHeight + ")";
 	    res += "]";

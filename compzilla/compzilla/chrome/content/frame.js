@@ -19,6 +19,16 @@ function getDescendentById (root, id)
 }
 
 
+/* probably a rather more useful function */
+function addCachedEventListener (o, eventid, cachedListener, newListener, usecapture)
+{
+    if (cachedListener != undefined)
+	o.removeEventListener (eventid, cachedListener, usecapture);
+    o.addEventListener (eventid, newListener, usecapture);
+    return newListener;
+}
+
+
 function _compzillaFrameCommon (content, templateId)
 {
     var frame = document.getElementById (templateId).cloneNode (true);
@@ -62,7 +72,8 @@ function _compzillaFrameCommon (content, templateId)
     frame._moveResize = function (x, y, width, height) {
 	if (frame.offsetWidth != width) {
 	    contentBox.style.width = width + "px";
-	    titleBox.style.width = width + "px";
+	    if (titleBox)
+		titleBox.style.width = width + "px";
 	    content.width = width;
 	}
 	if (frame.offsetHeight != height) {
@@ -104,7 +115,7 @@ function _compzillaFrameCommon (content, templateId)
         "mousedown", 
         {
             handleEvent: function (event) {
-        	windowStack.moveToTop (frame);
+		windowStack.moveToTop (frame);
             }
         },
 	true);
@@ -180,61 +191,111 @@ function _connectNativeWindowListeners (frame, content)
 {
     var nativewin = content.getNativeWindow ();
 
-    nativewin.addEventListener (
-        "destroy", 
-        { 
-	    handleEvent: function (ev) {
-		Debug ("destroy.handleEvent");
-		frame.destroy ();
-	    }
-	},
-	true);
-    nativewin.addEventListener (
-        "configure", 
-        { 
-	    handleEvent: function (ev) {
-		Debug ("configure.handleEvent");
-		frame._moveResize (ev.x, ev.y, ev.width, ev.height);
+    frame._nativeDestroyListener =
+	addCachedEventListener (
+	    nativewin,
+	    "destroy",
+	    frame._nativeDestroyListener,
+		{
+		    handleEvent: function (ev) {
+			Debug ("destroy.handleEvent");
+			frame.destroy ();
+		    }
+		},
+	    true);
 
-		svc.SendConfigureNotify (nativewin.nativeWindowId, ev.x, ev.y, ev.width, ev.height, ev.borderWidth);
+    frame._nativeConfigureListener =
+	addCachedEventListener (
+	    nativewin,
+	    "configure",
+	    frame._nativeConfigureListener,
+		{
+		    handleEvent: function (ev) {
+			Debug ("configure.handleEvent");
+			frame._moveResize (ev.x, ev.y, ev.width, ev.height);
 
-		// XXX handle stacking requests here too
-	    }
-	},
-	true);
-    nativewin.addEventListener (
-	"map", 
-	{ 
-	    handleEvent: function (ev) {
-		Debug ("map.handleEvent");
-		frame.show ();
-	    }
-	},
-	true);
-    nativewin.addEventListener (
-	"unmap", 
-        { 
-	    handleEvent: function (ev) {
-		Debug ("unmap.handleEvent");
-		frame.hide ();
-	    }
-	},
-	true);
-    nativewin.addEventListener (
-	"propertychange", 
-	{ 
-	    handleEvent: function (ev) {
-		Debug ("propertychange.handleEvent: ev.atom=" + ev.atom);
+			svc.SendConfigureNotify (nativewin.nativeWindowId, ev.x, ev.y, ev.width, ev.height, ev.borderWidth);
 
-		if (ev.atom == Atoms.WM_NAME () ||
-		    ev.atom == Atoms._NET_WM_NAME ()) {
-		    name = ev.value.getProperty(".text");
+			// XXX handle stacking requests here too
+		    }
+		},
+	    true);
 
-		    Debug ("propertychange: setting title =" + name);
-		    frame.setTitle (name);
-		    return;
-		}
-	    }
-	},
-	true);    
+    frame._nativeMapListener =
+	addCachedEventListener (
+	    nativewin,
+	    "map",
+	    frame._nativeMapListener,
+		{
+		    handleEvent: function (ev) {
+			Debug ("map.handleEvent");
+			frame.show ();
+		    }
+		},
+	    true);
+
+    frame._nativeUnmapListener =
+	addCachedEventListener (
+	    nativewin,
+	    "unmap",
+	    frame._nativeUnmapListener,
+		{
+		    handleEvent: function (ev) {
+			Debug ("unmap.handleEvent");
+			frame.hide ();
+		    }
+		},
+	    true);
+
+    frame._nativePropertyChangeListener =
+	addCachedEventListener (
+	    nativewin,
+	    "propertychange",
+	    frame._nativePropertyChangeListener,
+		{
+		    handleEvent: function (ev) {
+			Debug ("propertychange.handleEvent: ev.atom=" + ev.atom);
+
+
+			if (ev.atom == Atoms.WM_NAME () ||
+			    ev.atom == Atoms._NET_WM_NAME ()) {
+			    name = ev.value.getProperty(".text");
+
+			    Debug ("propertychange: setting title =" + name);
+			    frame.setTitle (name);
+			    return;
+			}
+
+
+
+			if (ev.atom == Atoms._NET_WM_WINDOW_TYPE()) {
+			    //Debug ("window " + content.xid + " type set");
+			    // XXX _NET_WM_WINDOW_TYPE is actually an array of atoms, not just 1.
+			    var type = ev.value.getPropertyAsUint32 (".atom");
+
+			    frame._net_wm_window_type = type;
+
+			    var new_frame = null;
+
+			    if (type == Atoms._NET_WM_WINDOW_TYPE_DOCK() ||
+				type == Atoms._NET_WM_WINDOW_TYPE_DESKTOP() ||
+				type == Atoms._NET_WM_WINDOW_TYPE_SPLASH()) {
+				if (frame.className == "windowFrame") {
+				    new_frame = CompzillaDockFrame (frame.getContent());
+				}
+			    }
+			    else {
+				if (frame.className == "dockWindowFrame") {
+				    new_frame = CompzillaFrame (frame.getContent());
+				}
+			    }
+
+			    if (new_frame != null)
+				windowStack.replaceWindow (frame, new_frame);
+
+			    return;
+			}
+		    }
+		},
+	    true);
 }
