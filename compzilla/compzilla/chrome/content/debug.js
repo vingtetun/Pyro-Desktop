@@ -52,3 +52,18 @@ function debugEval ()
 	Debug ("Eval: " + result);
     }
 }
+
+
+function debugListWindows ()
+{
+    for (var i = 0; i < layers.length; i ++) {
+	res = "Layer" + i + ": ";
+	for (var el = layers[i].firstChild; el != null; el = el.nextSibling) {
+	    if (el.getTitle) {
+		res += "[Title: " + el.getTitle() + "]";
+	    }
+	}
+	Debug (res);
+    }
+    return "";
+}
