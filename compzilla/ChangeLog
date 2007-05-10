@@ -1,5 +1,8 @@
 2007-05-10  Alex Graveley  <alex@beatniksoftware.com>
 
+	* compzilla/chrome/skin/compzilla.css: Hide some layers by
+	default, clean up a bit.
+
 	* compzilla/chrome/content/debug.js (debugListWindows): Print the
 	XID and frame rect.
 

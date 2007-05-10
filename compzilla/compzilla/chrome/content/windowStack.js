@@ -27,16 +27,6 @@
  *  toggleDesktop () - toggles all layers above the desktop-layer.
  */
 
-// HACK:
-// compzillaWindowManager.js installs two things on it's body tag (id = "desktop"):
-//
-// 1. the Debug function that allows us to spew to the debug window
-//    from here
-// 2. the Atoms object which allows us to share the interned js cache.
-//
-// These are accessed from here by "windowStack.parentNode.Debug" and
-// "windowStack.parentNode.Atoms".
-
 
 var windowStack = document.getElementById ("windowStack");
 

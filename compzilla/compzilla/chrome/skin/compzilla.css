@@ -32,13 +32,6 @@ html {
 	-moz-user-select: none;
 }
 
-#debugContent {
-	position: absolute;
-	font-family: Andale Mono, monospace;
-	font-size: 0.80em;
-	visibility: hidden;
-}
-
 #debugLog {
 	background: #ffffff;
 	overflow: scroll;
@@ -94,31 +87,40 @@ html {
 
 #dockLayer {
 	z-index: 3;
+	display: none;
 }
 
 #fullscreenLayer {
 	z-index: 4;
-}
-
-
-#debugLayer {
-	z-index: 65535;
+	display: none;
 }
 
 #overlayLayer {
 	overflow: hidden;
-	visibility: hidden;
+	display: none;
 	background-color: #000000;
 	opacity: 0.85;
 	z-index: 65534;
 }
 
-#exposeLayer {
+#pickerLayer {
 	overflow: hidden;
-	visibility: hidden;
+	display: none;
 	background-color: #000000;
 	opacity: 0.85;
 	z-index: 65533;
+}
+
+#exposeLayer {
+	overflow: hidden;
+	display: none;
+	background-color: #000000;
+	opacity: 0.85;
+	z-index: 65532;
+}
+
+#debugLayer {
+	z-index: 65535;
 }
 
 #windowFrame {
@@ -157,6 +159,9 @@ html {
 }
 
 #debugContent {
+	font-family: Andale Mono, monospace;
+	font-size: 0.80em;
+	visibility: hidden;
 	width: 100%;
 	height: 100%;
 }

@@ -1,5 +1,6 @@
 /* -*- mode: javascript; c-basic-offset: 4; indent-tabs-mode: t; -*- */
 
+
 function getDescendentById (root, id)
 {
     if (root.id == id)
@@ -7,16 +8,18 @@ function getDescendentById (root, id)
 
     for (var el = root.firstChild; el != null; el = el.nextSibling) {
 	var rv = getDescendentById (el, id);
-	if (rv != null)
+	if (rv != null) {
 	    return rv;
+	}
     }
 
     return null;
 }
 
-function _CompzillaFrameCommon (content, override)
+
+function _compzillaFrameCommon (content, templateId)
 {
-    var frame = document.getElementById (override ? "dockFrame" : "windowFrame").cloneNode (true);
+    var frame = document.getElementById (templateId).cloneNode (true);
 
     frame._content = content;
     frame.getContent = function () { return frame._content; };
@@ -71,23 +74,26 @@ function _CompzillaFrameCommon (content, override)
     };
 
     if (content.getNativeWindow) {
-	connectNativeWindowListeners (frame, content);
+	_connectNativeWindowListeners (frame, content);
     }
 
     return frame;
 }
 
+
 function CompzillaFrame (content)
 {
-    return _CompzillaFrameCommon (content, false);
+    return _compzillaFrameCommon (content, "windowFrame");
 }
+
 
 function CompzillaDockFrame (content)
 {
-    return _CompzillaFrameCommon (content, true);
+    return _compzillaFrameCommon (content, "dockFrame");
 }
 
-function connectNativeWindowListeners (frame, content) 
+
+function _connectNativeWindowListeners (frame, content) 
 {
     var nativewin = content.getNativeWindow ();
 
