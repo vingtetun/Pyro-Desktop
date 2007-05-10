@@ -93,10 +93,10 @@ windowStack.moveToBottom = function(w) {
     if (w.layer == undefined)
 	return;
 
-    if (w.layer.firstChild != w)
+    if (w.layer.firstChild != w) {
 	w.layer.insertBefore (w, w.layer.firstChild);
-
-    restackLayer (l);
+	restackLayer (l);
+    }
 }
 
 
@@ -104,8 +104,10 @@ windowStack.moveToTop = function(w) {
     if (w.layer == undefined)
 	return;
 
-    w.layer.insertBefore (w, null);
-    restackLayer (w.layer);
+    if (w.layer.lastChild != w) {
+        w.layer.insertBefore (w, null);
+        restackLayer (w.layer);
+    }
 }
 
 

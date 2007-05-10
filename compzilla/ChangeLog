@@ -1,5 +1,10 @@
 2007-05-10  Alex Graveley  <alex@beatniksoftware.com>
 
+	* compzilla/chrome/content/windowStack.js: Fix click to raise for
+	FF2 by making moveToTop a noop if the window is already on top.
+
+2007-05-10  Alex Graveley  <alex@beatniksoftware.com>
+
 	* compzilla/chrome/skin/compzilla.css: Hide some layers by
 	default, clean up a bit.
 
