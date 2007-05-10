@@ -77,6 +77,16 @@ function _compzillaFrameCommon (content, templateId)
 	_connectNativeWindowListeners (frame, content);
     }
 
+    if (frame._title) {
+	_connectFrameDragListeners (frame, contentBox);
+    }
+
+    // click to raise
+    frame.addEventListener ("mousedown", {
+                            handleEvent: function (event) {
+				windowStack.moveToTop (frame);
+			    } },
+			    true);
     return frame;
 }
 
@@ -92,6 +102,53 @@ function CompzillaDockFrame (content)
     return _compzillaFrameCommon (content, "dockFrame");
 }
 
+function _connectFrameDragListeners (frame, contentBox)
+{
+    var frameDragPosition = new Object ();
+    var frameDragMouseMoveListener = {
+        handleEvent: function (ev) {
+	    if (frame.originalOpacity == undefined) {
+		frame.originalOpacity = frame.style.opacity
+		    frame.style.opacity = "0.8";
+	    }
+
+	    // figure out the deltas
+	    var dx = ev.clientX - frameDragPosition.x;
+	    var dy = ev.clientY - frameDragPosition.y;
+
+	    frameDragPosition.x = ev.clientX;
+	    frameDragPosition.y = ev.clientY;
+
+	    // XXX this should be frame.offsetWidth/frame.offsetHeight.  once that's fixed, remove the contentBox parameter
+	    frame.moveResize (contentBox.offsetWidth, contentBox.offsetHeight, frame.offsetLeft + dx, frame.offsetTop + dy);
+
+	    ev.stopPropagation ();
+	}
+    }
+
+    var frameDragMouseUpListener = {
+	handleEvent: function (ev) {
+	    if (frame.originalOpacity != undefined) {
+		frame.style.opacity = frame.originalOpacity;
+		frame.originalOpacity = undefined;
+	    }
+
+	    // clear the event handlers we add in the title mousedown handler below
+	    document.removeEventListener ("mousemove", frameDragMouseMoveListener, true);
+	    document.removeEventListener ("mouseup", frameDragMouseUpListener, true);
+
+	    ev.stopPropagation ();
+	}
+    }
+
+    frame._title.onmousedown = function (ev) {
+	frameDragPosition.x = ev.clientX;
+	frameDragPosition.y = ev.clientY;
+	document.addEventListener ("mousemove", frameDragMouseMoveListener, true);
+	document.addEventListener ("mouseup", frameDragMouseUpListener, true);
+	ev.stopPropagation ();
+    }
+}
 
 function _connectNativeWindowListeners (frame, content) 
 {
