@@ -1,5 +1,24 @@
 2007-05-10  Chris Toshok  <toshok@hungry.com>
 
+	* compzilla/src/compzillaWindowEvents.cpp (GetBorderWidth): return
+	the border width, not the width.
+
+	* compzilla/chrome/skin/compzilla.css: visibility -> display here
+	too.
+
+	* compzilla/chrome/content/debug.js: oops, toggleDebugWindow ->
+	debugToggleWindow.
+
+	* compzilla/chrome/content/frame.js: switch to using display
+	instead of visibility to show/hide windows.  saves us having to
+	set visibility on both the content and frame.  also, clean up the
+	frame recreation in the WINDOW_TYPE code.
+
+	* compzilla/chrome/content/windowStack.js: make replaceWindow a
+	no-op if w1 == w2.
+
+2007-05-10  Chris Toshok  <toshok@hungry.com>
+
 	* compzilla/chrome/content/frame.js: add a new function,
 	addCachedEventListener (this should really be a method added to
 	nativewin) which does the idempotent "if registered, unregister

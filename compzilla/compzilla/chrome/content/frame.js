@@ -91,15 +91,13 @@ function _compzillaFrameCommon (content, templateId)
     frame.show = function () {
 	Debug ("frame.show");
 
-	frame.style.visibility = "visible";
-	content.style.visibility = "visible";
+	frame.style.display = "block";
     };
 
     frame.hide = function () {
 	Debug ("frame.hide");
 
-	frame.style.visibility = "hidden";
-	content.style.visibility = "hidden";
+	frame.style.display = "none";
     };
 
     if (content.getNativeWindow) {
@@ -141,10 +139,10 @@ function _connectFrameDragListeners (frame)
     var frameDragPosition = new Object ();
     var frameDragMouseMoveListener = {
         handleEvent: function (ev) {
-	    if (frame.originalOpacity == undefined) {
-		frame.originalOpacity = frame.style.opacity;
-		frame.style.opacity = "0.8";
-	    }
+ 	    if (frame.originalOpacity == undefined) {
+ 		frame.originalOpacity = frame.style.opacity;
+ 		frame.style.opacity = "0.8";
+ 	    }
 
 	    // figure out the deltas
 	    var dx = ev.clientX - frameDragPosition.x;
@@ -164,10 +162,10 @@ function _connectFrameDragListeners (frame)
 
     var frameDragMouseUpListener = {
 	handleEvent: function (ev) {
-	    if (frame.originalOpacity != undefined) {
-		frame.style.opacity = frame.originalOpacity;
-		frame.originalOpacity = undefined;
-	    }
+ 	    if (frame.originalOpacity != undefined) {
+ 		frame.style.opacity = frame.originalOpacity;
+ 		frame.originalOpacity = undefined;
+ 	    }
 
 	    // clear the event handlers we add in the title mousedown handler below
 	    document.removeEventListener ("mousemove", frameDragMouseMoveListener, true);
@@ -269,13 +267,11 @@ function _connectNativeWindowListeners (frame, content)
 
 
 			if (ev.atom == Atoms._NET_WM_WINDOW_TYPE()) {
-			    //Debug ("window " + content.xid + " type set");
+			    Debug ("window " + frame.id + " type set");
 			    // XXX _NET_WM_WINDOW_TYPE is actually an array of atoms, not just 1.
 			    var type = ev.value.getPropertyAsUint32 (".atom");
 
-			    frame._net_wm_window_type = type;
-
-			    var new_frame = null;
+			    var new_frame = frame;
 
 			    if (type == Atoms._NET_WM_WINDOW_TYPE_DOCK() ||
 				type == Atoms._NET_WM_WINDOW_TYPE_DESKTOP() ||
@@ -290,8 +286,9 @@ function _connectNativeWindowListeners (frame, content)
 				}
 			    }
 
-			    if (new_frame != null)
-				windowStack.replaceWindow (frame, new_frame);
+			    new_frame._net_wm_window_type = type;
+
+			    windowStack.replaceWindow (frame, new_frame);
 
 			    return;
 			}

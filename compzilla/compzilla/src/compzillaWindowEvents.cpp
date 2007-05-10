@@ -130,7 +130,7 @@ compzillaWindowEvent::GetHeight(PRInt32 *aHeight)
 NS_IMETHODIMP
 compzillaWindowEvent::GetBorderWidth(PRInt32 *aBorderWidth)
 {
-    *aBorderWidth = mRect.width;
+    *aBorderWidth = mBorderWidth;
     return NS_OK;
 }
 

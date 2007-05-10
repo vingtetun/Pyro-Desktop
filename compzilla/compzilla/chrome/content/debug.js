@@ -82,7 +82,7 @@ function debugListWindows ()
 document.addEventListener("keypress", {
                               handleEvent: function (event) {
 				  if (event.keyCode == event.DOM_VK_F10 && event.ctrlKey) {
-				      toggleDebugWindow ();
+				      debugToggleWindow ();
 				  }
 			      } },
 			      true);

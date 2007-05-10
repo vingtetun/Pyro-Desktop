@@ -126,7 +126,7 @@ html {
 .windowFrame {
 	background: #000000;
 	position: absolute;
-	visibility: hidden;
+	display: none;
 }
 
 #windowTitleBox {
@@ -148,12 +148,11 @@ html {
 .dockFrame {
 	background: #000000;
 	position: absolute;
-	visibility: hidden;
+	display: none;
 	opacity: 0.8;
 }
 
 #windowContent {
-	visibility: hidden;
 	background: #ffffff;
 	tab-index: 1;
 	width: 100%;
@@ -163,7 +162,6 @@ html {
 #debugContent {
 	font-family: Andale Mono, monospace;
 	font-size: 0.75em;
-	visibility: hidden;
 	width: 100%;
 	height: 100%;
 }

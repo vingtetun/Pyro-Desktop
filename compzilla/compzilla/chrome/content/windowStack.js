@@ -41,6 +41,9 @@ windowStack.stackWindow = function (w) {
 
 
 windowStack.replaceWindow = function (w1, w2) {
+    if (w1 == w2)
+	return;
+
     if (w1.layer == undefined) {
 	Debug ("w1 not in a layer.  just adding w2");
 	windowStack.stackWindow (w2);
