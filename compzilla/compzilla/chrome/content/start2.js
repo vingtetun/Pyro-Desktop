@@ -20,7 +20,11 @@ function compzillaLoad()
 		//       toplevel window, to avoid an infinite loop.
 
 		content = CompzillaWindowContent (ev.window);
-		frame = CompzillaFrame (content);
+
+		if (ev.overrideRedirect)
+		    frame = CompzillaDockFrame (content);
+		else
+		    frame = CompzillaFrame (content);
 
 		// ev is a compzillaIWindowConfigureEvent
 		frame.moveResize (ev.width, ev.height, ev.x, ev.y);

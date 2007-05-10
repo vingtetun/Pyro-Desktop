@@ -27,7 +27,10 @@ SKIN_SRCDIR=$(EXTENSION_SRCDIR)/chrome/skin
 skin_DATA =					\
 	$(SKIN_SRCDIR)/compzilla.css		\
 	$(SKIN_SRCDIR)/desktop.html		\
-	$(SKIN_SRCDIR)/desktop-background.jpg
+	$(SKIN_SRCDIR)/icon.png			\
+	$(SKIN_SRCDIR)/minimize.png		\
+	$(SKIN_SRCDIR)/maximize.png		\
+	$(SKIN_SRCDIR)/close.png
 
 endir=$(extensiondir)/chrome/locale/en-US
 EN_SRCDIR=$(EXTENSION_SRCDIR)/chrome/locale/en-US

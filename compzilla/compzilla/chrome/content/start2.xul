@@ -80,10 +80,8 @@
             </xul:menupopup>
 
             <div id="windowTitleBox">
-	        <img src="http://www.beatniksoftware.com/img/alexgotchi.png" 
-                     width="24" height="24"/>
-
-                <xul:image id="compzillaWindowIcon" 
+                <xul:image id="compzillaWindowIcon"
+		           src="chrome://compzilla/skin/icon.png"
                            tooltiptext="&windowMenu.label;" 
                            popup="compzillaWindowMenu" />
 
@@ -111,7 +109,9 @@
         <canvas id="windowContent" mousethrough="never" />
 
 	<div id="dockFrame" mousethrough="never">
-	    <!-- The content node will be inserted here. -->
+            <div id="windowContentBox">
+                <!-- The content node will be inserted here. -->
+            </div>
 	</div>
 
         <!-- Contents of the debug window. Manually reparented into a window

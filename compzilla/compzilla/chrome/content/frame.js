@@ -1,14 +1,27 @@
 /* -*- mode: javascript; c-basic-offset: 4; indent-tabs-mode: t; -*- */
 
-
-function CompzillaFrame (content) 
+function getDescendentById (root, id)
 {
-    var frame = document.getElementById ("windowFrame").cloneNode (true);
+    if (root.id == id)
+	return root;
+
+    for (var el = root.firstChild; el != null; el = el.nextSibling) {
+	var rv = getDescendentById (el, id);
+	if (rv != null)
+	    return rv;
+    }
+
+    return null;
+}
+
+function _CompzillaFrameCommon (content, override)
+{
+    var frame = document.getElementById (override ? "dockFrame" : "windowFrame").cloneNode (true);
 
     frame._content = content;
-    frame.getContent = function () { return frame._content; }
+    frame.getContent = function () { return frame._content; };
 
-    contentBox = frame.getElementsByTagNameNS ("http://www.w3.org/1999/xhtml", "div")[1];
+    contentBox = getDescendentById (frame, "windowContentBox");
     contentBox.appendChild (content);
 
     frame.destroy = function () {
@@ -18,12 +31,11 @@ function CompzillaFrame (content)
 	    content.destroy ();
 	}
 	windowStack.removeWindow (frame);
-    }
+    };
 
-    frame._title = frame.getElementsByTagNameNS (
-        "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul", "label")[0];
-    frame.setTitle = function (title) { frame._title.value = title; }
-    frame.getTitle = function () { return frame._title.value; }
+    frame._title = getDescendentById (frame, "windowTitle");
+    frame.setTitle = function (title) { if (frame._title) frame._title.value = title; }
+    frame.getTitle = function () { return frame._title ? frame._title.value : null; }
 
     frame.moveResize = function (width, height, x, y) {
 	Debug ("frame.moveResize: w=" + width + ", h=" + height);
@@ -65,6 +77,15 @@ function CompzillaFrame (content)
     return frame;
 }
 
+function CompzillaFrame (content)
+{
+    return _CompzillaFrameCommon (content, false);
+}
+
+function CompzillaDockFrame (content)
+{
+    return _CompzillaFrameCommon (content, true);
+}
 
 function connectNativeWindowListeners (frame, content) 
 {
