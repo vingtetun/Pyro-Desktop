@@ -1,5 +1,15 @@
 2007-05-10  Chris Toshok  <toshok@hungry.com>
 
+	* compzilla/chrome/skin/compzilla.css: add some style rules for
+	focused windows.  change the titlebar background in the focused
+	window.
+
+	* compzilla/chrome/content/frame.js (svc): just fucking around.
+	keep track of the "focused" window and change its CSS class to
+	className + "Focused".
+
+2007-05-10  Chris Toshok  <toshok@hungry.com>
+
 	* compzilla/src/compzillaWindowEvents.cpp (GetBorderWidth): return
 	the border width, not the width.
 

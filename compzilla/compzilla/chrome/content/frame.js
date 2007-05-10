@@ -3,6 +3,8 @@
 cls = Components.classes['@pyrodesktop.org/compzillaService'];
 svc = cls.getService(Components.interfaces.compzillaIControl);
 
+var _focusedFrame;
+
 function getDescendentById (root, id)
 {
     if (root.id == id)
@@ -108,12 +110,26 @@ function _compzillaFrameCommon (content, templateId)
 	_connectFrameDragListeners (frame);
     }
 
-    // click to raise
+    // click to raise/focus
     frame.addEventListener (
         "mousedown", 
         {
             handleEvent: function (event) {
 		windowStack.moveToTop (frame);
+
+		// XXX this should live in some sort of focus handler, not here.
+		if (frame.className.match ("Focused") == null) {
+
+		    if (_focusedFrame != null) {
+			_focusedFrame.className =
+			    _focusedFrame.className.slice (
+					   0, 
+					   _focusedFrame.className.lastIndexOf ("Focused"));
+		    }
+			
+		    frame.className += "Focused";
+		    _focusedFrame = frame;
+		}
             }
         },
 	true);
@@ -158,7 +174,7 @@ function _connectFrameDragListeners (frame)
 
 	    ev.stopPropagation ();
 	}
-    }
+    };
 
     var frameDragMouseUpListener = {
 	handleEvent: function (ev) {
@@ -173,7 +189,7 @@ function _connectFrameDragListeners (frame)
 
 	    ev.stopPropagation ();
 	}
-    }
+    };
 
     frame._title.onmousedown = function (ev) {
 	frameDragPosition.x = ev.clientX;
@@ -181,7 +197,7 @@ function _connectFrameDragListeners (frame)
 	document.addEventListener ("mousemove", frameDragMouseMoveListener, true);
 	document.addEventListener ("mouseup", frameDragMouseUpListener, true);
 	ev.stopPropagation ();
-    }
+    };
 }
 
 

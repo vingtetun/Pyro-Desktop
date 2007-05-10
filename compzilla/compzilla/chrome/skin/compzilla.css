@@ -123,7 +123,7 @@ html {
 	z-index: 65535;
 }
 
-.windowFrame {
+.windowFrame, .windowFrameFocused {
 	background: #000000;
 	position: absolute;
 	display: none;
@@ -131,7 +131,13 @@ html {
 
 #windowTitleBox {
 	position: static;
-	background: grey;
+	background: #999999;
+	color: #000000;
+}
+
+.windowFrameFocused #windowTitleBox {
+	background: #444499;
+	color: #ffffff;
 }
 
 #windowContentBox {
@@ -145,7 +151,7 @@ html {
 	-moz-user-select: none;
 }
 
-.dockFrame {
+.dockFrame, .dockFrameFocused {
 	background: #000000;
 	position: absolute;
 	display: none;
