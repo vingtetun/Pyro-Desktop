@@ -119,8 +119,11 @@
 
         <div id="debugContent">
             <div id="debugLog" />
-            <input type="text" value="Debug..." /><button>Eval</button>
-            <button id="debugClear" onclick="clearDebugLog();">Clear</button>
+	    <form>
+            <input id="debugEntry" type="text" value="Debug..." onsubmit="debugEval();" />
+	    <button onclick="debugEval();">Eval</button>
+            <button onclick="debugClearLog();">Clear</button>
+            </form>
         </div>
 
     </html:body>

@@ -34,7 +34,21 @@ function toggleDebugWindow ()
 }
 
 
-function clearDebugLog ()
+function debugClearLog ()
 {
     debugLog.innerHTML = "";
+}
+
+
+function debugEval ()
+{
+    text = document.getElementById ("debugEntry").value;
+    if (text) {
+	try {
+	    result = eval(text);
+	} catch (e) {
+	    result = e;
+	}
+	Debug ("Eval: " + result);
+    }
 }
