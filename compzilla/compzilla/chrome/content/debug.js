@@ -4,10 +4,7 @@
 Debug = function (str)
 {
     if (debugLog) {
-	debugLog.insertBefore (document.createElementNS ("http://www.w3.org/1999/xhtml", "br"),
-			       debugLog.firstChild);
-	debugLog.insertBefore (document.createTextNode (str),
-			       debugLog.firstChild);
+	debugLog.value = str + "\n" + debugLog.value;
     }
 }
 document.Debug = Debug;
@@ -28,6 +25,7 @@ debugFrame.show ();
 var windowStack = document.getElementById ("windowStack");
 windowStack.stackWindow (debugFrame);
 
+
 // should we hide the window, or the entire layer?
 function debugToggleWindow ()
 {
@@ -38,7 +36,7 @@ function debugToggleWindow ()
 
 function debugClearLog ()
 {
-    debugLog.innerHTML = "";
+    debugLog.value = "";
 }
 
 

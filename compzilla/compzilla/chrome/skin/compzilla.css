@@ -1,54 +1,14 @@
-html {
+body {
 	overflow: hidden;
-}
-
-#desktop {
 	margin: 0px;
-}
-
-.window {
 	position: absolute;
-	background: #777777;
-	left: 0px;
-	top: 0px;
-	width: 0px;
-	height: 0px;
-	overflow: hidden;
-}
-
-.titlebar {
-	position: absolute;
-	background: #cccccc;
-	cursor: default;
-	overflow: hidden;
-	left: 0px;
-	top: 0px;
-	width: 0px;
-	height: 0px;
-}
-
-.windowtitle {
-	font-weight: bold;
-	-moz-user-select: none;
+	width: 100%;
+	height: 100%;
 }
 
 #debugLog {
-	background: #ffffff;
-	overflow: scroll;
-	width: 100%;
+	width: 98%;
 	height: 90%;
-}
-
-.content {
-	position: absolute;
-	background: #ffffff;
-	-moz-user-select: none;
-}
-
-.override-content {
-	position: absolute;
-	background: #ffffff;
-	opacity: 0.8;
 }
 
 #windowStack {
@@ -130,7 +90,6 @@ html {
 }
 
 #windowTitleBox {
-	position: static;
 	background: #999999;
 	color: #000000;
 }
@@ -141,7 +100,6 @@ html {
 }
 
 #windowContentBox {
-	position: static;
 }
 
 .windowTitle {

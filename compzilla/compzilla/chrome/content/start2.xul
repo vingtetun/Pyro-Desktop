@@ -12,13 +12,14 @@
 	width="640" height="480">
 
     <html:body id="desktop" xmlns="http://www.w3.org/1999/xhtml" flex="1">
+
         <div id="windowStack" mousethrough="never">
 
             <!-- these are the EWMH spec'ed logical window layers -->
 
             <div id="desktopLayer"    class="windowLayer" mousethrough="always"></div>
 	    <div id="belowLayer"      class="windowLayer" mousethrough="always"></div>
-            <div id="normalLayer"     class="windowLayer" mousethrough="always">Normal Layer</div>
+            <div id="normalLayer"     class="windowLayer" mousethrough="always"></div>
             <div id="dockLayer"       class="windowLayer" mousethrough="always"></div>
             <div id="fullscreenLayer" class="windowLayer" mousethrough="always"></div>
 
@@ -39,7 +40,7 @@
 	    <!-- another special purpose layer, always on top of everything.
 	         used for our debug log (and firebug?) -->
 
-	    <div id="debugLayer"   class="windowLayer" mousethrough="always">Debug Layer</div>
+	    <div id="debugLayer"   class="windowLayer" mousethrough="always"></div>
 
 	</div>
 
@@ -118,7 +119,7 @@
              frame we create for it in debug.js	-->
 
         <div id="debugContent">
-            <div id="debugLog" />
+	    <textarea id="debugLog" />
 	    <form>
             <input id="debugEntry" type="text" value="Debug..." onsubmit="debugEval();" />
 	    <button onclick="debugEval();">Eval</button>

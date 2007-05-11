@@ -1,3 +1,11 @@
+2007-05-11  Alex Graveley  <alex@beatniksoftware.com>
+
+	* compzilla/chrome/skin/compzilla.css: Clean out some old cruft.
+	Fix strange desktop positioning in FF2 by making the body tag
+	position:absolute.  Remove unnessasary position:static.
+
+	* compzilla/chrome/content/start2.xul: Make the debugLog a textarea.
+
 2007-05-10  Chris Toshok  <toshok@hungry.com>
 
 	* compzilla/chrome/skin/compzilla.css: add some style rules for
