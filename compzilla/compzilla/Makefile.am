@@ -10,8 +10,6 @@ extension_DATA =				\
 contentdir=$(extensiondir)/chrome/content
 CONTENT_SRCDIR=$(EXTENSION_SRCDIR)/chrome/content
 content_DATA =					\
-	$(CONTENT_SRCDIR)/overlay.js		\
-	$(CONTENT_SRCDIR)/overlay.xul		\
 	$(CONTENT_SRCDIR)/start.js		\
 	$(CONTENT_SRCDIR)/start.xul		\
 	$(CONTENT_SRCDIR)/atoms.js		\
@@ -33,9 +31,7 @@ skin_DATA =					\
 
 endir=$(extensiondir)/chrome/locale/en-US
 EN_SRCDIR=$(EXTENSION_SRCDIR)/chrome/locale/en-US
-en_DATA = 				\
-	$(EN_SRCDIR)/overlay.dtd	\
-	$(EN_SRCDIR)/start.dtd
+en_DATA = $(EN_SRCDIR)/start.dtd
 
 prefsdir = $(extensiondir)/defaults/preferences
 PREFS_SRCDIR = $(EXTENSION_SRCDIR)/defaults/preferences

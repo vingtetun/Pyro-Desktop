@@ -7,9 +7,3 @@ locale compzilla en-US chrome/locale/en-US/
 # Register a theme for chrome://compzilla/skin/ ... there could be multiple of these
 skin compzilla classic/1.0 chrome/skin/
 
-# Register our main overlay
-#overlay chrome://browser/content/browser.xul chrome://compzilla/content/overlay.xul
-
-# Apply our icon style to the toolbar customization window; the reference
-# in the overlay file handles pulling it in for the browser window
-###style chrome://global/content/customizeToolbar.xul chrome://compzilla/skin/toolbar.css

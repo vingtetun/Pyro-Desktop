@@ -1,8 +1,0 @@
-<?xml version="1.0"?>
-<?xml-stylesheet href="chrome://compzilla/skin/compzilla.css" type="text/css"?>
-<!DOCTYPE overlay SYSTEM "chrome://compzilla/locale/overlay.dtd">
-
-<overlay id="compzilla-overlay"
-         xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
-    <script src="overlay.js"/>
-</overlay>
