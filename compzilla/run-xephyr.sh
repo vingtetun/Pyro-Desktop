@@ -1,4 +1,6 @@
 #!/bin/bash
 
-Xephyr -ac -noreset +extension XEVIE :1
+### Uncomment to turn on XEVIE event capturing extension
+#Xephyr -ac -noreset +extension XEVIE :1
 
+Xephyr -ac -noreset :1
