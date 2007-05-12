@@ -446,7 +446,7 @@ function addWindow (w) {
 }
 
 function scaleStart () {
-    for (var el = layers[2].firstChild; el != null; el = el.nextSibling) {
+    for (var el = windowStack.firstChild; el != null; el = el.nextSibling) {
 	if (el.className == "windowFrame")
 	    addWindow (el);
     }
@@ -461,13 +461,17 @@ ss.reverseWindows = new Array ();
 ss.speed = 1.5;
 ss.timestep = 1.2;
 
+Debug ("scale.js loading!");
 
 document.addEventListener("keypress", {
                               handleEvent: function (event) {
+				  Debug ("scale.js!");
 				  if (event.keyCode == event.DOM_VK_F11 && event.ctrlKey) {
 				      if (ss.state == "none")
+					  Debug ("scaleStart!");
 					  scaleStart ();
 				      else
+					  Debug ("scaleTerminate!");
 					  scaleTerminate ();
 				  }
 			      } },

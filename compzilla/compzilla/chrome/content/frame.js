@@ -228,7 +228,10 @@ function _connectNativeWindowListeners (frame, content)
 			Debug ("configure.handleEvent");
 			frame._moveResize (ev.x, ev.y, ev.width, ev.height);
 
-			svc.SendConfigureNotify (nativewin.nativeWindowId, ev.x, ev.y, ev.width, ev.height, ev.borderWidth);
+			svc.SendConfigureNotify (nativewin.nativeWindowId, 
+						 ev.x, ev.y, 
+						 ev.width, ev.height, 
+						 ev.borderWidth);
 
 			// XXX handle stacking requests here too
 		    }

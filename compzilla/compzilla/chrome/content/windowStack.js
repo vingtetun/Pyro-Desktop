@@ -24,7 +24,7 @@
  *  moveToTop (w) - moves @w to the top of its layer.  If @w is not in
  *                  the window stack, no action is taken.
  *
- *  toggleDesktop () - toggles all layers above the desktop-layer.
+ *  toggleDesktop () - toggles all windows above the desktop-layer.
  */
 
 
@@ -32,11 +32,14 @@ var windowStack = document.getElementById ("windowStack");
 
 
 windowStack.stackWindow = function (w) {
-    var l = determineLayer (w);
-    Debug ("adding window '" + w.id + "' to layer '" + l.id + "'");
-    l.appendChild (w);
+    var l = _determineLayer (w);
+    Debug ("adding window '" + w.id + "' to layer '" + l[0] + "'");
+
     w.layer = l;
-    restackLayer (l);
+    w.style.zIndex = ++l[3]; // Stack on top of the layer by default
+    windowStack.appendChild (w);
+
+    _maybeRestackLayer (l);
 }
 
 
@@ -49,9 +52,9 @@ windowStack.replaceWindow = function (w1, w2) {
 	windowStack.stackWindow (w2);
     }
     else {
-	w2.zIndex= w1.nzIndex;
+	w2.style.zIndex = w1.style.zIndex;
 	try {
-	    w1.layer.replaceChild (w2, w1);
+	    windowStack.replaceChild (w2, w1);
 	} catch (ex) { 
 	    /* 
 	     * swallow any exception raised here.  it should only raise one if
@@ -74,8 +77,14 @@ windowStack.moveAbove = function(w, above) {
     if (above.layer != w.layer)
 	return; // XXX
 
-    above.layer.insertBefore (w, above.nextSibling);
-    restackLayer (above.layer);
+    w.style.zIndex = above.style.zIndex;
+
+    // This will remove and re-add the element, causing
+    // interactive drags to break (with FF2).  Use with caution.
+    // (To avoid this we could assign with only even zIndexes,
+    // then assign the above window's to above.style.zIndex, then
+    // call restoreWindow.)
+    windowStack.insertAfter (w, above);
 }
 
 
@@ -84,8 +93,8 @@ windowStack.removeWindow = function(w) {
 	return;
 
     try {
-	w.layer.removeChild (w);
-    } catch (ex) { 
+	windowStack.removeChild (w);
+    } catch (ex) {
 	/* swallow any exception raised here */ 
     }
     w.layer = undefined;
@@ -96,9 +105,15 @@ windowStack.moveToBottom = function(w) {
     if (w.layer == undefined)
 	return;
 
-    if (w.layer.firstChild != w) {
-	w.layer.insertBefore (w, w.layer.firstChild);
-	restackLayer (l);
+    if (w.layer[1] != w.style.zIndex && 
+	w.layer[3] != w.style.zIndex) {
+	// Not the lowest window, or the only window.  
+	// Assign an invalid zIndex, which will be reassigned
+	// in restackLayer.
+	w.style.zIndex = w.layer[1] - 1;
+
+	// Restack now to assign valid zIndex to w
+	_restackLayer (w.layer);
     }
 }
 
@@ -107,77 +122,116 @@ windowStack.moveToTop = function(w) {
     if (w.layer == undefined)
 	return;
 
-    if (w.layer.lastChild != w) {
-        w.layer.insertBefore (w, null);
-        restackLayer (w.layer);
+    Debug ("windowStack.moveToTop: layer=" + w.layer + " zIndex=" + w.style.zIndex);
+
+    if (w.layer[3] != w.style.zIndex) {
+	// Not already the top window
+	w.style.zIndex = ++w.layer[3];
+
+	// Restack if we've run out of valid zIndexes
+	_maybeRestackLayer (w.layer);
     }
 }
 
 
 windowStack.toggleDesktop = function () {
-    Debug ("toggling the desktop display");
-    for (var i = 1; i < layers.length; i ++) {
-	if (i == 8)
-	    continue;
-	layers[i].style.display = showingDesktop ? "block" : "none";
-    }
-
     showingDesktop = !showingDesktop;
+
+    Debug ("toggling the desktop display");
+    for (var el = windowStack.firstChild; el != null; el = el.nextSibling) {
+	if (el.layer != layers[0]) {
+	    el.style.display = showingDesktop ? "none" : "block";
+	}
+    }
 }
 
 
-/// initialization
+// initialization
 
 var showingDesktop = false;
-var layers = new Array ();
 
-// XXX this is inflexible and needs rethinking.  maybe we should just look them up by name?
-for (var el = windowStack.firstChild; el != null; el = el.nextSibling) {
-    if (el.id == "desktopLayer")         layers[0] = el;
-    else if (el.id == "belowLayer")      layers[1] = el;
-    else if (el.id == "normalLayer")     layers[2] = el;
-    else if (el.id == "dockLayer")       layers[3] = el;
-    else if (el.id == "fullscreenLayer") layers[4] = el;
-    else if (el.id == "exposeLayer")     layers[5] = el;
-    else if (el.id == "pickerLayer")     layers[6] = el;
-    else if (el.id == "overlayLayer")    layers[7] = el;
-    else if (el.id == "debugLayer")      layers[8] = el;
-}
+/*
+ * layers is an array of arrays, each containing 
+ *   0: a name for the layer
+ *   1: the starting zIndex
+ *   2: the ending zIndex
+ *   3: the highest zIndex of a window in that range
+ */
+var layers = new Array ();
+layers[0] = ["desktopLayer",        0,  1000,     0];
+layers[1] = ["belowLayer",       5000,  6000,  5000];
+layers[2] = ["normalLayer",     10000, 11000, 10000];
+layers[3] = ["dockLayer",       20000, 21000, 20000];
+layers[4] = ["fullscreenLayer", 25000, 25001, 25000];
+layers[5] = ["debugLayer",      60000, 61000, 60000];
+
 
 // private methods
 
-// add a resize event handler on the parentNode so we can resize the
-// window stack in response to the document being layed out.
+/*
+ * Add a resize event handler on the parentNode so we can resize
+ * the window stack in response to the document being layed out.
+ */
 windowStack.parentNode.onresize = function (e) {
-    updateSize ();
-}
-
-
-function updateSize () {
-    /* make sure the window stack takes up 100% of the size available to it */
     windowStack.style.width = windowStack.parentNode.clientWidth;
     windowStack.style.height = windowStack.parentNode.clientHeight;
 }
 
 
-function restackLayer (l) {
-    var z = 0;
-
-    for (var el = l.firstChild; el != null; el = el.nextSibling)
-	el.zIndex = z++;
+function _sortByZIndex (w1, w2)
+{
+    return w1.style.zIndex - w2.style.zIndex;
 }
 
 
-function determineLayer (w) {
-    /* from EWMH:
-       from bottom to top:
-       * 0: windows of type _NET_WM_WINDOW_TYPE_DESKTOP
-       * 1: windows having state _NET_WM_STATE_BELOW
-       * 2: windows not belonging in any other layer
-       * 3: windows of type _NET_WM_TYPE_DOCK (unless they have state _NET_WM_TYPE_BELOW) and
-       *    windows having state _NET_WM_STATE_ABOVE
-       * 4: focused windows having state _NET_WM_STATE_FULLSCREEN
-       */
+function _restackLayer (l) {	
+    var lower = l[1]; // Lower zIndex bound
+    var upper = l[2]; // Upper zIndex bound
+
+    if (l[3] <= lower) {
+	return; // Zero or one window in layer
+    }
+
+    var windows = []
+    for (var el = windowStack.firstChild; el != null; el = el.nextSibling) {
+	if (el.layer == l) {
+	    windows.push(el);
+	}
+    }
+
+    // NOTE: It is important that this maintain document sorting
+    //       order for children with the same zIndex, so we don't
+    //       accidentally raise an older window above a newer one.
+    windows.sort (_sortByZIndex);
+
+    var z = lower - 1;
+
+    for (var idx = 0; idx < windows.length; idx++) {
+	windows[idx].style.zIndex = ++z;
+    }
+
+    l[3] = z;
+}
+
+
+function _maybeRestackLayer (l) {
+    if (l[3] >= l[2]) {
+	Debug ("Maximum zIndex for layer '" + l[0] + "' hit, restacking");
+	_restackLayer (l);
+    }
+}
+
+
+function _determineLayer (w) {
+    /* 
+     * from EWMH, bottom to top:
+     *   0: windows of type _NET_WM_WINDOW_TYPE_DESKTOP
+     *   1: windows having state _NET_WM_STATE_BELOW
+     *   2: windows not belonging in any other layer
+     *   3: windows of type _NET_WM_TYPE_DOCK (unless they have state _NET_WM_TYPE_BELOW) and
+     *      windows having state _NET_WM_STATE_ABOVE
+     *   4: focused windows having state _NET_WM_STATE_FULLSCREEN
+     */
 
     // XXX we really need to think how we're going to assign layers to
     // different types of windows.  what about html content that needs
@@ -186,7 +240,7 @@ function determineLayer (w) {
 
     if (w.getContent() != null && w.getContent().id == "debugContent") 
 	// special case for the debug window, which sits above everything
-	return layers[8];
+	return layers[5];
     if (w._net_wm_window_type == Atoms._NET_WM_WINDOW_TYPE_DESKTOP())
 	return layers[0];
     else if (w._net_wm_window_type == Atoms._NET_WM_WINDOW_TYPE_DOCK())

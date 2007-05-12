@@ -20,7 +20,8 @@ content_DATA =					\
 	$(CONTENT_SRCDIR)/content.js		\
 	$(CONTENT_SRCDIR)/debug.js		\
 	$(CONTENT_SRCDIR)/frame.js		\
-	$(CONTENT_SRCDIR)/windowStack.js
+	$(CONTENT_SRCDIR)/windowStack.js	\
+	$(CONTENT_SRCDIR)/scale.js
 
 skindir=$(extensiondir)/chrome/skin
 SKIN_SRCDIR=$(EXTENSION_SRCDIR)/chrome/skin

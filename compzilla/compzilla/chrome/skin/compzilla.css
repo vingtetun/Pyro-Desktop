@@ -1,86 +1,66 @@
 body {
-	overflow: hidden;
-	margin: 0px;
 	position: absolute;
+	margin: 0px;
 	width: 100%;
 	height: 100%;
-}
-
-#debugLog {
-	width: 98%;
-	height: 90%;
 }
 
 #windowStack {
 	position: absolute;
+	overflow: hidden;
+	margin: 0px;
 	left: 0px;
 	top: 0px;
 	width: 100%;
 	height: 100%;
-	margin: 0px;
 	visibility: visible;
 }
 
 .windowLayer {
 	position: absolute;
-	background: #000000;
 	overflow: hidden;
 	visibility: visible;
 	margin: 0px;
-	width: 100%;
-	height: 100%;
-	background-color: transparent;
 }
 
 #desktopLayer {
 	background: url(chrome://compzilla/skin/desktop-background.jpg);
 	z-index: 0;
-}
-
-#belowLayer {
-	z-index: 1;
-}
-
-#normalLayer {
-	z-index: 2;
-}
-
-#dockLayer {
-	z-index: 3;
-	display: none;
+	width: 100%;
+	height: 100%;
 }
 
 #fullscreenLayer {
-	z-index: 4;
+	z-index: 15000;
 	display: none;
-}
-
-#overlayLayer {
-	overflow: hidden;
-	display: none;
-	background-color: #000000;
-	opacity: 0.85;
-	z-index: 65534;
-}
-
-#pickerLayer {
-	overflow: hidden;
-	display: none;
-	background-color: #000000;
-	opacity: 0.85;
-	z-index: 65533;
+	background: #000000;
+	background-color: transparent;
 }
 
 #exposeLayer {
-	overflow: hidden;
+	z-index: 25000;
 	display: none;
-	background-color: #000000;
+	width: 100%;
+	height: 100%;
 	opacity: 0.85;
-	z-index: 65532;
+	background-color: #000000;
 }
 
-#debugLayer {
-	z-index: 65535;
+#pickerLayer {
+	z-index: 26000;
+	display: none;
+	opacity: 0.85;
+	background: #000000;
+	background-color: transparent;
+}
+
+#overlayLayer {
+	z-index: 30000;
+	display: none;
+	width: 100%;
+	height: 100%;
+	opacity: 0.85;
+	background-color: #000000;
 }
 
 .windowFrame, .windowFrameFocused {
@@ -121,6 +101,11 @@ body {
 	tab-index: 1;
 	width: 100%;
 	height: 100%;
+}
+
+#debugLog {
+	width: 98%;
+	height: 90%;
 }
 
 #debugContent {

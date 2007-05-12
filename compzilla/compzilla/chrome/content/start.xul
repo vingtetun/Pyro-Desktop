@@ -1,65 +1,134 @@
 <?xml version="1.0"?>
-<?xml-stylesheet href="chrome://global/skin/" type="text/css"?>
+<?xml-stylesheet href="chrome://compzilla/skin/compzilla.css" type="text/css"?>
+
+<!DOCTYPE window SYSTEM "chrome://compzilla/locale/start.dtd">
 
 <window id="desktopWindow"
         xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
-        xmlns:xbl="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
 	xmlns:html="http://www.w3.org/1999/xhtml"
+        xmlns:xul="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
 	title="compzilla"
-	onload="compzillaLoad()"
-	left="0px" top="0px"
-	width="640px" height="480px">
+	onload="compzillaLoad()" 
+	width="640" height="480">
+
+    <html:body id="desktop" xmlns="http://www.w3.org/1999/xhtml" flex="1">
+
+        <div id="windowStack">
+
+            <!-- desktop is always at the bottom -->
+
+            <div id="desktopLayer" class="windowLayer"></div>
+
+            <!-- these layers are special purpose and are generally hidden.
+		 fullscreenLayer is for reparenting maximized windows
+		 exposeLayer is for the OSX expose-like functionality
+		 pickerLayer is for the alt-tab functionality
+		 overlayLayer is for desktop widgets. -->
+
+            <div id="fullscreenLayer" class="windowLayer"></div>
+            <div id="exposeLayer" class="windowLayer"></div>
+            <div id="pickerLayer" class="windowLayer"></div>
+            <div id="overlayLayer" class="windowLayer"></div>
+
+	</div>
 
 
-  <html:link type="text/css" href="chrome://compzilla/skin/compzilla.css" rel="stylesheet" />
+	<!-- Window frame template, which is cloned for each created window, and
+	     the content reparented inside.  Done using CompzillaFrame. -->
 
+        <div id="windowFrame" class="windowFrame" mousethrough="never">
+            <xul:commandset id="compzillaWindowCommandSet">
+                <xul:command id="cmd_minimizeWindow" oncommand="compzilla.minimizeWindow();" />
+                <xul:command id="cmd_restoreWindow" oncommand="compzilla.restoreWindow();" />
+                <xul:command id="cmd_maximizeWindow" oncommand="compzilla.maximizeWindow();" />
+                <xul:command id="cmd_closeWindow" oncommand="compzilla.closeWindow();" />
+            </xul:commandset>
 
-  <html:body id="desktop" flex="1">
+            <xul:keyset id="compzillaWindowKeyset">
+                <xul:key id="key_minimizeWindow" 
+                         keycode="VK_F9" modifiers="alt"
+                         command="cmd_minimizeWindow" />
+                <xul:key id="key_maximizeWindow" 
+                         keycode="VK_F10" modifiers="alt"
+                         command="cmd_maximizeWindow" />
+                <xul:key id="key_closeWindow" 
+                         keycode="VK_F4" modifiers="alt"
+                         command="cmd_closeWindow" />
+            </xul:keyset>
 
+            <xul:menupopup id="compzillaWindowMenu">
+                <xul:menuitem id="menu_minimizeWindow" 
+                              label="&minimizeWindow.label;" 
+                              command="cmd_minimizeWindow" />
+                <xul:menuitem id="menu_maximizeWindow" 
+                              label="&maximizeWindow.label;" 
+                              command="cmd_maximizeWindow" />
+                <xul:menuitem id="menu_closeWindow" 
+                              label="&closeWindow.label;" 
+                              command="cmd_closeWindow" />
+            </xul:menupopup>
 
-    <html:div id="compzillaWindowStack">
+            <xul:hbox id="windowTitleBox">
+                <xul:image id="compzillaWindowIcon"
+		           src="chrome://compzilla/skin/icon.png"
+                           tooltiptext="&windowMenu.label;" 
+                           popup="compzillaWindowMenu" />
 
-      <!-- these are the EWMH spec'ed logical window layers -->
+                <xul:label id="windowTitle" class="windowTitle" flex="1" value="Unknown" />
 
-      <html:div id="desktopLayer"    class="windowLayer" mousethrough="always"></html:div>
-      <html:div id="belowLayer"      class="windowLayer" mousethrough="always"></html:div>
-      <html:div id="normalLayer"     class="windowLayer" mousethrough="always"></html:div>
-      <html:div id="dockLayer"       class="windowLayer" mousethrough="always"></html:div>
-      <html:div id="fullscreenLayer" class="windowLayer" mousethrough="always"></html:div>
+                <xul:image id="compzillaWindowMinimize"
+                           src="chrome://compzilla/skin/minimize.png"
+                           tooltiptext="&minimizeWindow.label;" 
+                           onclick="goDoCommand('cmd_minimizeWindow');" />
+                <xul:image id="compzillaWindowMaximize"
+                           src="chrome://compzilla/skin/maximize.png"
+                           tooltiptext="&maximizeWindow.label;" 
+                           onclick="goDoCommand('cmd_maximizeWindow');" />
+                <xul:image id="compzillaWindowClose"
+                           src="chrome://compzilla/skin/close.png"
+                           tooltiptext="&closeWindow.label;" 
+                           onclick="goDoCommand('cmd_closeWindow');" />
+            </xul:hbox>
 
-      <!-- these layers are special purpose and are generally hidden.
-           are never added to them.
+            <div id="windowContentBox">
+                <!-- The content node will be inserted here. -->
+            </div>
+        </div>
 
-           exposeLayer is for the OSX expose-like functionality
+        <canvas id="windowContent" mousethrough="never" />
 
-	   pickerLayer is for the alt-tab functionality
+	<div id="dockFrame" class="dockFrame" mousethrough="never">
+            <div id="windowContentBox">
+                <!-- The content node will be inserted here. -->
+            </div>
+	</div>
 
-	   overlayLayer is for desktop widgets.
-        -->
+        <!-- Contents of the debug window. Manually reparented into a window
+             frame we create for it in debug.js	-->
 
-      <div id="exposeLayer"  class="windowLayer" mousethrough="always"></div>
-      <div id="pickerLayer"  class="windowLayer" mousethrough="always"></div>
-      <div id="overlayLayer" class="windowLayer" mousethrough="always"></div>
+        <div id="debugContent">
+	    <textarea id="debugLog" />
+	    <form>
+            <input id="debugEntry" type="text" value="Debug..." onsubmit="debugEval();" />
+	    <button onclick="debugEval();">Eval</button>
+            <button onclick="debugClearLog();">Clear</button>
+            </form>
+        </div>
 
-      <!-- another special purpose layer, always on top of everything.
-           used for our debug log (and firebug?) -->
+    </html:body>
 
-      <div id="debugLayer"   class="windowLayer" mousethrough="always"></div>
+    <!-- need globalOverlay.js for goDoCommand -->
+    <script type="application/x-javascript" src="chrome://global/content/globalOverlay.js" />
 
-      <html:script type="application/x-javascript" src="chrome://compzilla/content/windowStack.js" />
-    </html:div>
+    <script type="application/x-javascript" src="chrome://compzilla/content/atoms.js" />
+    <script type="application/x-javascript" src="chrome://compzilla/content/windowStack.js" />
+    <script type="application/x-javascript" src="chrome://compzilla/content/frame.js" />
+    <script type="application/x-javascript" src="chrome://compzilla/content/content.js" />
+    <script type="application/x-javascript" src="chrome://compzilla/content/debug.js" />
+    <script type="application/x-javascript" src="chrome://compzilla/content/scale.js" />
+    <script type="application/x-javascript" src="chrome://compzilla/content/start2.js" />
 
-    <html:script type="application/x-javascript" src="chrome://compzilla/content/atoms.js" />
-    <html:script type="application/x-javascript" src="chrome://compzilla/content/start.js" />
-
-
-    <!-- this is the contents of the debug window.  it is reparented into the chrome we create for it -->
-
-    <html:div id="debugContent">
-      <html:div id="debugLog"></html:div>
-      <html:br clear="all" />
-      <html:button id="debugClear" value="Clear">Clear</html:button>
-    </html:div>
-  </html:body>
-
+    <commandset id="compzillaDesktopCommandSet">
+        <command id="cmd_showDesktop" oncommand="windowStack.toggleDesktop();" />
+    </commandset>
 </window>

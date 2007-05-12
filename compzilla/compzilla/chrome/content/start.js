@@ -1,23 +1,48 @@
+/* -*- mode: javascript; c-basic-offset: 4; indent-tabs-mode: t; -*- */
 
 const compzillaIControl = Components.interfaces.compzillaIControl;
-const compzillaIWindowManager = Components.interfaces.compzillaIWindowManager;
+
 
 function compzillaLoad()
 {
-   svccls = Components.classes['@pyrodesktop.org/compzillaService'];
-   svc = svccls.getService(compzillaIControl);
+    var xulwin = document.getElementById ("desktopWindow");
+    xulwin.width = screen.width;
+    xulwin.height = screen.height;
 
-   wmcls = Components.classes['@pyrodesktop.org/compzillaWindowManager'];
-   wm = wmcls.createInstance(compzillaIWindowManager);
+    svccls = Components.classes['@pyrodesktop.org/compzillaService'];
+    svc = svccls.getService (compzillaIControl);
 
-   var desktop = document.getElementById ("desktop");
-   wm.SetDocument (document);
+    svc.addEventListener (
+	"windowcreate", 
+	{
+	    handleEvent: function (ev) {
+		// NOTE: Be careful to not do anything which will create a new
+		//       toplevel window, to avoid an infinite loop.
 
-   var win = document.getElementById ("desktopWindow");
+		content = CompzillaWindowContent (ev.window);
 
-   win.width = screen.width;
-   win.height = screen.height;
+		if (ev.overrideRedirect)
+		    frame = CompzillaDockFrame (content);
+		else
+		    frame = CompzillaFrame (content);
 
-   // this will generates a call to compzillaWindowCreated for each window
-   svc.RegisterWindowManager (window, wm);
+		frame.id = "XID:" + content.getNativeWindow().nativeWindowId;
+
+		// ev is a compzillaIWindowConfigureEvent
+		frame.moveResize (ev.x, ev.y, ev.width, ev.height);
+		if (ev.mapped) {
+		    frame.show ();
+		}
+
+		stack = document.getElementById ("windowStack");
+    		stack.stackWindow (frame);
+	    }
+        },
+	true);
+
+   Debug ("Calling RegisterWindowManager!");
+
+   // Register as the window manager and generate windowcreate events for
+   // existing windows.
+   svc.RegisterWindowManager (window);
 }
