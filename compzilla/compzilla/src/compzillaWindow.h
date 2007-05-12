@@ -98,7 +98,7 @@ public:
     Window mLastEntered;
 
     compzillaEventManager mDestroyEvMgr;
-    compzillaEventManager mMoveResizeEvMgr;
+    compzillaEventManager mConfigureEvMgr;
     compzillaEventManager mShowEvMgr;
     compzillaEventManager mHideEvMgr;
     compzillaEventManager mPropertyChangeEvMgr;

@@ -89,7 +89,7 @@ compzillaWindow::compzillaWindow(Display *display, Window win)
       mDamage(0),
       mLastEntered(0),
       mDestroyEvMgr("destroy"),
-      mMoveResizeEvMgr("configure"),
+      mConfigureEvMgr("configure"),
       mShowEvMgr("map"),
       mHideEvMgr("unmap"),
       mPropertyChangeEvMgr("propertychange")
@@ -949,7 +949,7 @@ compzillaWindow::AddEventListener (const nsAString & type,
     if (type.EqualsLiteral ("destroy")) {
         return mDestroyEvMgr.AddEventListener (type, listener);
     } else if (type.EqualsLiteral ("configure")) {
-        return mMoveResizeEvMgr.AddEventListener (type, listener);
+        return mConfigureEvMgr.AddEventListener (type, listener);
     } else if (type.EqualsLiteral ("map")) {
         return mShowEvMgr.AddEventListener (type, listener);
     } else if (type.EqualsLiteral ("unmap")) {
@@ -969,7 +969,7 @@ compzillaWindow::RemoveEventListener (const nsAString & type,
     if (type.EqualsLiteral ("destroy")) {
         return mDestroyEvMgr.RemoveEventListener (type, listener);
     } else if (type.EqualsLiteral ("configure")) {
-        return mMoveResizeEvMgr.RemoveEventListener (type, listener);
+        return mConfigureEvMgr.RemoveEventListener (type, listener);
     } else if (type.EqualsLiteral ("map")) {
         return mShowEvMgr.RemoveEventListener (type, listener);
     } else if (type.EqualsLiteral ("unmap")) {
@@ -1222,7 +1222,7 @@ compzillaWindow::WindowConfigured (PRInt32 x, PRInt32 y,
         }
     }
 
-    if (mMoveResizeEvMgr.HasEventListeners ()) {
+    if (mConfigureEvMgr.HasEventListeners ()) {
         // abovewin doesn't work given that abovewin has a list of content
         // nodes...  but really, we shouldn't have to worry about this, as you
         // *can't* reliably specify a window to raise/lower above/below, since
@@ -1235,6 +1235,6 @@ compzillaWindow::WindowConfigured (PRInt32 x, PRInt32 y,
                                                              width, height,
                                                              border,
                                                              aboveWin);
-        ev->Send (NS_LITERAL_STRING ("configure"), this, mMoveResizeEvMgr);
+        ev->Send (NS_LITERAL_STRING ("configure"), this, mConfigureEvMgr);
     }
 }
