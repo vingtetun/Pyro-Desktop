@@ -14,8 +14,6 @@ content_DATA =					\
 	$(CONTENT_SRCDIR)/overlay.xul		\
 	$(CONTENT_SRCDIR)/start.js		\
 	$(CONTENT_SRCDIR)/start.xul		\
-	$(CONTENT_SRCDIR)/start2.js		\
-	$(CONTENT_SRCDIR)/start2.xul		\
 	$(CONTENT_SRCDIR)/atoms.js		\
 	$(CONTENT_SRCDIR)/content.js		\
 	$(CONTENT_SRCDIR)/debug.js		\
