@@ -461,18 +461,14 @@ ss.reverseWindows = new Array ();
 ss.speed = 1.5;
 ss.timestep = 1.2;
 
-Debug ("scale.js loading!");
-
 document.addEventListener("keypress", {
                               handleEvent: function (event) {
-				  Debug ("scale.js!");
 				  if (event.keyCode == event.DOM_VK_F11 && event.ctrlKey) {
-				      if (ss.state == "none")
-					  Debug ("scaleStart!");
+				      if (ss.state == "none") {
 					  scaleStart ();
-				      else
-					  Debug ("scaleTerminate!");
+				      } else {
 					  scaleTerminate ();
+                                      }
 				  }
 			      } },
 			      true);
