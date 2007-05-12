@@ -1,0 +1,26 @@
+
+
+<html>
+<body>
+
+This is the body...
+<div id="foo">
+<script>
+alert("This = " + this);
+this.parentNode.aScript = function () { alert("Hello!"); }
+</script>
+This is the div
+</div>
+
+<script>
+foo = document.getElementById("foo")
+//foo.aScript = function () { alert("Hello!"); }
+alert("foo.aScript = " + foo.aScript);
+
+foo2 = foo.cloneNode(true);
+alert("foo2.aScript = " + foo2.aScript);
+
+</script>
+
+</body>
+</html>

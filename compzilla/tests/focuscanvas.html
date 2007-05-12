@@ -1,0 +1,52 @@
+
+<html>
+<body>
+
+<div id="main"
+        onkeypress="alert('div on keypress!')"
+	onfocus="alert('div on focus!')"
+	onclick="alert('div on click!');">
+
+<div>
+<span id="foo">This is some text <input type="text" name="foo" /></span>
+</div>
+<canvas id="test" width="400" height="400" 
+        tabindex="1"
+        style="-moz-user-focus: normal"
+        onkeypress="alert('canvas on keypress!')"
+	onfocus="alert('canvas on focus!')"
+	onclick="alert('canvas on click!')"
+	/>
+</div>
+
+Done.
+
+<script>
+var canvas = document.getElementById ("test")
+alert ("Canvas = " + canvas);
+
+/*
+canvas.onkeyup = function (event) {
+    alert ("Keyup!");
+  };
+
+canvas.onkeydown = function (event) {
+    alert ("Keydown!");
+  };
+
+canvas.addEventListener ("keypress", { 
+  handleEvent: function (event) {
+    alert ("Keypress!");
+  }
+}, true);
+
+*/
+
+//canvas.setTabIndex (1);
+canvas.focus ();
+
+alert ("Done connecting events");
+</script>
+
+</body>
+</html>
