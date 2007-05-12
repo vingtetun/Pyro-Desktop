@@ -127,7 +127,6 @@ libcompzilla_la_CPPFLAGS =			\
 	-I$(GECKO_INCLUDEDIR)/xpcom		\
 	-I$(GECKO_INCLUDEDIR)/xpconnect		\
 	\
-	-I$(top_srcdir)/gecko-sdk/include	\
 	-I$(srcdir)/public
 
 nodist_libcompzilla_la_SOURCES = $(IDL_H_FILES)
