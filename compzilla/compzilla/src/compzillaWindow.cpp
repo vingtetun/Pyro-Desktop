@@ -86,8 +86,9 @@ compzillaWindow::compzillaWindow(Display *display, Window win)
     : mDisplay(display),
       mWindow(win),
       mPixmap(None),
-      mDamage(0),
-      mLastEntered(0),
+      mDamage(None),
+      mLastEntered(None),
+      mIsDestroyed(false),
       mDestroyEvMgr("destroy"),
       mConfigureEvMgr("configure"),
       mShowEvMgr("map"),
@@ -104,8 +105,7 @@ compzillaWindow::compzillaWindow(Display *display, Window win)
     XShapeSelectInput (display, win, ShapeNotifyMask);
 
     memset (&mAttr, 0, sizeof (XWindowAttributes));
-
-    EnsurePixmap ();
+    UpdateAttributes ();
 }
 
 
@@ -117,34 +117,60 @@ compzillaWindow::~compzillaWindow()
     // FIXME: This crashes for some reason
     //ConnectListeners (false);
 
-    // Let the window render itself
-    XCompositeUnredirectWindow (mDisplay, mWindow, CompositeRedirectManual);
+    // This is the only resource that stays around after window destruction.
+    ResetPixmap ();
 
-    if (mDamage) {
-        XDamageDestroy(mDisplay, mDamage);
-    }
-    if (mPixmap) {
-        XFreePixmap(mDisplay, mPixmap);
-    }
+    if (!mIsDestroyed) {
+        // Let the window render itself
+        XCompositeUnredirectWindow (mDisplay, mWindow, CompositeRedirectManual);
 
-    /* 
-     * This is the only case where a window is removed but not
-     * destroyed. We must remove our event mask and all passive
-     * grabs.  -- compiz
-     */
-    XSelectInput (mDisplay, mWindow, NoEventMask);
-    XShapeSelectInput (mDisplay, mWindow, NoEventMask);
-    XUngrabButton (mDisplay, AnyButton, AnyModifier, mWindow);
+        if (mDamage) {
+            XDamageDestroy(mDisplay, mDamage);
+        }
+
+        /* 
+         * This is the only case where a window is removed but not
+         * destroyed. We must remove our event mask and all passive
+         * grabs.  -- compiz
+         */
+        XSelectInput (mDisplay, mWindow, NoEventMask);
+        XShapeSelectInput (mDisplay, mWindow, NoEventMask);
+        XUngrabButton (mDisplay, AnyButton, AnyModifier, mWindow);
+    }
 
     mContentNodes.Clear();
 }
 
 
 void
+compzillaWindow::UpdateAttributes ()
+{
+    XGetWindowAttributes(mDisplay, mWindow, &mAttr);
+}
+
+
+void
+compzillaWindow::EnsureDamage ()
+{
+    if (mDamage) {
+        return;
+    }
+
+    /* 
+     * Set up damage notification.  RawRectangles gives us smaller grain
+     * changes, versus NonEmpty which seems to always include the entire
+     * contents.
+     */
+    mDamage = XDamageCreate (mDisplay, mWindow, XDamageReportRawRectangles);
+}
+
+
+void
 compzillaWindow::ResetPixmap()
 {
-    if (mPixmap)
+    if (mPixmap) {
         XFreePixmap (mDisplay, mPixmap);
+    }
     mPixmap = None;
 }
 
@@ -156,14 +182,14 @@ compzillaWindow::EnsurePixmap()
         return;
     }
 
+    UpdateAttributes ();
+
     if (mAttr.map_state == IsViewable) {
         // Set up persistent offscreen window contents pixmap.
         mPixmap = XCompositeNameWindowPixmap (mDisplay, mWindow);
-
         if (mPixmap == None) {
             ERROR ("unable to get backing pixmap for window %p\n", mWindow);
         }
-
     }
 }
 
@@ -993,6 +1019,8 @@ compzillaWindow::DispatchEvent (nsIDOMEvent *evt, PRBool *_retval)
 void
 compzillaWindow::DestroyWindow ()
 {
+    mIsDestroyed = true;
+
     if (mDestroyEvMgr.HasEventListeners ()) {
         compzillaWindowEvent *ev;
         if (NS_OK == CZ_NewCompzillaWindowEvent (this, &ev))
@@ -1004,21 +1032,13 @@ compzillaWindow::DestroyWindow ()
 void
 compzillaWindow::MapWindow ()
 {
+    UpdateAttributes ();
+    EnsureDamage ();
+
     if (mShowEvMgr.HasEventListeners ()) {
         compzillaWindowEvent *ev;
         if (NS_OK == CZ_NewCompzillaWindowEvent (this, &ev))
             ev->Send (NS_LITERAL_STRING ("map"), this, mShowEvMgr);
-    }
-
-    XGetWindowAttributes(mDisplay, mWindow, &mAttr);
-
-    if (!mDamage) {
-        /* 
-         * Set up damage notification.  RawRectangles gives us smaller grain
-         * changes, versus NonEmpty which seems to always include the entire
-         * contents.
-         */
-        mDamage = XDamageCreate (mDisplay, mWindow, XDamageReportRawRectangles);
     }
 }
 
@@ -1026,6 +1046,8 @@ compzillaWindow::MapWindow ()
 void
 compzillaWindow::UnmapWindow ()
 {
+    UpdateAttributes ();
+
     if (mHideEvMgr.HasEventListeners ()) {
         compzillaWindowEvent *ev;
         if (NS_OK == CZ_NewCompzillaWindowEvent (this, &ev))
@@ -1273,16 +1295,9 @@ compzillaWindow::WindowConfigured (PRInt32 x, PRInt32 y,
         }
     }
 
-    bool reset_pixmap = false;
-
-    if (mAttr.width != width || mAttr.height != height)
-        reset_pixmap = true;
-
-    XGetWindowAttributes(mDisplay, mWindow, &mAttr);
-
-    if (mPixmap) {
-        if (reset_pixmap) {
-            ResetPixmap ();
-        }
+    if (mAttr.width != width || mAttr.height != height) {
+        ResetPixmap ();
     }
+
+    UpdateAttributes ();
 }

@@ -45,9 +45,6 @@ public:
     compzillaWindow (Display *display, Window window);
     virtual ~compzillaWindow ();
 
-    void ResetPixmap ();
-    void EnsurePixmap ();
-
     // nsIDOMKeyListener
 
     NS_IMETHOD KeyDown (nsIDOMEvent* aDOMEvent);
@@ -80,7 +77,6 @@ public:
                            compzillaWindow *aboveWin);
 
     XWindowAttributes mAttr;
-    Damage mDamage;
 
  private:
     void OnMouseMove (nsIDOMEvent* aDOMEvent);
@@ -92,11 +88,18 @@ public:
     Window GetSubwindowAtPoint (int *x, int *y);
     unsigned int DOMKeyCodeToKeySym (PRUint32 vkCode);
 
+    void UpdateAttributes ();
+    void ResetPixmap ();
+    void EnsurePixmap ();
+    void EnsureDamage ();
+
     nsCOMArray<nsISupports> mContentNodes;
     Display *mDisplay;
     Window mWindow;
     Pixmap mPixmap;
+    Damage mDamage;
     Window mLastEntered;
+    bool mIsDestroyed;
 
     compzillaEventManager mDestroyEvMgr;
     compzillaEventManager mConfigureEvMgr;

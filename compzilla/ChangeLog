@@ -1,3 +1,24 @@
+2007-05-14  Alex Graveley  <alex@beatniksoftware.com>
+
+	* compzilla/chrome/content/windowStack.js (debugLayer): Change to
+	using named properties (minZIndex, maxZIndex, and highZIndex) on
+	layer Objects.  Add windowStack.addLayer, and
+	windowStack.getLayer.
+
+	* compzilla/src/compzillaWindow.cpp (MapWindow): Use
+	UpdateAttributes and EnsureDamage helpers, and call them before
+	sending the "map" event.
+	(~compzillaWindow): Avoid the error spew on window destroy by
+	setting mIsDestroyed, and only resetting things in the destructor
+	if this is not true.  Always call ResetPixmap though.
+	(compzillaWindow): Don't call EnsurePixmap here, call
+	UpdateAttributes.
+
+	* compzilla/src/compzillaControl.cpp (AddWindow): Call
+	CZ_NewCompzillaConfigureEvent instead of new.
+	(DestroyWindow): Ditto, except with CZ_NewCompzillaWindowEvent.
+	Don't poke at window's mDamage. 
+
 2007-05-14  Chris Toshok  <toshok@hungry.com>
 
 	* compzilla/Makefile.am (skin_DATA): add the

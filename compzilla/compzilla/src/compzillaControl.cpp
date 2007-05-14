@@ -645,7 +645,6 @@ compzillaControl::AddWindow (Window win)
     INFO ("AddWindow for window %p\n", win);
 
     compzillaWindow *compwin;
-
     if (NS_OK != CZ_NewCompzillaWindow (mXDisplay, win, &compwin))
         return;
 
@@ -658,15 +657,17 @@ compzillaControl::AddWindow (Window win)
     mWindowMap.Put (win, compwin);
 
     if (mWindowCreateEvMgr.HasEventListeners ()) {
-        compzillaWindowEvent *ev = 
-            new compzillaWindowEvent (compwin,
-                                      compwin->mAttr.map_state == IsViewable,
-                                      compwin->mAttr.override_redirect != 0,
-                                      compwin->mAttr.x, compwin->mAttr.y,
-                                      compwin->mAttr.width, compwin->mAttr.height,
-                                      compwin->mAttr.border_width,
-                                      NULL);
-        ev->Send (NS_LITERAL_STRING ("windowcreate"), this, mWindowCreateEvMgr);
+        compzillaWindowEvent *ev;
+        if (NS_OK == CZ_NewCompzillaConfigureEvent (compwin,
+                                                    compwin->mAttr.map_state == IsViewable,
+                                                    compwin->mAttr.override_redirect != 0,
+                                                    compwin->mAttr.x, compwin->mAttr.y,
+                                                    compwin->mAttr.width, compwin->mAttr.height,
+                                                    compwin->mAttr.border_width,
+                                                    NULL, 
+                                                    &ev)) {
+            ev->Send (NS_LITERAL_STRING ("windowcreate"), this, mWindowCreateEvMgr);
+        }
     }
 
     if (compwin->mAttr.map_state == IsViewable) {
@@ -683,12 +684,12 @@ compzillaControl::DestroyWindow (Window win)
         compwin->DestroyWindow ();
 
         if (mWindowDestroyEvMgr.HasEventListeners ()) {
-            compzillaWindowEvent *ev = new compzillaWindowEvent (compwin);
-            ev->Send (NS_LITERAL_STRING ("windowdestroy"), this, mWindowDestroyEvMgr);
+            compzillaWindowEvent *ev;
+            if (NS_OK == CZ_NewCompzillaWindowEvent (compwin, &ev)) {
+                ev->Send (NS_LITERAL_STRING ("windowdestroy"), this, mWindowDestroyEvMgr);
+            }
         }
 
-        // Damage is not valid if the window is already destroyed
-        compwin->mDamage = 0;
         mWindowMap.Remove (win);
     }
 }

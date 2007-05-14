@@ -33,10 +33,10 @@ var windowStack = document.getElementById ("windowStack");
 
 windowStack.stackWindow = function (w) {
     var l = _determineLayer (w);
-    Debug ("adding window '" + w.id + "' to layer '" + l[0] + "'");
+    Debug ("adding window '" + w.id + "' to layer '" + l.name + "'");
 
     w.layer = l;
-    w.style.zIndex = ++l[3]; // Stack on top of the layer by default
+    w.style.zIndex = ++l.highZIndex; // Stack on top of the layer by default
     windowStack.appendChild (w);
 
     _maybeRestackLayer (l);
@@ -105,12 +105,11 @@ windowStack.moveToBottom = function(w) {
     if (w.layer == undefined)
 	return;
 
-    if (w.layer[1] != w.style.zIndex && 
-	w.layer[3] != w.style.zIndex) {
-	// Not the lowest window, or the only window.  
+    if (w.layer.minZIndex != w.style.zIndex) {
+	// Not already the lowest window  
 	// Assign an invalid zIndex, which will be reassigned
 	// in restackLayer.
-	w.style.zIndex = w.layer[1] - 1;
+	w.style.zIndex = w.layer.minZIndex - 1;
 
 	// Restack now to assign valid zIndex to w
 	_restackLayer (w.layer);
@@ -122,11 +121,11 @@ windowStack.moveToTop = function(w) {
     if (w.layer == undefined)
 	return;
 
-    Debug ("windowStack.moveToTop: layer=" + w.layer + " zIndex=" + w.style.zIndex);
+    Debug ("windowStack.moveToTop: layer=" + w.layer.name + " zIndex=" + w.style.zIndex);
 
-    if (w.layer[3] != w.style.zIndex) {
+    if (w.layer.highZIndex != w.style.zIndex) {
 	// Not already the top window
-	w.style.zIndex = ++w.layer[3];
+	w.style.zIndex = ++w.layer.highZIndex;
 
 	// Restack if we've run out of valid zIndexes
 	_maybeRestackLayer (w.layer);
@@ -139,31 +138,66 @@ windowStack.toggleDesktop = function () {
 
     Debug ("toggling the desktop display");
     for (var el = windowStack.firstChild; el != null; el = el.nextSibling) {
-	if (el.layer != layers[0]) {
+	if (el.layer != desktopLayer) {
 	    el.style.display = showingDesktop ? "none" : "block";
 	}
     }
 }
 
 
+// Utility functions for extensions
+
+windowStack.getLayer = function (name) {
+    for (var idx = 0; idx < layers.length; idx++) {
+	if (layers[idx].name == name) {
+	    return layers[idx];
+	}
+    }
+}
+
+
+/* 
+ * Layers are Objects with the following properties:
+ *   name: a name for the layer
+ *   minZIndex: the starting zIndex
+ *   maxZIndex: the ending zIndex
+ *   highZIndex: the highest zIndex of a window in that range
+ */
+windowStack.addLayer = function (name, minZIndex, maxZIndex) {
+    layer = new Object ();
+    layer.name = name;
+    layer.minZIndex = minZIndex;
+    layer.maxZIndex = maxZIndex;
+    layer.highZIndex = minZIndex;
+
+    // Ensure we're not overlapping existing layers
+    for (var idx = 0; idx < layers.length; idx++) {
+	l = layers[idx]
+	if (l.name == name) {
+	    throw "Layer name '" + name + "' already taken.";
+	}
+	if ((l.minZIndex <= minZIndex && l.maxZIndex >= minZIndex) || 
+	    (l.minZIndex <= maxZIndex && l.maxZIndex >= maxZIndex)) {
+	    throw "Cannot add layer which overlaps existing layer '" + l.name + "'.";
+	}
+    }
+
+    layers.push (layer);
+    return layer;
+}
+
+
 // initialization
 
 var showingDesktop = false;
-
-/*
- * layers is an array of arrays, each containing 
- *   0: a name for the layer
- *   1: the starting zIndex
- *   2: the ending zIndex
- *   3: the highest zIndex of a window in that range
- */
 var layers = new Array ();
-layers[0] = ["desktopLayer",        0,  1000,     0];
-layers[1] = ["belowLayer",       5000,  6000,  5000];
-layers[2] = ["normalLayer",     10000, 11000, 10000];
-layers[3] = ["dockLayer",       20000, 21000, 20000];
-layers[4] = ["fullscreenLayer", 25000, 25001, 25000];
-layers[5] = ["debugLayer",      60000, 61000, 60000];
+
+desktopLayer    = windowStack.addLayer ("desktopLayer",        0,  1000);
+belowLayer      = windowStack.addLayer ("belowLayer",       5000,  6000);
+normalLayer     = windowStack.addLayer ("normalLayer",     10000, 11000);
+dockLayer       = windowStack.addLayer ("dockLayer",       20000, 21000);
+fullscreenLayer = windowStack.addLayer ("fullscreenLayer", 25000, 25001);
+debugLayer      = windowStack.addLayer ("debugLayer",      60000, 61000);
 
 
 // private methods
@@ -185,10 +219,7 @@ function _sortByZIndex (w1, w2)
 
 
 function _restackLayer (l) {	
-    var lower = l[1]; // Lower zIndex bound
-    var upper = l[2]; // Upper zIndex bound
-
-    if (l[3] <= lower) {
+    if (l.highZIndex <= l.minZIndex) {
 	return; // Zero or one window in layer
     }
 
@@ -204,19 +235,19 @@ function _restackLayer (l) {
     //       accidentally raise an older window above a newer one.
     windows.sort (_sortByZIndex);
 
-    var z = lower - 1;
+    var z = l.minZIndex - 1;
 
     for (var idx = 0; idx < windows.length; idx++) {
 	windows[idx].style.zIndex = ++z;
     }
 
-    l[3] = z;
+    l.highZIndex = z;
 }
 
 
 function _maybeRestackLayer (l) {
-    if (l[3] >= l[2]) {
-	Debug ("Maximum zIndex for layer '" + l[0] + "' hit, restacking");
+    if (l.highZIndex >= l.maxZIndex) {
+	Debug ("Maximum zIndex for layer '" + l.name + "' hit, restacking");
 	_restackLayer (l);
     }
 }
@@ -240,12 +271,12 @@ function _determineLayer (w) {
 
     if (w.getContent() != null && w.getContent().id == "debugContent") 
 	// special case for the debug window, which sits above everything
-	return layers[5];
+	return debugLayer;
     if (w._net_wm_window_type == Atoms._NET_WM_WINDOW_TYPE_DESKTOP())
-	return layers[0];
+	return desktopLayer;
     else if (w._net_wm_window_type == Atoms._NET_WM_WINDOW_TYPE_DOCK())
-	return layers[3];
+	return dockLayer;
     /* XXX we need cases 1 and 4 here */
     else
-	return layers[2];
+	return normalLayer;
 }
