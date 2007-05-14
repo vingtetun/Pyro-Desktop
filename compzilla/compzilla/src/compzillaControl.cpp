@@ -710,8 +710,6 @@ compzillaControl::MapWindow (Window win)
 {
     compzillaWindow *compwin = FindWindow (win);
     if (compwin) {
-        // Make sure we've got a handle to the content
-        compwin->EnsurePixmap ();
         compwin->MapWindow ();
     }
 }
@@ -786,6 +784,27 @@ compzillaControl::Filter (GdkXEvent *xevent, GdkEvent *event)
         break;
     }
     case ConfigureNotify: {
+        SPEW ("ConfigureNotify: window=%p, x=%d, y=%d, width=%d, height=%d, border=%d, override=%d\n",
+              x11_event->xconfigure.window,
+              x11_event->xconfigure.x,
+              x11_event->xconfigure.y,
+              x11_event->xconfigure.width,
+              x11_event->xconfigure.height,
+              x11_event->xconfigure.border_width,
+              x11_event->xconfigure.override_redirect);
+
+        compzillaWindow *compwin = FindWindow (x11_event->xconfigure.window);
+
+        if (compwin && x11_event->xconfigure.override_redirect) {
+            compzillaWindow *abovewin = FindWindow (x11_event->xconfigure.above);
+
+            compwin->WindowConfigured (x11_event->xconfigure.x,
+                                       x11_event->xconfigure.y,
+                                       x11_event->xconfigure.width,
+                                       x11_event->xconfigure.height,
+                                       x11_event->xconfigure.border_width,
+                                       abovewin);
+        }
         break;
     }
     case ConfigureRequest: {

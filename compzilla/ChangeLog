@@ -1,3 +1,45 @@
+2007-05-14  Chris Toshok  <toshok@hungry.com>
+
+	* compzilla/Makefile.am (skin_DATA): add the
+	desktop-background.jpg back in, so we get a sweet, sweet
+	background.
+
+	* compzilla/src/compzillaWindow.h: add ResetPixmap.
+
+	* compzilla/src/compzillaWindow.cpp (ResetPixmap): free/reset
+	mPixmap.
+	(EnsurePixmap): don't do XGetWindowAttributes here.
+	(GetStringProperty): don't leak property data.
+	(GetAtomProperty): same.
+	(DestroyWindow): use CZ_NewCompzillaWindowEvent.
+	(MapWindow): use CZ_NewCompzillaWindowEvent.  do
+	XGetWindowAttributes here to get the initial width/height on map,
+	and create mDamage here if it hasn't already been created.
+	(PropertyChanged): use CZ_NewPropertyChangeEvent.  add a "break"
+	after XA_WM_NORMAL_HINTS so we don't fall through.  Handle
+	XA_WM_CLASS.
+	(WindowConfigured): rework this a little.  use
+	CZ_NewConfigureEvent.  resync our idea of the current window
+	attributes (server round trip, ugh) and reset the pixmap *after*
+	the js has had time to deal with the event (since it might give
+	the client a different size).
+
+	* compzilla/src/compzillaWindowEvents.cpp
+	(CZ_NewCompzillaWindowEvent)
+	(CZ_NewCompzillaPropertyChangeEvent)
+	(CZ_NewCompzillaConfigureEvent): new methods to create
+	compzillaWindowEvents and provide them with an initial ref.
+
+	* compzilla/src/compzillaWindowEvents.h: add prototypes for the
+	new CZ_* calls.
+
+	* compzilla/src/compzillaControl.cpp (Filter): for the time being
+	handle ConfigureNotify by just calling WindowConfigured, but only
+	for override redirect windows (since we don't get
+	ConfigureRequest).
+	(AddWindow): Don't call window->EnsurePixmap here, we do it
+	lazily.
+
 2007-05-11  Alex Graveley  <alex@beatniksoftware.com>
 
 	* compzilla/chrome/skin/compzilla.css: Clean out some old cruft.

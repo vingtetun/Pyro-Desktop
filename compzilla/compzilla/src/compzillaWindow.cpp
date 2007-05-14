@@ -141,15 +141,21 @@ compzillaWindow::~compzillaWindow()
 
 
 void
+compzillaWindow::ResetPixmap()
+{
+    if (mPixmap)
+        XFreePixmap (mDisplay, mPixmap);
+    mPixmap = None;
+}
+
+
+void
 compzillaWindow::EnsurePixmap()
 {
     if (mPixmap) {
         return;
     }
 
-    XGrabServer (mDisplay);
-
-    XGetWindowAttributes(mDisplay, mWindow, &mAttr);
     if (mAttr.map_state == IsViewable) {
         // Set up persistent offscreen window contents pixmap.
         mPixmap = XCompositeNameWindowPixmap (mDisplay, mWindow);
@@ -158,15 +164,7 @@ compzillaWindow::EnsurePixmap()
             ERROR ("unable to get backing pixmap for window %p\n", mWindow);
         }
 
-        /* 
-         * Set up damage notification.  RawRectangles gives us smaller grain
-         * changes, versus NonEmpty which seems to always include the entire
-         * contents.
-         */
-        mDamage = XDamageCreate (mDisplay, mWindow, XDamageReportRawRectangles);
     }
-
-    XUngrabServer (mDisplay);
 }
 
 
@@ -282,6 +280,8 @@ compzillaWindow::GetStringProperty (PRUint32 prop, nsAString& value)
 
     SPEW (" + %s\n", data);
 
+    XFree (data);
+
     return NS_OK;
 }
 
@@ -303,6 +303,8 @@ compzillaWindow::GetAtomProperty (PRUint32 prop, PRUint32* value)
                         &data);
 
     *value = *(PRUint32*)data;
+
+    XFree (data);
 
     return NS_OK;
 }
@@ -992,8 +994,9 @@ void
 compzillaWindow::DestroyWindow ()
 {
     if (mDestroyEvMgr.HasEventListeners ()) {
-        compzillaWindowEvent *ev = new compzillaWindowEvent (this);
-        ev->Send (NS_LITERAL_STRING ("destroy"), this, mDestroyEvMgr);
+        compzillaWindowEvent *ev;
+        if (NS_OK == CZ_NewCompzillaWindowEvent (this, &ev))
+            ev->Send (NS_LITERAL_STRING ("destroy"), this, mDestroyEvMgr);
     }
 }
 
@@ -1002,8 +1005,20 @@ void
 compzillaWindow::MapWindow ()
 {
     if (mShowEvMgr.HasEventListeners ()) {
-        compzillaWindowEvent *ev = new compzillaWindowEvent (this);
-        ev->Send (NS_LITERAL_STRING ("map"), this, mShowEvMgr);
+        compzillaWindowEvent *ev;
+        if (NS_OK == CZ_NewCompzillaWindowEvent (this, &ev))
+            ev->Send (NS_LITERAL_STRING ("map"), this, mShowEvMgr);
+    }
+
+    XGetWindowAttributes(mDisplay, mWindow, &mAttr);
+
+    if (!mDamage) {
+        /* 
+         * Set up damage notification.  RawRectangles gives us smaller grain
+         * changes, versus NonEmpty which seems to always include the entire
+         * contents.
+         */
+        mDamage = XDamageCreate (mDisplay, mWindow, XDamageReportRawRectangles);
     }
 }
 
@@ -1012,8 +1027,9 @@ void
 compzillaWindow::UnmapWindow ()
 {
     if (mHideEvMgr.HasEventListeners ()) {
-        compzillaWindowEvent *ev = new compzillaWindowEvent (this);
-        ev->Send (NS_LITERAL_STRING ("unmap"), this, mHideEvMgr);
+        compzillaWindowEvent *ev;
+        if (NS_OK == CZ_NewCompzillaWindowEvent (this, &ev))
+            ev->Send (NS_LITERAL_STRING ("unmap"), this, mHideEvMgr);
     }
 }
 
@@ -1104,9 +1120,32 @@ compzillaWindow::PropertyChanged (Window win, Atom prop, bool deleted)
 
             SET_PROP(wbag2, Int32, "sizeHints.winGravity", sizeHints.win_gravity);
         }
+        break;
     }
     case XA_WM_CLASS: {
         // 2 strings, separated by a \0
+
+        char *instance, *_class;
+
+        Atom actual_type;
+        int format;
+        unsigned long nitems;
+        unsigned long bytes_after_return;
+        unsigned char *data;
+
+        XGetWindowProperty (mDisplay, mWindow, (Atom)prop,
+                            0, BUFSIZ, false, XA_STRING,
+                            &actual_type, &format, &nitems, &bytes_after_return, 
+                            &data);
+
+        instance = (char*)data;
+        _class = instance + strlen (instance) + 1;
+
+        SET_PROP (wbag2, AString, ".instanceName", NS_ConvertASCIItoUTF16 (instance));
+        SET_PROP (wbag2, AString, ".className", NS_ConvertASCIItoUTF16 (_class));
+
+        XFree (data);
+
         break;
     }
     case XA_WM_TRANSIENT_FOR: {
@@ -1177,8 +1216,9 @@ compzillaWindow::PropertyChanged (Window win, Atom prop, bool deleted)
 #undef SET_PROP
 
     if (mPropertyChangeEvMgr.HasEventListeners ()) {
-        compzillaWindowEvent *ev = new compzillaWindowEvent (this, prop, deleted, bag2);
-        ev->Send (NS_LITERAL_STRING ("propertychange"), this, mPropertyChangeEvMgr);
+        compzillaWindowEvent *ev;
+        if (NS_OK == CZ_NewCompzillaPropertyChangeEvent (this, prop, deleted, bag2, &ev))
+            ev->Send (NS_LITERAL_STRING ("propertychange"), this, mPropertyChangeEvMgr);
     }
 }
 
@@ -1215,26 +1255,34 @@ compzillaWindow::WindowConfigured (PRInt32 x, PRInt32 y,
                                    PRInt32 border,
                                    compzillaWindow *aboveWin)
 {
-    if (mPixmap) {
-        if (mAttr.width != width || mAttr.height != height) {
-            XFreePixmap (mDisplay, mPixmap);
-            mPixmap = None;
-        }
-    }
-
     if (mConfigureEvMgr.HasEventListeners ()) {
         // abovewin doesn't work given that abovewin has a list of content
         // nodes...  but really, we shouldn't have to worry about this, as you
         // *can't* reliably specify a window to raise/lower above/below, since
         // clients can't depend on the fact that other topevel windows are
         // siblings of each other.
-        compzillaWindowEvent *ev = new compzillaWindowEvent (this,
-                                                             mAttr.map_state == IsViewable,
-                                                             mAttr.override_redirect != 0,
-                                                             x, y,
-                                                             width, height,
-                                                             border,
-                                                             aboveWin);
-        ev->Send (NS_LITERAL_STRING ("configure"), this, mConfigureEvMgr);
+        compzillaWindowEvent *ev;
+        if (NS_OK == CZ_NewCompzillaConfigureEvent (this,
+                                                    mAttr.map_state == IsViewable,
+                                                    mAttr.override_redirect != 0,
+                                                    x, y,
+                                                    width, height,
+                                                    border,
+                                                    aboveWin, &ev)) {
+            ev->Send (NS_LITERAL_STRING ("configure"), this, mConfigureEvMgr);
+        }
+    }
+
+    bool reset_pixmap = false;
+
+    if (mAttr.width != width || mAttr.height != height)
+        reset_pixmap = true;
+
+    XGetWindowAttributes(mDisplay, mWindow, &mAttr);
+
+    if (mPixmap) {
+        if (reset_pixmap) {
+            ResetPixmap ();
+        }
     }
 }

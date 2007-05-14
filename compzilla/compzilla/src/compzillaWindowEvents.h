@@ -104,5 +104,18 @@ protected:
 };
 #endif
 
-
+nsresult CZ_NewCompzillaWindowEvent (compzillaIWindow *win, compzillaWindowEvent **retval);
+nsresult CZ_NewCompzillaPropertyChangeEvent (compzillaIWindow *win, long atom, bool deleted,
+                                             nsIPropertyBag2 *bag,
+                                             compzillaWindowEvent **retval);
+nsresult CZ_NewCompzillaConfigureEvent (compzillaIWindow *window,
+                                        bool mapped,
+                                        bool override,
+                                        long x,
+                                        long y,
+                                        long width,
+                                        long height,
+                                        long borderWidth,
+                                        compzillaIWindow *aboveWin,
+                                        compzillaWindowEvent **retval);
 #endif

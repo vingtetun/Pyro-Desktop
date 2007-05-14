@@ -45,6 +45,7 @@ public:
     compzillaWindow (Display *display, Window window);
     virtual ~compzillaWindow ();
 
+    void ResetPixmap ();
     void EnsurePixmap ();
 
     // nsIDOMKeyListener

@@ -22,6 +22,66 @@ NS_IMPL_CI_INTERFACE_GETTER4(compzillaWindowEvent,
                              compzillaIWindowPropertyEvent)
 
 
+
+nsresult CZ_NewCompzillaWindowEvent (compzillaIWindow *win, compzillaWindowEvent **retval)
+{
+    compzillaWindowEvent *ev = new compzillaWindowEvent (win);
+    if (!ev)
+        return NS_ERROR_OUT_OF_MEMORY;
+
+    NS_ADDREF(ev);
+
+    *retval = ev;
+    return NS_OK;
+}
+
+nsresult CZ_NewCompzillaPropertyChangeEvent (compzillaIWindow *win, long atom, bool deleted,
+                                             nsIPropertyBag2 *bag,
+                                             compzillaWindowEvent **retval)
+{
+    compzillaWindowEvent *ev = new compzillaWindowEvent (win, atom, deleted, bag);
+    if (!ev)
+        return NS_ERROR_OUT_OF_MEMORY;
+
+    NS_ADDREF(ev);
+
+    *retval = ev;
+    return NS_OK;
+}
+
+nsresult CZ_NewCompzillaConfigureEvent (compzillaIWindow *win,
+                                        bool mapped,
+                                        bool override,
+                                        long x,
+                                        long y,
+                                        long width,
+                                        long height,
+                                        long borderWidth,
+                                        compzillaIWindow *aboveWin,
+                                        compzillaWindowEvent **retval)
+{
+    compzillaWindowEvent *ev = new compzillaWindowEvent (win, mapped,
+                                                         override,
+                                                         x, y,
+                                                         width, height,
+                                                         borderWidth,
+                                                         aboveWin);
+
+    if (!ev)
+        return NS_ERROR_OUT_OF_MEMORY;
+
+    NS_ADDREF(ev);
+
+    *retval = ev;
+    return NS_OK;
+}
+
+
+compzillaWindowEvent::compzillaWindowEvent(compzillaIWindow *window)
+    : mWindow(window)
+{
+}
+
 compzillaWindowEvent::~compzillaWindowEvent()
 {
 }
@@ -30,12 +90,6 @@ compzillaWindowEvent::~compzillaWindowEvent()
 //
 // compzillaIWindowEvent implementation...
 //
-
-compzillaWindowEvent::compzillaWindowEvent(compzillaIWindow *window)
-    : mWindow(window)
-{
-}
-
 
 NS_IMETHODIMP 
 compzillaWindowEvent::GetWindow(compzillaIWindow **aWindow)
