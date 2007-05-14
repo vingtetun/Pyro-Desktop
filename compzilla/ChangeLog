@@ -1,3 +1,28 @@
+2007-05-14  Chris Toshok  <toshok@hungry.com>
+
+	* compzilla/chrome/content/start.js: initialize the
+	allowed-actions on the frame to "minimize maximize close", and as
+	a temporary hack, explicitly set its wm-class so that we can see
+	if that works.
+
+	* compzilla/chrome/skin/compzilla.css: add the pyro (and xul, for
+	completeness' sake).  Also add some example attribute selectors
+	which only show the window manager buttons (close, minimize,
+	maximize) when the allowed-actions attribute contains the proper
+	value.  Add an example of using the wm-class attribute for
+	styling, although it doesn't work without the hack that I stuck in
+	start.js.
+
+	* compzilla/chrome/content/atoms.js (Atoms): add WM_CLASS and
+	WM_TRANSIENT_FOR.
+
+	* compzilla/chrome/content/start.xul: add the pyro xml namespace.
+
+	* compzilla/chrome/content/frame.js: add {get,set}WMClass and
+	{get,set}AllowedActions which provide for a means of styling
+	windows based on their X window manager class, as well as a way
+	for showing/hiding window manager functionality.
+
 2007-05-14  Alex Graveley  <alex@beatniksoftware.com>
 
 	* compzilla/chrome/content/windowStack.js (debugLayer): Change to

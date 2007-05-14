@@ -6,6 +6,7 @@
 <window id="desktopWindow"
         xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
 	xmlns:html="http://www.w3.org/1999/xhtml"
+        xmlns:pyro="http://www.pyrodesktop.org/compzilla"
         xmlns:xul="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
 	title="compzilla"
 	onload="compzillaLoad()" 

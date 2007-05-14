@@ -34,6 +34,15 @@ function compzillaLoad()
 		    frame.show ();
 		}
 
+		/* initialize newly created frames to have all actions
+		   available.  we'll selectively turn them off later
+		   based on properties */
+		frame.setAllowedActions ("minimize maximize close");
+
+		/* XXX temporary hack to make sure I'm not totally
+		   losing my mind */
+		frame.setWMClass ("gnome-terminal Gnome-terminal");
+
 		stack = document.getElementById ("windowStack");
     		stack.stackWindow (frame);
 	    }

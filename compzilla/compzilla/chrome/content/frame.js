@@ -48,6 +48,7 @@ function _compzillaFrameCommon (content, templateId)
 
 	if (content.destroy) {
 	    content.destroy ();
+	    frame._content = null;
 	}
 	windowStack.removeWindow (frame);
     };
@@ -55,6 +56,16 @@ function _compzillaFrameCommon (content, templateId)
     frame._title = getDescendentById (frame, "windowTitle");
     frame.setTitle = function (title) { if (frame._title) frame._title.value = title; };
     frame.getTitle = function () { return frame._title ? frame._title.value : null; };
+
+    frame.getWMClass = function () { return frame.getAttributeNS ("http://www.pyrodesktop.org/compzilla",
+								  "wm-class"); }
+    frame.setWMClass = function (wmclass) { return frame.setAttributeNS ("http://www.pyrodesktop.org/compzilla",
+									 "wm-class", wmclass); }
+
+    frame.getAllowedActions = function () { return frame.getAttributeNS ("http://www.pyrodesktop.org/compzilla",
+									 "allowed-actions"); }
+    frame.setAllowedActions = function (actions) { return frame.setAttributeNS ("http://www.pyrodesktop.org/compzilla",
+										"allowed-actions", actions); }
 
     frame.moveResize = function (x, y, width, height) {
 	//Debug ("frame.moveResize: w=" + width + ", h=" + height);
@@ -200,6 +211,11 @@ function _connectFrameDragListeners (frame)
     };
 }
 
+function _copyPyroFrameAttributes (from, to)
+{
+    to.setWMClass (from.getWMClass ());
+    to.setAllowedActions (from.getAllowedActions ());
+}
 
 function _connectNativeWindowListeners (frame, content) 
 {
@@ -307,8 +323,19 @@ function _connectNativeWindowListeners (frame, content)
 
 			    new_frame._net_wm_window_type = type;
 
+			    _copyPyroFrameAttributes (frame, new_frame);
+
 			    windowStack.replaceWindow (frame, new_frame);
 
+			    return;
+			}
+
+			if (ev.atom == Atoms.WM_CLASS()) {
+			    frame.setWMClass (ev.value.getProperty (".instanceName") +
+					      " " +
+					      ev.value.getProperty (".className"));
+
+			    Debug ("frame wm-class = `" +  frame.getWMClass ());
 			    return;
 			}
 		    }

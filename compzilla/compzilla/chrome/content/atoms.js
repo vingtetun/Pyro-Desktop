@@ -17,8 +17,10 @@ Atoms = {
       return this.cache[atom_name];
     },
 
+    WM_CLASS : function () { return this.Get ("WM_CLASS"); },
     WM_NAME : function () { return this.Get ("WM_NAME"); },
     WM_NORMAL_HINTS : function () { return this.Get ("WM_NORMAL_HINTS"); },
+    WM_TRANSIENT_FOR : function () { return this.Get ("WM_TRANSIENT_FOR"); },
     _NET_WM_NAME : function () { return this.Get ("_NET_WM_NAME"); },
     _NET_WM_WINDOW_TYPE : function () { return this.Get ("_NET_WM_WINDOW_TYPE"); },
     _NET_WM_WINDOW_TYPE_DOCK : function () { return this.Get ("_NET_WM_WINDOW_TYPE_DOCK"); },
