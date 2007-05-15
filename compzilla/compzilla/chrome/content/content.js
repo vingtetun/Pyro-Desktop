@@ -2,7 +2,7 @@
 
 
 function CompzillaWindowContent (nativewin) {
-    content = document.getElementById ("windowContent").cloneNode (true);
+    var content = document.getElementById ("windowContent").cloneNode (true);
 
     Debug ("Creating content for nativewin=" + nativewin);
 

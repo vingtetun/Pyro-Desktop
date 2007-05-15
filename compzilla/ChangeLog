@@ -1,3 +1,9 @@
+2007-05-15  Chris Toshok  <toshok@hungry.com>
+
+	* compzilla/chrome/content/content.js: make "content" a local
+	variable here, or else we're using a global and trashing over
+	previous CompzillaWindowContent calls.
+
 2007-05-14  Chris Toshok  <toshok@hungry.com>
 
 	* compzilla/chrome/content/start.js: initialize the
