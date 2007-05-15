@@ -25,8 +25,10 @@ Atoms = {
     _NET_WM_WINDOW_TYPE : function () { return this.Get ("_NET_WM_WINDOW_TYPE"); },
     _NET_WM_WINDOW_TYPE_DOCK : function () { return this.Get ("_NET_WM_WINDOW_TYPE_DOCK"); },
     _NET_WM_WINDOW_TYPE_MENU : function () { return this.Get ("_NET_WM_WINDOW_TYPE_MENU"); },
+    _NET_WM_WINDOW_TYPE_NORMAL : function () { return this.Get ("_NET_WM_WINDOW_TYPE_NORMAL"); },
     _NET_WM_WINDOW_TYPE_DESKTOP : function () { return this.Get ("_NET_WM_WINDOW_TYPE_DESKTOP"); },
     _NET_WM_WINDOW_TYPE_SPLASH : function () { return this.Get ("_NET_WM_WINDOW_TYPE_SPLASH"); },
+    _NET_WM_WINDOW_TYPE_TOOLBAR : function () { return this.Get ("_NET_WM_WINDOW_TYPE_TOOLBAR"); },
 }
 
 document.Atoms = Atoms;

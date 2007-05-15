@@ -1,5 +1,17 @@
 2007-05-15  Chris Toshok  <toshok@hungry.com>
 
+	* compzilla/chrome/content/atoms.js (Atoms): add
+	_NET_WM_WINDOW_TYPE_TOOLBAR/NORMAL.
+
+	* compzilla/chrome/content/frame.js: _compzillaFrameCommon is
+	starting to get pretty confusing, with the actual code we're
+	executing as well as the methods we're adding.  split the methods
+	out into a separate object.  Also, add some code to follow
+	metacity's method for setting allowed actions based on window
+	type.
+
+2007-05-15  Chris Toshok  <toshok@hungry.com>
+
 	* compzilla/chrome/content/content.js: make "content" a local
 	variable here, or else we're using a global and trashing over
 	previous CompzillaWindowContent calls.

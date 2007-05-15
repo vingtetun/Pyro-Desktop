@@ -31,87 +31,164 @@ function addCachedEventListener (o, eventid, cachedListener, newListener, usecap
 }
 
 
+var FrameMethods = {
+    getContent: function () {
+	return this._content;
+    },
+
+
+    destroy: function () {
+	Debug ("frame.destroy");
+
+	if (this._content && this._content.destroy) {
+	    this._content.destroy ();
+	}
+	windowStack.removeWindow (this);
+    },
+
+
+    setTitle: function (title) {
+	if (this._title)
+	    this._title.value = title;
+    },
+
+
+    getTitle: function () {
+	return this._title ? this._title.value : null;
+    },
+
+
+    getWMClass: function () {
+	return this.getAttributeNS ("http://www.pyrodesktop.org/compzilla",
+				    "wm-class");
+    },
+
+
+    setWMClass: function (wmclass) {
+	return this.setAttributeNS ("http://www.pyrodesktop.org/compzilla",
+				    "wm-class", wmclass);
+    },
+
+
+    getAllowedActions: function () {
+	return this.getAttributeNS ("http://www.pyrodesktop.org/compzilla",
+				    "allowed-actions");
+    },
+
+
+    setAllowedActions: function (actions) {
+	return this.setAttributeNS ("http://www.pyrodesktop.org/compzilla",
+				    "allowed-actions", actions);
+    },
+
+    moveResize: function (x, y, width, height) {
+	Debug ("frame.moveResize: w=" + width + ", h=" + height);
+
+	this._moveResize (x, y, width, height);
+
+	if (this._content.getNativeWindow) {
+	    svc.ConfigureWindow (this._content.getNativeWindow().nativeWindowId,
+				 x + this._contentBox.offsetLeft,
+				 y + this._contentBox.offsetTop,
+				 this._contentBox.offsetWidth,
+				 this._contentBox.offsetHeight,
+				 0);
+	}
+    },
+
+
+    _moveResize: function (x, y, width, height) {
+	if (this.offsetWidth != width) {
+	    this._contentBox.style.width = width + "px";
+	    if (this._titleBox)
+		this._titleBox.style.width = width + "px";
+	    this._content.width = width;
+	}
+	if (this.offsetHeight != height) {
+	    this._contentBox.style.height = height + "px";
+	    this._content.height = height;
+	}
+	if (this.offsetLeft != x) {
+	    this.style.left = x + "px";
+	}
+	if (this.offsetTop != y) {
+	    this.style.top = y + "px";
+	}
+    },
+
+
+    _recomputeAllowedActions: function () {
+	/* this only applies for native windows, and those windows
+	   which have had mwm hints/_net_wm_window_type set. */
+	if (/* XXX mwm hints? */ this._net_wm_window_type == undefined)
+	    return;
+
+	var max_action = "maximize ";
+	var min_action = "minimize ";
+	var close_action = "close ";
+	var resize_action = "resize ";
+	var fullscreen_action = "fullscreen ";
+	var move_action = "move ";
+	var shade_action = "shade ";
+
+	// XXX first consider the mwm hints
+
+	// next override using metacity's rules for assigning features
+	// based on EWMH's window types.
+	if (this._net_wm_window_type == Atoms._NET_WM_WINDOW_TYPE_DESKTOP () ||
+	    this._net_wm_window_type == Atoms._NET_WM_WINDOW_TYPE_DOCK () ||
+	    this._net_wm_window_type == Atoms._NET_WM_WINDOW_TYPE_SPLASH ()) {
+	    close_action = "";
+	    shade_action = "";
+	    move_action = "";
+	    resize_action = "";
+	}
+
+
+	if (this._net_wm_window_type != Atoms._NET_WM_WINDOW_TYPE_NORMAL ()) {
+	    max_action = "";
+	    min_action = "";
+	    fullscreen_action = "";
+	}
+
+	if (!resize_action) {
+	    max_action = "";
+	    fullscreen_action = "";
+	}
+    },
+
+
+    show: function () {
+	Debug ("frame.show");
+
+	this.style.display = "block";
+    },
+
+
+    hide: function () {
+	Debug ("frame.hide");
+
+	this.style.display = "none";
+    },
+
+};
+
 function _compzillaFrameCommon (content, templateId)
 {
     var frame = document.getElementById (templateId).cloneNode (true);
 
     frame._content = content;
-    frame.getContent = function () { return frame._content; };
 
-    titleBox = getDescendentById (frame, "windowTitleBox");
+    frame._titleBox = getDescendentById (frame, "windowTitleBox");
 
-    contentBox = getDescendentById (frame, "windowContentBox");
-    contentBox.appendChild (content);
-
-    frame.destroy = function () {
-	Debug ("frame.destroy");
-
-	if (content.destroy) {
-	    content.destroy ();
-	    frame._content = null;
-	}
-	windowStack.removeWindow (frame);
-    };
+    frame._contentBox = getDescendentById (frame, "windowContentBox");
+    frame._contentBox.appendChild (content);
 
     frame._title = getDescendentById (frame, "windowTitle");
-    frame.setTitle = function (title) { if (frame._title) frame._title.value = title; };
-    frame.getTitle = function () { return frame._title ? frame._title.value : null; };
 
-    frame.getWMClass = function () { return frame.getAttributeNS ("http://www.pyrodesktop.org/compzilla",
-								  "wm-class"); }
-    frame.setWMClass = function (wmclass) { return frame.setAttributeNS ("http://www.pyrodesktop.org/compzilla",
-									 "wm-class", wmclass); }
-
-    frame.getAllowedActions = function () { return frame.getAttributeNS ("http://www.pyrodesktop.org/compzilla",
-									 "allowed-actions"); }
-    frame.setAllowedActions = function (actions) { return frame.setAttributeNS ("http://www.pyrodesktop.org/compzilla",
-										"allowed-actions", actions); }
-
-    frame.moveResize = function (x, y, width, height) {
-	//Debug ("frame.moveResize: w=" + width + ", h=" + height);
-
-	frame._moveResize (x, y, width, height);
-
-	if (content.getNativeWindow) {
-	    svc.ConfigureWindow (content.getNativeWindow().nativeWindowId,
-				 x + contentBox.offsetLeft,
-				 y + contentBox.offsetTop,
-				 contentBox.offsetWidth,
-				 contentBox.offsetHeight,
-				 0);
-	}
-    };
-
-    frame._moveResize = function (x, y, width, height) {
-	if (frame.offsetWidth != width) {
-	    contentBox.style.width = width + "px";
-	    if (titleBox)
-		titleBox.style.width = width + "px";
-	    content.width = width;
-	}
-	if (frame.offsetHeight != height) {
-	    contentBox.style.height = height + "px";
-	    content.height = height;
-	}
-	if (frame.offsetLeft != x) {
-	    frame.style.left = x + "px";
-	}
-	if (frame.offsetTop != y) {
-	    frame.style.top = y + "px";
-	}
-    };
-
-    frame.show = function () {
-	Debug ("frame.show");
-
-	frame.style.display = "block";
-    };
-
-    frame.hide = function () {
-	Debug ("frame.hide");
-
-	frame.style.display = "none";
-    };
+    for (var m in FrameMethods) {
+	frame[m] = FrameMethods[m];
+    }
 
     if (content.getNativeWindow) {
 	_connectNativeWindowListeners (frame, content);
@@ -228,7 +305,7 @@ function _connectNativeWindowListeners (frame, content)
 	    frame._nativeDestroyListener,
 		{
 		    handleEvent: function (ev) {
-			Debug ("destroy.handleEvent");
+			Debug ("destroy.handleEvent (" + content + ")");
 			frame.destroy ();
 		    }
 		},
@@ -310,7 +387,8 @@ function _connectNativeWindowListeners (frame, content)
 
 			    if (type == Atoms._NET_WM_WINDOW_TYPE_DOCK() ||
 				type == Atoms._NET_WM_WINDOW_TYPE_DESKTOP() ||
-				type == Atoms._NET_WM_WINDOW_TYPE_SPLASH()) {
+				type == Atoms._NET_WM_WINDOW_TYPE_SPLASH() ||
+				type == Atoms._NET_WM_WINDOW_TYPE_TOOLBAR()) {
 				if (frame.className == "windowFrame") {
 				    new_frame = CompzillaDockFrame (frame.getContent());
 				}
@@ -324,6 +402,8 @@ function _connectNativeWindowListeners (frame, content)
 			    new_frame._net_wm_window_type = type;
 
 			    _copyPyroFrameAttributes (frame, new_frame);
+
+			    new_frame._recomputeAllowedActions ();
 
 			    windowStack.replaceWindow (frame, new_frame);
 
