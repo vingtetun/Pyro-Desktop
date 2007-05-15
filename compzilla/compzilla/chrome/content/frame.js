@@ -43,6 +43,10 @@ var FrameMethods = {
 	if (this._content && this._content.destroy) {
 	    this._content.destroy ();
 	}
+
+	if (_focusedFrame == this)
+	    _focusedFrame = null;
+
 	windowStack.removeWindow (this);
     },
 

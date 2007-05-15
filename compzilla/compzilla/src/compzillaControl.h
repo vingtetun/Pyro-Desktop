@@ -2,7 +2,7 @@
 
 #include <nsCOMPtr.h>
 #define MOZILLA_INTERNAL_API
-#include <nsClassHashtable.h>
+#include <nsRefPtrHashtable.h>
 #undef MOZILLA_INTERNAL_API
 #include <nsIDOMEventTarget.h>
 #include <nsIWidget.h>
@@ -30,7 +30,7 @@ public:
     virtual ~compzillaControl ();
 
 private:
-    compzillaWindow *FindWindow (Window win);
+    already_AddRefed<compzillaWindow> FindWindow (Window win);
 
     void AddWindow (Window win);
     void DestroyWindow (Window win);
@@ -41,7 +41,7 @@ private:
     void WindowDamaged (Window win, XRectangle *rect);
 
     GdkWindow *GetNativeWindow(nsIDOMWindow *window);
-    nsCOMPtr<nsIWidget> GetNativeWidget(nsIDOMWindow *window);
+    nsresult GetNativeWidget(nsIDOMWindow *window, nsIWidget **widget);
 
     bool InitXAtoms ();
     bool InitXExtensions ();
@@ -74,7 +74,7 @@ private:
     bool mIsCompositor;
 
     nsCOMPtr<nsIDOMWindow> mDOMWindow;
-    nsClassHashtable<nsUint32HashKey, compzillaWindow> mWindowMap;
+    nsRefPtrHashtable<nsUint32HashKey, compzillaWindow> mWindowMap;
 
     compzillaEventManager mWindowCreateEvMgr;
     compzillaEventManager mWindowDestroyEvMgr;

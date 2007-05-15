@@ -41,13 +41,11 @@ prefs_DATA = $(PREFS_SRCDIR)/prefs.js
 
 #
 # The 'components' directory contains the generated .xpt typelibs,
-# libcompzilla.so, and compzillaWindowManager.js
+# libcompzilla.so
 #
 
 componentdir = $(extensiondir)/components
-COMPONENT_SRCDIR = $(EXTENSION_SRCDIR)/components
-component_DATA = $(IDL_XPT_FILES)				\
-		 $(COMPONENT_SRCDIR)/compzillaWindowManager.js
+component_DATA = $(IDL_XPT_FILES)
 component_LTLIBRARIES = libcompzilla.la
 
 

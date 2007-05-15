@@ -4,6 +4,15 @@
 #include <nsMemory.h>
 #include "compzillaWindowEvents.h"
 
+#if WITH_SPEW
+#define SPEW(format...) printf("   - " format)
+#else
+#define SPEW(format...)
+#endif
+
+#define INFO(format...) printf(" *** " format)
+#define WARNING(format...) printf(" !!! " format)
+#define ERROR(format...) fprintf(stderr, format)
 
 NS_IMPL_ADDREF(compzillaWindowEvent)
 NS_IMPL_RELEASE(compzillaWindowEvent)
@@ -31,6 +40,8 @@ nsresult CZ_NewCompzillaWindowEvent (compzillaIWindow *win, compzillaWindowEvent
 
     NS_ADDREF(ev);
 
+    SPEW ("CZ_NewCompzillaWindowEvent = %p\n", ev);
+
     *retval = ev;
     return NS_OK;
 }
@@ -44,6 +55,8 @@ nsresult CZ_NewCompzillaPropertyChangeEvent (compzillaIWindow *win, long atom, b
         return NS_ERROR_OUT_OF_MEMORY;
 
     NS_ADDREF(ev);
+
+    SPEW ("CZ_NewCompzillaPropertyChangeEvent = %p\n", ev);
 
     *retval = ev;
     return NS_OK;
@@ -72,6 +85,8 @@ nsresult CZ_NewCompzillaConfigureEvent (compzillaIWindow *win,
 
     NS_ADDREF(ev);
 
+    SPEW ("CZ_NewCompzillaConfigureEvent = %p\n", ev);
+
     *retval = ev;
     return NS_OK;
 }
@@ -84,6 +99,7 @@ compzillaWindowEvent::compzillaWindowEvent(compzillaIWindow *window)
 
 compzillaWindowEvent::~compzillaWindowEvent()
 {
+    SPEW ("compzillaWindowEvent::~compzillaWindowEvent %p\n", this);
 }
 
 
@@ -210,6 +226,10 @@ compzillaWindowEvent::compzillaWindowEvent(compzillaIWindow *window,
       mDeleted(deleted),
       mBag(bag)
 {
+    // XXX i can't believe there's not some automatic nsCOMPtr magic
+    // that does this... but this fixes the crash we're seeing when
+    // the GC runs.
+    NS_ADDREF (bag);
 }
 
 

@@ -51,7 +51,7 @@ public:
                   compzillaEventManager& eventMgr);
 
 private:
-    ~compzillaWindowEvent();
+    virtual ~compzillaWindowEvent();
 
 protected:
     nsCOMPtr<compzillaIWindow> mWindow;
@@ -80,7 +80,7 @@ public:
     compzillaWindowConfigureEvent();
 
 private:
-    ~compzillaWindowConfigureEvent();
+    virtual ~compzillaWindowConfigureEvent();
 
 protected:
     /* additional members */
@@ -97,7 +97,7 @@ public:
     compzillaWindowPropertyEvent();
 
 private:
-    ~compzillaWindowPropertyEvent();
+    virtual ~compzillaWindowPropertyEvent();
 
 protected:
     /* additional members */

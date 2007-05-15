@@ -254,8 +254,8 @@ compzillaControl::gdk_filter_func (GdkXEvent *xevent, GdkEvent *event, gpointer 
 }
 
 
-nsCOMPtr<nsIWidget>
-compzillaControl::GetNativeWidget(nsIDOMWindow *window)
+nsresult
+compzillaControl::GetNativeWidget(nsIDOMWindow *window, nsIWidget **widget)
 {
 #ifdef MOZILLA_1_8_BRANCH
     nsCOMPtr<nsIScriptGlobalObject> global = do_QueryInterface(window);
@@ -266,21 +266,21 @@ compzillaControl::GetNativeWidget(nsIDOMWindow *window)
     if (global) {
         nsCOMPtr<nsIBaseWindow> baseWin = do_QueryInterface(global->GetDocShell());
         if (baseWin) {
-            nsCOMPtr<nsIWidget> widget;
-            baseWin->GetMainWidget(getter_AddRefs(widget));
-            return widget;
+            baseWin->GetMainWidget(widget);
+            return NS_OK;
         }
     }
 
-    return NULL;
+    return NS_ERROR_FAILURE;
 }
 
 
 GdkWindow *
 compzillaControl::GetNativeWindow(nsIDOMWindow *window)
 {
-    nsCOMPtr<nsIWidget> widget = GetNativeWidget (window);
-    if (widget) {
+    nsCOMPtr<nsIWidget> widget;
+
+    if (NS_OK == GetNativeWidget (window, getter_AddRefs (widget))) {
         GdkWindow *iframe = (GdkWindow *)widget->GetNativeData (NS_NATIVE_WINDOW);
         GdkWindow *toplevel = gdk_window_get_toplevel (iframe);
 
@@ -644,20 +644,19 @@ compzillaControl::AddWindow (Window win)
 {
     INFO ("AddWindow for window %p\n", win);
 
-    compzillaWindow *compwin;
-    if (NS_OK != CZ_NewCompzillaWindow (mXDisplay, win, &compwin))
+    nsRefPtr<compzillaWindow> compwin;
+    if (NS_OK != CZ_NewCompzillaWindow (mXDisplay, win, getter_AddRefs (compwin)))
         return;
 
     if (compwin->mAttr.c_class == InputOnly) {
         WARNING ("AddWindow ignoring InputOnly window %p\n", win);
-        NS_RELEASE (compwin);
         return;
     }
 
     mWindowMap.Put (win, compwin);
 
     if (mWindowCreateEvMgr.HasEventListeners ()) {
-        compzillaWindowEvent *ev;
+        nsRefPtr<compzillaWindowEvent> ev;
         if (NS_OK == CZ_NewCompzillaConfigureEvent (compwin,
                                                     compwin->mAttr.map_state == IsViewable,
                                                     compwin->mAttr.override_redirect != 0,
@@ -665,7 +664,7 @@ compzillaControl::AddWindow (Window win)
                                                     compwin->mAttr.width, compwin->mAttr.height,
                                                     compwin->mAttr.border_width,
                                                     NULL, 
-                                                    &ev)) {
+                                                    getter_AddRefs(ev))) {
             ev->Send (NS_LITERAL_STRING ("windowcreate"), this, mWindowCreateEvMgr);
         }
     }
@@ -679,18 +678,20 @@ compzillaControl::AddWindow (Window win)
 void
 compzillaControl::DestroyWindow (Window win)
 {
-    compzillaWindow *compwin = FindWindow (win);
+    nsRefPtr<compzillaWindow> compwin = FindWindow (win);
     if (compwin) {
         compwin->DestroyWindow ();
 
         if (mWindowDestroyEvMgr.HasEventListeners ()) {
-            compzillaWindowEvent *ev;
-            if (NS_OK == CZ_NewCompzillaWindowEvent (compwin, &ev)) {
+            nsRefPtr<compzillaWindowEvent> ev;
+            if (NS_OK == CZ_NewCompzillaWindowEvent (compwin, getter_AddRefs(ev))) {
                 ev->Send (NS_LITERAL_STRING ("windowdestroy"), this, mWindowDestroyEvMgr);
             }
         }
 
+        SPEW ("BEFORE REMOVING %p\n", compwin.get());
         mWindowMap.Remove (win);
+        SPEW ("AFTER REMOVING %p\n", compwin.get());
     }
 }
 
@@ -698,7 +699,7 @@ compzillaControl::DestroyWindow (Window win)
 void
 compzillaControl::ForgetWindow (Window win)
 {
-    compzillaWindow *compwin = FindWindow (win);
+    nsRefPtr<compzillaWindow> compwin = FindWindow (win);
     if (compwin) {
         compwin->DestroyWindow ();
         mWindowMap.Remove (win);
@@ -709,7 +710,7 @@ compzillaControl::ForgetWindow (Window win)
 void
 compzillaControl::MapWindow (Window win)
 {
-    compzillaWindow *compwin = FindWindow (win);
+    nsRefPtr<compzillaWindow> compwin = FindWindow (win);
     if (compwin) {
         compwin->MapWindow ();
     }
@@ -719,7 +720,7 @@ compzillaControl::MapWindow (Window win)
 void
 compzillaControl::UnmapWindow (Window win)
 {
-    compzillaWindow *compwin = FindWindow (win);
+    nsRefPtr<compzillaWindow> compwin = FindWindow (win);
     if (compwin) {
         compwin->UnmapWindow ();
     }
@@ -729,7 +730,7 @@ compzillaControl::UnmapWindow (Window win)
 void
 compzillaControl::PropertyChanged (Window win, Atom prop, bool deleted)
 {
-    compzillaWindow *compwin = FindWindow (win);
+    nsRefPtr<compzillaWindow> compwin = FindWindow (win);
     if (compwin) {
         compwin->PropertyChanged (win, prop, deleted);
     }
@@ -739,14 +740,14 @@ compzillaControl::PropertyChanged (Window win, Atom prop, bool deleted)
 void
 compzillaControl::WindowDamaged (Window win, XRectangle *rect)
 {
-    compzillaWindow *compwin = FindWindow (win);
+    nsRefPtr<compzillaWindow> compwin = FindWindow (win);
     if (compwin) {
         compwin->WindowDamaged (rect);
     }
 }
 
 
-compzillaWindow *
+already_AddRefed<compzillaWindow>
 compzillaControl::FindWindow (Window win)
 {
     compzillaWindow *compwin;
@@ -794,10 +795,10 @@ compzillaControl::Filter (GdkXEvent *xevent, GdkEvent *event)
               x11_event->xconfigure.border_width,
               x11_event->xconfigure.override_redirect);
 
-        compzillaWindow *compwin = FindWindow (x11_event->xconfigure.window);
+        nsRefPtr<compzillaWindow> compwin = FindWindow (x11_event->xconfigure.window);
 
         if (compwin && x11_event->xconfigure.override_redirect) {
-            compzillaWindow *abovewin = FindWindow (x11_event->xconfigure.above);
+            nsRefPtr<compzillaWindow> abovewin = FindWindow (x11_event->xconfigure.above);
 
             compwin->WindowConfigured (x11_event->xconfigure.x,
                                        x11_event->xconfigure.y,
@@ -818,10 +819,10 @@ compzillaControl::Filter (GdkXEvent *xevent, GdkEvent *event)
               x11_event->xconfigure.border_width,
               x11_event->xconfigure.override_redirect);
 
-        compzillaWindow *compwin = FindWindow (x11_event->xconfigure.window);
+        nsRefPtr<compzillaWindow> compwin = FindWindow (x11_event->xconfigure.window);
 
         if (compwin) {
-            compzillaWindow *abovewin = FindWindow (x11_event->xconfigure.above);
+            nsRefPtr<compzillaWindow> abovewin = FindWindow (x11_event->xconfigure.above);
 
             compwin->WindowConfigured (x11_event->xconfigure.x,
                                        x11_event->xconfigure.y,
@@ -857,7 +858,7 @@ compzillaControl::Filter (GdkXEvent *xevent, GdkEvent *event)
             return GDK_FILTER_REMOVE;
         }
 
-        compzillaWindow *compwin = FindWindow (x11_event->xreparent.window);
+        nsRefPtr<compzillaWindow> compwin = FindWindow (x11_event->xreparent.window);
 
         if (x11_event->xreparent.parent == GDK_DRAWABLE_XID (mRoot) && !compwin) {
             AddWindow (x11_event->xreparent.window);
@@ -937,8 +938,8 @@ compzillaControl::Filter (GdkXEvent *xevent, GdkEvent *event)
         */
         XevieSendEvent (mXDisplay, x11_event, XEVIE_UNMODIFIED);
 
-        nsCOMPtr<nsIWidget> widget = GetNativeWidget(mDOMWindow);
-        if (widget) {
+        nsCOMPtr<nsIWidget> widget;
+        if (NS_OK == GetNativeWidget (mDOMWindow, getter_AddRefs (widget))) {
             // Call nsIWidget::DispatchEvent?
         }
 

@@ -113,9 +113,13 @@ compzillaWindow::~compzillaWindow()
 {
     SPEW ("compzillaWindow::~compzillaWindow %p, xid=%p\n", this, mWindow);
 
-    // Don't send events
-    // FIXME: This crashes for some reason
-    //ConnectListeners (false);
+    // Allow a caller to remove O(N^2) behavior by removing end-to-start.
+    for (PRUint32 i = mContentNodes.Count() - 1; i != PRUint32(-1); --i) {
+        SPEW ("disconnecting content node %d\n", i);
+        nsCOMPtr<nsISupports> aContent = mContentNodes.ObjectAt(i);
+        ConnectListeners (false, aContent);
+    }
+    mContentNodes.Clear ();
 
     // This is the only resource that stays around after window destruction.
     ResetPixmap ();
@@ -137,8 +141,6 @@ compzillaWindow::~compzillaWindow()
         XShapeSelectInput (mDisplay, mWindow, NoEventMask);
         XUngrabButton (mDisplay, AnyButton, AnyModifier, mWindow);
     }
-
-    mContentNodes.Clear();
 }
 
 
@@ -270,6 +272,8 @@ compzillaWindow::AddContentNode (nsISupports* aContent)
 NS_IMETHODIMP
 compzillaWindow::RemoveContentNode (nsISupports* aContent)
 {
+    SPEW ("compzillaWindow::RemoveContentNode %p\n", this);
+
     // Allow a caller to remove O(N^2) behavior by removing end-to-start.
     for (PRUint32 i = mContentNodes.Count() - 1; i != PRUint32(-1); --i) {
         if (mContentNodes.ObjectAt(i) == aContent) {
@@ -1019,13 +1023,18 @@ compzillaWindow::DispatchEvent (nsIDOMEvent *evt, PRBool *_retval)
 void
 compzillaWindow::DestroyWindow ()
 {
+    SPEW ("compzillaWindow::DestroyWindow %p\n", this);
+
     mIsDestroyed = true;
 
     if (mDestroyEvMgr.HasEventListeners ()) {
-        compzillaWindowEvent *ev;
-        if (NS_OK == CZ_NewCompzillaWindowEvent (this, &ev))
+        nsRefPtr<compzillaWindowEvent> ev;
+        if (NS_OK == CZ_NewCompzillaWindowEvent (this, getter_AddRefs (ev)))
             ev->Send (NS_LITERAL_STRING ("destroy"), this, mDestroyEvMgr);
     }
+
+    // Damage is not valid if the window is already destroyed
+    mDamage = 0;
 }
 
 
@@ -1036,8 +1045,8 @@ compzillaWindow::MapWindow ()
     EnsureDamage ();
 
     if (mShowEvMgr.HasEventListeners ()) {
-        compzillaWindowEvent *ev;
-        if (NS_OK == CZ_NewCompzillaWindowEvent (this, &ev))
+        nsRefPtr<compzillaWindowEvent> ev;
+        if (NS_OK == CZ_NewCompzillaWindowEvent (this, getter_AddRefs (ev)))
             ev->Send (NS_LITERAL_STRING ("map"), this, mShowEvMgr);
     }
 }
@@ -1049,8 +1058,8 @@ compzillaWindow::UnmapWindow ()
     UpdateAttributes ();
 
     if (mHideEvMgr.HasEventListeners ()) {
-        compzillaWindowEvent *ev;
-        if (NS_OK == CZ_NewCompzillaWindowEvent (this, &ev))
+        nsRefPtr<compzillaWindowEvent> ev;
+        if (NS_OK == CZ_NewCompzillaWindowEvent (this, getter_AddRefs (ev)))
             ev->Send (NS_LITERAL_STRING ("unmap"), this, mHideEvMgr);
     }
 }
@@ -1238,8 +1247,8 @@ compzillaWindow::PropertyChanged (Window win, Atom prop, bool deleted)
 #undef SET_PROP
 
     if (mPropertyChangeEvMgr.HasEventListeners ()) {
-        compzillaWindowEvent *ev;
-        if (NS_OK == CZ_NewCompzillaPropertyChangeEvent (this, prop, deleted, bag2, &ev))
+        nsRefPtr<compzillaWindowEvent> ev;
+        if (NS_OK == CZ_NewCompzillaPropertyChangeEvent (this, prop, deleted, bag2, getter_AddRefs (ev)))
             ev->Send (NS_LITERAL_STRING ("propertychange"), this, mPropertyChangeEvMgr);
     }
 }
@@ -1283,14 +1292,15 @@ compzillaWindow::WindowConfigured (PRInt32 x, PRInt32 y,
         // *can't* reliably specify a window to raise/lower above/below, since
         // clients can't depend on the fact that other topevel windows are
         // siblings of each other.
-        compzillaWindowEvent *ev;
+        nsRefPtr<compzillaWindowEvent> ev;
         if (NS_OK == CZ_NewCompzillaConfigureEvent (this,
                                                     mAttr.map_state == IsViewable,
                                                     mAttr.override_redirect != 0,
                                                     x, y,
                                                     width, height,
                                                     border,
-                                                    aboveWin, &ev)) {
+                                                    aboveWin,
+                                                    getter_AddRefs (ev))) {
             ev->Send (NS_LITERAL_STRING ("configure"), this, mConfigureEvMgr);
         }
     }

@@ -1,5 +1,51 @@
 2007-05-15  Chris Toshok  <toshok@hungry.com>
 
+	* compzilla/Makefile.am (component_DATA): remove
+	compzillaWindowManager.js from the list of files to install.
+
+	* compzilla/chrome/content/frame.js (frame.destroy): if the
+	destroyed frame was the one that was focused, clear the ref so it
+	can be collected.
+
+	* compzilla/src/compzillaControl.h (class compzillaControl):
+	update signature for FindWindow and GetNativeWidget.  Also, make
+	mWindowMap an nsRefPtrHashtable instead of an nsClassHashtable.
+
+	* compzilla/src/compzillaControl.cpp (AddWindow): use nsRefPtr
+	instead of a raw pointer for both the window and event.
+	(DestroyWindow): same.
+	(GetNativeWidget): change this around to using an out parameter to
+	get ref counting right.
+	(GetNativeWindow): update to track GetNativeWidget.
+	(Filter): same, and use nsRefPtr.
+	(FindWindow): mark the return value already_AddRefed.
+
+	* compzilla/src/compzillaWindowEvents.cpp
+	(CZ_NewCompzillaWindowEvent): spew the new event pointer.
+	(CZ_NewCompzillaPropertyChangeEvent): same.
+	(CZ_NewCompzillaConfigureEvent): same.
+	(~compzillaWindowEvent): spew which event we're destroying.
+	(compzillaWindowEvent): addref the property bag we pass in.  this
+	fixes the crash with gnome-terminal.  I'd like to believe the
+	nsCOMPtr machinery would do this for us, but it doesn't appear to.
+
+	* compzilla/src/compzillaWindowEvents.h: make all the dtors
+	virtual.
+
+	* compzilla/src/compzillaWindow.cpp (~compzillaWindow): add alex's
+	change to disconnect all content node listeners.
+	(DestroyWindow): set mDamage to 0 here.  use nsRefPtr and
+	getter_AddRefs. instead of a pointer which we'll need to release.
+	(MapWindow): same.
+	(PropertyChanged): same.
+	(UnmapWindow): same.
+	(WindowConfigured): same.
+
+	* compzilla/src/XAtoms.h: add _MOTIF_WM_HINTS in preparation for
+	supporting them.
+
+2007-05-15  Chris Toshok  <toshok@hungry.com>
+
 	* compzilla/chrome/content/atoms.js (Atoms): add
 	_NET_WM_WINDOW_TYPE_TOOLBAR/NORMAL.
 
