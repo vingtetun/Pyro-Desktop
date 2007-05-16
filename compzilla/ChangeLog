@@ -1,5 +1,13 @@
 2007-05-16  Alex Graveley  <alex@beatniksoftware.com>
 
+	* compzilla/chrome/skin/compzilla.css: Add a #windowContent:focus
+	class to set the outline-width to 0;
+
+	* compzilla/chrome/content/start.xul: Set tabindex here, instead
+	of in content.js, and remove mousethrough while we're here.
+
+2007-05-16  Alex Graveley  <alex@beatniksoftware.com>
+
 	* compzilla/chrome/content/frame.js: In the frame mousedown
 	handler, call _content.focus() to give keyboard focus to the
 	content, and send a FocusIn behind the scenes.  Also call
