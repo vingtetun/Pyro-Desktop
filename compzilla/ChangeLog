@@ -1,5 +1,11 @@
 2007-05-16  Alex Graveley  <alex@beatniksoftware.com>
 
+	* compzilla/defaults/preferences/prefs.js: Set
+	browser.sessionstore.resume_from_crash to false, to maintain
+	sanity.
+
+2007-05-16  Alex Graveley  <alex@beatniksoftware.com>
+
 	* compzilla/chrome/content/overlay.js: New file. Just toggles the
 	overlayLayer visibility when pressing Alt-F9.  Loads it with
 	http://www.google.com/ig (Google Homepage).
