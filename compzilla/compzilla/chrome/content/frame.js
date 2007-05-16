@@ -183,6 +183,11 @@ function _compzillaFrameCommon (content, templateId)
 
     frame._content = content;
 
+    // FIXME: Find a better scheme for switching classes
+    // Assume frame starts with unfocused class.
+    frame._classNameUnfocused = frame.className;
+    frame._classNameFocused = frame.className + "Focused";
+
     frame._titleBox = getDescendentById (frame, "windowTitleBox");
 
     frame._contentBox = getDescendentById (frame, "windowContentBox");
@@ -209,19 +214,20 @@ function _compzillaFrameCommon (content, templateId)
             handleEvent: function (event) {
 		windowStack.moveToTop (frame);
 
-		// XXX this should live in some sort of focus handler, not here.
-		if (frame.className.match ("Focused") == null) {
+                // XXX this should live in some sort of focus handler, not here.
+                if (frame.className != frame._classNameFocused) {
+                    if (_focusedFrame) {
+                        // Send FocusOut
+                        _focusedFrame._content.blur();
+                        _focusedFrame.className = _focusedFrame._classNameUnfocused;
+                    }
 
-		    if (_focusedFrame != null) {
-			_focusedFrame.className =
-			    _focusedFrame.className.slice (
-					   0, 
-					   _focusedFrame.className.lastIndexOf ("Focused"));
-		    }
-			
-		    frame.className += "Focused";
-		    _focusedFrame = frame;
-		}
+                    // Send FocusIn
+                    frame._content.focus();
+                    frame.className = frame._classNameFocused;
+
+                    _focusedFrame = frame;
+                }
             }
         },
 	true);

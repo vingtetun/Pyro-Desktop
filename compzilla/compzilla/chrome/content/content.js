@@ -2,9 +2,12 @@
 
 
 function CompzillaWindowContent (nativewin) {
+    Debug ("Creating content for nativewin=" + nativewin);
+
     var content = document.getElementById ("windowContent").cloneNode (true);
 
-    Debug ("Creating content for nativewin=" + nativewin);
+    // Allow the content to be focus()'d
+    content.tabIndex = "1";
 
     content._nativewin = nativewin;
     content.getNativeWindow = function () { return content._nativewin; }

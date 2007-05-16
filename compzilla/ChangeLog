@@ -1,5 +1,15 @@
 2007-05-16  Alex Graveley  <alex@beatniksoftware.com>
 
+	* compzilla/chrome/content/frame.js: In the frame mousedown
+	handler, call _content.focus() to give keyboard focus to the
+	content, and send a FocusIn behind the scenes.  Also call
+	_content.blur() on previously focused content to send FocusOut.
+
+	* compzilla/chrome/content/content.js: Set tabIndex="1" so the
+	content can be focused.
+
+2007-05-16  Alex Graveley  <alex@beatniksoftware.com>
+
 	* compzilla/defaults/preferences/prefs.js: Set
 	browser.sessionstore.resume_from_crash to false, to maintain
 	sanity.
