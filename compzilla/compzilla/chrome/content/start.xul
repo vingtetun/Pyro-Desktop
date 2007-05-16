@@ -29,7 +29,11 @@
             <div id="fullscreenLayer" class="windowLayer"></div>
             <div id="exposeLayer" class="windowLayer"></div>
             <div id="pickerLayer" class="windowLayer"></div>
-            <div id="overlayLayer" class="windowLayer"></div>
+            <div id="overlayLayer" class="windowLayer">
+                <div>
+                    <iframe id="overlayContent" />
+                </div>
+            </div>
 
 	</div>
 
@@ -127,6 +131,7 @@
     <script type="application/x-javascript" src="chrome://compzilla/content/content.js" />
     <script type="application/x-javascript" src="chrome://compzilla/content/debug.js" />
     <script type="application/x-javascript" src="chrome://compzilla/content/scale.js" />
+    <script type="application/x-javascript" src="chrome://compzilla/content/overlay.js" />
     <script type="application/x-javascript" src="chrome://compzilla/content/start.js" />
 
     <commandset id="compzillaDesktopCommandSet">

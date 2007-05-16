@@ -1,5 +1,21 @@
 2007-05-16  Alex Graveley  <alex@beatniksoftware.com>
 
+	* compzilla/chrome/content/overlay.js: New file. Just toggles the
+	overlayLayer visibility when pressing Alt-F9.  Loads it with
+	http://www.google.com/ig (Google Homepage).
+
+	* compzilla/chrome/content/start.xul: Put an iframe in
+	overlayLayer.
+
+	* compzilla/src/compzillaControl.cpp (InitWindowState): Reenable
+	adding existing windows at startup.
+
+2007-05-16  Alex Graveley  <alex@beatniksoftware.com>
+
+	* compzilla/chrome/content/frame.js (svc): Call ConfigureWindow in
+	response to the configure event, if the window isn't
+	override_redirect.  This fixes xterm.
+
 	* compzilla/src/compzillaWindow.cpp (MapWindow): Avoid a terver
 	roundtrip by just setting mAttr.map_state.
 	(UnmapWindow): Ditto.
@@ -10,10 +26,6 @@
 
 	* compzilla/public/compzillaIControl.idl: Add bool
 	overrideRedirect arg to SendConfigureNotify.
-
-	* compzilla/chrome/content/frame.js (svc): Call ConfigureWindow in
-	response to the configure event, if the window isn't
-	override_redirect.  This fixes xterm.
 
 2007-05-15  Chris Toshok  <toshok@hungry.com>
 

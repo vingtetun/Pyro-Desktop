@@ -416,13 +416,11 @@ compzillaControl::InitWindowState ()
                     &children, 
                     &nchildren);
 
-        /*
         for (int i = 0; i < nchildren; i++) {
             if (children[i] != mOverlay
                 && children[i] != GDK_WINDOW_XID (mMainwin))
             AddWindow (children[i]);
         }
-        */
 
         XFree (children);
     }
