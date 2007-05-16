@@ -15,7 +15,8 @@ interface compzillaIControl : nsISupports
     void SendConfigureNotify (in PRUint32 xid, 
                               in PRUint32 x, in PRUint32 y, 
                               in PRUint32 width, in PRUint32 height, 
-                              in PRUint32 border);
+                              in PRUint32 border,
+                              in boolean overrideRedirect);
     void ConfigureWindow (in PRUint32 xid, 
                           in PRUint32 x, in PRUint32 y, 
                           in PRUint32 width, in PRUint32 height, 

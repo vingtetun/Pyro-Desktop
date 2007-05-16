@@ -74,7 +74,8 @@ public:
     void WindowConfigured (PRInt32 x, PRInt32 y,
                            PRInt32 width, PRInt32 height,
                            PRInt32 border,
-                           compzillaWindow *aboveWin);
+                           compzillaWindow *aboveWin,
+                           bool override_redirect);
 
     XWindowAttributes mAttr;
 

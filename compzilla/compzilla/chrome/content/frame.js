@@ -148,7 +148,6 @@ var FrameMethods = {
 	    resize_action = "";
 	}
 
-
 	if (this._net_wm_window_type != Atoms._NET_WM_WINDOW_TYPE_NORMAL ()) {
 	    max_action = "";
 	    min_action = "";
@@ -176,6 +175,7 @@ var FrameMethods = {
     },
 
 };
+
 
 function _compzillaFrameCommon (content, templateId)
 {
@@ -292,11 +292,13 @@ function _connectFrameDragListeners (frame)
     };
 }
 
+
 function _copyPyroFrameAttributes (from, to)
 {
     to.setWMClass (from.getWMClass ());
     to.setAllowedActions (from.getAllowedActions ());
 }
+
 
 function _connectNativeWindowListeners (frame, content) 
 {
@@ -323,12 +325,15 @@ function _connectNativeWindowListeners (frame, content)
 		{
 		    handleEvent: function (ev) {
 			Debug ("configure.handleEvent");
+
 			frame._moveResize (ev.x, ev.y, ev.width, ev.height);
 
-			svc.SendConfigureNotify (nativewin.nativeWindowId, 
-						 ev.x, ev.y, 
-						 ev.width, ev.height, 
-						 ev.borderWidth);
+			if (!ev.overrideRedirect) {
+			    svc.ConfigureWindow (
+                                frame._content.getNativeWindow().nativeWindowId,
+                                ev.x, ev.y, ev.width, ev.height,
+                                ev.borderWidth);
+                        }
 
 			// XXX handle stacking requests here too
 		    }

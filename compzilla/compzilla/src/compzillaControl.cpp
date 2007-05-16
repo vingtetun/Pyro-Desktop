@@ -151,7 +151,8 @@ NS_IMETHODIMP
 compzillaControl::SendConfigureNotify (PRUint32 xid,
                                        PRUint32 x, PRUint32 y,
                                        PRUint32 width, PRUint32 height,
-                                       PRUint32 border)
+                                       PRUint32 border,
+                                       PRBool overrideRedirect)
 {
     XEvent ev;
 
@@ -167,7 +168,7 @@ compzillaControl::SendConfigureNotify (PRUint32 xid,
     ev.xconfigure.height = height;
     ev.xconfigure.border_width = border;
     ev.xconfigure.above = None;
-    ev.xconfigure.override_redirect = False; /* XXX */
+    ev.xconfigure.override_redirect = overrideRedirect;
 
     SPEW ("SendConfigureNotify (window=%p, x=%d, y=%d, width=%d, height=%d, "
           "border=%d, override=%d)\n",
@@ -196,6 +197,10 @@ compzillaControl::ConfigureWindow (PRUint32 xid,
     changes.width = width;
     changes.height = height;
     changes.border_width = border;
+
+    SPEW ("ConfigureWindow calling XConfigureWindow (window=%p, x=%d, y=%d, "
+          "width=%d, height=%d, border=%d)\n",
+          xid, x, y, width, height, border);
 
     XConfigureWindow (mXDisplay, xid,
                       (CWX | CWY | CWWidth | CWHeight | CWBorderWidth),
@@ -786,7 +791,8 @@ compzillaControl::Filter (GdkXEvent *xevent, GdkEvent *event)
         break;
     }
     case ConfigureNotify: {
-        SPEW ("ConfigureNotify: window=%p, x=%d, y=%d, width=%d, height=%d, border=%d, override=%d\n",
+        SPEW ("ConfigureNotify: window=%p, x=%d, y=%d, width=%d, height=%d, "
+              "border=%d, override=%d\n",
               x11_event->xconfigure.window,
               x11_event->xconfigure.x,
               x11_event->xconfigure.y,
@@ -798,6 +804,8 @@ compzillaControl::Filter (GdkXEvent *xevent, GdkEvent *event)
         nsRefPtr<compzillaWindow> compwin = FindWindow (x11_event->xconfigure.window);
 
         if (compwin && x11_event->xconfigure.override_redirect) {
+            // There is no ConfigureRequest for override_redirect windows, so
+            // just update the view with the new position.
             nsRefPtr<compzillaWindow> abovewin = FindWindow (x11_event->xconfigure.above);
 
             compwin->WindowConfigured (x11_event->xconfigure.x,
@@ -805,12 +813,14 @@ compzillaControl::Filter (GdkXEvent *xevent, GdkEvent *event)
                                        x11_event->xconfigure.width,
                                        x11_event->xconfigure.height,
                                        x11_event->xconfigure.border_width,
-                                       abovewin);
+                                       abovewin,
+                                       x11_event->xconfigure.override_redirect);
         }
         break;
     }
     case ConfigureRequest: {
-        SPEW ("ConfigureRequest: window=%p, x=%d, y=%d, width=%d, height=%d, border=%d, override=%d\n",
+        SPEW ("ConfigureRequest: window=%p, x=%d, y=%d, width=%d, height=%d, "
+              "border=%d, override=%d\n",
               x11_event->xconfigure.window,
               x11_event->xconfigure.x,
               x11_event->xconfigure.y,
@@ -829,7 +839,16 @@ compzillaControl::Filter (GdkXEvent *xevent, GdkEvent *event)
                                        x11_event->xconfigure.width,
                                        x11_event->xconfigure.height,
                                        x11_event->xconfigure.border_width,
-                                       abovewin);
+                                       abovewin,
+                                       x11_event->xconfigure.override_redirect);
+        } else {
+            // Window we are not monitoring, allow the configure.
+            ConfigureWindow (x11_event->xconfigure.window,
+                             x11_event->xconfigure.x,
+                             x11_event->xconfigure.y,
+                             x11_event->xconfigure.width,
+                             x11_event->xconfigure.height,
+                             x11_event->xconfigure.border_width);
         }
 
         break;

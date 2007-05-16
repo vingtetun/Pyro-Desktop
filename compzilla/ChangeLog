@@ -1,3 +1,20 @@
+2007-05-16  Alex Graveley  <alex@beatniksoftware.com>
+
+	* compzilla/src/compzillaWindow.cpp (MapWindow): Avoid a terver
+	roundtrip by just setting mAttr.map_state.
+	(UnmapWindow): Ditto.
+	(WindowConfigured): Always call ResetPixmap.
+
+	* compzilla/src/compzillaControl.cpp (Filter): Call
+	ConfigureWindow for windows which don't have a compzillaWindow.
+
+	* compzilla/public/compzillaIControl.idl: Add bool
+	overrideRedirect arg to SendConfigureNotify.
+
+	* compzilla/chrome/content/frame.js (svc): Call ConfigureWindow in
+	response to the configure event, if the window isn't
+	override_redirect.  This fixes xterm.
+
 2007-05-15  Chris Toshok  <toshok@hungry.com>
 
 	* compzilla/Makefile.am (component_DATA): remove

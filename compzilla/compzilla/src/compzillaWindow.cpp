@@ -1041,7 +1041,7 @@ compzillaWindow::DestroyWindow ()
 void
 compzillaWindow::MapWindow ()
 {
-    UpdateAttributes ();
+    mAttr.map_state = IsViewable;
     EnsureDamage ();
 
     if (mShowEvMgr.HasEventListeners ()) {
@@ -1055,7 +1055,7 @@ compzillaWindow::MapWindow ()
 void
 compzillaWindow::UnmapWindow ()
 {
-    UpdateAttributes ();
+    mAttr.map_state = IsUnmapped;
 
     if (mHideEvMgr.HasEventListeners ()) {
         nsRefPtr<compzillaWindowEvent> ev;
@@ -1284,7 +1284,8 @@ void
 compzillaWindow::WindowConfigured (PRInt32 x, PRInt32 y,
                                    PRInt32 width, PRInt32 height,
                                    PRInt32 border,
-                                   compzillaWindow *aboveWin)
+                                   compzillaWindow *aboveWin,
+                                   bool override_redirect)
 {
     if (mConfigureEvMgr.HasEventListeners ()) {
         // abovewin doesn't work given that abovewin has a list of content
@@ -1295,7 +1296,7 @@ compzillaWindow::WindowConfigured (PRInt32 x, PRInt32 y,
         nsRefPtr<compzillaWindowEvent> ev;
         if (NS_OK == CZ_NewCompzillaConfigureEvent (this,
                                                     mAttr.map_state == IsViewable,
-                                                    mAttr.override_redirect != 0,
+                                                    override_redirect,
                                                     x, y,
                                                     width, height,
                                                     border,
@@ -1305,9 +1306,12 @@ compzillaWindow::WindowConfigured (PRInt32 x, PRInt32 y,
         }
     }
 
+    /*
     if (mAttr.width != width || mAttr.height != height) {
         ResetPixmap ();
     }
+    */
 
     UpdateAttributes ();
+    ResetPixmap (); // Always call this??
 }
