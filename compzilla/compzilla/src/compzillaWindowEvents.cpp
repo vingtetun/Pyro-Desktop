@@ -31,8 +31,8 @@ NS_IMPL_CI_INTERFACE_GETTER4(compzillaWindowEvent,
                              compzillaIWindowPropertyEvent)
 
 
-
-nsresult CZ_NewCompzillaWindowEvent (compzillaIWindow *win, compzillaWindowEvent **retval)
+nsresult 
+CZ_NewCompzillaWindowEvent (compzillaIWindow *win, compzillaWindowEvent **retval)
 {
     compzillaWindowEvent *ev = new compzillaWindowEvent (win);
     if (!ev)
@@ -40,15 +40,19 @@ nsresult CZ_NewCompzillaWindowEvent (compzillaIWindow *win, compzillaWindowEvent
 
     NS_ADDREF(ev);
 
-    SPEW ("CZ_NewCompzillaWindowEvent = %p\n", ev);
+    SPEW ("CZ_NewCompzillaWindowEvent = %p\n, win=%p\n", ev, win);
 
     *retval = ev;
     return NS_OK;
 }
 
-nsresult CZ_NewCompzillaPropertyChangeEvent (compzillaIWindow *win, long atom, bool deleted,
-                                             nsIPropertyBag2 *bag,
-                                             compzillaWindowEvent **retval)
+
+nsresult 
+CZ_NewCompzillaPropertyChangeEvent (compzillaIWindow *win, 
+                                    long atom, 
+                                    bool deleted,
+                                    nsIPropertyBag2 *bag,
+                                    compzillaWindowEvent **retval)
 {
     compzillaWindowEvent *ev = new compzillaWindowEvent (win, atom, deleted, bag);
     if (!ev)
@@ -56,22 +60,24 @@ nsresult CZ_NewCompzillaPropertyChangeEvent (compzillaIWindow *win, long atom, b
 
     NS_ADDREF(ev);
 
-    SPEW ("CZ_NewCompzillaPropertyChangeEvent = %p\n", ev);
+    SPEW ("CZ_NewCompzillaPropertyChangeEvent = %p, win=%p\n", ev, win);
 
     *retval = ev;
     return NS_OK;
 }
 
-nsresult CZ_NewCompzillaConfigureEvent (compzillaIWindow *win,
-                                        bool mapped,
-                                        bool override,
-                                        long x,
-                                        long y,
-                                        long width,
-                                        long height,
-                                        long borderWidth,
-                                        compzillaIWindow *aboveWin,
-                                        compzillaWindowEvent **retval)
+
+nsresult 
+CZ_NewCompzillaConfigureEvent (compzillaIWindow *win,
+                               bool mapped,
+                               bool override,
+                               long x,
+                               long y,
+                               long width,
+                               long height,
+                               long borderWidth,
+                               compzillaIWindow *aboveWin,
+                               compzillaWindowEvent **retval)
 {
     compzillaWindowEvent *ev = new compzillaWindowEvent (win, mapped,
                                                          override,
@@ -79,13 +85,12 @@ nsresult CZ_NewCompzillaConfigureEvent (compzillaIWindow *win,
                                                          width, height,
                                                          borderWidth,
                                                          aboveWin);
-
     if (!ev)
         return NS_ERROR_OUT_OF_MEMORY;
 
     NS_ADDREF(ev);
 
-    SPEW ("CZ_NewCompzillaConfigureEvent = %p\n", ev);
+    SPEW ("CZ_NewCompzillaConfigureEvent = %p, win=%p\n", ev, win);
 
     *retval = ev;
     return NS_OK;
@@ -97,9 +102,18 @@ compzillaWindowEvent::compzillaWindowEvent(compzillaIWindow *window)
 {
 }
 
+
 compzillaWindowEvent::~compzillaWindowEvent()
 {
     SPEW ("compzillaWindowEvent::~compzillaWindowEvent %p\n", this);
+    SPEW ("compzillaWindowEvent::~compzillaWindowEvent RELEASING WINDOW\n", this);
+    mWindow = NULL;
+    SPEW ("compzillaWindowEvent::~compzillaWindowEvent RELEASING TARGET\n", this);
+    mTarget = NULL;
+    SPEW ("compzillaWindowEvent::~compzillaWindowEvent RELEASING ABOVEWIN\n", this);
+    mAboveWindow = NULL;
+    SPEW ("compzillaWindowEvent::~compzillaWindowEvent RELEASING BAG\n", this);
+    mBag = NULL;
 }
 
 
@@ -108,7 +122,7 @@ compzillaWindowEvent::~compzillaWindowEvent()
 //
 
 NS_IMETHODIMP 
-compzillaWindowEvent::GetWindow(compzillaIWindow **aWindow)
+compzillaWindowEvent::GetWindow(nsISupports **aWindow)
 {
     *aWindow = mWindow;
     return NS_OK;
@@ -206,7 +220,7 @@ compzillaWindowEvent::GetBorderWidth(PRInt32 *aBorderWidth)
 
 
 NS_IMETHODIMP
-compzillaWindowEvent::GetAboveWindow(compzillaIWindow **aAboveWindow)
+compzillaWindowEvent::GetAboveWindow(nsISupports **aAboveWindow)
 {
     *aAboveWindow = mAboveWindow;
     return NS_OK;

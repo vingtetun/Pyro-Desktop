@@ -35,15 +35,22 @@ extern "C" {
 }
 
 
-#if WITH_SPEW
+#ifdef DEBUG
+#ifdef WITH_SPEW
 #define SPEW(format...) printf("   - " format)
 #else
 #define SPEW(format...)
 #endif
-
 #define INFO(format...) printf(" *** " format)
 #define WARNING(format...) printf(" !!! " format)
 #define ERROR(format...) fprintf(stderr, format)
+#else
+#define SPEW(format...) do { } while (0)
+#define INFO(format...) do { } while (0)
+#define WARNING(format...) do { } while (0)
+#define ERROR(format...) do { } while (0)
+#endif
+
 
 NS_IMPL_ISUPPORTS2_CI(compzillaControl, compzillaIControl, nsIDOMEventTarget);
 
@@ -221,6 +228,8 @@ compzillaControl::AddEventListener (const nsAString & type,
 {
     if (type.EqualsLiteral ("windowcreate")) {
         return mWindowCreateEvMgr.AddEventListener (type, listener);
+    } else if (type.EqualsLiteral ("windowdestroy")) {
+        return mWindowDestroyEvMgr.AddEventListener (type, listener);
     }
     return NS_ERROR_INVALID_ARG;
 }
@@ -233,6 +242,8 @@ compzillaControl::RemoveEventListener (const nsAString & type,
 {
     if (type.EqualsLiteral ("windowcreate")) {
         return mWindowCreateEvMgr.RemoveEventListener (type, listener);
+    } else if (type.EqualsLiteral ("windowdestroy")) {
+        return mWindowDestroyEvMgr.RemoveEventListener (type, listener);
     }
     return NS_ERROR_INVALID_ARG;
 }
@@ -730,6 +741,30 @@ compzillaControl::UnmapWindow (Window win)
 }
 
 
+void 
+compzillaControl::WindowConfigured (Window win,
+                                    PRInt32 x, PRInt32 y,
+                                    PRInt32 width, PRInt32 height,
+                                    PRInt32 border,
+                                    Window aboveWin,
+                                    bool override_redirect)
+{
+    nsRefPtr<compzillaWindow> compwin = FindWindow (win);
+    if (compwin) {
+        nsRefPtr<compzillaWindow> aboveCompWin = FindWindow (aboveWin);
+
+        compwin->WindowConfigured (x, y,
+                                   width, height,
+                                   border,
+                                   aboveCompWin,
+                                   override_redirect);
+    } else {
+        // Window we are not monitoring, so send the configure.
+        ConfigureWindow (win, x, y, width, height, border);
+    }
+}
+
+
 void
 compzillaControl::PropertyChanged (Window win, Atom prop, bool deleted)
 {
@@ -755,6 +790,9 @@ compzillaControl::FindWindow (Window win)
 {
     compzillaWindow *compwin;
     mWindowMap.Get(win, &compwin);
+    if (compwin && compwin->mIsDestroyed) {
+        return NULL;
+    }
     return compwin;
 }
 
@@ -799,20 +837,17 @@ compzillaControl::Filter (GdkXEvent *xevent, GdkEvent *event)
               x11_event->xconfigure.border_width,
               x11_event->xconfigure.override_redirect);
 
-        nsRefPtr<compzillaWindow> compwin = FindWindow (x11_event->xconfigure.window);
-
-        if (compwin && x11_event->xconfigure.override_redirect) {
+        if (x11_event->xconfigure.override_redirect) {
             // There is no ConfigureRequest for override_redirect windows, so
             // just update the view with the new position.
-            nsRefPtr<compzillaWindow> abovewin = FindWindow (x11_event->xconfigure.above);
-
-            compwin->WindowConfigured (x11_event->xconfigure.x,
-                                       x11_event->xconfigure.y,
-                                       x11_event->xconfigure.width,
-                                       x11_event->xconfigure.height,
-                                       x11_event->xconfigure.border_width,
-                                       abovewin,
-                                       x11_event->xconfigure.override_redirect);
+            WindowConfigured (x11_event->xconfigure.window,
+                              x11_event->xconfigure.x,
+                              x11_event->xconfigure.y,
+                              x11_event->xconfigure.width,
+                              x11_event->xconfigure.height,
+                              x11_event->xconfigure.border_width,
+                              x11_event->xconfigure.above,
+                              x11_event->xconfigure.override_redirect);
         }
         break;
     }
@@ -827,28 +862,14 @@ compzillaControl::Filter (GdkXEvent *xevent, GdkEvent *event)
               x11_event->xconfigure.border_width,
               x11_event->xconfigure.override_redirect);
 
-        nsRefPtr<compzillaWindow> compwin = FindWindow (x11_event->xconfigure.window);
-
-        if (compwin) {
-            nsRefPtr<compzillaWindow> abovewin = FindWindow (x11_event->xconfigure.above);
-
-            compwin->WindowConfigured (x11_event->xconfigure.x,
-                                       x11_event->xconfigure.y,
-                                       x11_event->xconfigure.width,
-                                       x11_event->xconfigure.height,
-                                       x11_event->xconfigure.border_width,
-                                       abovewin,
-                                       x11_event->xconfigure.override_redirect);
-        } else {
-            // Window we are not monitoring, allow the configure.
-            ConfigureWindow (x11_event->xconfigure.window,
-                             x11_event->xconfigure.x,
-                             x11_event->xconfigure.y,
-                             x11_event->xconfigure.width,
-                             x11_event->xconfigure.height,
-                             x11_event->xconfigure.border_width);
-        }
-
+        WindowConfigured (x11_event->xconfigure.window,
+                          x11_event->xconfigure.x,
+                          x11_event->xconfigure.y,
+                          x11_event->xconfigure.width,
+                          x11_event->xconfigure.height,
+                          x11_event->xconfigure.border_width,
+                          x11_event->xconfigure.above,
+                          x11_event->xconfigure.override_redirect);
         break;
     }
     case ReparentNotify: {

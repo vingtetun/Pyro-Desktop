@@ -1,9 +1,49 @@
 /* -*- mode: javascript; c-basic-offset: 4; indent-tabs-mode: t; -*- */
 
+
 cls = Components.classes['@pyrodesktop.org/compzillaService'];
 svc = cls.getService(Components.interfaces.compzillaIControl);
 
 var _focusedFrame;
+
+
+function CompzillaMakeFrame (content, typeAtom, isOverride)
+{
+    if (!isOverride && !typeAtom && content.getNativeWindow) {
+        try {
+            typeAtom = content.getNativeWindow().GetAtomProperty (Atoms._NET_WM_WINDOW_TYPE());
+        } catch (ex) {
+            // _NET_WM_WINDOW_TYPE may not be set on new windows
+        }
+    }
+
+    var className = _determineFrameClassName (typeAtom, isOverride, false);
+    var frame = CompzillaFrame (content, className);
+
+    frame._overrideRedirect = isOverride;
+    frame._net_wm_window_type = typeAtom;
+
+    if (content.getNativeWindow) {
+        frame.id = "XID:" + content.getNativeWindow().nativeWindowId;
+    }
+
+    return frame;
+}
+
+
+function _determineFrameClassName (typeAtom, isOverride, focused)
+{
+    if (isOverride ||
+        typeAtom == Atoms._NET_WM_WINDOW_TYPE_DOCK() ||
+        typeAtom == Atoms._NET_WM_WINDOW_TYPE_DESKTOP() ||
+        typeAtom == Atoms._NET_WM_WINDOW_TYPE_SPLASH() ||
+        typeAtom == Atoms._NET_WM_WINDOW_TYPE_TOOLBAR()) {
+        return focused ? "dockFrameFocused" : "dockFrame";
+    } else {
+        return focused ? "windowFrameFocused" : "windowFrame";
+    }
+}
+
 
 function getDescendentById (root, id)
 {
@@ -42,6 +82,7 @@ var FrameMethods = {
 
 	if (this._content && this._content.destroy) {
 	    this._content.destroy ();
+            this._content = null;
 	}
 
 	if (_focusedFrame == this)
@@ -81,6 +122,7 @@ var FrameMethods = {
 
 
     setAllowedActions: function (actions) {
+        Debug ("XXXXXXX setAllowedActions: " + actions);
 	return this.setAttributeNS ("http://www.pyrodesktop.org/compzilla",
 				    "allowed-actions", actions);
     },
@@ -127,13 +169,15 @@ var FrameMethods = {
 	if (/* XXX mwm hints? */ this._net_wm_window_type == undefined)
 	    return;
 
-	var max_action = "maximize ";
-	var min_action = "minimize ";
-	var close_action = "close ";
-	var resize_action = "resize ";
-	var fullscreen_action = "fullscreen ";
-	var move_action = "move ";
-	var shade_action = "shade ";
+        Debug ("XXXXXXXX _recomputeAllowedActions!");
+
+	var max = true;
+	var min = true;
+	var close = true;
+	var resize = true;
+	var fullscreen = true;
+	var move = true;
+	var shade = true;
 
 	// XXX first consider the mwm hints
 
@@ -142,22 +186,33 @@ var FrameMethods = {
 	if (this._net_wm_window_type == Atoms._NET_WM_WINDOW_TYPE_DESKTOP () ||
 	    this._net_wm_window_type == Atoms._NET_WM_WINDOW_TYPE_DOCK () ||
 	    this._net_wm_window_type == Atoms._NET_WM_WINDOW_TYPE_SPLASH ()) {
-	    close_action = "";
-	    shade_action = "";
-	    move_action = "";
-	    resize_action = "";
+	    close_action = false;
+	    shade_action = false;
+	    move_action = false;
+	    resize_action = false;
 	}
 
 	if (this._net_wm_window_type != Atoms._NET_WM_WINDOW_TYPE_NORMAL ()) {
-	    max_action = "";
-	    min_action = "";
-	    fullscreen_action = "";
+	    max_action = false;
+	    min_action = false;
+	    fullscreen_action = false;
 	}
 
 	if (!resize_action) {
-	    max_action = "";
-	    fullscreen_action = "";
+	    max_action = false;
+	    fullscreen_action = false;
 	}
+
+        var actionProp = "";
+        actionProp += max_action ? "maximize " : "";
+        actionProp += min_action ? "minimize " : "";
+        actionProp += close_action ? "close " : "";
+        actionProp += resize_action ? "resize " : "";
+        actionProp += fullscreen_action ? "fullscreen " : "";
+        actionProp += move_action ? "move " : "";
+        actionProp += shade_action ? "shade " : "";
+
+        this.setAllowedActions (actionProp);
     },
 
 
@@ -173,20 +228,15 @@ var FrameMethods = {
 
 	this.style.display = "none";
     },
-
 };
 
 
-function _compzillaFrameCommon (content, templateId)
+function CompzillaFrame (content, className)
 {
-    var frame = document.getElementById (templateId).cloneNode (true);
+    var frame = document.getElementById ("windowFrame").cloneNode (true);
+    frame.className = className;
 
     frame._content = content;
-
-    // FIXME: Find a better scheme for switching classes
-    // Assume frame starts with unfocused class.
-    frame._classNameUnfocused = frame.className;
-    frame._classNameFocused = frame.className + "Focused";
 
     frame._titleBox = getDescendentById (frame, "windowTitleBox");
 
@@ -200,7 +250,8 @@ function _compzillaFrameCommon (content, templateId)
     }
 
     if (content.getNativeWindow) {
-	_connectNativeWindowListeners (frame, content);
+	_connectNativeWindowListeners (frame, content.getNativeWindow());
+        frame._recomputeAllowedActions ();
     }
 
     if (frame._title) {
@@ -215,16 +266,23 @@ function _compzillaFrameCommon (content, templateId)
 		windowStack.moveToTop (frame);
 
                 // XXX this should live in some sort of focus handler, not here.
-                if (frame.className != frame._classNameFocused) {
+                if (frame != _focusedFrame) {
                     if (_focusedFrame) {
                         // Send FocusOut
-                        _focusedFrame._content.blur();
-                        _focusedFrame.className = _focusedFrame._classNameUnfocused;
+                        _focusedFrame._content.blur ();
+                        _focusedFrame.className = 
+                            _determineFrameClassName (_focusedFrame._net_wm_window_type,
+                                                      _focusedFrame._overrideRedirect,
+                                                      false);
                     }
 
                     // Send FocusIn
-                    frame._content.focus();
-                    frame.className = frame._classNameFocused;
+                    frame._content.focus ();
+                    frame.className = _determineFrameClassName (frame._net_wm_window_type,
+                                                                frame._overrideRedirect,
+                                                                true);
+
+                    Debug ("XXX Setting classname = " + frame.className);
 
                     _focusedFrame = frame;
                 }
@@ -233,18 +291,6 @@ function _compzillaFrameCommon (content, templateId)
 	true);
 
     return frame;
-}
-
-
-function CompzillaFrame (content)
-{
-    return _compzillaFrameCommon (content, "windowFrame");
-}
-
-
-function CompzillaDockFrame (content)
-{
-    return _compzillaFrameCommon (content, "dockFrame");
 }
 
 
@@ -299,17 +345,8 @@ function _connectFrameDragListeners (frame)
 }
 
 
-function _copyPyroFrameAttributes (from, to)
+function _connectNativeWindowListeners (frame, nativewin) 
 {
-    to.setWMClass (from.getWMClass ());
-    to.setAllowedActions (from.getAllowedActions ());
-}
-
-
-function _connectNativeWindowListeners (frame, content) 
-{
-    var nativewin = content.getNativeWindow ();
-
     frame._nativeDestroyListener =
 	addCachedEventListener (
 	    nativewin,
@@ -317,7 +354,7 @@ function _connectNativeWindowListeners (frame, content)
 	    frame._nativeDestroyListener,
 		{
 		    handleEvent: function (ev) {
-			Debug ("destroy.handleEvent (" + content + ")");
+			Debug ("destroy.handleEvent id='" + frame.id + "'");
 			frame.destroy ();
 		    }
 		},
@@ -381,7 +418,6 @@ function _connectNativeWindowListeners (frame, content)
 		    handleEvent: function (ev) {
 			Debug ("propertychange.handleEvent: ev.atom=" + ev.atom);
 
-
 			if (ev.atom == Atoms.WM_NAME () ||
 			    ev.atom == Atoms._NET_WM_NAME ()) {
 			    name = ev.value.getProperty(".text");
@@ -391,36 +427,15 @@ function _connectNativeWindowListeners (frame, content)
 			    return;
 			}
 
-
-
 			if (ev.atom == Atoms._NET_WM_WINDOW_TYPE()) {
 			    Debug ("window " + frame.id + " type set");
-			    // XXX _NET_WM_WINDOW_TYPE is actually an array of atoms, not just 1.
-			    var type = ev.value.getPropertyAsUint32 (".atom");
 
-			    var new_frame = frame;
+                            // XXX _NET_WM_WINDOW_TYPE is actually an array of atoms, not just 1
+                            var typeAtom = ev.value.getPropertyAsUint32 (".atom");
 
-			    if (type == Atoms._NET_WM_WINDOW_TYPE_DOCK() ||
-				type == Atoms._NET_WM_WINDOW_TYPE_DESKTOP() ||
-				type == Atoms._NET_WM_WINDOW_TYPE_SPLASH() ||
-				type == Atoms._NET_WM_WINDOW_TYPE_TOOLBAR()) {
-				if (frame.className == "windowFrame") {
-				    new_frame = CompzillaDockFrame (frame.getContent());
-				}
-			    }
-			    else {
-				if (frame.className == "dockWindowFrame") {
-				    new_frame = CompzillaFrame (frame.getContent());
-				}
-			    }
-
-			    new_frame._net_wm_window_type = type;
-
-			    _copyPyroFrameAttributes (frame, new_frame);
-
-			    new_frame._recomputeAllowedActions ();
-
-			    windowStack.replaceWindow (frame, new_frame);
+                            frame.className = _determineFrameClassName (typeAtom,
+                                                                        frame._overrideRedirect,
+                                                                        frame == _focusedFrame);
 
 			    return;
 			}

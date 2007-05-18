@@ -110,6 +110,14 @@ body {
 	opacity: 0.8;
 }
 
+.dockFrame #windowTitleBox {
+	display: none;
+}
+
+.dockFrameFocused #windowTitleBox {
+	display: none;
+}
+
 #windowContent {
 	background: #ffffff;
 	width: 100%;

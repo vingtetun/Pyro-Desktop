@@ -78,6 +78,7 @@ public:
                            bool override_redirect);
 
     XWindowAttributes mAttr;
+    bool mIsDestroyed;
 
  private:
     void OnMouseMove (nsIDOMEvent* aDOMEvent);
@@ -100,7 +101,6 @@ public:
     Pixmap mPixmap;
     Damage mDamage;
     Window mLastEntered;
-    bool mIsDestroyed;
 
     compzillaEventManager mDestroyEvMgr;
     compzillaEventManager mConfigureEvMgr;

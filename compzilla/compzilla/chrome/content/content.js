@@ -2,7 +2,7 @@
 
 
 function CompzillaWindowContent (nativewin) {
-    Debug ("Creating content for nativewin=" + nativewin);
+    Debug ("Creating content for nativewin=" + nativewin.nativeWindowId);
 
     var content = document.getElementById ("windowContent").cloneNode (true);
 
@@ -12,6 +12,7 @@ function CompzillaWindowContent (nativewin) {
     content.destroy = function () { 
 	Debug ("content.destroy");
 	content._nativewin.RemoveContentNode (content); 
+	content._nativewin = null;
     }
 
     nativewin.AddContentNode (content);

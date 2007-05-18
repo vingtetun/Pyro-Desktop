@@ -1,3 +1,39 @@
+2007-05-17  Alex Graveley  <alex@beatniksoftware.com>
+
+	* compzilla/src/compzillaWindow.cpp (GetStringProperty): Handle
+	prop lookup failure.
+	(GetAtomProperty): Ditto.
+	(PropertyChanged): Use CallCreateInstance to create the property
+	bag.  This is what other moz code does.
+
+	* compzilla/src/compzillaRenderingContext.cpp (Redraw): Switch to
+	non-syncronous draws, since there's a performance improvement when
+	multiple windows are updating.
+
+	* compzilla/src/compzillaControl.cpp: Add WindowConfigured
+	helper.  Avoid calling methods on already-destroyed windows.
+
+	* compzilla/chrome/skin/compzilla.css: Hide #windowTitleBox for
+	windowFrames of class dockFrame.
+
+	* compzilla/chrome/content/start.xul: Remove dockFrame: we just
+	set the class on windowFrame items.
+
+	* compzilla/chrome/content/start.js: Use CompzillaMakeFrame. 
+
+	* compzilla/chrome/content/frame.js: Add CompzillaMakeFrame, which
+	creates a frame as determined by _determineFrameClassName.  Make
+	CompzillaFrame take a className to use.  Kill
+	_copyPyroFrameAttributes since we don't create multiple frames for
+	the same content anymore.  Use _determineFrameClassName when the
+	window type changes.
+
+	* compzilla/chrome/content/debug.js: Pass "windowFrame" as
+	the className for debugFrame.
+
+	* compzilla/chrome/content/content.js: null out the _nativewin ref
+	on destroy.
+
 2007-05-16  Alex Graveley  <alex@beatniksoftware.com>
 
 	* compzilla/chrome/skin/compzilla.css: Add a #windowContent:focus

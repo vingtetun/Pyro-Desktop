@@ -2,30 +2,30 @@
 
 #define MOZILLA_INTERNAL_API
 
-#include "prmem.h"
-#include "prlog.h"
+#include <prmem.h>
+#include <prlog.h>
 
-#include "nsIRenderingContext.h"
-#include "nsIViewManager.h"
+#include <nsIRenderingContext.h>
+#include <nsIViewManager.h>
+
+#include <nsICanvasRenderingContextInternal.h>
+#include <nsIDOMHTMLCanvasElement.h>
 
 #include "compzillaIRenderingContext.h"
-#include "nsICanvasRenderingContextInternal.h"
-#include "nsIDOMHTMLCanvasElement.h"
-
 #include "compzillaRenderingContext.h"
 
 #include <gdk/gdk.h>
 #include <gdk/gdkx.h>
 
 #ifdef MOZ_CAIRO_GFX
-#include "thebes/gfxContext.h"
-#include "thebes/gfxASurface.h"
-#include "thebes/gfxPlatform.h"
-#include "thebes/gfxXlibSurface.h"
+#include <thebes/gfxContext.h>
+#include <thebes/gfxASurface.h>
+#include <thebes/gfxPlatform.h>
+#include <thebes/gfxXlibSurface.h>
 #else
-#include "nsTransform2D.h"
-#include "cairo-xlib.h"
-#include "cairo-xlib-xrender.h"
+#include <nsTransform2D.h>
+#include <cairo-xlib.h>
+#include <cairo-xlib-xrender.h>
 #endif
 
 #if WITH_SPEW
@@ -126,10 +126,10 @@ compzillaRenderingContext::Redraw (nsRect r)
         }
 #endif
 
-        PRUint32 flags = NS_VMREFRESH_IMMEDIATE;
-#if ASYNC_UPDATE
-        // Maybe slow update is okay in some cases?
-        flags = NS_VMREFRESH_NO_SYNC;
+        PRUint32 flags = NS_VMREFRESH_NO_SYNC;
+#if SYNC_UPDATE
+        // FIXME: Would be nice to force a sync update if this canvas is focused.
+        flags = NS_VMREFRESH_IMMEDIATE;
 #endif
 
         if (frame->HasView()) {

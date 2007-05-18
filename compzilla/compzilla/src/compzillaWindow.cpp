@@ -13,11 +13,12 @@
 #include "compzillaRenderingContext.h"
 #include "nsKeycodes.h"
 
-#include "nsMemory.h"
+#include <nsMemory.h>
 #include <nsIDOMEventTarget.h>
 #include <nsICanvasElement.h>
 #include <nsISupportsUtils.h>
-#include "nsHashPropertyBag.h"
+#include <nsComponentManagerUtils.h>
+#include <nsHashPropertyBag.h>
 
 extern "C" {
 #include <stdio.h>
@@ -39,15 +40,21 @@ extern GdkEvent *gtk_get_current_event (void);
 extern XAtoms atoms;
 
 
-#if WITH_SPEW
+#ifdef DEBUG
+#ifdef WITH_SPEW
 #define SPEW(format...) printf("   - " format)
 #else
 #define SPEW(format...)
 #endif
-
 #define INFO(format...) printf(" *** " format)
 #define WARNING(format...) printf(" !!! " format)
 #define ERROR(format...) fprintf(stderr, format)
+#else
+#define SPEW(format...) do { } while (0)
+#define INFO(format...) do { } while (0)
+#define WARNING(format...) do { } while (0)
+#define ERROR(format...) do { } while (0)
+#endif
 
 
 NS_IMPL_ADDREF(compzillaWindow)
@@ -76,6 +83,8 @@ CZ_NewCompzillaWindow(Display *display, Window win, compzillaWindow** retval)
         return NS_ERROR_OUT_OF_MEMORY;
 
     NS_ADDREF(window);
+
+    SPEW ("CZ_NewCompzillaWindow %p, xid=%p\n", window, win);
 
     *retval = window;
     return NS_OK;
@@ -237,6 +246,8 @@ compzillaWindow::ConnectListeners (bool connect, nsCOMPtr<nsISupports> aContent)
 	do_QueryInterface (NS_ISUPPORTS_CAST (nsIDOMKeyListener *, this));
 
     if (!target || !listener) {
+        SPEW ("compzillaWindow::ConnectListeners: Trying to %s invalid listener!\n",
+              connect ? "connect" : "disconnect");
 	return;
     }
 
@@ -298,10 +309,22 @@ compzillaWindow::GetStringProperty (PRUint32 prop, nsAString& value)
     unsigned long bytes_after_return;
     unsigned char *data;
 
-    XGetWindowProperty (mDisplay, mWindow, (Atom) prop,
-                        0, BUFSIZ, false, XA_STRING, 
-                        &actual_type, &format, &nitems, &bytes_after_return, 
-                        &data);
+    if (XGetWindowProperty (mDisplay, 
+                            mWindow, 
+                            (Atom) prop,
+                            0, 
+                            BUFSIZ, 
+                            false, 
+                            XA_STRING, 
+                            &actual_type, 
+                            &format, 
+                            &nitems, 
+                            &bytes_after_return, 
+                            &data) != Success || 
+        format == None) {
+        SPEW (" + (Not Found)\n");
+        return NS_ERROR_FAILURE;
+    }
 
     // XXX this is wrong - it's not always ASCII.  look at metacity's
     // handling of it (it calls a gdk function to convert the text
@@ -327,12 +350,26 @@ compzillaWindow::GetAtomProperty (PRUint32 prop, PRUint32* value)
     unsigned long bytes_after_return;
     unsigned char *data;
 
-    XGetWindowProperty (mDisplay, mWindow, (Atom)prop,
-                        0, BUFSIZ, false, XA_ATOM,
-                        &actual_type, &format, &nitems, &bytes_after_return, 
-                        &data);
+    if (XGetWindowProperty (mDisplay, 
+                            mWindow, 
+                            (Atom)prop,
+                            0, 
+                            BUFSIZ, 
+                            false, 
+                            XA_ATOM,
+                            &actual_type, 
+                            &format, 
+                            &nitems, 
+                            &bytes_after_return, 
+                            &data) != Success || 
+        format == None) {
+        SPEW (" + (Not Found)\n");
+        return NS_ERROR_FAILURE;
+    }
 
-    *value = *(PRUint32*)data;
+    *value = *(Atom*)data;
+
+    SPEW (" + %d\n", *value);
 
     XFree (data);
 
@@ -348,21 +385,22 @@ compzillaWindow::HandleEvent (nsIDOMEvent* aDOMEvent)
 {
     nsString type;
     aDOMEvent->GetType (type);
-    NS_LossyConvertUTF16toASCII ctype(type);
-    const char *cdata;
-    NS_CStringGetData (ctype, &cdata);
 
-    if (strcmp (cdata, "mousemove") == 0) {
+    if (type.EqualsLiteral ("mousemove")) {
         OnMouseMove (aDOMEvent);
-    } else if (strcmp (cdata, "DOMMouseScroll") == 0) {
+    } else if (type.EqualsLiteral ("DOMMouseScroll")) {
         OnDOMMouseScroll (aDOMEvent);
-    } else if (strcmp (cdata, "focus") == 0) {
+    } else if (type.EqualsLiteral ("focus")) {
         FocusIn (aDOMEvent);
-    } else if (strcmp (cdata, "blur") == 0) {
+    } else if (type.EqualsLiteral ("blur")) {
         FocusOut (aDOMEvent);
     } else {
         nsCOMPtr<nsIDOMEventTarget> target;
         aDOMEvent->GetTarget (getter_AddRefs (target));
+
+        NS_LossyConvertUTF16toASCII ctype(type);
+        const char *cdata;
+        NS_CStringGetData (ctype, &cdata);
 
         SPEW ("compzillaWindow::HandleEvent: unhandled type=%s, target=%p!!!\n", 
               cdata, target.get ());
@@ -1068,13 +1106,12 @@ compzillaWindow::UnmapWindow ()
 void
 compzillaWindow::PropertyChanged (Window win, Atom prop, bool deleted)
 {
-    nsIWritablePropertyBag *wbag;
-    nsresult rv = NS_NewHashPropertyBag (&wbag);
+    nsIWritablePropertyBag2 *wbag;
+    nsresult rv = CallCreateInstance("@mozilla.org/hash-property-bag;1", &wbag);
     if (NS_FAILED(rv)) {
         return;
     }
 
-    nsCOMPtr<nsIWritablePropertyBag2> wbag2 = do_QueryInterface(wbag);
     nsCOMPtr<nsIPropertyBag2> bag2 = do_QueryInterface(wbag);
 
 #define SET_PROP(_bag, _type, _key, _val) \
@@ -1091,7 +1128,7 @@ compzillaWindow::PropertyChanged (Window win, Atom prop, bool deleted)
         // handle this.
         nsString str;
         GetStringProperty (prop, str);
-        SET_PROP(wbag2, AString, ".text", str);
+        SET_PROP(wbag, AString, ".text", str);
         break;
     }
 
@@ -1101,15 +1138,15 @@ compzillaWindow::PropertyChanged (Window win, Atom prop, bool deleted)
         wmHints = XGetWMHints (mDisplay, win);
 
         if (wmHints) {
-            SET_PROP(wbag2, Int32, "wmHints.flags", wmHints->flags);
-            SET_PROP(wbag2, Bool, "wmHints.input", wmHints->input);
-            SET_PROP(wbag2, Int32, "wmHints.initialState", wmHints->initial_state);
-            SET_PROP(wbag2, Uint32, "wmHints.iconPixmap", wmHints->icon_pixmap);
-            SET_PROP(wbag2, Uint32, "wmHints.iconWindow", wmHints->icon_window);
-            SET_PROP(wbag2, Int32, "wmHints.iconX", wmHints->icon_x);
-            SET_PROP(wbag2, Int32, "wmHints.iconY", wmHints->icon_y);
-            SET_PROP(wbag2, Uint32, "wmHints.iconMask", wmHints->icon_mask);
-            SET_PROP(wbag2, Uint32, "wmHints.windowGroup", wmHints->window_group);
+            SET_PROP(wbag, Int32, "wmHints.flags", wmHints->flags);
+            SET_PROP(wbag, Bool, "wmHints.input", wmHints->input);
+            SET_PROP(wbag, Int32, "wmHints.initialState", wmHints->initial_state);
+            SET_PROP(wbag, Uint32, "wmHints.iconPixmap", wmHints->icon_pixmap);
+            SET_PROP(wbag, Uint32, "wmHints.iconWindow", wmHints->icon_window);
+            SET_PROP(wbag, Int32, "wmHints.iconX", wmHints->icon_x);
+            SET_PROP(wbag, Int32, "wmHints.iconY", wmHints->icon_y);
+            SET_PROP(wbag, Uint32, "wmHints.iconMask", wmHints->icon_mask);
+            SET_PROP(wbag, Uint32, "wmHints.windowGroup", wmHints->window_group);
 
             XFree (wmHints);
         }
@@ -1123,33 +1160,33 @@ compzillaWindow::PropertyChanged (Window win, Atom prop, bool deleted)
         // XXX check return value
         XGetWMNormalHints (mDisplay, win, &sizeHints, &supplied);
 
-        SET_PROP(wbag2, Int32, "sizeHints.flags", sizeHints.flags);
+        SET_PROP(wbag, Int32, "sizeHints.flags", sizeHints.flags);
 
-        SET_PROP(wbag2, Int32, "sizeHints.x", sizeHints.x);
-        SET_PROP(wbag2, Int32, "sizeHints.y", sizeHints.y);
-        SET_PROP(wbag2, Int32, "sizeHints.width", sizeHints.width);
-        SET_PROP(wbag2, Int32, "sizeHints.height", sizeHints.height);
+        SET_PROP(wbag, Int32, "sizeHints.x", sizeHints.x);
+        SET_PROP(wbag, Int32, "sizeHints.y", sizeHints.y);
+        SET_PROP(wbag, Int32, "sizeHints.width", sizeHints.width);
+        SET_PROP(wbag, Int32, "sizeHints.height", sizeHints.height);
 
-        SET_PROP(wbag2, Int32, "sizeHints.minWidth", sizeHints.min_width);
-        SET_PROP(wbag2, Int32, "sizeHints.minHeight", sizeHints.min_height);
+        SET_PROP(wbag, Int32, "sizeHints.minWidth", sizeHints.min_width);
+        SET_PROP(wbag, Int32, "sizeHints.minHeight", sizeHints.min_height);
 
-        SET_PROP(wbag2, Int32, "sizeHints.maxWidth", sizeHints.max_width);
-        SET_PROP(wbag2, Int32, "sizeHints.maxHeight", sizeHints.max_height);
+        SET_PROP(wbag, Int32, "sizeHints.maxWidth", sizeHints.max_width);
+        SET_PROP(wbag, Int32, "sizeHints.maxHeight", sizeHints.max_height);
 
-        SET_PROP(wbag2, Int32, "sizeHints.widthInc", sizeHints.width_inc);
-        SET_PROP(wbag2, Int32, "sizeHints.heightInc", sizeHints.height_inc);
+        SET_PROP(wbag, Int32, "sizeHints.widthInc", sizeHints.width_inc);
+        SET_PROP(wbag, Int32, "sizeHints.heightInc", sizeHints.height_inc);
 
-        SET_PROP(wbag2, Int32, "sizeHints.minAspect.x", sizeHints.min_aspect.x);
-        SET_PROP(wbag2, Int32, "sizeHints.minAspect.y", sizeHints.min_aspect.y);
+        SET_PROP(wbag, Int32, "sizeHints.minAspect.x", sizeHints.min_aspect.x);
+        SET_PROP(wbag, Int32, "sizeHints.minAspect.y", sizeHints.min_aspect.y);
 
-        SET_PROP(wbag2, Int32, "sizeHints.maxAspect.x", sizeHints.max_aspect.x);
-        SET_PROP(wbag2, Int32, "sizeHints.maxAspect.y", sizeHints.max_aspect.y);
+        SET_PROP(wbag, Int32, "sizeHints.maxAspect.x", sizeHints.max_aspect.x);
+        SET_PROP(wbag, Int32, "sizeHints.maxAspect.y", sizeHints.max_aspect.y);
 
         if ((supplied & (PBaseSize|PWinGravity)) != 0) {
-            SET_PROP(wbag2, Int32, "sizeHints.baseWidth", sizeHints.base_width);
-            SET_PROP(wbag2, Int32, "sizeHints.baseHeight", sizeHints.base_height);
+            SET_PROP(wbag, Int32, "sizeHints.baseWidth", sizeHints.base_width);
+            SET_PROP(wbag, Int32, "sizeHints.baseHeight", sizeHints.base_height);
 
-            SET_PROP(wbag2, Int32, "sizeHints.winGravity", sizeHints.win_gravity);
+            SET_PROP(wbag, Int32, "sizeHints.winGravity", sizeHints.win_gravity);
         }
         break;
     }
@@ -1172,8 +1209,8 @@ compzillaWindow::PropertyChanged (Window win, Atom prop, bool deleted)
         instance = (char*)data;
         _class = instance + strlen (instance) + 1;
 
-        SET_PROP (wbag2, AString, ".instanceName", NS_ConvertASCIItoUTF16 (instance));
-        SET_PROP (wbag2, AString, ".className", NS_ConvertASCIItoUTF16 (_class));
+        SET_PROP (wbag, AString, ".instanceName", NS_ConvertASCIItoUTF16 (instance));
+        SET_PROP (wbag, AString, ".className", NS_ConvertASCIItoUTF16 (_class));
 
         XFree (data);
 
@@ -1186,7 +1223,7 @@ compzillaWindow::PropertyChanged (Window win, Atom prop, bool deleted)
     case XA_WM_CLIENT_MACHINE: {
         nsString str;
         GetStringProperty (prop, str);
-        SET_PROP(wbag2, AString, ".text", str);
+        SET_PROP(wbag, AString, ".text", str);
     }
     default:
         // ICCCM properties which don't have predefined atoms
@@ -1209,7 +1246,7 @@ compzillaWindow::PropertyChanged (Window win, Atom prop, bool deleted)
             // utf8 encoded string
             nsString str;
             GetStringProperty (prop, str);
-            SET_PROP(wbag2, AString, ".text", str);
+            SET_PROP(wbag, AString, ".text", str);
         }
         else if (prop == atoms.x._NET_WM_DESKTOP) {
         }
@@ -1218,7 +1255,7 @@ compzillaWindow::PropertyChanged (Window win, Atom prop, bool deleted)
             // this also needs fixing in the JS.
             PRUint32 atom;
             GetAtomProperty (prop, &atom);
-            SET_PROP(wbag2, Uint32, ".atom", atom);
+            SET_PROP(wbag, Uint32, ".atom", atom);
         }
         else if (prop == atoms.x._NET_WM_STATE) {
         }
@@ -1248,7 +1285,11 @@ compzillaWindow::PropertyChanged (Window win, Atom prop, bool deleted)
 
     if (mPropertyChangeEvMgr.HasEventListeners ()) {
         nsRefPtr<compzillaWindowEvent> ev;
-        if (NS_OK == CZ_NewCompzillaPropertyChangeEvent (this, prop, deleted, bag2, getter_AddRefs (ev)))
+        if (NS_OK == CZ_NewCompzillaPropertyChangeEvent (this, 
+                                                         prop, 
+                                                         deleted, 
+                                                         bag2, 
+                                                         getter_AddRefs (ev)))
             ev->Send (NS_LITERAL_STRING ("propertychange"), this, mPropertyChangeEvMgr);
     }
 }

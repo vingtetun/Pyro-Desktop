@@ -98,6 +98,7 @@ libcompzilla_la_LDFLAGS = -avoid-version -module
 libcompzilla_la_LIBADD = $(XEXTENSIONS_LIBS) -L$(GECKO_LIBDIR) $(GFX_LIBS) -lxpcom_core
 
 libcompzilla_la_CPPFLAGS =			\
+	-DDEBUG					\
 	-DWITH_SPEW				\
 	-fshort-wchar				\
 	-fno-rtti 				\

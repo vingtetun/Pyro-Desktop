@@ -19,14 +19,8 @@ function compzillaLoad()
 		// NOTE: Be careful to not do anything which will create a new
 		//       toplevel window, to avoid an infinite loop.
 
-		content = CompzillaWindowContent (ev.window);
-
-		if (ev.overrideRedirect)
-		    frame = CompzillaDockFrame (content);
-		else
-		    frame = CompzillaFrame (content);
-
-		frame.id = "XID:" + content.getNativeWindow().nativeWindowId;
+		var content = CompzillaWindowContent (ev.window);
+		var frame = CompzillaMakeFrame (content, null, ev.overrideRedirect);
 
 		// ev is a compzillaIWindowConfigureEvent
 		frame.moveResize (ev.x, ev.y, ev.width, ev.height);
@@ -34,10 +28,10 @@ function compzillaLoad()
 		    frame.show ();
 		}
 
-		/* initialize newly created frames to have all actions
-		   available.  we'll selectively turn them off later
-		   based on properties */
-		frame.setAllowedActions ("minimize maximize close");
+                /* initialize newly created frames to have all actions
+                   available.  we'll selectively turn them off later
+                   based on properties */
+                frame.setAllowedActions ("minimize maximize close");
 
 		/* XXX temporary hack to make sure I'm not totally
 		   losing my mind */

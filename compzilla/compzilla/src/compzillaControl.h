@@ -37,6 +37,12 @@ private:
     void ForgetWindow (Window win);
     void MapWindow (Window win);
     void UnmapWindow (Window win);
+    void WindowConfigured (Window win,
+                           PRInt32 x, PRInt32 y,
+                           PRInt32 width, PRInt32 height,
+                           PRInt32 border,
+                           Window aboveWin,
+                           bool override_redirect);
     void PropertyChanged (Window win, Atom prop, bool deleted);
     void WindowDamaged (Window win, XRectangle *rect);
 

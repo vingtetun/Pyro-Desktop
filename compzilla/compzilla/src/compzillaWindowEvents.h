@@ -6,6 +6,7 @@
 
 
 #include <nsCOMPtr.h>
+#include <nsWeakPtr.h>
 #include <nsIDOMEvent.h>
 #include <nsIPropertyBag2.h>
 #include <nsRect.h>
@@ -54,14 +55,14 @@ private:
     virtual ~compzillaWindowEvent();
 
 protected:
-    nsCOMPtr<compzillaIWindow> mWindow;
+    nsCOMPtr<nsISupports> mWindow;
     nsCOMPtr<nsIDOMEventTarget> mTarget;
 
     bool mMapped;
     bool mOverrideRedirect;
     nsIntRect mRect;
     int mBorderWidth;
-    nsCOMPtr<compzillaIWindow> mAboveWindow;
+    nsCOMPtr<nsISupports> mAboveWindow;
 
     long mAtom;
     bool mDeleted;
@@ -69,45 +70,15 @@ protected:
 };
 
 
-#if LAZY
-class compzillaWindowConfigureEvent
-    : public compzillaIWindowConfigureEvent
-{
-public:
-    NS_DECL_ISUPPORTS
-    NS_DECL_COMPZILLAIWINDOWCONFIGUREEVENT
+nsresult CZ_NewCompzillaWindowEvent (compzillaIWindow *win, 
+                                     compzillaWindowEvent **retval);
 
-    compzillaWindowConfigureEvent();
-
-private:
-    virtual ~compzillaWindowConfigureEvent();
-
-protected:
-    /* additional members */
-};
-
-
-class compzillaWindowPropertyEvent
-    : public compzillaIWindowPropertyEvent
-{
-public:
-    NS_DECL_ISUPPORTS
-    NS_DECL_COMPZILLAIWINDOWPROPERTYEVENT
-
-    compzillaWindowPropertyEvent();
-
-private:
-    virtual ~compzillaWindowPropertyEvent();
-
-protected:
-    /* additional members */
-};
-#endif
-
-nsresult CZ_NewCompzillaWindowEvent (compzillaIWindow *win, compzillaWindowEvent **retval);
-nsresult CZ_NewCompzillaPropertyChangeEvent (compzillaIWindow *win, long atom, bool deleted,
+nsresult CZ_NewCompzillaPropertyChangeEvent (compzillaIWindow *win, 
+                                             long atom, 
+                                             bool deleted,
                                              nsIPropertyBag2 *bag,
                                              compzillaWindowEvent **retval);
+
 nsresult CZ_NewCompzillaConfigureEvent (compzillaIWindow *window,
                                         bool mapped,
                                         bool override,
@@ -118,4 +89,5 @@ nsresult CZ_NewCompzillaConfigureEvent (compzillaIWindow *window,
                                         long borderWidth,
                                         compzillaIWindow *aboveWin,
                                         compzillaWindowEvent **retval);
+
 #endif
