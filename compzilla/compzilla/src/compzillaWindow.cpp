@@ -208,37 +208,37 @@ compzillaWindow::EnsurePixmap()
 void
 compzillaWindow::ConnectListeners (bool connect, nsCOMPtr<nsISupports> aContent)
 {
-    const char *events[] = {
+    static const nsString events[] = {
 	// nsIDOMKeyListener events
 	// NOTE: These aren't delivered due to WM focus issues currently
-	"keydown",
-	"keyup",
-	//"keypress",
+	NS_LITERAL_STRING("keydown"),
+	NS_LITERAL_STRING("keyup"),
+	// "keypress",
 
 	// nsIDOMMouseListener events
-	"mousedown",
-	"mouseup",
-	"mouseover",
-	"mouseout",
-	"mousein",
-	//"click",
-	//"dblclick",
+	NS_LITERAL_STRING("mousedown"),
+	NS_LITERAL_STRING("mouseup"),
+	NS_LITERAL_STRING("mouseover"),
+	NS_LITERAL_STRING("mouseout"),
+	NS_LITERAL_STRING("mousein"),
+	// "click",
+	// "dblclick",
 
 	// nsIDOMUIListener events
-	//"activate",
-	"focusin",
-	"focusout",
-        "DOMFocusIn",
-        "DOMFocusOut",
-        "resize",
+	// "activate",
+	NS_LITERAL_STRING("focusin"),
+	NS_LITERAL_STRING("focusout"),
+        NS_LITERAL_STRING("DOMFocusIn"),
+        NS_LITERAL_STRING("DOMFocusOut"),
+        NS_LITERAL_STRING("resize"),
 
 	// HandleEvent events
-	"focus",
-	"blur",
-	"mousemove",
-	"DOMMouseScroll",
+	NS_LITERAL_STRING("focus"),
+	NS_LITERAL_STRING("blur"),
+	NS_LITERAL_STRING("mousemove"),
+	NS_LITERAL_STRING("DOMMouseScroll"),
 
-	NULL
+        nsString() // Must be last element
     };
 
     nsCOMPtr<nsIDOMEventTarget> target = do_QueryInterface (aContent);
@@ -251,12 +251,11 @@ compzillaWindow::ConnectListeners (bool connect, nsCOMPtr<nsISupports> aContent)
 	return;
     }
 
-    for (int i = 0; events [i]; i++) {
-	nsString evname = NS_ConvertASCIItoUTF16 (events [i]);
+    for (int i = 0; !events [i].IsEmpty (); i++) {
 	if (connect) {
-	    target->AddEventListener (evname, listener, PR_TRUE);
+	    target->AddEventListener (events [i], listener, PR_TRUE);
 	} else {
-	    target->RemoveEventListener (evname, listener, PR_TRUE);
+	    target->RemoveEventListener (events [i], listener, PR_TRUE);
 	}
     }
 }

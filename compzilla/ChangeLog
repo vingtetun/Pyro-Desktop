@@ -1,3 +1,8 @@
+2007-05-21  Alex Graveley  <alex@beatniksoftware.com>
+
+	* compzilla/src/compzillaWindow.cpp (ConnectListeners): Use
+	NS_LITERAL_STRING to create the list of events to connect to statically.
+
 2007-05-17  Alex Graveley  <alex@beatniksoftware.com>
 
 	* compzilla/src/compzillaWindow.cpp (GetStringProperty): Handle
