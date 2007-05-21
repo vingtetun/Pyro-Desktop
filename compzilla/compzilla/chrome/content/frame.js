@@ -132,13 +132,14 @@ var FrameMethods = {
 
         Debug ("XXXXXXXX _recomputeAllowedActions!");
 
-	var max = true;
-	var min = true;
-	var close = true;
-	var resize = true;
-	var fullscreen = true;
-	var move = true;
-	var shade = true;
+	var max_action = true;
+	var min_action = true;
+	var close_action = true;
+	var resize_action = true;
+	var fullscreen_action = true;
+	var move_action = true;
+	var shade_action = true;
+	var resize_action = true;
 
 	// XXX first consider the mwm hints
 
@@ -172,6 +173,8 @@ var FrameMethods = {
         actionProp += fullscreen_action ? "fullscreen " : "";
         actionProp += move_action ? "move " : "";
         actionProp += shade_action ? "shade " : "";
+
+	Debug ("new actions = " + actionProp);
 
         this.allowedActions = actionProp;
     },
@@ -473,8 +476,11 @@ function _connectNativeWindowListeners (frame, nativewin)
                             var typeAtom = ev.value.getPropertyAsUint32 (".atom");
 
                             frame.className = _determineFrameClassName (typeAtom,
-                                                                        frame._overrideRedirect,
-                                                                        frame == _focusedFrame);
+                                                                        frame._overrideRedirect);
+
+			    frame._net_wm_window_type = typeAtom;
+
+			    frame._recomputeAllowedActions ();
 
 			    return;
 			}
