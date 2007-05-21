@@ -153,6 +153,15 @@ body {
 *[pyro|allowed-actions~="close"] * #compzillaWindowClose { visibility: visible; }
 
 
+/* make moving windows translucent */
+.windowFrame[pyro|window-state~="moving"] { opacity: 0.8; }
+
+/* and make focused windows stand out a bit */
+.windowFrame[pyro|window-state~="focused"] #windowTitleBox {
+	background: #444499;
+	color: #ffffff;
+}
+
 /* a little hack to see if we can get wm-class support working.
    gnome-terminal windows should be translucent */
 *[pyro|wm-class~="Gnome-terminal"] { opacity: 0.5; }

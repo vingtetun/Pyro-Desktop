@@ -9,9 +9,9 @@ var _focusedFrame;
 
 function CompzillaMakeFrame (content, typeAtom, isOverride)
 {
-    if (!isOverride && !typeAtom && content.getNativeWindow) {
+    if (!isOverride && !typeAtom && content.nativewindow) {
         try {
-            typeAtom = content.getNativeWindow().GetAtomProperty (Atoms._NET_WM_WINDOW_TYPE());
+            typeAtom = content.nativeWindow.GetAtomProperty (Atoms._NET_WM_WINDOW_TYPE());
         } catch (ex) {
             // _NET_WM_WINDOW_TYPE may not be set on new windows
         }
@@ -23,24 +23,24 @@ function CompzillaMakeFrame (content, typeAtom, isOverride)
     frame._overrideRedirect = isOverride;
     frame._net_wm_window_type = typeAtom;
 
-    if (content.getNativeWindow) {
-        frame.id = "XID:" + content.getNativeWindow().nativeWindowId;
+    if (content.nativeWindow) {
+        frame.id = "XID:" + content.nativeWindow.nativeWindowId;
     }
 
     return frame;
 }
 
 
-function _determineFrameClassName (typeAtom, isOverride, focused)
+function _determineFrameClassName (typeAtom, isOverride)
 {
     if (isOverride ||
         typeAtom == Atoms._NET_WM_WINDOW_TYPE_DOCK() ||
         typeAtom == Atoms._NET_WM_WINDOW_TYPE_DESKTOP() ||
         typeAtom == Atoms._NET_WM_WINDOW_TYPE_SPLASH() ||
         typeAtom == Atoms._NET_WM_WINDOW_TYPE_TOOLBAR()) {
-        return focused ? "dockFrameFocused" : "dockFrame";
+        return "dockFrame";
     } else {
-        return focused ? "windowFrameFocused" : "windowFrame";
+        return "windowFrame";
     }
 }
 
@@ -72,13 +72,9 @@ function addCachedEventListener (o, eventid, cachedListener, newListener, usecap
 
 
 var FrameMethods = {
-    getContent: function () {
-	return this._content;
-    },
-
-
     destroy: function () {
-	Debug ("frame.destroy");
+	Debug ("frame",
+	       "frame.destroy");
 
 	if (this._content && this._content.destroy) {
 	    this._content.destroy ();
@@ -91,49 +87,14 @@ var FrameMethods = {
 	windowStack.removeWindow (this);
     },
 
-
-    setTitle: function (title) {
-	if (this._title)
-	    this._title.value = title;
-    },
-
-
-    getTitle: function () {
-	return this._title ? this._title.value : null;
-    },
-
-
-    getWMClass: function () {
-	return this.getAttributeNS ("http://www.pyrodesktop.org/compzilla",
-				    "wm-class");
-    },
-
-
-    setWMClass: function (wmclass) {
-	return this.setAttributeNS ("http://www.pyrodesktop.org/compzilla",
-				    "wm-class", wmclass);
-    },
-
-
-    getAllowedActions: function () {
-	return this.getAttributeNS ("http://www.pyrodesktop.org/compzilla",
-				    "allowed-actions");
-    },
-
-
-    setAllowedActions: function (actions) {
-        Debug ("XXXXXXX setAllowedActions: " + actions);
-	return this.setAttributeNS ("http://www.pyrodesktop.org/compzilla",
-				    "allowed-actions", actions);
-    },
-
     moveResize: function (x, y, width, height) {
-	Debug ("frame.moveResize: w=" + width + ", h=" + height);
+	Debug ("frame",
+	       "frame.moveResize: w=" + width + ", h=" + height);
 
 	this._moveResize (x, y, width, height);
 
-	if (this._content.getNativeWindow) {
-	    svc.ConfigureWindow (this._content.getNativeWindow().nativeWindowId,
+	if (this._content.nativeWindow) {
+	    svc.ConfigureWindow (this._content.nativeWindow.nativeWindowId,
 				 x + this._contentBox.offsetLeft,
 				 y + this._contentBox.offsetTop,
 				 this._contentBox.offsetWidth,
@@ -212,24 +173,116 @@ var FrameMethods = {
         actionProp += move_action ? "move " : "";
         actionProp += shade_action ? "shade " : "";
 
-        this.setAllowedActions (actionProp);
+        this.allowedActions = actionProp;
     },
 
 
     show: function () {
-	Debug ("frame.show");
+	Debug ("frame", "frame.show");
 
 	this.style.display = "block";
     },
 
 
     hide: function () {
-	Debug ("frame.hide");
+	Debug ("frame", "frame.hide");
 
 	this.style.display = "none";
     },
+
+
+    setWindowState: function (state) {
+	this.windowState += " " + state + " ";
+    },
+
+
+    clearWindowState: function (state) {
+	this.windowState = this.windowState.replace (" " + state + " ", "", "g");
+    },
+
+
+    hasWindowState: function (state) {
+	return this.windowState.indexOf (" " + state + " ") != -1;
+    },
+
+
+    addProperty: function (name, getter, setter) {
+	this.__defineGetter__ (name, getter);
+
+	/* allow setter to be undefined for read-only properties */
+	if (setter != undefined)
+	    this.__defineSetter__ (name, setter);
+    }
 };
 
+function _addFrameMethods (frame)
+{
+    for (var m in FrameMethods) {
+	frame[m] = FrameMethods[m];
+    }
+
+    // now add our public properties
+    frame.addProperty ("title",
+		       /* getter */
+		       function () {
+			   return this._title ? this._title.value : null;
+		       },
+		       /* setter */
+		       function (t) {
+			   if (this._title)
+			       this._title.value = t;
+		       });
+
+    frame.addProperty ("wmClass",
+		       /* getter */
+		       function () {
+			   return this.getAttributeNS (
+				       "http://www.pyrodesktop.org/compzilla",
+				       "wm-class");
+		       },
+		       /* setter */
+		       function (wmclass) {
+			   return this.setAttributeNS (
+				       "http://www.pyrodesktop.org/compzilla",
+				       "wm-class", wmclass);
+		       });
+
+    frame.addProperty ("windowState",
+		       /* getter */
+		       function () {
+			   return this.getAttributeNS (
+				       "http://www.pyrodesktop.org/compzilla",
+				       "window-state");
+		       },
+		       /* setter */
+		       function (wmclass) {
+			   return this.setAttributeNS (
+				       "http://www.pyrodesktop.org/compzilla",
+				       "window-state", wmclass);
+		       });
+
+    frame.addProperty ("allowedActions",
+		       /* getter */
+		       function () {
+			   return this.getAttributeNS (
+				       "http://www.pyrodesktop.org/compzilla",
+				       "allowed-actions");
+		       },
+		       /* setter */
+		       function (actions) {
+			   return this.setAttributeNS (
+				       "http://www.pyrodesktop.org/compzilla",
+				       "allowed-actions", actions);
+		       });
+
+    frame.addProperty ("content",
+		       /* getter */
+		       function () {
+			   return this._content;
+		       }
+		       /* no setter */
+		       );
+}
 
 function CompzillaFrame (content, className)
 {
@@ -245,12 +298,11 @@ function CompzillaFrame (content, className)
 
     frame._title = getDescendentById (frame, "windowTitle");
 
-    for (var m in FrameMethods) {
-	frame[m] = FrameMethods[m];
-    }
-
-    if (content.getNativeWindow) {
-	_connectNativeWindowListeners (frame, content.getNativeWindow());
+    // add our methods
+    _addFrameMethods (frame);
+    
+    if (content.nativeWindow) {
+	_connectNativeWindowListeners (frame, content.nativeWindow);
         frame._recomputeAllowedActions ();
     }
 
@@ -266,26 +318,19 @@ function CompzillaFrame (content, className)
 		windowStack.moveToTop (frame);
 
                 // XXX this should live in some sort of focus handler, not here.
-                if (frame != _focusedFrame) {
-                    if (_focusedFrame) {
-                        // Send FocusOut
-                        _focusedFrame._content.blur ();
-                        _focusedFrame.className = 
-                            _determineFrameClassName (_focusedFrame._net_wm_window_type,
-                                                      _focusedFrame._overrideRedirect,
-                                                      false);
-                    }
+		if (_focusedFrame != frame) {
+		    if (_focusedFrame) {
+			// Send FocusOut
+			_focusedFrame._content.blur();
+			_focusedFrame.clearWindowState ("focused");
+                     }
 
-                    // Send FocusIn
-                    frame._content.focus ();
-                    frame.className = _determineFrameClassName (frame._net_wm_window_type,
-                                                                frame._overrideRedirect,
-                                                                true);
+                     // Send FocusIn
+                     frame._content.focus();
+		     frame.setWindowState ("focused");
 
-                    Debug ("XXX Setting classname = " + frame.className);
-
-                    _focusedFrame = frame;
-                }
+                     _focusedFrame = frame;
+                 }
             }
         },
 	true);
@@ -299,10 +344,7 @@ function _connectFrameDragListeners (frame)
     var frameDragPosition = new Object ();
     var frameDragMouseMoveListener = {
         handleEvent: function (ev) {
- 	    if (frame.originalOpacity == undefined) {
- 		frame.originalOpacity = frame.style.opacity;
- 		frame.style.opacity = "0.8";
- 	    }
+	    frame.setWindowState ("moving");
 
 	    // figure out the deltas
 	    var dx = ev.clientX - frameDragPosition.x;
@@ -322,10 +364,7 @@ function _connectFrameDragListeners (frame)
 
     var frameDragMouseUpListener = {
 	handleEvent: function (ev) {
- 	    if (frame.originalOpacity != undefined) {
- 		frame.style.opacity = frame.originalOpacity;
- 		frame.originalOpacity = undefined;
- 	    }
+	    frame.clearWindowState ("moving");
 
 	    // clear the event handlers we add in the title mousedown handler below
 	    document.removeEventListener ("mousemove", frameDragMouseMoveListener, true);
@@ -345,7 +384,7 @@ function _connectFrameDragListeners (frame)
 }
 
 
-function _connectNativeWindowListeners (frame, nativewin) 
+function _connectNativeWindowListeners (frame, nativewin)
 {
     frame._nativeDestroyListener =
 	addCachedEventListener (
@@ -354,7 +393,7 @@ function _connectNativeWindowListeners (frame, nativewin)
 	    frame._nativeDestroyListener,
 		{
 		    handleEvent: function (ev) {
-			Debug ("destroy.handleEvent id='" + frame.id + "'");
+			Debug ("frame", "destroy.handleEvent (" + content + ")");
 			frame.destroy ();
 		    }
 		},
@@ -367,13 +406,13 @@ function _connectNativeWindowListeners (frame, nativewin)
 	    frame._nativeConfigureListener,
 		{
 		    handleEvent: function (ev) {
-			Debug ("configure.handleEvent");
+			Debug ("frame", "configure.handleEvent");
 
 			frame._moveResize (ev.x, ev.y, ev.width, ev.height);
 
 			if (!ev.overrideRedirect) {
 			    svc.ConfigureWindow (
-                                frame._content.getNativeWindow().nativeWindowId,
+                                frame._content.nativeWindow.nativeWindowId,
                                 ev.x, ev.y, ev.width, ev.height,
                                 ev.borderWidth);
                         }
@@ -390,7 +429,7 @@ function _connectNativeWindowListeners (frame, nativewin)
 	    frame._nativeMapListener,
 		{
 		    handleEvent: function (ev) {
-			Debug ("map.handleEvent");
+			Debug ("frame", "map.handleEvent");
 			frame.show ();
 		    }
 		},
@@ -403,7 +442,7 @@ function _connectNativeWindowListeners (frame, nativewin)
 	    frame._nativeUnmapListener,
 		{
 		    handleEvent: function (ev) {
-			Debug ("unmap.handleEvent");
+			Debug ("frame", "unmap.handleEvent");
 			frame.hide ();
 		    }
 		},
@@ -416,19 +455,19 @@ function _connectNativeWindowListeners (frame, nativewin)
 	    frame._nativePropertyChangeListener,
 		{
 		    handleEvent: function (ev) {
-			Debug ("propertychange.handleEvent: ev.atom=" + ev.atom);
+			Debug ("frame", "propertychange.handleEvent: ev.atom=" + ev.atom);
 
 			if (ev.atom == Atoms.WM_NAME () ||
 			    ev.atom == Atoms._NET_WM_NAME ()) {
 			    name = ev.value.getProperty(".text");
 
-			    Debug ("propertychange: setting title =" + name);
-			    frame.setTitle (name);
+			    Debug ("frame", "propertychange: setting title =" + name);
+			    frame.title = name;
 			    return;
 			}
 
 			if (ev.atom == Atoms._NET_WM_WINDOW_TYPE()) {
-			    Debug ("window " + frame.id + " type set");
+			    Debug ("frame", "window " + frame.id + " type set");
 
                             // XXX _NET_WM_WINDOW_TYPE is actually an array of atoms, not just 1
                             var typeAtom = ev.value.getPropertyAsUint32 (".atom");
@@ -441,11 +480,11 @@ function _connectNativeWindowListeners (frame, nativewin)
 			}
 
 			if (ev.atom == Atoms.WM_CLASS()) {
-			    frame.setWMClass (ev.value.getProperty (".instanceName") +
-					      " " +
-					      ev.value.getProperty (".className"));
-
-			    Debug ("frame wm-class = `" +  frame.getWMClass ());
+			    frame.wmClass = (ev.value.getProperty (".instanceName") +
+					     " " +
+					     ev.value.getProperty (".className"));
+					     
+			    Debug ("frame", "frame wm-class = `" +  frame.wmClass);
 			    return;
 			}
 		    }

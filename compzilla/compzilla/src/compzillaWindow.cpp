@@ -272,8 +272,20 @@ compzillaWindow::GetNativeWindowId (PRInt32 *aId)
 NS_IMETHODIMP
 compzillaWindow::AddContentNode (nsISupports* aContent)
 {
+    SPEW ("compzillaWindow::AddContentNode %p - %p\n", this, aContent);
     mContentNodes.AppendObject (aContent);
     ConnectListeners (true, aContent);
+
+    /* when initially adding a content node, we need to force a redraw
+       to that node if we have an existing pixmap. */
+    if (mPixmap) {
+        XRectangle r;
+        r.x = r.y = 0;
+        r.width = mAttr.width;
+        r.height = mAttr.height;
+
+        RedrawContentNode (aContent, &r);
+    }
 
     return NS_OK;
 }
@@ -1293,6 +1305,26 @@ compzillaWindow::PropertyChanged (Window win, Atom prop, bool deleted)
     }
 }
 
+void
+compzillaWindow::RedrawContentNode (nsISupports *aContent, XRectangle *rect)
+{
+    nsCOMPtr<nsIDOMHTMLCanvasElement> canvas = 
+        do_QueryInterface (aContent);
+    if (!canvas) {
+        ERROR ("Content node %p is not a nsIDOMHTMLCanvasElement\n", 
+               aContent);
+        return;
+    }
+
+    nsCOMPtr<compzillaIRenderingContextInternal> internal;
+    nsresult rv = canvas->GetContext (NS_LITERAL_STRING ("compzilla"), 
+                                      getter_AddRefs (internal));
+
+    if (NS_SUCCEEDED (rv)) {
+        internal->SetDrawable (mDisplay, mPixmap, mAttr.visual);
+        internal->Redraw (nsRect (rect->x, rect->y, rect->width, rect->height));
+    }
+}
 
 void
 compzillaWindow::WindowDamaged (XRectangle *rect)
@@ -1300,22 +1332,7 @@ compzillaWindow::WindowDamaged (XRectangle *rect)
     EnsurePixmap ();
 
     for (PRUint32 i = mContentNodes.Count() - 1; i != PRUint32(-1); --i) {
-        nsCOMPtr<nsIDOMHTMLCanvasElement> canvas = 
-            do_QueryInterface (mContentNodes.ObjectAt(i));
-        if (!canvas) {
-            ERROR ("Content node %p is not a nsIDOMHTMLCanvasElement\n", 
-                   mContentNodes.ObjectAt(i));
-            continue;
-        }
-
-        nsCOMPtr<compzillaIRenderingContextInternal> internal;
-        nsresult rv = canvas->GetContext (NS_LITERAL_STRING ("compzilla"), 
-                                          getter_AddRefs (internal));
-
-        if (NS_SUCCEEDED (rv)) {
-            internal->SetDrawable (mDisplay, mPixmap, mAttr.visual);
-            internal->Redraw (nsRect (rect->x, rect->y, rect->width, rect->height));
-        }
+        RedrawContentNode (mContentNodes.ObjectAt(i), rect);
     }
 }
 

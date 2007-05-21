@@ -90,6 +90,8 @@ public:
     Window GetSubwindowAtPoint (int *x, int *y);
     unsigned int DOMKeyCodeToKeySym (PRUint32 vkCode);
 
+    void RedrawContentNode (nsISupports *aContent, XRectangle *rect);
+
     void UpdateAttributes ();
     void ResetPixmap ();
     void EnsurePixmap ();

@@ -2,6 +2,8 @@
 
 /* adapted from compiz's scale plugin */
 
+var exposeLayer = document.getElementById ("exposeLayer");
+
 var ss = new Object ();
 
 /* for now, just always say windows should be scaled
@@ -64,7 +66,7 @@ function layoutSlots () {
     ss.slots = new Array ();
     var nSlots = 0;
 
-    var lines = Math.sqrt (ss.windows.length + 1);
+    var lines = Math.floor (Math.sqrt (ss.windows.length + 1));
 
     var x1 = 0;
     var y1 = 0;
@@ -72,14 +74,14 @@ function layoutSlots () {
     var y2 = windowStack.offsetHeight;
 
     y      = y1 + ss.spacing;
-    height = ((y2 - y1) - (lines + 1) * ss.spacing) / lines;
+    height = Math.floor (((y2 - y1) - (lines + 1) * ss.spacing) / lines);
 
     for (i = 0; i < lines; i++) {
 	n = Math.min (ss.windows.length - nSlots,
 		      Math.ceil (ss.windows.length / lines));
 
 	x     = x1 + ss.spacing;
-	width = ((x2 - x1) - (n + 1) * ss.spacing) / n;
+	width = Math.floor (((x2 - x1) - (n + 1) * ss.spacing) / n);
 
 	for (var j = 0; j < n; j++) {
 	    var new_slot = new Object ();
@@ -145,6 +147,12 @@ function fillInWindows () {
     for (i = 0; i < ss.windows.length; i++) {
 	w = ss.windows[i];
 
+	Debug ("window is [ " +
+	       w.orig_left + ", " +
+	       w.orig_top + "   " +
+	       w.orig_width + ", " +
+	       w.orig_height + " ]");
+	       
 	if (w.slot == null) {
 	    if (ss.slots[w.sid].filled)
 		return true;
@@ -171,6 +179,12 @@ function fillInWindows () {
 	    w.slot.y1 = cy - sy / 2;
 	    w.slot.x2 = cx + sx / 2;
 	    w.slot.y2 = cy + sy / 2;
+
+	    Debug ("slot is [ " +
+		   w.slot.x1 + ", " +
+		   w.slot.y1 + " - " +
+		   w.slot.x2 + ", " +
+		   w.slot.y2 + " ]");
 
 	    w.slot.filled = true;
 
@@ -238,6 +252,8 @@ function adjustScaleVelocity (sw) {
 	scale = 1.0;
     }
 
+    //Debug ("sw.orig_left = " + sw.orig_left);
+
     dx = x1 - (sw.orig_left + sw.tx);
 
     adjust = dx * 0.15;
@@ -249,7 +265,11 @@ function adjustScaleVelocity (sw) {
 
     sw.xVelocity = (amount * sw.xVelocity + adjust) / (amount + 1.0);
 
+    //Debug ("sw.xVelocity = " + sw.xVelocity);
+
     dy = y1 - (sw.orig_top + sw.ty);
+
+    //Debug ("dy = " + dy);
 
     adjust = dy * 0.15;
     amount = Math.abs (dy) * 1.5;
@@ -257,6 +277,9 @@ function adjustScaleVelocity (sw) {
 	amount = 0.5;
     else if (amount > 5.0)
 	amount = 5.0;
+
+    //    Debug ("amount = " + amount);
+    //    Debug ("adjust = " + adjust);
 
     sw.yVelocity = (amount * sw.yVelocity + adjust) / (amount + 1.0);
 
@@ -275,16 +298,26 @@ function adjustScaleVelocity (sw) {
 	Math.abs (dy) < 0.1 && Math.abs (sw.yVelocity) < 0.2 &&
 	Math.abs (ds) < 0.001 && Math.abs (sw.scaleVelocity) < 0.002) {
 
+	//Debug ("y1 = " + y1);
+
 	sw.xVelocity = sw.yVelocity = sw.scaleVelocity = 0.0;
 	sw.tx = x1 - sw.orig_left;
 	sw.ty = y1 - sw.orig_top;
 	sw.scale = scale;
 
-	sw.style.left = (sw.orig_left + sw.tx / sw.scale) + "px";
-	sw.style.top = (sw.orig_top + sw.ty / sw.scale) + "px";
-	sw.style.width = (sw.orig_width / sw.scale) + "px";
-	sw.style.height = (sw.orig_height / sw.scale) + "px";
+	//Debug ("sw.style.top = " + (sw.orig_top + sw.ty / sw.scale) + "px");
 
+	sw.style.left = Math.floor (sw.orig_left + sw.tx / sw.scale) + "px";
+	sw.style.top = Math.floor (sw.orig_top + sw.ty / sw.scale) + "px";
+	sw.style.width = Math.floor (sw.orig_width / sw.scale) + "px";
+	sw.style.height = Math.floor (sw.orig_height / sw.scale) + "px";
+
+	Debug ("after window is [ " +
+	       sw.offsetLeft + ", " +
+	       sw.offsetTop + "   " +
+	       sw.offsetWidth + ", " +
+	       sw.offsetHeight + " ]");
+	       
 	return 0;
     }
 
@@ -303,7 +336,7 @@ function scaleDoStep ()
 }
 
 function scaleStep (msSinceLastStep) {
-    
+
     if (ss.state != "none" && ss.state != "wait") {
 	var amount = msSinceLastStep * 0.05 * ss.speed;
 	var steps  = Math.floor (amount / (0.5 * ss.timestep));
@@ -320,16 +353,18 @@ function scaleStep (msSinceLastStep) {
 		    sw.adjust = adjustScaleVelocity (sw);
 
 		    ss.moreAdjust |= sw.adjust;
+		    
+		    //Debug ("sw.yVelocity = " + sw.yVelocity);
 
 		    sw.tx += sw.xVelocity * chunk;
 		    sw.ty += sw.yVelocity * chunk;
 		    sw.scale += sw.scaleVelocity * chunk;
 
 		    if (sw.adjust) {
-			sw.style.left = (sw.orig_left + sw.tx / sw.scale) + "px";
-			sw.style.top = (sw.orig_top + sw.ty / sw.scale) + "px";
-			sw.style.width = (sw.orig_width / sw.scale) + "px";
-			sw.style.height = (sw.orig_height / sw.scale) + "px";
+			sw.style.left = Math.floor (sw.orig_left + sw.tx / sw.scale) + "px";
+			sw.style.top = Math.floor (sw.orig_top + sw.ty / sw.scale) + "px";
+ 			sw.style.width = Math.floor (sw.orig_width / sw.scale) + "px";
+ 			sw.style.height = Math.floor (sw.orig_height / sw.scale) + "px";
 		    }
 		}
 	    }
@@ -345,8 +380,17 @@ function scaleStep (msSinceLastStep) {
 	    setTimeout (scaleDoStep, 10);
 	}
 	else {
-	    if (ss.state == "in")
+	    if (ss.state == "in") {
+		// we're done zooming out.  hide the expose layer
+		exposeLayer.style.display = "none";
+		for (var swi = 0; swi < ss.windows.length; swi++) {
+		    var sw = ss.reverseWindows[swi];
+		    sw.destroy ();
+		    exposeLayer.removeChild (sw);
+		}
+		ss.reverseWindows = new Array ();
 		ss.state = "none";
+	    }
 	    else if (ss.state == "out")
 		ss.state = "wait";
 	}
@@ -354,6 +398,7 @@ function scaleStep (msSinceLastStep) {
 }
 
 function scaleTerminate () {
+    Debug ("scaleTerminate (" + ss.state + ")");
     if (ss.state != "none") {
 
 	for (var swi = 0; swi < ss.windows.length; swi++) {
@@ -397,8 +442,12 @@ function scaleTerminate () {
 
 function scaleInitiateCommon ()
 {
-    if (!layoutThumbs ())
+    ss.state = "out";
+
+    if (!layoutThumbs ()) {
+	ss.state = "wait";
 	return false;
+    }
 
     /* not yet 
 
@@ -409,8 +458,6 @@ function scaleInitiateCommon ()
     sd->selectedWindow   = s->display->activeWindow;
 
     */
-
-    ss.state = "out";
 
     ss.lastTime = new Date ().getTime();
 
@@ -431,37 +478,56 @@ function scaleInitiateAll ()
 }
 
 function addWindow (w) {
-    w.orig_left = w.offsetLeft;
-    w.orig_top = w.offsetTop;
-    w.orig_width = w.offsetWidth;
-    w.orig_height = w.offsetHeight;
-    w.orig_opacity = w.style.opacity;
+    var sw = CompzillaWindowContent (w.content.nativeWindow);
+    sw.orig_window = w;
 
-    w.scale = 1;
-    w.tx = w.ty = 0;
-    w.xVelocity = w.yVelocity = 0;
-    w.scaleVelocity = 1;
+    Debug ("window is at " + w.offsetLeft + ", " + w.offsetTop);
+    sw.orig_left = w.offsetLeft;
+    sw.orig_top = w.offsetTop;
+    sw.orig_width = w._contentBox.offsetWidth; /* XXX need a getter */
+    sw.orig_height = w._contentBox.offsetHeight;
 
-    ss.reverseWindows.push (w);
+    sw.style.left = sw.orig_left + "px";
+    sw.style.top = sw.orig_top + "px";
+    sw.style.width = sw.orig_width + "px";
+    sw.style.height = sw.orig_height + "px";
+    sw.width = w.content.width;
+    sw.height = w.content.height;
+
+    sw.scale = 1;
+    sw.tx = sw.ty = 0;
+    sw.xVelocity = sw.yVelocity = 0;
+    sw.scaleVelocity = 1;
+
+    exposeLayer.appendChild (sw);
+
+    ss.reverseWindows.push (sw);
 }
 
 function scaleStart () {
+    exposeLayer.style.display = "block";
+
     for (var el = windowStack.firstChild; el != null; el = el.nextSibling) {
-	if (el.className == "windowFrame")
+	if (el.className == "windowFrame" /* it's a compzillaWindowFrame */
+	    && el.content.nativeWindow /* it has native content */
+	    && el.style.display == "block" /* it's displayed */) {
+	    Debug ("adding scale window for '" + el.title + "'");
 	    addWindow (el);
+	}
     }
 
     scaleInitiateAll ();
 }
 
 ss.state = "none";
-ss.spacing = 10;
-ss.opacity = 0.75;
 ss.reverseWindows = new Array ();
+ss.spacing = 10;
+ss.opacity = 1.0;
 ss.speed = 1.5;
 ss.timestep = 1.2;
 
-document.addEventListener("keypress", {
+if (exposeLayer != null)
+    document.addEventListener("keypress", {
                               handleEvent: function (event) {
 				  if (event.keyCode == event.DOM_VK_F11 && event.ctrlKey) {
 				      if (ss.state == "none") {
@@ -470,5 +536,7 @@ document.addEventListener("keypress", {
 					  scaleTerminate ();
                                       }
 				  }
+
+				  event.stopPropagation ();
 			      } },
 			      true);

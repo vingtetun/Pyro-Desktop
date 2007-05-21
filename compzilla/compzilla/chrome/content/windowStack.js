@@ -33,7 +33,8 @@ var windowStack = document.getElementById ("windowStack");
 
 windowStack.stackWindow = function (w) {
     var l = _determineLayer (w);
-    Debug ("adding window '" + w.id + "' to layer '" + l.name + "'");
+    Debug ("windowStack",
+	   "adding window '" + w.id + "' to layer '" + l.name + "'");
 
     w.layer = l;
     w.style.zIndex = ++l.highZIndex; // Stack on top of the layer by default
@@ -48,7 +49,8 @@ windowStack.replaceWindow = function (w1, w2) {
 	return;
 
     if (w1.layer == undefined) {
-	Debug ("w1 not in a layer.  just adding w2");
+	Debug ("windowStack",
+	       "w1 not in a layer.  just adding w2");
 	windowStack.stackWindow (w2);
     }
     else {
@@ -121,7 +123,8 @@ windowStack.moveToTop = function(w) {
     if (w.layer == undefined)
 	return;
 
-    Debug ("windowStack.moveToTop: layer=" + w.layer.name + " zIndex=" + w.style.zIndex);
+    Debug ("windowStack",
+	   "windowStack.moveToTop: layer=" + w.layer.name + " zIndex=" + w.style.zIndex);
 
     if (w.layer.highZIndex != w.style.zIndex) {
 	// Not already the top window
@@ -136,7 +139,8 @@ windowStack.moveToTop = function(w) {
 windowStack.toggleDesktop = function () {
     showingDesktop = !showingDesktop;
 
-    Debug ("toggling the desktop display");
+    Debug ("windowStack",
+	   "toggling the desktop display");
     for (var el = windowStack.firstChild; el != null; el = el.nextSibling) {
 	if (el.layer != desktopLayer) {
 	    el.style.display = showingDesktop ? "none" : "block";
@@ -247,7 +251,8 @@ function _restackLayer (l) {
 
 function _maybeRestackLayer (l) {
     if (l.highZIndex >= l.maxZIndex) {
-	Debug ("Maximum zIndex for layer '" + l.name + "' hit, restacking");
+	Debug ("windowStack",
+	       "Maximum zIndex for layer '" + l.name + "' hit, restacking");
 	_restackLayer (l);
     }
 }
@@ -269,7 +274,7 @@ function _determineLayer (w) {
     // to go in the overlay?  are we going to require a special CSS
     // class for overlay widgets?
 
-    if (w.getContent() != null && w.getContent().id == "debugContent") 
+    if (w.content != null && w.content.id == "debugContent") 
 	// special case for the debug window, which sits above everything
 	return debugLayer;
     if (w._net_wm_window_type == Atoms._NET_WM_WINDOW_TYPE_DESKTOP())

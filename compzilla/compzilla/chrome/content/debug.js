@@ -1,14 +1,29 @@
 /* -*- mode: javascript; c-basic-offset: 4; indent-tabs-mode: t; -*- */
 
 
-Debug = function (str)
+Debug = function (log, str)
 {
-    if (debugLog) {
-	debugLog.value = str + "\n" + debugLog.value;
+    /* we accept the 1 arg form, and use "all" for the log in that
+       case. */
+    if (str == undefined) {
+	str = log;
+	log = "all";
+    }
+
+    if (log == "all" || log in Debug) {
+	if (debugLog) {
+	    debugLog.value = str + "\n" + debugLog.value;
+	}
     }
 }
 document.Debug = Debug;
 
+function debugSelectLog (log) {
+    Debug[log] = true;
+}
+function debugDeselectLog (log) {
+    delete Debug[log];
+}
 
 // Build the debug window
 var debugContent = document.getElementById ("debugContent");
@@ -18,7 +33,7 @@ var debugLog = document.getElementById ("debugLog");
 var debugFrame = CompzillaFrame (debugContent, "windowFrame");
 
 debugFrame.id = "debugFrame";
-debugFrame.setTitle ("Debug Window");
+debugFrame.title = "Debug Window";
 debugFrame.moveResize (200, 50, 300, 300);
 debugFrame.show ();
 

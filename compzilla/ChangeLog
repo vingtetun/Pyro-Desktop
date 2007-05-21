@@ -1,3 +1,43 @@
+2007-05-21  Chris Toshok  <toshok@ximian.com>
+
+	* compzilla/chrome/skin/compzilla.css: add the opacity stuff for
+	moving windows, and the focused title background color changing
+	here.
+
+	* compzilla/chrome/content/scale.js: work on this some more.  we
+	now create another content node for the windows (which gets drawn
+	properly), and we move that.  presently completely screwed for
+	some reason, but at least we have live updating content in the
+	scaled windows.
+
+	* compzilla/src/compzillaWindow.cpp (AddContentNode): if we add a
+	content node and we have a backing store, we need to explicitly
+	draw that node.
+	(RedrawContentNode): new method, split out the contents of the
+	loop from WindowDamaged.
+	(WindowDamaged): loop over the content nodes, calling
+	RedrawContentNode.
+
+	* compzilla/src/compzillaWindow.h (class compzillaWindow ): add
+	RedrawContentNode method to explicity draw just one of our nodes.
+
+	* compzilla/chrome/content/windowStack.js: use the property
+	getters and log levels.
+
+	* compzilla/chrome/content/start.js: use the property setter.
+
+	* compzilla/chrome/content/frame.js: yay property getters/setters.
+	and log levels.  and window-state for "focused".  also, get rid of
+	the window moving opacity hack.  it's done via css now.
+
+	* compzilla/chrome/content/content.js: yay property
+	getters/setters.  and log levels.
+
+	* compzilla/chrome/content/debug.js (Debug): make Debug take 2
+	args, a log name and a debug string.  if we pass 1 string it
+	assumes "all" for the log name.  Add two methods (debugSelectLog
+	and debugDeselectLog) to control which logs are shown.
+
 2007-05-21  Alex Graveley  <alex@beatniksoftware.com>
 
 	* compzilla/src/compzillaWindow.cpp (ConnectListeners): Use
