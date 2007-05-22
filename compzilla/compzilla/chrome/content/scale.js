@@ -6,6 +6,8 @@ var exposeLayer = document.getElementById ("exposeLayer");
 
 var ss = new Object ();
 
+var stepTimeout = 50;
+
 /* for now, just always say windows should be scaled
 
 function isNeverScaleWin (CompWindow *w) {
@@ -284,8 +286,8 @@ function adjustScaleVelocity (sw) {
 
 	sw.style.left = Math.floor (sw.orig_left + sw.tx / sw.scale) + "px";
 	sw.style.top = Math.floor (sw.orig_top + sw.ty / sw.scale) + "px";
-	sw.style.width = Math.floor (sw.orig_width / sw.scale) + "px";
-	sw.style.height = Math.floor (sw.orig_height / sw.scale) + "px";
+	sw.style.width = Math.floor (sw.orig_width * sw.scale) + "px";
+	sw.style.height = Math.floor (sw.orig_height * sw.scale) + "px";
 
 	return 0;
     }
@@ -330,8 +332,8 @@ function scaleStep (msSinceLastStep) {
 		    if (sw.adjust) {
 			sw.style.left = Math.floor (sw.orig_left + sw.tx / sw.scale) + "px";
 			sw.style.top = Math.floor (sw.orig_top + sw.ty / sw.scale) + "px";
- 			sw.style.width = Math.floor (sw.orig_width / sw.scale) + "px";
- 			sw.style.height = Math.floor (sw.orig_height / sw.scale) + "px";
+ 			sw.style.width = Math.floor (sw.orig_width * sw.scale) + "px";
+ 			sw.style.height = Math.floor (sw.orig_height * sw.scale) + "px";
 		    }
 		}
 	    }
@@ -344,7 +346,7 @@ function scaleStep (msSinceLastStep) {
 
     if (ss.state != "none") {
 	if (ss.moreAdjust) {
-	    setTimeout (scaleDoStep, 10);
+	    setTimeout (scaleDoStep, stepTimeout);
 	}
 	else {
 	    if (ss.state == "in") {
@@ -398,7 +400,7 @@ function scaleTerminate () {
 	ss.state = "in";
 
 	ss.lastTime = new Date ().getTime();
-	setTimeout (scaleDoStep, 10);
+	setTimeout (scaleDoStep, stepTimeout);
     }
 
     //sd->lastActiveNum = 0;
@@ -428,7 +430,7 @@ function scaleInitiateCommon ()
     ss.lastTime = new Date ().getTime();
 
     /* start the timeout */
-    setTimeout (scaleDoStep, 10);
+    setTimeout (scaleDoStep, stepTimeout);
 
     return false;
 }
