@@ -5,6 +5,21 @@
 
 2007-05-22  Chris Toshok  <toshok@ximian.com>
 
+	* compzilla/Makefile.am (content_DATA): add jquery .js file.
+
+	* compzilla/chrome/content/start.xul: load the jquery js file.
+
+	* compzilla/chrome/content/start.js: remove that stupid hack for
+	gnome-terminal wm-class.
+
+	* compzilla/chrome/content/scale.js: use jquery for extreme
+	beauty.
+
+	* compzilla/chrome/content/minimize.js: use jquery for extreme
+	beauty.
+
+2007-05-22  Chris Toshok  <toshok@ximian.com>
+
 	* compzilla/Makefile.am (content_DATA): install minimize.js.
 
 	* compzilla/chrome/content/start.xul: load minimize.js.

@@ -32,10 +32,6 @@ function compzillaLoad()
 		   available.  we'll selectively turn them off later
 		   based on properties */
 
-		/* XXX temporary hack to make sure I'm not totally
-		   losing my mind */
-		frame.wmClass = "gnome-terminal Gnome-terminal";
-
 		stack = document.getElementById ("windowStack");
     		stack.stackWindow (frame);
 	    }

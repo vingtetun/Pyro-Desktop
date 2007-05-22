@@ -32,34 +32,10 @@ function MinimizeCompzillaFrame (w) {
   min.style.position = "absolute";
   min.style.display = "block";
 
-  /* now animate the minimization */
+  var dest_x = 0;
+  var dest_y = windowStack.offsetTop + windowStack.offsetHeight;
 
-  min.dest_x = 0;
-  min.dest_y = windowStack.offsetTop + windowStack.offsetHeight;
-
-  min.update =  function () {
-    var another = false;
-
-    if (min.offsetLeft > min.dest_x + 5) {
-      min.style.left = (min.offsetLeft - 5) + "px";
-      another = true;
-    }
-    if (min.offsetTop < min.dest_y + 10) {
-      min.style.top = (min.offsetTop + 10) + "px";
-      another = true;
-    }
-
-    if (min.offsetWidth > 5)
-      min.style.width = (min.offsetWidth - 5) + "px";
-
-    if (min.offsetHeight > 5)
-      min.style.height = (min.offsetHeight - 5) + "px";
-
-    if (another)
-      setTimeout (min.update, 50);
-  };
-
-  setTimeout (min.update, 50);
+  $(min).animate ( { left: dest_x, top: dest_y, width: 0, height: 0, opacity: 0 }, 250 );
 }
 
 function hackMinimizeFrame ()

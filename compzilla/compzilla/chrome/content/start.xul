@@ -119,6 +119,7 @@
     <!-- need globalOverlay.js for goDoCommand -->
     <script type="application/x-javascript" src="chrome://global/content/globalOverlay.js" />
 
+    <script type="application/x-javascript" src="chrome://compzilla/content/jquery.pack.js" />
     <script type="application/x-javascript" src="chrome://compzilla/content/atoms.js" />
     <script type="application/x-javascript" src="chrome://compzilla/content/windowStack.js" />
     <script type="application/x-javascript" src="chrome://compzilla/content/frame.js" />

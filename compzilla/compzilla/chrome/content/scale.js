@@ -6,59 +6,7 @@ var exposeLayer = document.getElementById ("exposeLayer");
 
 var ss = new Object ();
 
-var stepTimeout = 50;
-
-/* for now, just always say windows should be scaled
-
-function isNeverScaleWin (CompWindow *w) {
-    if (w->attrib.override_redirect)
-	return true;
-
-    if (w->wmType & (CompWindowTypeDockMask | CompWindowTypeDesktopMask))
-	return true;
-
-    return false;
-}
-
-function isScaleWin (w) {
-    SCALE_SCREEN (w->screen);
-
-    if (isNeverScaleWin (w))
-	return false;
-
-    if (!ss->type || ss->type == ScaleTypeOutput) {
-	if (!(*w->screen->focusWindow) (w))
-	    return false;
-    }
-
-    if (w->state & CompWindowStateSkipPagerMask)
-	return false;
-
-    if (w->state & CompWindowStateShadedMask)
-	return false;
-
-    if (!w->mapNum || w->attrib.map_state != IsViewable)
-	return false;
-
-    switch (ss->type) {
-    case ScaleTypeGroup:
-	if (ss->clientLeader != w->clientLeader &&
-	    ss->clientLeader != w->id)
-	    return false;
-	break;
-    case ScaleTypeOutput:
-	if (outputDeviceForWindow(w) != w->screen->currentOutputDev)
-	    return false;
-    default:
-	break;
-    }
-
-    if (!matchEval (ss->currentMatch, w))
-	return false;
-
-    return true;
-}
-*/
+/* for now, just always say windows should be scaled */
 function isScaleWin (w) {
     return true;
 }
@@ -227,183 +175,53 @@ function layoutThumbs () {
     return true;
 }
 
-function adjustScaleVelocity (sw) {
-    var dx, dy, ds, adjust, amount;
-    var x1, y1, scale;
-
-    if (sw.slot != null) {
-	x1 = sw.slot.x1;
-	y1 = sw.slot.y1;
-	scale = sw.slot.scale;
-    }
-    else {
-	x1 = sw.orig_left;
-	y1 = sw.orig_top;
-	scale = 1.0;
-    }
-
-    dx = x1 - (sw.orig_left + sw.tx);
-
-    adjust = dx * 0.15;
-    amount = Math.abs (dx) * 1.5;
-    if (amount < 0.5)
-	amount = 0.5;
-    else if (amount > 5.0)
-	amount = 5.0;
-
-    sw.xVelocity = (amount * sw.xVelocity + adjust) / (amount + 1.0);
-
-    dy = y1 - (sw.orig_top + sw.ty);
-
-    adjust = dy * 0.15;
-    amount = Math.abs (dy) * 1.5;
-    if (amount < 0.5)
-	amount = 0.5;
-    else if (amount > 5.0)
-	amount = 5.0;
-
-    sw.yVelocity = (amount * sw.yVelocity + adjust) / (amount + 1.0);
-
-    ds = scale - sw.scale;
-
-    adjust = ds * 0.1;
-    amount = Math.abs (ds) * 7.0;
-    if (amount < 0.01)
-	amount = 0.01;
-    else if (amount > 0.15)
-	amount = 0.15;
-
-    sw.scaleVelocity = (amount * sw.scaleVelocity + adjust) / (amount + 1.0);
-
-    if (Math.abs (dx) < 0.1 && Math.abs (sw.xVelocity) < 0.2 &&
-	Math.abs (dy) < 0.1 && Math.abs (sw.yVelocity) < 0.2 &&
-	Math.abs (ds) < 0.001 && Math.abs (sw.scaleVelocity) < 0.002) {
-
-	sw.xVelocity = sw.yVelocity = sw.scaleVelocity = 0.0;
-	sw.tx = x1 - sw.orig_left;
-	sw.ty = y1 - sw.orig_top;
-	sw.scale = scale;
-
-	sw.style.left = Math.floor (sw.orig_left + sw.tx / sw.scale) + "px";
-	sw.style.top = Math.floor (sw.orig_top + sw.ty / sw.scale) + "px";
-	sw.style.width = Math.floor (sw.orig_width * sw.scale) + "px";
-	sw.style.height = Math.floor (sw.orig_height * sw.scale) + "px";
-
-	return 0;
-    }
-
-    return 1;
-}
-
-function scaleDoStep ()
-{
-    var new_time = new Date().getTime();
-
-    var ms = new_time - ss.lastTime;
-
-    ss.lastTime = new_time;
-
-    scaleStep (ms);
-}
-
-function scaleStep (msSinceLastStep) {
-
-    if (ss.state != "none" && ss.state != "wait") {
-	var amount = msSinceLastStep * 0.05 * ss.speed;
-	var steps  = Math.floor (amount / (0.5 * ss.timestep));
-	if (steps == 0) steps = 1;
-	var chunk  = amount / steps;
-
-	while (steps--) {
-	    ss.moreAdjust = 0;
-
-	    for (var swi = 0; swi < ss.windows.length; swi++) {
-		var sw = ss.windows[swi];
-
-		if (sw.adjust) {
-		    sw.adjust = adjustScaleVelocity (sw);
-
-		    ss.moreAdjust |= sw.adjust;
-		    
-		    sw.tx += sw.xVelocity * chunk;
-		    sw.ty += sw.yVelocity * chunk;
-		    sw.scale += sw.scaleVelocity * chunk;
-
-		    if (sw.adjust) {
-			sw.style.left = Math.floor (sw.orig_left + sw.tx / sw.scale) + "px";
-			sw.style.top = Math.floor (sw.orig_top + sw.ty / sw.scale) + "px";
- 			sw.style.width = Math.floor (sw.orig_width * sw.scale) + "px";
- 			sw.style.height = Math.floor (sw.orig_height * sw.scale) + "px";
-		    }
-		}
-	    }
-
-	    if (!ss.moreAdjust)
-		break;
-	}
-    }
-
-
-    if (ss.state != "none") {
-	if (ss.moreAdjust) {
-	    setTimeout (scaleDoStep, stepTimeout);
-	}
-	else {
-	    if (ss.state == "in") {
-		// we're done zooming out.  hide the expose layer
-		exposeLayer.style.display = "none";
-		for (var swi = 0; swi < ss.windows.length; swi++) {
-		    var sw = ss.reverseWindows[swi];
-		    sw.destroy ();
-		    exposeLayer.removeChild (sw);
-		}
-		ss.reverseWindows = new Array ();
-		ss.state = "none";
-	    }
-	    else if (ss.state == "out")
-		ss.state = "wait";
-	}
-    }
-}
-
 function scaleTerminate () {
     if (ss.state != "none") {
+
+	var callback_count = 0;
+
+	for (var swi = 0; swi < ss.windows.length; swi++) {
+	    var sw = ss.windows[swi];
+	    if (sw.slot != null)
+		callback_count ++;
+	}
 
 	for (var swi = 0; swi < ss.windows.length; swi++) {
 	    var sw = ss.windows[swi];
 	    if (sw.slot != null) {
 		sw.slot = null;
-		sw.adjust = true;
+
+		// animate the scaled windows back to their original spots
+		$(sw).animate ( {left: sw.orig_left,
+				 top: sw.orig_top,
+				 width: sw.orig_width,
+				 height: sw.orig_height } ,
+				250, "linear",
+				function () {
+				    if (--callback_count == 0) {
+					for (var i = 0; i < ss.windows.length; i ++) {
+					    ss.windows[i].destroy ();
+					    exposeLayer.removeChild (ss.windows[i]);
+					}
+					ss.reverseWindows = new Array ();
+					ss.state = "none";
+					Debug ("made it to none state");
+
+					// animate the expose layer fading out
+					$(exposeLayer).animate ( { opacity: 0.0 }, 100,
+								 "linear",
+								 function () {
+								     exposeLayer.style.display = "none";
+								 });
+				    }
+				});
+
+		// also animate the original window fading in, so that it
+		// ends a little bit after the movement animations.
+		$(sw.orig_window).animate ({ opacity: sw.orig_opacity }, 350);
 	    }
 	}
-
-	/*
-	  not yet - toshok
-
-	if (ss.state != "in") {
-	    w = findWindowAtScreen (s, sd->lastActiveWindow);
-	    if (w) {
-		int x, y;
-
-		activateWindow (w);
-
-		defaultViewportForWindow (w, &x, &y);
-
-		if (x != s->x || y != s->y)
-		    sendViewportMoveRequest (s,
-					     x * s->width,
-					     y * s->height);
-	    }
-	}
-	*/
-
-	ss.state = "in";
-
-	ss.lastTime = new Date ().getTime();
-	setTimeout (scaleDoStep, stepTimeout);
     }
-
-    //sd->lastActiveNum = 0;
 
     return false;
 }
@@ -417,20 +235,39 @@ function scaleInitiateCommon ()
 	return false;
     }
 
-    /* not yet 
+    var callback_count = 0;
 
-    if (!sd->lastActiveNum)
-	sd->lastActiveNum = s->activeNum - 1;
+    for (var swi = 0; swi < ss.windows.length; swi++) {
+	var sw = ss.windows[swi];
+	if (sw.slot != null)
+	    callback_count ++;
+    }
 
-    sd->lastActiveWindow = s->display->activeWindow;
-    sd->selectedWindow   = s->display->activeWindow;
+    exposeLayer.style.opacity = 0.0;
+    exposeLayer.style.display = "block";
+    $(exposeLayer).animate ( { opacity: 0.5 }, 250 );
 
-    */
+    for (var swi = 0; swi < ss.windows.length; swi++) {
+	var sw = ss.windows[swi];
+	if (sw.slot != null) {
 
-    ss.lastTime = new Date ().getTime();
+	    // animate the contents moving to the right place
+	    $(sw).animate ({ left: sw.slot.x1,
+			     top: sw.slot.y1,
+			     width: sw.slot.x2-sw.slot.x1,
+			     height: sw.slot.y2-sw.slot.y1 },
+			   250, "linear",
+			   function () {
+			       if (--callback_count == 0) {
+				   ss.state = "wait";
+				   Debug ("made it to wait state");
+			       }
+			   });
 
-    /* start the timeout */
-    setTimeout (scaleDoStep, stepTimeout);
+	    // and also animate the original window fading out, very quickly
+	    $(sw.orig_window).animate ({ opacity: 0.0 }, 100);
+	}
+    }
 
     return false;
 }
@@ -441,7 +278,7 @@ function scaleInitiateAll ()
 	ss.type = "all";
 	return scaleInitiateCommon ();
     }
-
+    
     return false;
 }
 
@@ -453,6 +290,9 @@ function addWindow (w) {
     sw.orig_top = w.offsetTop;
     sw.orig_width = w._contentBox.offsetWidth; /* XXX need a getter */
     sw.orig_height = w._contentBox.offsetHeight;
+    sw.orig_opacity = 1.0;
+
+    Debug ("orig opacity = " + w.opacity);
 
     sw.style.left = sw.orig_left + "px";
     sw.style.top = sw.orig_top + "px";
