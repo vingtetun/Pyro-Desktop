@@ -31,7 +31,8 @@ skin_DATA =					\
 	$(SKIN_SRCDIR)/icon.png			\
 	$(SKIN_SRCDIR)/minimize.png		\
 	$(SKIN_SRCDIR)/maximize.png		\
-	$(SKIN_SRCDIR)/close.png
+	$(SKIN_SRCDIR)/close.png		\
+	$(SKIN_SRCDIR)/meebo/*
 
 endir=$(extensiondir)/chrome/locale/en-US
 EN_SRCDIR=$(EXTENSION_SRCDIR)/chrome/locale/en-US

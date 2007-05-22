@@ -14,6 +14,8 @@
 
     <html:body id="desktop" xmlns="http://www.w3.org/1999/xhtml" flex="1">
 
+        <!-- windowStack contains all the windowFrames -->
+
         <div id="windowStack">
 
             <!-- desktop is always at the bottom -->
@@ -37,73 +39,86 @@
 
 	</div>
 
+        <!-- windowFrame is the template used for wrapping native window content -->
 
-	<!-- Window frame template, which is cloned for each created window, and
-	     the content reparented inside.  Done using CompzillaFrame. -->
+        <div id="windowFrame" 
+             class="uiDlg" 
+             style="display: none"
+             pyro:wm-class="Unknown Unknown"
+             pyro:allow-resize="true"
+             pyro:allow-move="true"
+             pyro:allow-maximize="true"
+             pyro:allow-minimize="true"
+             pyro:allow-close="true"
+             pyro:allow-fullscreen="true"
+             pyro:allow-shade="true"
+             pyro:inactive="true"
+             pyro:moving="false">
 
-        <div id="windowFrame" class="windowFrame" mousethrough="never">
-            <xul:commandset id="compzillaWindowCommandSet">
-                <xul:command id="cmd_minimizeWindow" oncommand="compzilla.minimizeWindow();" />
-                <xul:command id="cmd_restoreWindow" oncommand="compzilla.restoreWindow();" />
-                <xul:command id="cmd_maximizeWindow" oncommand="compzilla.maximizeWindow();" />
-                <xul:command id="cmd_closeWindow" oncommand="compzilla.closeWindow();" />
-            </xul:commandset>
-
-            <xul:keyset id="compzillaWindowKeyset">
-                <xul:key id="key_minimizeWindow" 
-                         keycode="VK_F9" modifiers="alt"
-                         command="cmd_minimizeWindow" />
-                <xul:key id="key_maximizeWindow" 
-                         keycode="VK_F10" modifiers="alt"
-                         command="cmd_maximizeWindow" />
-                <xul:key id="key_closeWindow" 
-                         keycode="VK_F4" modifiers="alt"
-                         command="cmd_closeWindow" />
-            </xul:keyset>
-
-            <xul:menupopup id="compzillaWindowMenu">
-                <xul:menuitem id="menu_minimizeWindow" 
-                              label="&minimizeWindow.label;" 
-                              command="cmd_minimizeWindow" />
-                <xul:menuitem id="menu_maximizeWindow" 
-                              label="&maximizeWindow.label;" 
-                              command="cmd_maximizeWindow" />
-                <xul:menuitem id="menu_closeWindow" 
-                              label="&closeWindow.label;" 
-                              command="cmd_closeWindow" />
-            </xul:menupopup>
-
-            <xul:hbox id="windowTitleBox">
-                <xul:image id="compzillaWindowIcon"
-		           src="chrome://compzilla/skin/icon.png"
-                           tooltiptext="&windowMenu.label;" 
-                           popup="compzillaWindowMenu" />
-
-                <xul:label id="windowTitle" class="windowTitle" flex="1" value="Unknown" />
-
-                <xul:image id="compzillaWindowMinimize"
-                           src="chrome://compzilla/skin/minimize.png"
-                           tooltiptext="&minimizeWindow.label;" 
-                           onclick="goDoCommand('cmd_minimizeWindow');" />
-                <xul:image id="compzillaWindowMaximize"
-                           src="chrome://compzilla/skin/maximize.png"
-                           tooltiptext="&maximizeWindow.label;" 
-                           onclick="goDoCommand('cmd_maximizeWindow');" />
-                <xul:image id="compzillaWindowClose"
-                           src="chrome://compzilla/skin/close.png"
-                           tooltiptext="&closeWindow.label;" 
-                           onclick="goDoCommand('cmd_closeWindow');" />
-            </xul:hbox>
-
-            <div id="windowContentBox">
-                <!-- The content node will be inserted here. -->
+            <div class="uiDlgTop">
+                <div class="uiDlgTopLeft" pyro:resize="nw"/>
+                <div class="uiDlgTopRight" pyro:resize="ne"/>
+                <div class="uiDlgTopCenter" pyro:resize="n"/>
             </div>
+
+            <div class="uiDlgBar">
+                <div class="uiDlgBarLeft" pyro:resize="w"/>
+                <div class="uiDlgBarRight" pyro:resize="e"/>
+                <div class="uiDlgBarCenter" id="windowTitleBox" pyro:resize="move">
+
+                    <div class="uiDlgButtons">
+                        <xul:image class="uiDlgButton uiDlgButtonMin"
+                                   tooltiptext="&minimizeWindow.label;" 
+                                   onclick="goDoCommand('cmd_minimizeWindow');" />
+
+                        <xul:image class="uiDlgButton uiDlgButtonMax"
+                                   tooltiptext="&maximizeWindow.label;" 
+                                   onclick="goDoCommand('cmd_maximizeWindow');" />
+
+                        <xul:image class="uiDlgButton uiDlgButtonClose"
+                                   tooltiptext="&closeWindow.label;" 
+                                   onclick="goDoCommand('cmd_closeWindow');" />
+                    </div>
+
+                    <xul:image id="compzillaWindowIcon"
+                               class="uiDlgButton uiDlgButtonMenu"
+                               src="chrome://compzilla/skin/icon.png"
+                               tooltiptext="&windowMenu.label;" 
+                               popup="compzillaWindowMenu" />
+
+                    <div class="uiDlgCaption" 
+                         id="windowTitle" 
+                         caption="Test Frame" 
+                         pyro:resize="move">
+                        <span pyro:resize="move">Test Frame</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="uiDlgContent">
+                <div class="uiDlgContentLeft" pyro:resize="w"/>
+                <div class="uiDlgContentRight" pyro:resize="e"/>
+                <div class="uiDlgContentCenter" id="windowContentBox">
+                    <!-- The content node will be inserted here. -->
+                </div>
+            </div>
+
+            <div class="uiDlgBottom">
+                <div class="uiDlgBottomLeft" pyro:resize="sw"/>
+                <div class="uiDlgBottomRight" pyro:resize="se"/>
+                <div class="uiDlgBottomCenter" pyro:resize="s"/>
+            </div>
+
+            <img class="uiDlgHandle" src="chrome://compzilla/skin/handle.gif" pyro:resize="se"/>
         </div>
+
+        <!-- windowContent is cloned to represent native window contents, and
+             reparented into a windowFrame clone -->
 
         <canvas id="windowContent" tabindex="1" />
 
         <!-- Contents of the debug window. Manually reparented into a window
-             frame we create for it in debug.js	-->
+             frame we create for it in debug.js -->
 
         <div id="debugContent">
 	    <textarea id="debugLog" />
@@ -115,6 +130,41 @@
         </div>
 
     </html:body>
+
+    <commandset id="compzillaDesktopCommandSet">
+        <command id="cmd_showDesktop" oncommand="windowStack.toggleDesktop();" />
+    </commandset>
+
+    <commandset id="compzillaWindowCommandSet">
+        <command id="cmd_minimizeWindow" oncommand="compzillaMinimizeWindow();" />
+        <command id="cmd_restoreWindow" oncommand="compzillaRestoreWindow();" />
+        <command id="cmd_maximizeWindow" oncommand="compzillaMaximizeWindow();" />
+        <command id="cmd_closeWindow" oncommand="compzillaCloseWindow();" />
+    </commandset>
+
+    <keyset id="compzillaWindowKeyset">
+        <key id="key_minimizeWindow" 
+             keycode="VK_F9" modifiers="alt"
+             command="cmd_minimizeWindow" />
+        <key id="key_maximizeWindow" 
+             keycode="VK_F10" modifiers="alt"
+             command="cmd_maximizeWindow" />
+        <key id="key_closeWindow" 
+             keycode="VK_F4" modifiers="alt"
+             command="cmd_closeWindow" />
+    </keyset>
+
+    <menupopup id="compzillaWindowMenu">
+        <menuitem id="menu_minimizeWindow" 
+                  label="&minimizeWindow.label;" 
+                  command="cmd_minimizeWindow" />
+        <menuitem id="menu_maximizeWindow" 
+                  label="&maximizeWindow.label;" 
+                  command="cmd_maximizeWindow" />
+        <menuitem id="menu_closeWindow" 
+                  label="&closeWindow.label;" 
+                  command="cmd_closeWindow" />
+    </menupopup>
 
     <!-- need globalOverlay.js for goDoCommand -->
     <script type="application/x-javascript" src="chrome://global/content/globalOverlay.js" />
@@ -130,7 +180,4 @@
     <script type="application/x-javascript" src="chrome://compzilla/content/minimize.js" />
     <script type="application/x-javascript" src="chrome://compzilla/content/start.js" />
 
-    <commandset id="compzillaDesktopCommandSet">
-        <command id="cmd_showDesktop" oncommand="windowStack.toggleDesktop();" />
-    </commandset>
 </window>

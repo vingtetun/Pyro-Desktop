@@ -1,3 +1,8 @@
+2007-05-22  Alex Graveley  <alex@beatniksoftware.com>
+
+	Flush themed window frame code, with resize and property fixups. 
+	Sizing/configure is broken, but this change is already too big.
+
 2007-05-22  Chris Toshok  <toshok@hungry.com>
 
 	* compzilla/chrome/content/scale.js: use a constant for the
@@ -78,7 +83,8 @@
 2007-05-21  Alex Graveley  <alex@beatniksoftware.com>
 
 	* compzilla/src/compzillaWindow.cpp (ConnectListeners): Use
-	NS_LITERAL_STRING to create the list of events to connect to statically.
+	NS_LITERAL_STRING to create the list of event names to connect to
+	statically.
 
 2007-05-17  Alex Graveley  <alex@beatniksoftware.com>
 

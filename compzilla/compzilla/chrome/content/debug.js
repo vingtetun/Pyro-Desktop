@@ -30,7 +30,7 @@ var debugContent = document.getElementById ("debugContent");
 var debugLog = document.getElementById ("debugLog");
 
 // Make a frame for the debug window
-var debugFrame = CompzillaFrame (debugContent, "windowFrame");
+var debugFrame = CompzillaFrame (debugContent);
 
 debugFrame.id = "debugFrame";
 debugFrame.title = "Debug Window";

@@ -7,44 +7,6 @@ svc = cls.getService(Components.interfaces.compzillaIControl);
 var _focusedFrame;
 
 
-function CompzillaMakeFrame (content, typeAtom, isOverride)
-{
-    if (!isOverride && !typeAtom && content.nativewindow) {
-        try {
-            typeAtom = content.nativeWindow.GetAtomProperty (Atoms._NET_WM_WINDOW_TYPE());
-        } catch (ex) {
-            // _NET_WM_WINDOW_TYPE may not be set on new windows
-        }
-    }
-
-    var className = _determineFrameClassName (typeAtom, isOverride, false);
-    var frame = CompzillaFrame (content, className);
-
-    frame._overrideRedirect = isOverride;
-    frame._net_wm_window_type = typeAtom;
-
-    if (content.nativeWindow) {
-        frame.id = "XID:" + content.nativeWindow.nativeWindowId;
-    }
-
-    return frame;
-}
-
-
-function _determineFrameClassName (typeAtom, isOverride)
-{
-    if (isOverride ||
-        typeAtom == Atoms._NET_WM_WINDOW_TYPE_DOCK() ||
-        typeAtom == Atoms._NET_WM_WINDOW_TYPE_DESKTOP() ||
-        typeAtom == Atoms._NET_WM_WINDOW_TYPE_SPLASH() ||
-        typeAtom == Atoms._NET_WM_WINDOW_TYPE_TOOLBAR()) {
-        return "dockFrame";
-    } else {
-        return "windowFrame";
-    }
-}
-
-
 function getDescendentById (root, id)
 {
     if (root.id == id)
@@ -71,6 +33,21 @@ function addCachedEventListener (o, eventid, cachedListener, newListener, usecap
 }
 
 
+function findPos (obj) 
+{
+    var curleft = curtop = 0;
+    if (obj.offsetParent) {
+        curleft = obj.offsetLeft;
+        curtop = obj.offsetTop;
+        while (obj = obj.offsetParent) {
+            curleft += obj.offsetLeft;
+            curtop += obj.offsetTop;
+        }
+    }
+    return [curleft, curtop];
+}
+
+
 var FrameMethods = {
     destroy: function () {
 	Debug ("frame",
@@ -87,96 +64,128 @@ var FrameMethods = {
 	windowStack.removeWindow (this);
     },
 
+
     moveResize: function (x, y, width, height) {
-	Debug ("frame",
-	       "frame.moveResize: w=" + width + ", h=" + height);
+        // Coordinates are relative to the frame
+
+	Debug ("frame", 
+	       "frame.moveResize: x=" + x + ", y=" + y + ", w=" + width + ", h=" + height);
 
 	this._moveResize (x, y, width, height);
-
-	if (this._content.nativeWindow) {
-	    svc.ConfigureWindow (this._content.nativeWindow.nativeWindowId,
-				 x + this._contentBox.offsetLeft,
-				 y + this._contentBox.offsetTop,
-				 this._contentBox.offsetWidth,
-				 this._contentBox.offsetHeight,
-				 0);
-	}
+        this._configureNativeWindow ();
     },
 
 
     _moveResize: function (x, y, width, height) {
-	if (this.offsetWidth != width) {
-	    this._contentBox.style.width = width + "px";
-	    if (this._titleBox)
-		this._titleBox.style.width = width + "px";
-	    this._content.width = width;
-	}
-	if (this.offsetHeight != height) {
-	    this._contentBox.style.height = height + "px";
-	    this._content.height = height;
-	}
+        // Coordinates are relative to the frame
+
+        Debug ("BEFORE _moveResize: this.offsetHeight=" + this.offsetHeight + 
+               " this._contentBox.style.height=" + this._contentBox.style.height + 
+               " this._contentBox.offsetHeight=" + this._contentBox.offsetHeight);
+
 	if (this.offsetLeft != x) {
 	    this.style.left = x + "px";
 	}
 	if (this.offsetTop != y) {
 	    this.style.top = y + "px";
 	}
+
+        if (this.offsetWidth != width) {
+            this.style.width = width + "px";
+
+            //width -= this._contentBox.offsetLeft;
+            this._contentBox.style.width = width;
+        }
+        if (this.offsetHeight != height) {
+            this.style.height = height + "px";
+
+            //height -= this._contentBox.offsetHeight;
+            this._contentBox.style.height = height;
+        }
+
+        if (this._content.nativeWindow) {
+            this._content.width = width;
+            this._content.height = height;
+        }
+
+        Debug ("AFTER _moveResize: this.offsetHeight=" + this.offsetHeight + 
+               " this._contentBox.style.height=" + this._contentBox.style.height + 
+               " this._contentBox.offsetHeight=" + this._contentBox.offsetHeight);
+    },
+
+
+    _configureNativeWindow: function () {
+        if (!this._content.nativeWindow)
+            return;
+
+        this._content.width = this._content.offsetWidth;
+        this._content.height = this._content.offsetHeight;
+
+        if (this.overrideRedirect)
+            return;
+
+        var pos = findPos (this._content);
+        Debug("FindPos: " + pos);
+
+        Debug("Calling ConfigureWindow: xid=" +
+              this._content.nativeWindow.nativeWindowId + ", x=" +
+              pos[0] + ", y=" +
+              pos[1] + ", width=" +
+              this._content.width + ", height=" +
+              this._content.height);
+
+        svc.ConfigureWindow (this._content.nativeWindow.nativeWindowId,
+                             pos[0],
+                             pos[1],
+                             this._content.width,
+                             this._content.height,
+                             0);
+    },
+    
+
+    _resetChromeless: function () {
+        if (this.overrideRedirect ||
+            this.wmWindowType == Atoms._NET_WM_WINDOW_TYPE_DOCK() ||
+            this.wmWindowType == Atoms._NET_WM_WINDOW_TYPE_DESKTOP() ||
+            this.wmWindowType == Atoms._NET_WM_WINDOW_TYPE_SPLASH() ||
+            this.wmWindowType == Atoms._NET_WM_WINDOW_TYPE_TOOLBAR()) {
+            this.chromeless = true;
+        } else {
+            this.chromeless = false;
+        }
     },
 
 
     _recomputeAllowedActions: function () {
 	/* this only applies for native windows, and those windows
-	   which have had mwm hints/_net_wm_window_type set. */
-	if (/* XXX mwm hints? */ this._net_wm_window_type == undefined)
+	   which have had mwm hints/wmWindowType set. */
+	if (!this.wmWindowType)
 	    return;
-
-        Debug ("XXXXXXXX _recomputeAllowedActions!");
-
-	var max_action = true;
-	var min_action = true;
-	var close_action = true;
-	var resize_action = true;
-	var fullscreen_action = true;
-	var move_action = true;
-	var shade_action = true;
-	var resize_action = true;
 
 	// XXX first consider the mwm hints
 
 	// next override using metacity's rules for assigning features
 	// based on EWMH's window types.
-	if (this._net_wm_window_type == Atoms._NET_WM_WINDOW_TYPE_DESKTOP () ||
-	    this._net_wm_window_type == Atoms._NET_WM_WINDOW_TYPE_DOCK () ||
-	    this._net_wm_window_type == Atoms._NET_WM_WINDOW_TYPE_SPLASH ()) {
-	    close_action = false;
-	    shade_action = false;
-	    move_action = false;
-	    resize_action = false;
+        var isSpecial = 
+            (this.wmWindowType == Atoms._NET_WM_WINDOW_TYPE_DESKTOP () ||
+             this.wmWindowType == Atoms._NET_WM_WINDOW_TYPE_DOCK () ||
+             this.wmWindowType == Atoms._NET_WM_WINDOW_TYPE_SPLASH ());
+        var isNormal = 
+            this.wmWindowType == Atoms._NET_WM_WINDOW_TYPE_NORMAL ();
+
+        this.allowClose = !isSpecial;
+        this.allowShade = !isSpecial;
+        this.allowMove = !isSpecial;
+        this.allowResize = !isSpecial;
+
+        this.allowMaximize = isNormal;
+        this.allowMinimize = isNormal;
+        this.allowFullscreen = isNormal;
+
+	if (!this.allowResize) {
+	    this.allowMaximize = false;
+	    this.allowFullscreen = false;
 	}
-
-	if (this._net_wm_window_type != Atoms._NET_WM_WINDOW_TYPE_NORMAL ()) {
-	    max_action = false;
-	    min_action = false;
-	    fullscreen_action = false;
-	}
-
-	if (!resize_action) {
-	    max_action = false;
-	    fullscreen_action = false;
-	}
-
-        var actionProp = "";
-        actionProp += max_action ? "maximize " : "";
-        actionProp += min_action ? "minimize " : "";
-        actionProp += close_action ? "close " : "";
-        actionProp += resize_action ? "resize " : "";
-        actionProp += fullscreen_action ? "fullscreen " : "";
-        actionProp += move_action ? "move " : "";
-        actionProp += shade_action ? "shade " : "";
-
-	Debug ("new actions = " + actionProp);
-
-        this.allowedActions = actionProp;
     },
 
 
@@ -194,18 +203,13 @@ var FrameMethods = {
     },
 
 
-    setWindowState: function (state) {
-	this.windowState += " " + state + " ";
+    getPyroAttribute: function (name) {
+        return this.getAttributeNS ("http://www.pyrodesktop.org/compzilla", name);
     },
 
 
-    clearWindowState: function (state) {
-	this.windowState = this.windowState.replace (" " + state + " ", "", "g");
-    },
-
-
-    hasWindowState: function (state) {
-	return this.windowState.indexOf (" " + state + " ") != -1;
+    setPyroAttribute: function (name, value) {
+        this.setAttributeNS ("http://www.pyrodesktop.org/compzilla", name, value);
     },
 
 
@@ -215,8 +219,10 @@ var FrameMethods = {
 	/* allow setter to be undefined for read-only properties */
 	if (setter != undefined)
 	    this.__defineSetter__ (name, setter);
-    }
+    },
+
 };
+
 
 function _addFrameMethods (frame)
 {
@@ -234,48 +240,131 @@ function _addFrameMethods (frame)
 		       function (t) {
 			   if (this._title)
 			       this._title.value = t;
+                           else
+                               this._title.value = "[Unknown]";
 		       });
 
     frame.addProperty ("wmClass",
 		       /* getter */
 		       function () {
-			   return this.getAttributeNS (
-				       "http://www.pyrodesktop.org/compzilla",
-				       "wm-class");
-		       },
+			   return this.getPyroAttribute ("wm-class");
+                       },
 		       /* setter */
 		       function (wmclass) {
-			   return this.setAttributeNS (
-				       "http://www.pyrodesktop.org/compzilla",
-				       "wm-class", wmclass);
+			   this.setPyroAttribute ("wm-class", wmclass);
 		       });
 
-    frame.addProperty ("windowState",
+    frame.addProperty ("allowResize",
 		       /* getter */
 		       function () {
-			   return this.getAttributeNS (
-				       "http://www.pyrodesktop.org/compzilla",
-				       "window-state");
+			   return this.getPyroAttribute ("allow-resize");
 		       },
 		       /* setter */
-		       function (wmclass) {
-			   return this.setAttributeNS (
-				       "http://www.pyrodesktop.org/compzilla",
-				       "window-state", wmclass);
+		       function (val) {
+			   this.setPyroAttribute ("allow-resize", val);
 		       });
 
-    frame.addProperty ("allowedActions",
+    frame.addProperty ("allowMaximize",
 		       /* getter */
 		       function () {
-			   return this.getAttributeNS (
-				       "http://www.pyrodesktop.org/compzilla",
-				       "allowed-actions");
+			   return this.getPyroAttribute ("allow-maximize");
 		       },
 		       /* setter */
-		       function (actions) {
-			   return this.setAttributeNS (
-				       "http://www.pyrodesktop.org/compzilla",
-				       "allowed-actions", actions);
+		       function (val) {
+			   this.setPyroAttribute ("allow-maximize", val);
+		       });
+
+    frame.addProperty ("allowMinimize",
+		       /* getter */
+		       function () {
+			   return this.getPyroAttribute ("allow-minimize");
+		       },
+		       /* setter */
+		       function (val) {
+			   this.setPyroAttribute ("allow-minimize", val);
+		       });
+
+    frame.addProperty ("allowMove",
+		       /* getter */
+		       function () {
+			   return this.getPyroAttribute ("allow-move");
+		       },
+		       /* setter */
+		       function (val) {
+			   this.setPyroAttribute ("allow-move", val);
+		       });
+
+    frame.addProperty ("allowShade",
+		       /* getter */
+		       function () {
+			   return this.getPyroAttribute ("allow-shade");
+		       },
+		       /* setter */
+		       function (val) {
+			   this.setPyroAttribute ("allow-shade", val);
+		       });
+
+    frame.addProperty ("inactive",
+		       /* getter */
+		       function () {
+			   return this.getPyroAttribute ("inactive");
+		       },
+		       /* setter */
+		       function (val) {
+			   this.setPyroAttribute ("inactive", val);
+		       });
+
+    frame.addProperty ("moving",
+		       /* getter */
+		       function () {
+			   return this.getPyroAttribute ("moving");
+		       },
+		       /* setter */
+		       function (val) {
+			   this.setPyroAttribute ("moving", val);
+		       });
+
+    frame.addProperty ("chromeless",
+		       /* getter */
+		       function () {
+                           return this.className.indexOf ("chromeless") != -1;
+                       },
+		       /* setter */
+		       function () {
+                           this.className = this.className.replace ("chromeless", "");
+		       });
+
+    frame.addProperty ("wmWindowType",
+		       /* getter */
+		       function () {
+                           if (!this._net_wm_window_type && this._content) {
+                               try {
+                                   this._net_wm_window_type = 
+                                       this._content.nativeWindow.GetAtomProperty (
+                                           Atoms._NET_WM_WINDOW_TYPE());
+                               } catch (ex) {
+                                   // _NET_WM_WINDOW_TYPE may not be set on new windows
+                               }
+                           }
+
+			   return this._net_wm_window_type;
+		       },
+		       /* setter */
+		       function (val) {
+                           this._net_wm_window_type = val;
+                           this._resetChromeless ();
+                           this._recomputeAllowedActions ();
+		       });
+
+    frame.addProperty ("overrideRedirect",
+		       /* getter */
+		       function () {
+                           return this._overrideRedirect;
+		       },
+		       /* setter */
+		       function (val) {
+                           this._overrideRedirect = val;
+                           this._resetChromeless ();
 		       });
 
     frame.addProperty ("content",
@@ -287,10 +376,10 @@ function _addFrameMethods (frame)
 		       );
 }
 
-function CompzillaFrame (content, className)
+
+function CompzillaFrame (content)
 {
     var frame = document.getElementById ("windowFrame").cloneNode (true);
-    frame.className = className;
 
     frame._content = content;
 
@@ -301,10 +390,12 @@ function CompzillaFrame (content, className)
 
     frame._title = getDescendentById (frame, "windowTitle");
 
-    // add our methods
+    // Add our methods
     _addFrameMethods (frame);
     
     if (content.nativeWindow) {
+        frame.id = "XID:" + content.nativeWindow.nativeWindowId;
+
 	_connectNativeWindowListeners (frame, content.nativeWindow);
         frame._recomputeAllowedActions ();
     }
@@ -313,6 +404,14 @@ function CompzillaFrame (content, className)
 	_connectFrameDragListeners (frame);
     }
 
+    _connectFrameFocusListeners (frame);
+
+    return frame;
+}
+
+
+function _connectFrameFocusListeners (frame)
+{
     // click to raise/focus
     frame.addEventListener (
         "mousedown", 
@@ -320,35 +419,34 @@ function CompzillaFrame (content, className)
             handleEvent: function (event) {
 		windowStack.moveToTop (frame);
 
+                Debug ("mousedown: inactive = " + frame.inactive);
+
                 // XXX this should live in some sort of focus handler, not here.
-		if (_focusedFrame != frame) {
-		    if (_focusedFrame) {
-			// Send FocusOut
-			_focusedFrame._content.blur();
-			_focusedFrame.clearWindowState ("focused");
-                     }
+                if (frame != _focusedFrame) {
+                    if (_focusedFrame) {
+                        // Send FocusOut
+                        _focusedFrame._content.blur ();
+                        _focusedFrame.inactive = true;
+                    }
 
-                     // Send FocusIn
-                     frame._content.focus();
-		     frame.setWindowState ("focused");
+                    // Send FocusIn
+                    frame._content.focus ();
+                    frame.inactive = false;
 
-                     _focusedFrame = frame;
-                 }
+                    _focusedFrame = frame;
+                }
             }
         },
 	true);
-
-    return frame;
 }
 
 
 function _connectFrameDragListeners (frame)
 {
     var frameDragPosition = new Object ();
+
     var frameDragMouseMoveListener = {
         handleEvent: function (ev) {
-	    frame.setWindowState ("moving");
-
 	    // figure out the deltas
 	    var dx = ev.clientX - frameDragPosition.x;
 	    var dy = ev.clientY - frameDragPosition.y;
@@ -356,30 +454,80 @@ function _connectFrameDragListeners (frame)
 	    frameDragPosition.x = ev.clientX;
 	    frameDragPosition.y = ev.clientY;
 
-	    frame.moveResize (frame.offsetLeft + dx,
-			      frame.offsetTop + dy,
-			      frame.offsetWidth,
-			      frame.offsetHeight); 
+            switch (frameDragPosition.operation) {
+            case "nw-resize":
+            case "ne-resize":
+            case "n-resize":
+                frame._contentBox.style.height = frame._contentBox.offsetHeight - dy + "px"; 
+                frame.style.top = frame.offsetTop + dy + "px";
+                break;
+            case "sw-resize":
+            case "se-resize":
+            case "s-resize":
+                frame._contentBox.style.height = frame._contentBox.offsetHeight + dy + "px"; 
+                break;
+            case "move-resize":
+                frame.style.top = frame.offsetTop + dy + "px";
+                frame.style.left = frame.offsetLeft + dx + "px";
+                break;
+            }
 
+            switch (frameDragPosition.operation) {
+            case "nw-resize":
+            case "sw-resize":
+            case "w-resize":
+                frame._contentBox.style.width = frame._contentBox.offsetWidth - dx + "px"; 
+                frame.style.left = frame.offsetLeft + dx + "px";
+                break;
+            case "ne-resize":
+            case "se-resize":
+            case "e-resize":
+                frame._contentBox.style.width = frame._contentBox.offsetWidth + dx + "px";
+                break;
+            }
+
+            // Tell the window it's new (temporary) coordinates
+            frame._configureNativeWindow ();
+
+	    ev.preventDefault ();
 	    ev.stopPropagation ();
 	}
     };
 
     var frameDragMouseUpListener = {
 	handleEvent: function (ev) {
-	    frame.clearWindowState ("moving");
+            if (frame.moving) {
+                frame.moving = false;
+            }
 
 	    // clear the event handlers we add in the title mousedown handler below
 	    document.removeEventListener ("mousemove", frameDragMouseMoveListener, true);
 	    document.removeEventListener ("mouseup", frameDragMouseUpListener, true);
 
+            // Tell the window it's final coordinates
+            frame._configureNativeWindow ();
+
+	    ev.preventDefault ();
 	    ev.stopPropagation ();
 	}
     };
 
-    frame._title.onmousedown = function (ev) {
+    frame.onmousedown = function (ev) {
+        var op = ev.target.getAttributeNS ("http://www.pyrodesktop.org/compzilla", "resize");
+        if (!op)
+            return;
+
+        if (op == "move") {
+            if (!frame.allowMove)
+                return;
+            frame.moving = true;
+        } else if (!frame.allowResize)
+            return;
+
+        frameDragPosition.operation = op + "-resize";
 	frameDragPosition.x = ev.clientX;
 	frameDragPosition.y = ev.clientY;
+
 	document.addEventListener ("mousemove", frameDragMouseMoveListener, true);
 	document.addEventListener ("mouseup", frameDragMouseUpListener, true);
 	ev.stopPropagation ();
@@ -411,14 +559,14 @@ function _connectNativeWindowListeners (frame, nativewin)
 		    handleEvent: function (ev) {
 			Debug ("frame", "configure.handleEvent");
 
-			frame._moveResize (ev.x, ev.y, ev.width, ev.height);
+                        // This is the only way we're notified of override changes
+                        frame.overrideRedirect = ev.overrideRedirect;
 
-			if (!ev.overrideRedirect) {
-			    svc.ConfigureWindow (
-                                frame._content.nativeWindow.nativeWindowId,
-                                ev.x, ev.y, ev.width, ev.height,
-                                ev.borderWidth);
-                        }
+                        // ev coords are relative to content, adjust for frame offsets
+			frame.moveResize (x - frame._contentBox.offsetLeft,
+                                          y - frame._contentBox.offsetTop,
+                                          ev.width + frame._contentBox.offsetLeft,
+                                          ev.height + frame._contentBox.offsetTop);
 
 			// XXX handle stacking requests here too
 		    }
@@ -462,26 +610,18 @@ function _connectNativeWindowListeners (frame, nativewin)
 
 			if (ev.atom == Atoms.WM_NAME () ||
 			    ev.atom == Atoms._NET_WM_NAME ()) {
-			    name = ev.value.getProperty(".text");
+			    frame.title = ev.value.getProperty (".text");
 
-			    Debug ("frame", "propertychange: setting title =" + name);
-			    frame.title = name;
+			    Debug ("frame", "propertychange: setting title:" + frame.title);
 			    return;
 			}
 
 			if (ev.atom == Atoms._NET_WM_WINDOW_TYPE()) {
-			    Debug ("frame", "window " + frame.id + " type set");
-
                             // XXX _NET_WM_WINDOW_TYPE is actually an array of atoms, not just 1
-                            var typeAtom = ev.value.getPropertyAsUint32 (".atom");
+                            frame.wmWindowType = ev.value.getPropertyAsUint32 (".atom");
 
-                            frame.className = _determineFrameClassName (typeAtom,
-                                                                        frame._overrideRedirect);
-
-			    frame._net_wm_window_type = typeAtom;
-
-			    frame._recomputeAllowedActions ();
-
+			    Debug ("frame", "propertychange: setting wmWindowType:" + 
+                                   frame.wmWindowType);
 			    return;
 			}
 
@@ -490,7 +630,8 @@ function _connectNativeWindowListeners (frame, nativewin)
 					     " " +
 					     ev.value.getProperty (".className"));
 					     
-			    Debug ("frame", "frame wm-class = `" +  frame.wmClass);
+			    Debug ("frame", "propertychange: setting wmClass: '" +  
+                                   frame.wmClass + "'");
 			    return;
 			}
 		    }

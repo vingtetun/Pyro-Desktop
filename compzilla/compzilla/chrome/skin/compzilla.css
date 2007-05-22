@@ -1,6 +1,12 @@
 @namespace pyro "http://www.pyrodesktop.org/compzilla";
 @namespace xul  "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul";
 
+/*
+ *===============================================================
+ * START basic desktop/content theming
+ *===============================================================
+ */
+
 body {
 	position: absolute;
 	margin: 0px;
@@ -77,47 +83,6 @@ body {
 	height: 100%;
 }
 
-.windowFrame, .windowFrameFocused {
-	background: #000000;
-	position: absolute;
-	display: none;
-}
-
-#windowTitleBox {
-	background: #999999;
-	color: #000000;
-}
-
-.windowFrameFocused #windowTitleBox {
-	background: #444499;
-	color: #ffffff;
-}
-
-#windowContentBox {
-}
-
-.windowTitle {
-	font-weight: bold;
-	font-family: Arial, Verdana;
-	font-size: 0.80em;
-	-moz-user-select: none;
-}
-
-.dockFrame, .dockFrameFocused {
-	background: #000000;
-	position: absolute;
-	display: none;
-	opacity: 0.8;
-}
-
-.dockFrame #windowTitleBox {
-	display: none;
-}
-
-.dockFrameFocused #windowTitleBox {
-	display: none;
-}
-
 #windowContent {
 	background: #ffffff;
 	width: 100%;
@@ -129,7 +94,7 @@ body {
 }
 
 #debugLog {
-	width: 98%;
+	width: 100%;
 	height: 90%;
 }
 
@@ -140,26 +105,326 @@ body {
 	height: 100%;
 }
 
-/* rules that hide/show the action images (close, minimize, maximize)
-   base on what the allowed actions of the window are */
 
-#compzillaWindowMinimize { visibility: hidden; }
-*[pyro|allowed-actions~="minimize"] * #compzillaWindowMinimize { visibility: visible; }
 
-#compzillaWindowMaximize { visibility: hidden; }
-*[pyro|allowed-actions~="maximize"] * #compzillaWindowMaximize { visibility: visible; }
+/*
+ *===============================================================
+ * START window frame theming
+ *===============================================================
+ */
 
-#compzillaWindowClose { visibility: hidden; }
-*[pyro|allowed-actions~="close"] * #compzillaWindowClose { visibility: visible; }
+.uiDlg {
+        position: absolute;
+        z-index: 1;
+}
 
+.uiDlgTop, .uiDlgTop > div, .uiDlgBottom, .uiDlgBottom > div {
+        height: 8px;
+}
+.uiDlgBar, .uiDlgBar > div {
+        height: 22px;
+}
+.uiDlgContent {
+        height: 100%;
+        width: 100%;
+}
+.uiDlgContentLeft, .uiDlgContentRight, .uiDlgContentCenter {
+        width: 100%;
+        height: 100%;
+}
+.uiDlgTopCenter, .uiDlgBarCenter, .uiDlgContentCenter, .uiDlgBottomCenter {
+        overflow: hidden;
+        margin-left: 8px;
+        margin-right: 8px;
+}
+.uiDlgTopLeft, .uiDlgBarLeft, .uiDlgContentLeft, .uiDlgBottomLeft {
+        position: absolute;
+        left: 0px;
+        width: 8px;
+}
+.uiDlgTopRight, .uiDlgBarRight, .uiDlgContentRight, .uiDlgBottomRight {
+        position: absolute;
+        right: 0px;
+        width: 8px;
+}
+
+.uiDlgHandle {
+        position: absolute; 
+        bottom: 1px;
+        right: 1px;
+        display: none;
+}
+
+
+.uiDlgTopLeft {
+        background: transparent url(chrome://compzilla/skin/nw.gif) no-repeat scroll top left;
+}
+.uiDlgTopRight {
+        background: transparent url(chrome://compzilla/skin/ne.gif) no-repeat scroll top right;
+}
+.uiDlgTopCenter {
+        background: transparent url(chrome://compzilla/skin/n.gif) repeat-x scroll 0% 50%;
+}
+
+.uiDlgBarLeft {
+        background: transparent url(chrome://compzilla/skin/barw.gif) no-repeat scroll 0%;
+}
+.uiDlgBarRight {
+        background: transparent url(chrome://compzilla/skin/bare.gif) no-repeat scroll 0%;
+}
+.uiDlgBarCenter {
+        background: transparent url(chrome://compzilla/skin/barn.gif) repeat-x scroll 0%;
+}
+
+.uiDlgContentLeft {
+        background: transparent url(chrome://compzilla/skin/w.gif) repeat-y scroll 0%;
+}
+.uiDlgContentRight {
+        background: transparent url(chrome://compzilla/skin/e.gif) repeat-y scroll 0%;
+}
+.uiDlgContentCenter {
+        background: #ECECEC none repeat scroll 0%;
+}
+
+.uiDlgBottomLeft {
+        background: transparent url(chrome://compzilla/skin/sw.gif) no-repeat scroll 0%;
+}
+.uiDlgBottomRight {
+        background: transparent url(chrome://compzilla/skin/se.gif) no-repeat scroll 0%;
+}
+.uiDlgBottomCenter {
+        background: transparent url(chrome://compzilla/skin/s.gif) repeat-x scroll 0%;
+}
+
+
+.uiDlg[pyro|allow-move="true"] *[pyro|resize="move"] {
+        cursor: -moz-grab;
+}
+.uiDlg[pyro|moving="true"] :active {
+        cursor: -moz-grabbing;
+}
+.uiDlg[pyro|allow-resize="true"] *[pyro|resize="n"] {
+        cursor: n-resize;
+}
+.uiDlg[pyro|allow-resize="true"] *[pyro|resize="s"] {
+        cursor: s-resize;
+}
+.uiDlg[pyro|allow-resize="true"] *[pyro|resize="w"] {
+        cursor: w-resize;
+}
+.uiDlg[pyro|allow-resize="true"] *[pyro|resize="e"] {
+        cursor: e-resize;
+}
+.uiDlg[pyro|allow-resize="true"] *[pyro|resize="nw"] {
+        cursor: nw-resize;
+}
+.uiDlg[pyro|allow-resize="true"] *[pyro|resize="sw"] {
+        cursor: sw-resize;
+}
+.uiDlg[pyro|allow-resize="true"] *[pyro|resize="ne"] {
+        cursor: ne-resize;
+}
+.uiDlg[pyro|allow-resize="true"] *[pyro|resize="se"] {
+        cursor: se-resize;
+}
+.uiDlg[pyro|allow-resize="true"] .uiDlgHandle {
+        display: block;
+}
+
+
+.chromeless .uiDlgTop, .chromeless .uiDlgBar, .chromeless .uiDlgBottom  {
+        display: none;
+}
+.chromeless .uiDlgContentLeft, .chromeless .uiDlgContentRight  {
+        display: none;
+}
+.chromeless .uiDlgContentCenter {
+        display: block;
+        margin: 0px;
+        background:#ECECEC none repeat scroll 0%;
+}
+.chromeless[pyro|inactive="true"] .uiDlgContentCenter {
+        background:#EAEAEB none repeat scroll 0%;
+}
+
+
+.uiDlg[pyro|inactive="true"] .uiDlgTopLeft {
+        background: transparent url(chrome://compzilla/skin/dis_nw.gif) no-repeat scroll top left;
+}
+.uiDlg[pyro|inactive="true"] .uiDlgTopRight {
+        background: transparent url(chrome://compzilla/skin/dis_ne.gif) no-repeat scroll top right;
+}
+.uiDlg[pyro|inactive="true"] .uiDlgTopCenter {
+        background: transparent url(chrome://compzilla/skin/dis_n.gif) repeat-x scroll 0% 50%;
+}
+
+.uiDlg[pyro|inactive="true"] .uiDlgBarLeft {
+        background: transparent url(chrome://compzilla/skin/dis_barw.gif) no-repeat scroll 0%;
+}
+.uiDlg[pyro|inactive="true"] .uiDlgBarRight {
+        background: transparent url(chrome://compzilla/skin/dis_bare.gif) no-repeat scroll 0%;
+}
+.uiDlg[pyro|inactive="true"] .uiDlgBarCenter {
+        background: transparent url(chrome://compzilla/skin/dis_barn.gif) repeat-x scroll 0%;
+}
+
+.uiDlg[pyro|inactive="true"] .uiDlgContentLeft {
+        background: transparent url(chrome://compzilla/skin/dis_w.gif) repeat-y scroll 0%;
+}
+.uiDlg[pyro|inactive="true"] .uiDlgContentRight {
+        background: transparent url(chrome://compzilla/skin/dis_e.gif) repeat-y scroll 0%;
+}
+.uiDlg[pyro|inactive="true"] .uiDlgContentCenter {
+        background: #ECECEC none repeat scroll 0%;
+}
+
+.uiDlg[pyro|inactive="true"] .uiDlgBottomLeft {
+        background: transparent url(chrome://compzilla/skin/dis_sw.gif) no-repeat scroll 0%;
+}
+.uiDlg[pyro|inactive="true"] .uiDlgBottomRight {
+        background: transparent url(chrome://compzilla/skin/dis_se.gif) no-repeat scroll 0%;
+}
+.uiDlg[pyro|inactive="true"] .uiDlgBottomCenter {
+        background: transparent url(chrome://compzilla/skin/dis_s.gif) repeat-x scroll 0%;
+}
+
+
+
+/*
+ *===============================================================
+ * START titlebar label theming
+ *===============================================================
+ */
+
+.uiDlgCaption {
+        color: #FFFFFF;
+        cursor: default;
+        display: inline;
+        font-family: Tahoma, Arial, sans-serif;
+        font-size: 12px;
+        font-weight: bold;
+        line-height: normal;
+        overflow: hidden;
+        white-space: nowrap;
+        position: absolute;
+        height: 18px;
+        width: auto;
+        left: 28px;
+        top: 8px;
+}
+.uiDlgCaption span {
+        padding: 0pt 2px 0pt 3px;
+}
+
+/* Text Shadow -- must set caption attribute on uiDlgCaption to label content */
+.uiDlgCaption:before {
+        display: block;
+        margin: 0 0 -1.12em 0.15em;
+        color: #666666;
+        content: attr(caption);
+}
+
+.uiDlg[pyro|inactive="true"] .uiDlgCaption {
+        color: grey;
+}
+.uiDlg[pyro|inactive="true"] .uiDlgCaption:before {
+        display: none;
+}
+
+
+
+/*
+ *===============================================================
+ * START titlebar button theming
+ *===============================================================
+ */
+
+.uiDlgButtons {
+        cursor: inherit;
+        position: absolute;
+        right: 8px;
+        top: 6px;
+}
+
+.uiDlgButton {
+        cursor: pointer;
+        float: left;
+        height: 19px;
+        width: 19px;
+        visibility: hidden;
+}
+
+.uiDlgButtonMenu {
+        visibility: visible;
+        position: absolute;
+        height: 18px;
+        left: 8px;
+        top: 6px;
+}
+
+.uiDlgButtonMin {
+        background:transparent url(chrome://compzilla/skin/min.gif) no-repeat scroll 0%;
+}
+.uiDlgButtonMax {
+        background:transparent url(chrome://compzilla/skin/max.gif) no-repeat scroll 0%;
+}
+.uiDlgButtonClose {
+        background:transparent url(chrome://compzilla/skin/close.gif) no-repeat scroll 0%;
+}
+.uiDlgButtonRestore {
+        background:transparent url(chrome://compzilla/skin/restore.gif) no-repeat scroll 0%;
+}
+
+.uiDlg[pyro|allow-minimize="true"] .uiDlgButtonMin {
+        visibility: visible;
+}
+.uiDlg[pyro|allow-maximize="true"] .uiDlgButtonMax {
+        visibility: visible;
+}
+.uiDlg[pyro|allow-close="true"] .uiDlgButtonClose {
+        visibility: visible;
+}
+.uiDlg[pyro|allow-restore="true"] .uiDlgButtonRestore {
+        visibility: visible;
+}
+
+.uiDlgButtonMin:hover {
+        background:transparent url(chrome://compzilla/skin/min_hot.gif) no-repeat scroll 0%;
+}
+.uiDlgButtonMax:hover {
+        background:transparent url(chrome://compzilla/skin/max_hot.gif) no-repeat scroll 0%;
+}
+.uiDlgButtonClose:hover {
+        background:transparent url(chrome://compzilla/skin/close_hot.gif) no-repeat scroll 0%;
+}
+.uiDlgButtonRestore:hover {
+        background:transparent url(chrome://compzilla/skin/restore_hot.gif) no-repeat scroll 0%;
+}
+
+.uiDlgButtonMin:active {
+        background:transparent url(chrome://compzilla/skin/min_down.gif) no-repeat scroll 0%;
+}
+.uiDlgButtonMax:active {
+        background:transparent url(chrome://compzilla/skin/max_down.gif) no-repeat scroll 0%;
+}
+.uiDlgButtonClose:active {
+        background:transparent url(chrome://compzilla/skin/close_down.gif) no-repeat scroll 0%;
+}
+.uiDlgButtonRestore:active {
+        background:transparent url(chrome://compzilla/skin/restore_down.gif) no-repeat scroll 0%;
+}
+
+
+
+/*
+ *===============================================================
+ * START sweet effects
+ *===============================================================
+ */
 
 /* make moving windows translucent */
-.windowFrame[pyro|window-state~="moving"] { opacity: 0.8; }
-
-/* and make focused windows stand out a bit */
-.windowFrame[pyro|window-state~="focused"] #windowTitleBox {
-	background: #444499;
-	color: #ffffff;
+.uiDlg[pyro|moving="true"] { 
+        opacity: 0.8; 
 }
 
 /* a little hack to see if we can get wm-class support working.

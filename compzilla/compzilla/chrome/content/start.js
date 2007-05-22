@@ -20,20 +20,16 @@ function compzillaLoad()
 		//       toplevel window, to avoid an infinite loop.
 
 		var content = CompzillaWindowContent (ev.window);
-		var frame = CompzillaMakeFrame (content, null, ev.overrideRedirect);
+		var frame = CompzillaFrame (content);
+		frame.overrideRedirect = ev.overrideRedirect;
+
+		windowStack.stackWindow (frame);
 
 		// ev is a compzillaIWindowConfigureEvent
 		frame.moveResize (ev.x, ev.y, ev.width, ev.height);
 		if (ev.mapped) {
 		    frame.show ();
 		}
-
-		/* initialize newly created frames to have all actions
-		   available.  we'll selectively turn them off later
-		   based on properties */
-
-		stack = document.getElementById ("windowStack");
-    		stack.stackWindow (frame);
 	    }
         },
 	true);
