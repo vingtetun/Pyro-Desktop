@@ -126,6 +126,7 @@
     <script type="application/x-javascript" src="chrome://compzilla/content/debug.js" />
     <script type="application/x-javascript" src="chrome://compzilla/content/scale.js" />
     <script type="application/x-javascript" src="chrome://compzilla/content/overlay.js" />
+    <script type="application/x-javascript" src="chrome://compzilla/content/minimize.js" />
     <script type="application/x-javascript" src="chrome://compzilla/content/start.js" />
 
     <commandset id="compzillaDesktopCommandSet">

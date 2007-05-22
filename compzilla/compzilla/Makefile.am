@@ -16,6 +16,7 @@ content_DATA =					\
 	$(CONTENT_SRCDIR)/content.js		\
 	$(CONTENT_SRCDIR)/debug.js		\
 	$(CONTENT_SRCDIR)/frame.js		\
+	$(CONTENT_SRCDIR)/minimize.js		\
 	$(CONTENT_SRCDIR)/overlay.js		\
 	$(CONTENT_SRCDIR)/windowStack.js	\
 	$(CONTENT_SRCDIR)/scale.js

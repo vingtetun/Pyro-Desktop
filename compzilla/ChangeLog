@@ -1,5 +1,15 @@
 2007-05-22  Chris Toshok  <toshok@ximian.com>
 
+	* compzilla/Makefile.am (content_DATA): install minimize.js.
+
+	* compzilla/chrome/content/start.xul: load minimize.js.
+
+	* compzilla/chrome/content/minimize.js: temporary hack.  we should
+	either port compiz's or come up with the proper math for a smooth
+	animation ourselves.
+
+2007-05-22  Chris Toshok  <toshok@ximian.com>
+
 	* compzilla/chrome/content/scale.js: so the reason this doesn't
 	work is that the compzillaWindowContent stuff isn't absolutely
 	positioned anymore.  force sw.style.position="absolute", and
