@@ -147,12 +147,6 @@ function fillInWindows () {
     for (i = 0; i < ss.windows.length; i++) {
 	w = ss.windows[i];
 
-	Debug ("window is [ " +
-	       w.orig_left + ", " +
-	       w.orig_top + "   " +
-	       w.orig_width + ", " +
-	       w.orig_height + " ]");
-	       
 	if (w.slot == null) {
 	    if (ss.slots[w.sid].filled)
 		return true;
@@ -179,12 +173,6 @@ function fillInWindows () {
 	    w.slot.y1 = cy - sy / 2;
 	    w.slot.x2 = cx + sx / 2;
 	    w.slot.y2 = cy + sy / 2;
-
-	    Debug ("slot is [ " +
-		   w.slot.x1 + ", " +
-		   w.slot.y1 + " - " +
-		   w.slot.x2 + ", " +
-		   w.slot.y2 + " ]");
 
 	    w.slot.filled = true;
 
@@ -252,8 +240,6 @@ function adjustScaleVelocity (sw) {
 	scale = 1.0;
     }
 
-    //Debug ("sw.orig_left = " + sw.orig_left);
-
     dx = x1 - (sw.orig_left + sw.tx);
 
     adjust = dx * 0.15;
@@ -265,11 +251,7 @@ function adjustScaleVelocity (sw) {
 
     sw.xVelocity = (amount * sw.xVelocity + adjust) / (amount + 1.0);
 
-    //Debug ("sw.xVelocity = " + sw.xVelocity);
-
     dy = y1 - (sw.orig_top + sw.ty);
-
-    //Debug ("dy = " + dy);
 
     adjust = dy * 0.15;
     amount = Math.abs (dy) * 1.5;
@@ -277,9 +259,6 @@ function adjustScaleVelocity (sw) {
 	amount = 0.5;
     else if (amount > 5.0)
 	amount = 5.0;
-
-    //    Debug ("amount = " + amount);
-    //    Debug ("adjust = " + adjust);
 
     sw.yVelocity = (amount * sw.yVelocity + adjust) / (amount + 1.0);
 
@@ -298,26 +277,16 @@ function adjustScaleVelocity (sw) {
 	Math.abs (dy) < 0.1 && Math.abs (sw.yVelocity) < 0.2 &&
 	Math.abs (ds) < 0.001 && Math.abs (sw.scaleVelocity) < 0.002) {
 
-	//Debug ("y1 = " + y1);
-
 	sw.xVelocity = sw.yVelocity = sw.scaleVelocity = 0.0;
 	sw.tx = x1 - sw.orig_left;
 	sw.ty = y1 - sw.orig_top;
 	sw.scale = scale;
-
-	//Debug ("sw.style.top = " + (sw.orig_top + sw.ty / sw.scale) + "px");
 
 	sw.style.left = Math.floor (sw.orig_left + sw.tx / sw.scale) + "px";
 	sw.style.top = Math.floor (sw.orig_top + sw.ty / sw.scale) + "px";
 	sw.style.width = Math.floor (sw.orig_width / sw.scale) + "px";
 	sw.style.height = Math.floor (sw.orig_height / sw.scale) + "px";
 
-	Debug ("after window is [ " +
-	       sw.offsetLeft + ", " +
-	       sw.offsetTop + "   " +
-	       sw.offsetWidth + ", " +
-	       sw.offsetHeight + " ]");
-	       
 	return 0;
     }
 
@@ -354,8 +323,6 @@ function scaleStep (msSinceLastStep) {
 
 		    ss.moreAdjust |= sw.adjust;
 		    
-		    //Debug ("sw.yVelocity = " + sw.yVelocity);
-
 		    sw.tx += sw.xVelocity * chunk;
 		    sw.ty += sw.yVelocity * chunk;
 		    sw.scale += sw.scaleVelocity * chunk;
@@ -398,7 +365,6 @@ function scaleStep (msSinceLastStep) {
 }
 
 function scaleTerminate () {
-    Debug ("scaleTerminate (" + ss.state + ")");
     if (ss.state != "none") {
 
 	for (var swi = 0; swi < ss.windows.length; swi++) {
@@ -481,7 +447,6 @@ function addWindow (w) {
     var sw = CompzillaWindowContent (w.content.nativeWindow);
     sw.orig_window = w;
 
-    Debug ("window is at " + w.offsetLeft + ", " + w.offsetTop);
     sw.orig_left = w.offsetLeft;
     sw.orig_top = w.offsetTop;
     sw.orig_width = w._contentBox.offsetWidth; /* XXX need a getter */
@@ -499,6 +464,8 @@ function addWindow (w) {
     sw.xVelocity = sw.yVelocity = 0;
     sw.scaleVelocity = 1;
 
+    sw.style.position = "absolute";
+
     exposeLayer.appendChild (sw);
 
     ss.reverseWindows.push (sw);
@@ -511,7 +478,6 @@ function scaleStart () {
 	if (el.className == "windowFrame" /* it's a compzillaWindowFrame */
 	    && el.content.nativeWindow /* it has native content */
 	    && el.style.display == "block" /* it's displayed */) {
-	    Debug ("adding scale window for '" + el.title + "'");
 	    addWindow (el);
 	}
     }

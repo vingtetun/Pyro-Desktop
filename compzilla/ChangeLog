@@ -1,3 +1,10 @@
+2007-05-22  Chris Toshok  <toshok@ximian.com>
+
+	* compzilla/chrome/content/scale.js: so the reason this doesn't
+	work is that the compzillaWindowContent stuff isn't absolutely
+	positioned anymore.  force sw.style.position="absolute", and
+	everything is happy.  also, remove all the debug spew.
+
 2007-05-21  Chris Toshok  <toshok@ximian.com>
 
 	* compzilla/chrome/skin/compzilla.css: add the opacity stuff for
