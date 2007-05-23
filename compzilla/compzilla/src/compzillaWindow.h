@@ -69,7 +69,7 @@ public:
     void DestroyWindow ();
     void MapWindow ();
     void UnmapWindow ();
-    void PropertyChanged (Window win, Atom prop, bool deleted);
+    void PropertyChanged (Atom prop, bool deleted);
     void WindowDamaged (XRectangle *rect);
     void WindowConfigured (PRInt32 x, PRInt32 y,
                            PRInt32 width, PRInt32 height,
@@ -96,6 +96,9 @@ public:
     void ResetPixmap ();
     void EnsurePixmap ();
     void EnsureDamage ();
+
+    nsresult GetAtomProperty (Atom prop, PRUint32* value);
+    nsresult GetStringProperty (Atom prop, nsAString& value);
 
     nsCOMArray<nsISupports> mContentNodes;
     Display *mDisplay;

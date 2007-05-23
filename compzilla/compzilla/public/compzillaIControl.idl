@@ -21,6 +21,8 @@ interface compzillaIControl : nsISupports
                           in PRUint32 x, in PRUint32 y, 
                           in PRUint32 width, in PRUint32 height, 
                           in PRUint32 border);
+
+    void SetRootWindowArrayProperty (in PRInt32 prop, in PRInt32 type, in PRUint32 count, [array, size_is (count)] in PRUInt32 valueArray);
 };
 
 

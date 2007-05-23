@@ -115,6 +115,7 @@ body {
 
 .uiDlg {
         position: absolute;
+	overflow: hidden;
         z-index: 1;
 }
 
@@ -348,7 +349,7 @@ body {
 
 .uiDlgButton {
         cursor: pointer;
-        float: left;
+        /*float: left;*/
         height: 19px;
         width: 19px;
         visibility: hidden;

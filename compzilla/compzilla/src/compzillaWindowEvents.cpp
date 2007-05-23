@@ -51,10 +51,9 @@ nsresult
 CZ_NewCompzillaPropertyChangeEvent (compzillaIWindow *win, 
                                     long atom, 
                                     bool deleted,
-                                    nsIPropertyBag2 *bag,
                                     compzillaWindowEvent **retval)
 {
-    compzillaWindowEvent *ev = new compzillaWindowEvent (win, atom, deleted, bag);
+    compzillaWindowEvent *ev = new compzillaWindowEvent (win, atom, deleted);
     if (!ev)
         return NS_ERROR_OUT_OF_MEMORY;
 
@@ -112,8 +111,6 @@ compzillaWindowEvent::~compzillaWindowEvent()
     mTarget = NULL;
     SPEW ("compzillaWindowEvent::~compzillaWindowEvent RELEASING ABOVEWIN\n", this);
     mAboveWindow = NULL;
-    SPEW ("compzillaWindowEvent::~compzillaWindowEvent RELEASING BAG\n", this);
-    mBag = NULL;
 }
 
 
@@ -233,17 +230,11 @@ compzillaWindowEvent::GetAboveWindow(nsISupports **aAboveWindow)
 
 compzillaWindowEvent::compzillaWindowEvent(compzillaIWindow *window,
                                            long atom,
-                                           bool deleted,
-                                           nsIPropertyBag2 *bag)
+                                           bool deleted)
     : mWindow(window),
       mAtom(atom),
-      mDeleted(deleted),
-      mBag(bag)
+      mDeleted(deleted)
 {
-    // XXX i can't believe there's not some automatic nsCOMPtr magic
-    // that does this... but this fixes the crash we're seeing when
-    // the GC runs.
-    NS_ADDREF (bag);
 }
 
 
@@ -259,14 +250,6 @@ NS_IMETHODIMP
 compzillaWindowEvent::GetDeleted(PRBool *aDeleted)
 {
     *aDeleted = mDeleted;
-    return NS_OK;
-}
-
-
-NS_IMETHODIMP 
-compzillaWindowEvent::GetValue(nsIPropertyBag2 **aValue)
-{
-    *aValue = mBag;
     return NS_OK;
 }
 

@@ -309,8 +309,8 @@ compzillaWindow::RemoveContentNode (nsISupports* aContent)
 }
 
 
-NS_IMETHODIMP
-compzillaWindow::GetStringProperty (PRUint32 prop, nsAString& value)
+nsresult
+compzillaWindow::GetStringProperty (Atom prop, nsAString& value)
 {
     SPEW ("GetStringProperty (prop = %s)\n", XGetAtomName (mDisplay, prop));
 
@@ -322,7 +322,7 @@ compzillaWindow::GetStringProperty (PRUint32 prop, nsAString& value)
 
     if (XGetWindowProperty (mDisplay, 
                             mWindow, 
-                            (Atom) prop,
+                            prop,
                             0, 
                             BUFSIZ, 
                             false, 
@@ -350,8 +350,8 @@ compzillaWindow::GetStringProperty (PRUint32 prop, nsAString& value)
 }
 
 
-NS_IMETHODIMP
-compzillaWindow::GetAtomProperty (PRUint32 prop, PRUint32* value)
+nsresult
+compzillaWindow::GetAtomProperty (Atom prop, PRUint32* value)
 {
     SPEW ("GetAtomProperty (prop = %s)\n", XGetAtomName (mDisplay, prop));
 
@@ -363,7 +363,7 @@ compzillaWindow::GetAtomProperty (PRUint32 prop, PRUint32* value)
 
     if (XGetWindowProperty (mDisplay, 
                             mWindow, 
-                            (Atom)prop,
+                            prop,
                             0, 
                             BUFSIZ, 
                             false, 
@@ -1113,17 +1113,30 @@ compzillaWindow::UnmapWindow ()
     }
 }
 
-
-void
-compzillaWindow::PropertyChanged (Window win, Atom prop, bool deleted)
+NS_IMETHODIMP
+compzillaWindow::GetProperty (PRUint32 iprop, nsIPropertyBag2 **bag2)
 {
-    nsIWritablePropertyBag2 *wbag;
-    nsresult rv = CallCreateInstance("@mozilla.org/hash-property-bag;1", &wbag);
-    if (NS_FAILED(rv)) {
-        return;
-    }
+    *bag2 = nsnull;
 
-    nsCOMPtr<nsIPropertyBag2> bag2 = do_QueryInterface(wbag);
+    Atom prop = (Atom)iprop;
+
+    nsISupports *bag;
+    nsCOMPtr<nsIWritablePropertyBag2> wbag;
+    nsCOMPtr<nsIPropertyBag2> rbag;
+
+    nsresult rv = CallCreateInstance("@mozilla.org/hash-property-bag;1", &bag);
+    if (NS_FAILED(rv)) {
+        return rv;
+    }
+ 
+    wbag = do_QueryInterface (bag);
+    rbag = do_QueryInterface (bag);
+
+
+#define SET_BAG() do { \
+    NS_ADDREF (rbag); \
+    *bag2 = rbag; \
+} while (0)
 
 #define SET_PROP(_bag, _type, _key, _val) \
     (_bag)->SetPropertyAs##_type (NS_LITERAL_STRING (_key), _val)
@@ -1138,17 +1151,20 @@ compzillaWindow::PropertyChanged (Window win, Atom prop, bool deleted)
         // (latin1?  who knows).  Check the gtk+ source on how to
         // handle this.
         nsString str;
-        GetStringProperty (prop, str);
-        SET_PROP(wbag, AString, ".text", str);
+        if (NS_OK == GetStringProperty (prop, str)) {
+            SET_BAG ();
+            SET_PROP(wbag, AString, ".text", str);
+        }
         break;
     }
 
     case XA_WM_HINTS: {
         XWMHints *wmHints;
 
-        wmHints = XGetWMHints (mDisplay, win);
+        wmHints = XGetWMHints (mDisplay, mWindow);
 
         if (wmHints) {
+            SET_BAG ();
             SET_PROP(wbag, Int32, "wmHints.flags", wmHints->flags);
             SET_PROP(wbag, Bool, "wmHints.input", wmHints->input);
             SET_PROP(wbag, Int32, "wmHints.initialState", wmHints->initial_state);
@@ -1169,7 +1185,9 @@ compzillaWindow::PropertyChanged (Window win, Atom prop, bool deleted)
         long supplied;
 
         // XXX check return value
-        XGetWMNormalHints (mDisplay, win, &sizeHints, &supplied);
+        XGetWMNormalHints (mDisplay, mWindow, &sizeHints, &supplied);
+
+        SET_BAG ();
 
         SET_PROP(wbag, Int32, "sizeHints.flags", sizeHints.flags);
 
@@ -1220,6 +1238,7 @@ compzillaWindow::PropertyChanged (Window win, Atom prop, bool deleted)
         instance = (char*)data;
         _class = instance + strlen (instance) + 1;
 
+        SET_BAG ();
         SET_PROP (wbag, AString, ".instanceName", NS_ConvertASCIItoUTF16 (instance));
         SET_PROP (wbag, AString, ".className", NS_ConvertASCIItoUTF16 (_class));
 
@@ -1233,8 +1252,10 @@ compzillaWindow::PropertyChanged (Window win, Atom prop, bool deleted)
     }
     case XA_WM_CLIENT_MACHINE: {
         nsString str;
-        GetStringProperty (prop, str);
-        SET_PROP(wbag, AString, ".text", str);
+        if (NS_OK == GetStringProperty (prop, str)) {
+            SET_BAG ();
+            SET_PROP(wbag, AString, ".text", str);
+        }
     }
     default:
         // ICCCM properties which don't have predefined atoms
@@ -1256,8 +1277,10 @@ compzillaWindow::PropertyChanged (Window win, Atom prop, bool deleted)
                  || prop == atoms.x._NET_WM_VISIBLE_ICON_NAME) {
             // utf8 encoded string
             nsString str;
-            GetStringProperty (prop, str);
-            SET_PROP(wbag, AString, ".text", str);
+            if (NS_OK == GetStringProperty (prop, str)) {
+                SET_BAG ();
+                SET_PROP(wbag, AString, ".text", str);
+            }
         }
         else if (prop == atoms.x._NET_WM_DESKTOP) {
         }
@@ -1265,8 +1288,10 @@ compzillaWindow::PropertyChanged (Window win, Atom prop, bool deleted)
             // XXX _NET_WM_WINDOW_TYPE is actually an array of atoms, not just 1.
             // this also needs fixing in the JS.
             PRUint32 atom;
-            GetAtomProperty (prop, &atom);
-            SET_PROP(wbag, Uint32, ".atom", atom);
+            if (NS_OK == GetAtomProperty (prop, &atom)) {
+                SET_BAG ();
+                SET_PROP(wbag, Uint32, ".atom", atom);
+            }
         }
         else if (prop == atoms.x._NET_WM_STATE) {
         }
@@ -1277,6 +1302,36 @@ compzillaWindow::PropertyChanged (Window win, Atom prop, bool deleted)
         else if (prop == atoms.x._NET_WM_STRUT_PARTIAL) {
         }
         else if (prop == atoms.x._NET_WM_ICON_GEOMETRY) {
+            // 4 cardinals
+
+            PRUint32 *values;
+
+            char *instance, *_class;
+
+            Atom actual_type;
+            int format;
+            unsigned long nitems;
+            unsigned long bytes_after_return;
+            unsigned char *data;
+
+            XGetWindowProperty (mDisplay, mWindow, (Atom)prop,
+                                0, 4, false, XA_CARDINAL,
+                                &actual_type, &format, &nitems, &bytes_after_return, 
+                                &data);
+
+            if (nitems == 4) {
+                PRUint32 *cards = (PRUint32*)data;
+                SET_BAG ();
+                SET_PROP(wbag, Uint32, ".x", cards[0]);
+                SET_PROP(wbag, Uint32, ".y", cards[1]);
+                SET_PROP(wbag, Uint32, ".width", cards[2]);
+                SET_PROP(wbag, Uint32, ".height", cards[3]);
+            }
+            else {
+                WARNING ("_NET_WM_ICON_GEOMETRY returned something other than 4 items");
+            }
+
+            XFree (data);
         }
         else if (prop == atoms.x._NET_WM_ICON) {
         }
@@ -1294,12 +1349,17 @@ compzillaWindow::PropertyChanged (Window win, Atom prop, bool deleted)
 
 #undef SET_PROP
 
+    return NS_OK;
+}
+
+void
+compzillaWindow::PropertyChanged (Atom prop, bool deleted)
+{
     if (mPropertyChangeEvMgr.HasEventListeners ()) {
         nsRefPtr<compzillaWindowEvent> ev;
         if (NS_OK == CZ_NewCompzillaPropertyChangeEvent (this, 
                                                          prop, 
                                                          deleted, 
-                                                         bag2, 
                                                          getter_AddRefs (ev)))
             ev->Send (NS_LITERAL_STRING ("propertychange"), this, mPropertyChangeEvMgr);
     }

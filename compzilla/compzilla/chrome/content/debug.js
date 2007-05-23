@@ -18,10 +18,26 @@ Debug = function (log, str)
 }
 document.Debug = Debug;
 
+function debugToggle (el) {
+    if (el.selected == undefined)
+	el.selected = false;
+
+    if (el.selected) {
+	debugDeselectLog (el.name);
+    }
+    else {
+	debugSelectLog (el.name);
+    }
+
+    el.selected = !el.selected;
+}
+
 function debugSelectLog (log) {
+    Debug ("deselecting debug log '" + log + "'");
     Debug[log] = true;
 }
 function debugDeselectLog (log) {
+    Debug ("selecting debug log '" + log + "'");
     delete Debug[log];
 }
 

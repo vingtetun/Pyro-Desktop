@@ -286,8 +286,8 @@ function addWindow (w) {
     var sw = CompzillaWindowContent (w.content.nativeWindow);
     sw.orig_window = w;
 
-    sw.orig_left = w.offsetLeft;
-    sw.orig_top = w.offsetTop;
+    sw.orig_left = w.offsetLeft + w.content.offsetLeft;
+    sw.orig_top = w.offsetTop + w.content.offsetTop;
     sw.orig_width = w._contentBox.offsetWidth; /* XXX need a getter */
     sw.orig_height = w._contentBox.offsetHeight;
     sw.orig_opacity = 1.0;
@@ -298,8 +298,8 @@ function addWindow (w) {
     sw.style.top = sw.orig_top + "px";
     sw.style.width = sw.orig_width + "px";
     sw.style.height = sw.orig_height + "px";
-    sw.width = w.content.width;
-    sw.height = w.content.height;
+    sw.width = sw.orig_width;
+    sw.height = sw.orig_height;
 
     sw.scale = 1;
     sw.tx = sw.ty = 0;
@@ -317,7 +317,7 @@ function scaleStart () {
     exposeLayer.style.display = "block";
 
     for (var el = windowStack.firstChild; el != null; el = el.nextSibling) {
-	if (el.className == "windowFrame" /* it's a compzillaWindowFrame */
+	if (el.className == "uiDlg" /* it's a compzillaWindowFrame */
 	    && el.content.nativeWindow /* it has native content */
 	    && el.style.display == "block" /* it's displayed */) {
 	    addWindow (el);

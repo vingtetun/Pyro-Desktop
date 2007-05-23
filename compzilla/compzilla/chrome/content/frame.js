@@ -6,7 +6,6 @@ svc = cls.getService(Components.interfaces.compzillaIControl);
 
 var _focusedFrame;
 
-
 function getDescendentById (root, id)
 {
     if (root.id == id)
@@ -86,33 +85,39 @@ var FrameMethods = {
 	if (this.offsetLeft != x) {
 	    this.style.left = x + "px";
 	}
+
 	if (this.offsetTop != y) {
 	    this.style.top = y + "px";
 	}
 
         if (this.offsetWidth != width) {
+	    // calculate the content box's width based on the delta to the new frame width.
+            var content_width = this._contentBox.offsetWidth + (width - this.offsetWidth);
+
+            this._contentBox.style.width = content_width + "px";
+
+	    if (this._content.nativeWindow)
+		this._content.width = content_width;
+
             this.style.width = width + "px";
-
-            //width -= this._contentBox.offsetLeft;
-            this._contentBox.style.width = width;
         }
+
         if (this.offsetHeight != height) {
+	    // calculate the content box's width based on the delta to the new frame width.
+            var content_height = this._contentBox.offsetHeight + (height - this.offsetHeight);
+
+            this._contentBox.style.height = content_height + "px";
+
+	    if (this._content.nativeWindow)
+		this._content.height = content_height;
+
             this.style.height = height + "px";
-
-            //height -= this._contentBox.offsetHeight;
-            this._contentBox.style.height = height;
-        }
-
-        if (this._content.nativeWindow) {
-            this._content.width = width;
-            this._content.height = height;
         }
 
         Debug ("AFTER _moveResize: this.offsetHeight=" + this.offsetHeight + 
                " this._contentBox.style.height=" + this._contentBox.style.height + 
                " this._contentBox.offsetHeight=" + this._contentBox.offsetHeight);
     },
-
 
     _configureNativeWindow: function () {
         if (!this._content.nativeWindow)
@@ -145,10 +150,10 @@ var FrameMethods = {
 
     _resetChromeless: function () {
         if (this.overrideRedirect ||
-            this.wmWindowType == Atoms._NET_WM_WINDOW_TYPE_DOCK() ||
-            this.wmWindowType == Atoms._NET_WM_WINDOW_TYPE_DESKTOP() ||
-            this.wmWindowType == Atoms._NET_WM_WINDOW_TYPE_SPLASH() ||
-            this.wmWindowType == Atoms._NET_WM_WINDOW_TYPE_TOOLBAR()) {
+            this.wmWindowType == Atoms._NET_WM_WINDOW_TYPE_DOCK ||
+            this.wmWindowType == Atoms._NET_WM_WINDOW_TYPE_DESKTOP ||
+            this.wmWindowType == Atoms._NET_WM_WINDOW_TYPE_SPLASH ||
+            this.wmWindowType == Atoms._NET_WM_WINDOW_TYPE_TOOLBAR) {
             this.chromeless = true;
         } else {
             this.chromeless = false;
@@ -167,11 +172,11 @@ var FrameMethods = {
 	// next override using metacity's rules for assigning features
 	// based on EWMH's window types.
         var isSpecial = 
-            (this.wmWindowType == Atoms._NET_WM_WINDOW_TYPE_DESKTOP () ||
-             this.wmWindowType == Atoms._NET_WM_WINDOW_TYPE_DOCK () ||
-             this.wmWindowType == Atoms._NET_WM_WINDOW_TYPE_SPLASH ());
+            (this.wmWindowType == Atoms._NET_WM_WINDOW_TYPE_DESKTOP ||
+             this.wmWindowType == Atoms._NET_WM_WINDOW_TYPE_DOCK ||
+             this.wmWindowType == Atoms._NET_WM_WINDOW_TYPE_SPLASH);
         var isNormal = 
-            this.wmWindowType == Atoms._NET_WM_WINDOW_TYPE_NORMAL ();
+            this.wmWindowType == Atoms._NET_WM_WINDOW_TYPE_NORMAL;
 
         this.allowClose = !isSpecial;
         this.allowShade = !isSpecial;
@@ -238,10 +243,20 @@ function _addFrameMethods (frame)
 		       },
 		       /* setter */
 		       function (t) {
-			   if (this._title)
+			   if (!this._title)
+			       return;
+
+			   if (t)
 			       this._title.value = t;
                            else
                                this._title.value = "[Unknown]";
+
+			   // XXX presumably this should set the
+			   // _NET_WM_NAME property on the native
+			   // window (by setting wmName?), although it
+			   // can't because the then the property
+			   // change code will fire and we'll end up
+			   // setting frame.title, etc, etc
 		       });
 
     frame.addProperty ("wmClass",
@@ -252,6 +267,29 @@ function _addFrameMethods (frame)
 		       /* setter */
 		       function (wmclass) {
 			   this.setPyroAttribute ("wm-class", wmclass);
+		       });
+
+    frame.addProperty ("wmName",
+		       /* getter */
+		       function () {
+			   if (!this._wm_name && this._content) {
+			       var prop_val = this._content.nativeWindow.GetProperty (Atoms._NET_WM_NAME);
+			       if (prop_val) {
+				   this._wm_name = prop_val.getProperty (".text");
+			       }
+			       else {
+				   prop_val = this._content.nativeWindow.GetProperty (Atoms.WM_NAME);
+				   if (prop_val)
+				       this._wm_name = prop_val.getProperty (".text");
+			       }
+			   }
+
+			   return this._wm_name;
+		       },
+		       /* setter */
+		       function (wmname) {
+			   // XXX see comment up above in frame.title
+			   // setter.
 		       });
 
     frame.addProperty ("allowResize",
@@ -338,19 +376,22 @@ function _addFrameMethods (frame)
 		       /* getter */
 		       function () {
                            if (!this._net_wm_window_type && this._content) {
-                               try {
-                                   this._net_wm_window_type = 
-                                       this._content.nativeWindow.GetAtomProperty (
-                                           Atoms._NET_WM_WINDOW_TYPE());
-                               } catch (ex) {
-                                   // _NET_WM_WINDOW_TYPE may not be set on new windows
-                               }
+			       // XXX _NET_WM_WINDOW_TYPE is actually an array of atoms, not just 1
+			       var prop_val = this._content.nativeWindow.GetProperty (Atoms._NET_WM_WINDOW_TYPE);
+			       if (prop_val)
+				   this._net_wm_window_type = prop_val.getPropertyAsUint32 (".atom");
                            }
 
 			   return this._net_wm_window_type;
 		       },
 		       /* setter */
 		       function (val) {
+			   // XXX we can't just update the cached
+			   // value.  we have to update the window's
+			   // property as well.  actually I can't
+			   // think of a reason why we'd be setting
+			   // this in compzilla.  we should just
+			   // remove the setter.
                            this._net_wm_window_type = val;
                            this._resetChromeless ();
                            this._recomputeAllowedActions ();
@@ -398,6 +439,8 @@ function CompzillaFrame (content)
 
 	_connectNativeWindowListeners (frame, content.nativeWindow);
         frame._recomputeAllowedActions ();
+
+	frame.title = frame.wmName;
     }
 
     if (frame._title) {
@@ -454,40 +497,50 @@ function _connectFrameDragListeners (frame)
 	    frameDragPosition.x = ev.clientX;
 	    frameDragPosition.y = ev.clientY;
 
-            switch (frameDragPosition.operation) {
-            case "nw-resize":
-            case "ne-resize":
-            case "n-resize":
-                frame._contentBox.style.height = frame._contentBox.offsetHeight - dy + "px"; 
-                frame.style.top = frame.offsetTop + dy + "px";
-                break;
-            case "sw-resize":
-            case "se-resize":
-            case "s-resize":
-                frame._contentBox.style.height = frame._contentBox.offsetHeight + dy + "px"; 
-                break;
-            case "move-resize":
-                frame.style.top = frame.offsetTop + dy + "px";
-                frame.style.left = frame.offsetLeft + dx + "px";
-                break;
-            }
+	    var new_x = frame.offsetLeft,
+		new_y = frame.offsetTop,
+		new_width = frame.offsetWidth,
+		new_height = frame.offsetHeight;
 
-            switch (frameDragPosition.operation) {
-            case "nw-resize":
-            case "sw-resize":
-            case "w-resize":
-                frame._contentBox.style.width = frame._contentBox.offsetWidth - dx + "px"; 
-                frame.style.left = frame.offsetLeft + dx + "px";
-                break;
-            case "ne-resize":
-            case "se-resize":
-            case "e-resize":
-                frame._contentBox.style.width = frame._contentBox.offsetWidth + dx + "px";
-                break;
-            }
+	    if (frameDragPosition.operation == "move-resize") {
+                new_x = frame.offsetLeft + dx;
+                new_y = frame.offsetTop + dy;
+		new_width = frame.offsetWidth;
+		new_height = frame.offsetHeight;
+	    }
+	    else {
+		// calculate y/height
+		switch (frameDragPosition.operation) {
+		case "nw-resize":
+		case "ne-resize":
+		case "n-resize":
+		    new_height = frame._contentBox.offsetHeight - dy;
+		    new_y = frame.offsetTop + dy;
+		    break;
+		case "sw-resize":
+		case "se-resize":
+		case "s-resize":
+		    new_height = frame._contentBox.offsetHeight + dy;
+		    break;
+		}
 
-            // Tell the window it's new (temporary) coordinates
-            frame._configureNativeWindow ();
+		// calculate x/width
+		switch (frameDragPosition.operation) {
+		case "nw-resize":
+		case "sw-resize":
+		case "w-resize":
+		    new_width = frame._contentBox.offsetWidth - dx;
+		    new_x = frame.offsetLeft + dx;
+		    break;
+		case "ne-resize":
+		case "se-resize":
+		case "e-resize":
+		    new_width = frame._contentBox.offsetWidth + dx;
+		    break;
+		}
+	    }
+
+	    frame.moveResize (new_x, new_y, new_width, new_height);
 
 	    ev.preventDefault ();
 	    ev.stopPropagation ();
@@ -496,16 +549,11 @@ function _connectFrameDragListeners (frame)
 
     var frameDragMouseUpListener = {
 	handleEvent: function (ev) {
-            if (frame.moving) {
-                frame.moving = false;
-            }
+	    frame.moving = false;
 
 	    // clear the event handlers we add in the title mousedown handler below
 	    document.removeEventListener ("mousemove", frameDragMouseMoveListener, true);
 	    document.removeEventListener ("mouseup", frameDragMouseUpListener, true);
-
-            // Tell the window it's final coordinates
-            frame._configureNativeWindow ();
 
 	    ev.preventDefault ();
 	    ev.stopPropagation ();
@@ -517,6 +565,9 @@ function _connectFrameDragListeners (frame)
         if (!op)
             return;
 
+	frameDragPosition.x = ev.clientX;
+	frameDragPosition.y = ev.clientY;
+
         if (op == "move") {
             if (!frame.allowMove)
                 return;
@@ -525,8 +576,6 @@ function _connectFrameDragListeners (frame)
             return;
 
         frameDragPosition.operation = op + "-resize";
-	frameDragPosition.x = ev.clientX;
-	frameDragPosition.y = ev.clientY;
 
 	document.addEventListener ("mousemove", frameDragMouseMoveListener, true);
 	document.addEventListener ("mouseup", frameDragMouseUpListener, true);
@@ -563,10 +612,10 @@ function _connectNativeWindowListeners (frame, nativewin)
                         frame.overrideRedirect = ev.overrideRedirect;
 
                         // ev coords are relative to content, adjust for frame offsets
-			frame.moveResize (x - frame._contentBox.offsetLeft,
-                                          y - frame._contentBox.offsetTop,
-                                          ev.width + frame._contentBox.offsetLeft,
-                                          ev.height + frame._contentBox.offsetTop);
+			frame.moveResize (ev.x - frame._contentBox.offsetLeft,
+                                          ev.y - frame._contentBox.offsetTop,
+                                          ev.width - frame._contentBox.offsetWidth + frame.offsetWidth,
+                                          ev.height - frame._contentBox.offsetHeight + frame.offsetHeight);
 
 			// XXX handle stacking requests here too
 		    }
@@ -608,28 +657,34 @@ function _connectNativeWindowListeners (frame, nativewin)
 		    handleEvent: function (ev) {
 			Debug ("frame", "propertychange.handleEvent: ev.atom=" + ev.atom);
 
-			if (ev.atom == Atoms.WM_NAME () ||
-			    ev.atom == Atoms._NET_WM_NAME ()) {
-			    frame.title = ev.value.getProperty (".text");
+			if (ev.atom == Atoms.WM_NAME ||
+			    ev.atom == Atoms._NET_WM_NAME) {
+
+			    frame._wm_name = null; /* uncached value */
+
+			    frame.title = frame.wmName;
 
 			    Debug ("frame", "propertychange: setting title:" + frame.title);
 			    return;
 			}
 
-			if (ev.atom == Atoms._NET_WM_WINDOW_TYPE()) {
-                            // XXX _NET_WM_WINDOW_TYPE is actually an array of atoms, not just 1
-                            frame.wmWindowType = ev.value.getPropertyAsUint32 (".atom");
+			if (ev.atom == Atoms._NET_WM_WINDOW_TYPE) {
 
-			    Debug ("frame", "propertychange: setting wmWindowType:" + 
-                                   frame.wmWindowType);
+			    this._net_wm_window_type = null; /* uncached value */
+
+			    frame._recomputeAllowedActions ();
 			    return;
 			}
 
-			if (ev.atom == Atoms.WM_CLASS()) {
-			    frame.wmClass = (ev.value.getProperty (".instanceName") +
-					     " " +
-					     ev.value.getProperty (".className"));
-					     
+			if (ev.atom == Atoms.WM_CLASS) {
+			    var prop_val = frame.content.nativeWindow.GetProperty (Atoms.WM_CLASS);
+			    if (prop_val)
+				frame.wmClass = (prop_val.getProperty (".instanceName") +
+						 " " +
+						 prop_val.getProperty (".className"));
+			    else
+				frame.wmClass = "";
+
 			    Debug ("frame", "propertychange: setting wmClass: '" +  
                                    frame.wmClass + "'");
 			    return;

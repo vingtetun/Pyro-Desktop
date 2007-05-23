@@ -277,9 +277,9 @@ function _determineLayer (w) {
     if (w.content != null && w.content.id == "debugContent") 
 	// special case for the debug window, which sits above everything
 	return debugLayer;
-    if (w._net_wm_window_type == Atoms._NET_WM_WINDOW_TYPE_DESKTOP())
+    if (w._net_wm_window_type == Atoms._NET_WM_WINDOW_TYPE_DESKTOP)
 	return desktopLayer;
-    else if (w._net_wm_window_type == Atoms._NET_WM_WINDOW_TYPE_DOCK())
+    else if (w._net_wm_window_type == Atoms._NET_WM_WINDOW_TYPE_DOCK)
 	return dockLayer;
     /* XXX we need cases 1 and 4 here */
     else

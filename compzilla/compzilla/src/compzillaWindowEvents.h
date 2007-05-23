@@ -8,7 +8,6 @@
 #include <nsCOMPtr.h>
 #include <nsWeakPtr.h>
 #include <nsIDOMEvent.h>
-#include <nsIPropertyBag2.h>
 #include <nsRect.h>
 
 
@@ -44,8 +43,7 @@ public:
                          compzillaIWindow *aboveWin);
     compzillaWindowEvent(compzillaIWindow *window,
                          long atom,
-                         bool deleted,
-                         nsIPropertyBag2 *bag);
+                         bool deleted);
 
     nsresult Send(const nsString& type, 
                   nsIDOMEventTarget *eventTarget,
@@ -66,7 +64,6 @@ protected:
 
     long mAtom;
     bool mDeleted;
-    nsCOMPtr<nsIPropertyBag2> mBag;
 };
 
 
@@ -76,7 +73,6 @@ nsresult CZ_NewCompzillaWindowEvent (compzillaIWindow *win,
 nsresult CZ_NewCompzillaPropertyChangeEvent (compzillaIWindow *win, 
                                              long atom, 
                                              bool deleted,
-                                             nsIPropertyBag2 *bag,
                                              compzillaWindowEvent **retval);
 
 nsresult CZ_NewCompzillaConfigureEvent (compzillaIWindow *window,

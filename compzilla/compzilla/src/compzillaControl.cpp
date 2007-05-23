@@ -153,6 +153,16 @@ compzillaControl::InternAtom (const char *property, PRUint32 *value)
     return NS_OK;
 }
 
+NS_IMETHODIMP
+compzillaControl::SetRootWindowArrayProperty (PRInt32 prop, PRInt32 type, PRUint32 count, PRUint32* valueArray)
+{
+    XChangeProperty (mXDisplay, GDK_DRAWABLE_XID (mRoot),
+                     prop, type, 32,
+                     PropModeReplace,
+                     (unsigned char*)valueArray, count);
+
+    return NS_OK;
+}
 
 NS_IMETHODIMP
 compzillaControl::SendConfigureNotify (PRUint32 xid,
@@ -770,7 +780,7 @@ compzillaControl::PropertyChanged (Window win, Atom prop, bool deleted)
 {
     nsRefPtr<compzillaWindow> compwin = FindWindow (win);
     if (compwin) {
-        compwin->PropertyChanged (win, prop, deleted);
+        compwin->PropertyChanged (prop, deleted);
     }
 }
 

@@ -126,6 +126,11 @@
             <input id="debugEntry" type="text" value="Debug..." onsubmit="debugEval();" />
 	    <button onclick="debugEval();">Eval</button>
             <button onclick="debugClearLog();">Clear</button>
+	    <p>
+            <button onclick="debugToggle(this);" name="frame">Frame</button>
+            <button onclick="debugToggle(this);" name="content">Content</button>
+            <button onclick="debugToggle(this);" name="windowStack">Window Stack</button>
+	    </p>
             </form>
         </div>
 

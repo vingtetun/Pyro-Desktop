@@ -1,5 +1,6 @@
 /* -*- mode: IDL; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
 #include "nsISupports.idl"
+#include "nsIPropertyBag2.idl"
 
 
 [scriptable, uuid(95aa8ead-40a9-41c6-a643-e3dd531e0afd)]
@@ -10,9 +11,8 @@ interface compzillaIWindow : nsISupports
 
     readonly attribute long nativeWindowId;
 
-    // window property accessors
-    DOMString GetStringProperty (in PRUint32 prop);
-    PRUint32 GetAtomProperty (in PRUint32 prop);
+    // window property accessor
+    nsIPropertyBag2 GetProperty (in PRUint32 prop);
 };
 
 

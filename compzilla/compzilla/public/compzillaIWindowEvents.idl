@@ -2,7 +2,6 @@
 
 #include "nsISupports.idl"
 #include "nsIDOMEvent.idl"
-#include "nsIPropertyBag2.idl"
 
 
 [scriptable, uuid(6797a12f-37a3-4ef4-8744-5bef35474240)]
@@ -41,5 +40,4 @@ interface compzillaIWindowPropertyEvent : compzillaIWindowEvent
 {
     readonly attribute long atom;
     readonly attribute boolean deleted;
-    readonly attribute nsIPropertyBag2 value;
 };

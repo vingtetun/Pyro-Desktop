@@ -1,3 +1,112 @@
+2007-05-23  Chris Toshok  <toshok@ximian.com>
+
+	[ pretty huge commit ]
+	
+	* compzilla/public/compzillaIWindowEvents.idl: remove the property
+	bag.
+
+	* compzilla/src/compzillaWindowEvents.cpp/.h: remove the property
+	bag.
+
+	* compzilla/src/compzillaWindow.cpp (GetStringProperty): since
+	this isn't part of the idl anymore, clean it up by taking an Atom
+	parameter, and removing a cast.
+	(GetProperty): massaged this method from the guts of
+	PropertyChanged.  there's certainly more refcounting problems
+	here...  we also create instances only to let them die if the
+	property isn't found.  This method returns NULL for bag2 if the
+	property isn't set.  Also, provide an implementation for
+	_NET_WM_ICON_GEOMETRY.
+	(PropertyChanged): remove the window parameter.  we should just be
+	using mWindow anyway.  no longer do anything with the property bag
+	here.  if the JS wants it they can turn around and query the
+	native code for it.
+
+	* compzilla/src/compzillaControl.cpp (SetRootWindowArrayProperty):
+	new method, just a thin wrapper around XChangeProperty on the root
+	window.
+	(PropertyChanged): there's no need to pass the window ID to
+	compwin->PropertyChanged.
+
+	* compzilla/public/compzillaIWindow.idl: remove GetAtomProperty
+	and GetStringProperty, replacing them with GetProperty, which
+	returns an nsIPropertyBag2.
+
+	* compzilla/public/compzillaIControl.idl: add
+	SetRootWindowArrayProperty.
+
+	* compzilla/chrome/skin/compzilla.css: set uiDlg's overflow to
+	hidden, so that we never see the window content outside the
+	frames, even if we happen to be resizing and that causes the frame
+	to resize before the content element.  Also, comment out the
+	uiDlgButton's float style, as it seems to work fine for me without
+	it, and it removes gobs and gobs and gobs of mozilla assertions.
+	That float is incorrect given the surrounding context.
+
+	* compzilla/chrome/content/start.js: hack to get the task switcher
+	to work.  update the _NET_CLIENT_LIST and
+	_NET_CLIENT_LIST_STACKING to the same array, the entire list of
+	windows we manage.
+
+	* compzilla/chrome/content/scale.js: make the destination of the
+	animation in the scale-in case (when we're going back to a normal
+	desktop) line up with the original window contents, instead of the
+	frame positions.  Also, switch from "windowFrame" to "uiDlg"
+	(worst.  class name.  ever.)
+
+	* compzilla/chrome/content/minimize.js: if the window has a
+	_NET_WM_ICON_GEOMETRY property, do the minimize animation to that
+	rectangle.  makes us look all snazzy when running against
+	gnome-panel.
+
+	* compzilla/chrome/content/frame.js: lots of changes.
+
+	1. _moveResize: calculate the new content width/height based on
+	the old width/height and the delta of new_frame_size -
+	old_frame_size.
+
+	2. fix frame.title setter.
+
+	3. add a wmName property that gets _NET_WM_NAME, falling back to
+	WM_NAME.
+
+	4. remove the try/catch from the wmWindowType getter.
+
+	5. In CompzillaFrame initialize the frame's title to the frame's
+	wmName property.
+
+	6. frameDragMouseMoveListener: break out "move" from "resize", as
+	it's simpler and this way and before it confused the purpose of
+	the two switches.  Also, don't update the frame's styles directly
+	here.  just store the values in variables and call
+	frame.moveResize calculating them all.
+
+	7. no need to check if we're moving, just always set moving to
+	false.  And don't generate another configure event on mouseup.
+	This was causing configure events to be generated when we clicked
+	on a titlebar, which is clearly wrong.
+
+	8. frame.onmousedown: go ahead and store off the frameDragPosition
+	regardless of whether we're going to end up performing an
+	operation.  We'll need this for more programmatic operations
+	anyway (alt-mouseclick to move, etc)
+
+	9. configure native listener: use a similar calculation method for
+	determining the new frame width.  we know both the before/after
+	content width's/height's, so use that delta and add it to the
+	frame width/height.
+
+	10. property change native listener: if the WM_NAME/_NET_WM_NAME
+	changes, invalidate our cached value and refetch it.  don't use
+	the property bag her anymore.  it's gone.
+	
+	* compzilla/chrome/content/debug.js (debugToggle): new function,
+	used as a callback from onclick handlers in the html.
+
+	* compzilla/chrome/content/atoms.js (Atoms): add a ton of _NET_WM
+	atoms, and make everything getters instead of functions.  all
+	references to Atoms.Foo() are replaced with Atoms.Foo elsewhere.
+
 2007-05-22  Alex Graveley  <alex@beatniksoftware.com>
 
 	Flush themed window frame code, with resize and property fixups. 
