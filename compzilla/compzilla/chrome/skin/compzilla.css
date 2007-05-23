@@ -349,9 +349,9 @@ body {
 
 .uiDlgButton {
         cursor: pointer;
-        /*float: left;*/
         height: 19px;
         width: 19px;
+        display: inline;
         visibility: hidden;
 }
 
@@ -430,4 +430,6 @@ body {
 
 /* a little hack to see if we can get wm-class support working.
    gnome-terminal windows should be translucent */
-*[pyro|wm-class~="Gnome-terminal"] { opacity: 0.5; }
+*[pyro|wm-class~="Gnome-terminal"] { 
+        opacity: 0.5; 
+}

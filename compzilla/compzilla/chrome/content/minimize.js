@@ -47,11 +47,16 @@ function MinimizeCompzillaFrame (w) {
 	       dest_height + "]");
     }
 
-    $(min).animate ( { left: dest_x, top: dest_y, width: dest_width, height: dest_height, opacity: 0 },
-		     250, "linear",
-		     function () {
-			 min.parentNode.removeChild (min);
-		     });
+    $(min).animate ({ left: dest_x, 
+		      top: dest_y, 
+		      width: dest_width, 
+		      height: dest_height, 
+		      opacity: 0 },
+		    250, 
+		    "linear",
+		    function () {
+                        min.parentNode.removeChild (min);
+                    });
 }
 
 function hackMinimizeFrame ()

@@ -274,12 +274,14 @@ function _addFrameMethods (frame)
 		       /* getter */
 		       function () {
 			   if (!this._wm_name && this._content) {
-			       var prop_val = this._content.nativeWindow.GetProperty (Atoms._NET_WM_NAME);
+			       var prop_val = 
+				   this._content.nativeWindow.GetProperty (Atoms._NET_WM_NAME);
 			       if (prop_val) {
 				   this._wm_name = prop_val.getProperty (".text");
 			       }
 			       else {
-				   prop_val = this._content.nativeWindow.GetProperty (Atoms.WM_NAME);
+				   prop_val = 
+				       this._content.nativeWindow.GetProperty (Atoms.WM_NAME);
 				   if (prop_val)
 				       this._wm_name = prop_val.getProperty (".text");
 			       }
@@ -377,10 +379,12 @@ function _addFrameMethods (frame)
 		       /* getter */
 		       function () {
                            if (!this._net_wm_window_type && this._content) {
-			       // XXX _NET_WM_WINDOW_TYPE is actually an array of atoms, not just 1
-			       var prop_val = this._content.nativeWindow.GetProperty (Atoms._NET_WM_WINDOW_TYPE);
+			       // XXX _NET_WM_WINDOW_TYPE is actually an array of atoms
+			       var prop_val = this._content.nativeWindow.GetProperty (
+			           Atoms._NET_WM_WINDOW_TYPE);
 			       if (prop_val)
-				   this._net_wm_window_type = prop_val.getPropertyAsUint32 (".atom");
+				   this._net_wm_window_type = 
+				       prop_val.getPropertyAsUint32 (".atom");
                            }
 
 			   return this._net_wm_window_type;
@@ -613,10 +617,11 @@ function _connectNativeWindowListeners (frame, nativewin)
                         frame.overrideRedirect = ev.overrideRedirect;
 
                         // ev coords are relative to content, adjust for frame offsets
-			frame.moveResize (ev.x - frame._contentBox.offsetLeft,
-                                          ev.y - frame._contentBox.offsetTop,
-                                          ev.width - frame._contentBox.offsetWidth + frame.offsetWidth,
-                                          ev.height - frame._contentBox.offsetHeight + frame.offsetHeight);
+			frame.moveResize (
+			    ev.x - frame._contentBox.offsetLeft,
+			    ev.y - frame._contentBox.offsetTop,
+			    ev.width - frame._contentBox.offsetWidth + frame.offsetWidth,
+			    ev.height - frame._contentBox.offsetHeight + frame.offsetHeight);
 
 			// XXX handle stacking requests here too
 		    }
@@ -678,7 +683,8 @@ function _connectNativeWindowListeners (frame, nativewin)
 			}
 
 			if (ev.atom == Atoms.WM_CLASS) {
-			    var prop_val = frame.content.nativeWindow.GetProperty (Atoms.WM_CLASS);
+			    var prop_val = 
+			        frame.content.nativeWindow.GetProperty (Atoms.WM_CLASS);
 			    if (prop_val)
 				frame.wmClass = (prop_val.getProperty (".instanceName") +
 						 " " +
