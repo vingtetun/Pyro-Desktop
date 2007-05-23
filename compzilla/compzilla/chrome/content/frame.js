@@ -247,10 +247,16 @@ function _addFrameMethods (frame)
 			   if (!this._title)
 			       return;
 
-			   if (t)
-			       this._title.value = t;
-                           else
-                               this._title.value = "[Unknown]";
+			   if (!t || t == "")
+			       t = "[Unknown]";
+
+			   Debug ("setting caption of " + this._title + " to " + t);
+
+			   this._title.setAttributeNS ("http://www.pyrodesktop.org/compzilla", "caption", t);
+			   for (var el = this._title.firstChild; el; el = el.nextSibling) {
+			       if (el.className == "windowTitleSpan")
+				   el.innerHTML = t;
+			   }
 
 			   // XXX presumably this should set the
 			   // _NET_WM_NAME property on the native
@@ -273,19 +279,23 @@ function _addFrameMethods (frame)
     frame.addProperty ("wmName",
 		       /* getter */
 		       function () {
-			   if (!this._wm_name && this._content) {
-			       var prop_val = 
+			   if (!this._content.nativeWindow)
+			       return null;
+
+			   if (!this._wm_name) {
+			       var prop_val =
 				   this._content.nativeWindow.GetProperty (Atoms._NET_WM_NAME);
-			       if (prop_val) {
+			       if (prop_val)
 				   this._wm_name = prop_val.getProperty (".text");
-			       }
-			       else {
-				   prop_val = 
-				       this._content.nativeWindow.GetProperty (Atoms.WM_NAME);
-				   if (prop_val)
-				       this._wm_name = prop_val.getProperty (".text");
-			       }
 			   }
+
+			   if (!this._wm_name) {
+			       prop_val = this._content.nativeWindow.GetProperty (Atoms.XA_WM_NAME);
+			       if (prop_val)
+				   this._wm_name = prop_val.getProperty (".text");
+			   }
+
+			   Debug ("wm_name is " + this._wm_name);
 
 			   return this._wm_name;
 		       },
@@ -368,11 +378,14 @@ function _addFrameMethods (frame)
     frame.addProperty ("chromeless",
 		       /* getter */
 		       function () {
-                           return this.className.indexOf ("chromeless") != -1;
+			   $(this).is ("chromeless");
                        },
 		       /* setter */
-		       function () {
-                           this.className = this.className.replace ("chromeless", "");
+		       function (flag) {
+			   if (flag)
+			       $(this).addClass ("chromeless");
+			   else
+			       $(this).removeClass ("chromeless");
 		       });
 
     frame.addProperty ("wmWindowType",
@@ -663,7 +676,7 @@ function _connectNativeWindowListeners (frame, nativewin)
 		    handleEvent: function (ev) {
 			Debug ("frame", "propertychange.handleEvent: ev.atom=" + ev.atom);
 
-			if (ev.atom == Atoms.WM_NAME ||
+			if (ev.atom == Atoms.XA_WM_NAME ||
 			    ev.atom == Atoms._NET_WM_NAME) {
 
 			    frame._wm_name = null; /* uncached value */
@@ -682,9 +695,9 @@ function _connectNativeWindowListeners (frame, nativewin)
 			    return;
 			}
 
-			if (ev.atom == Atoms.WM_CLASS) {
-			    var prop_val = 
-			        frame.content.nativeWindow.GetProperty (Atoms.WM_CLASS);
+			if (ev.atom == Atoms.XA_WM_CLASS) {
+			    var prop_val =
+				frame.content.nativeWindow.GetProperty (Atoms.XA_WM_CLASS);
 			    if (prop_val)
 				frame.wmClass = (prop_val.getProperty (".instanceName") +
 						 " " +

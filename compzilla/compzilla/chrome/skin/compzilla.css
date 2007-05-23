@@ -322,7 +322,7 @@ body {
         display: block;
         margin: 0 0 -1.12em 0.15em;
         color: #666666;
-        content: attr(caption);
+        content: attr(pyro|caption);
 }
 
 .uiDlg[pyro|inactive="true"] .uiDlgCaption {

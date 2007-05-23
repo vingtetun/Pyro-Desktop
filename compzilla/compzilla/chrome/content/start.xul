@@ -86,11 +86,11 @@
                                tooltiptext="&windowMenu.label;" 
                                popup="compzillaWindowMenu" />
 
-                    <div class="uiDlgCaption" 
-                         id="windowTitle" 
-                         caption="Test Frame" 
+                    <div class="uiDlgCaption"
+                         id="windowTitle"
+                         pyro:caption="[Unknown]"
                          pyro:resize="move">
-                        <span pyro:resize="move">Test Frame</span>
+                        <span class="windowTitleSpan" pyro:resize="move">[Unknown]</span>
                     </div>
                 </div>
             </div>

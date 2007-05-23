@@ -1,5 +1,27 @@
 2007-05-23  Chris Toshok  <toshok@ximian.com>
 
+	[ This gets window titles working for both JS and native windows ]
+	
+	* compzilla/chrome/content/frame.js (everywhere): use XA_
+	properties where possible.
+	(chromeless property): use the jquery addClass/removeClass/is
+	methods for this, to clean it up a bit.
+	(wmName property): flatten the if/else structure a bit.
+	(title setter): we need to update both the pyro-namespaced caption
+	attribute on the div as well as the contents of the
+	windowTitleSpan.
+	
+	* compzilla/chrome/skin/compzilla.css: make the title caption a
+	pyro namespaced attribute.
+
+	* compzilla/chrome/content/atoms.js: add all the XA_*
+	atoms. instead of relying on _intern for them.
+
+	* compzilla/chrome/content/start.xul: set a class on the span in
+	the title so we can update its content properly.
+
+2007-05-23  Chris Toshok  <toshok@ximian.com>
+
 	* compzilla/src/XAtoms.h: add UTF8_STRING.
 
 	* compzilla/src/compzillaWindow.cpp (GetStringProperty): fix this
