@@ -18,6 +18,7 @@ Debug = function (log, str)
 }
 document.Debug = Debug;
 
+
 function debugToggle (el) {
     if (el.selected == undefined)
 	el.selected = false;
@@ -32,14 +33,18 @@ function debugToggle (el) {
     el.selected = !el.selected;
 }
 
+
 function debugSelectLog (log) {
     Debug ("deselecting debug log '" + log + "'");
     Debug[log] = true;
 }
+
+
 function debugDeselectLog (log) {
     Debug ("selecting debug log '" + log + "'");
     delete Debug[log];
 }
+
 
 // Build the debug window
 var debugContent = document.getElementById ("debugContent");
@@ -106,6 +111,7 @@ function debugListWindows ()
     }
     return "";
 }
+
 
 // XXX until we get commands working in the .xul file
 document.addEventListener("keypress", {

@@ -119,6 +119,7 @@ var FrameMethods = {
                " this._contentBox.offsetHeight=" + this._contentBox.offsetHeight);
     },
 
+
     _configureNativeWindow: function () {
         if (!this._content.nativeWindow)
             return;

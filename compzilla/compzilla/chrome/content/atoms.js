@@ -6,15 +6,15 @@ Atoms = {
     cache : new Object (),
 
     _intern : function (atom_name) {
-      if (this.svc == null) {
-	  cls = Components.classes['@pyrodesktop.org/compzillaService'];
-	  this.svc = cls.getService(Components.interfaces.compzillaIControl);
-      }
+        if (this.svc == null) {
+            cls = Components.classes['@pyrodesktop.org/compzillaService'];
+            this.svc = cls.getService(Components.interfaces.compzillaIControl);
+        }
 
-      if (this.cache[atom_name] == null)
-	  this.cache[atom_name] = this.svc.InternAtom (atom_name);
+        if (this.cache[atom_name] == null)
+            this.cache[atom_name] = this.svc.InternAtom (atom_name);
 
-      return this.cache[atom_name];
+        return this.cache[atom_name];
     },
 
     /* constant atoms */

@@ -1113,6 +1113,7 @@ compzillaWindow::UnmapWindow ()
     }
 }
 
+
 NS_IMETHODIMP
 compzillaWindow::GetProperty (PRUint32 iprop, nsIPropertyBag2 **bag2)
 {
@@ -1131,7 +1132,6 @@ compzillaWindow::GetProperty (PRUint32 iprop, nsIPropertyBag2 **bag2)
  
     wbag = do_QueryInterface (bag);
     rbag = do_QueryInterface (bag);
-
 
 #define SET_BAG() do { \
     NS_ADDREF (rbag); \
@@ -1348,9 +1348,11 @@ compzillaWindow::GetProperty (PRUint32 iprop, nsIPropertyBag2 **bag2)
     }
 
 #undef SET_PROP
+#undef SET_BAG
 
     return NS_OK;
 }
+
 
 void
 compzillaWindow::PropertyChanged (Atom prop, bool deleted)
@@ -1364,6 +1366,7 @@ compzillaWindow::PropertyChanged (Atom prop, bool deleted)
             ev->Send (NS_LITERAL_STRING ("propertychange"), this, mPropertyChangeEvMgr);
     }
 }
+
 
 void
 compzillaWindow::RedrawContentNode (nsISupports *aContent, XRectangle *rect)
@@ -1385,6 +1388,7 @@ compzillaWindow::RedrawContentNode (nsISupports *aContent, XRectangle *rect)
         internal->Redraw (nsRect (rect->x, rect->y, rect->width, rect->height));
     }
 }
+
 
 void
 compzillaWindow::WindowDamaged (XRectangle *rect)

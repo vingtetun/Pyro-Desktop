@@ -153,8 +153,12 @@ compzillaControl::InternAtom (const char *property, PRUint32 *value)
     return NS_OK;
 }
 
+
 NS_IMETHODIMP
-compzillaControl::SetRootWindowArrayProperty (PRInt32 prop, PRInt32 type, PRUint32 count, PRUint32* valueArray)
+compzillaControl::SetRootWindowArrayProperty (PRInt32 prop, 
+                                              PRInt32 type, 
+                                              PRUint32 count, 
+                                              PRUint32* valueArray)
 {
     XChangeProperty (mXDisplay, GDK_DRAWABLE_XID (mRoot),
                      prop, type, 32,
@@ -163,6 +167,7 @@ compzillaControl::SetRootWindowArrayProperty (PRInt32 prop, PRInt32 type, PRUint
 
     return NS_OK;
 }
+
 
 NS_IMETHODIMP
 compzillaControl::SendConfigureNotify (PRUint32 xid,
