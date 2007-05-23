@@ -32,6 +32,8 @@ extern "C" {
 #include "XAtoms.h"
 
 #include <gdk/gdkkeys.h>
+#include <gdk/gdkproperty.h>
+#include <gdk/gdkx.h>
 extern uint32 gtk_get_current_event_time (void);
 #include <gdk/gdkevents.h>
 extern GdkEvent *gtk_get_current_event (void);
@@ -323,10 +325,10 @@ compzillaWindow::GetStringProperty (Atom prop, nsAString& value)
     if (XGetWindowProperty (mDisplay, 
                             mWindow, 
                             prop,
-                            0, 
+                            0,
                             BUFSIZ, 
                             false, 
-                            XA_STRING, 
+                            AnyPropertyType,
                             &actual_type, 
                             &format, 
                             &nitems, 
@@ -337,12 +339,33 @@ compzillaWindow::GetStringProperty (Atom prop, nsAString& value)
         return NS_ERROR_FAILURE;
     }
 
-    // XXX this is wrong - it's not always ASCII.  look at metacity's
-    // handling of it (it calls a gdk function to convert the text
-    // property to utf8).
-    value = NS_ConvertASCIItoUTF16 ((const char*)data);
+    if (actual_type == atoms.x.UTF8_STRING) {
+        value = NS_ConvertUTF8toUTF16 ((char*)data);
+    }
+    else if (actual_type == XA_STRING) {
+        char **list = NULL;
+        int count;
 
-    SPEW (" + %s\n", data);
+        count = gdk_text_property_to_utf8_list (gdk_x11_xatom_to_atom (actual_type),
+                                                format, data, nitems,
+                                                &list);
+
+        if (count == 0) {
+            XFree (data);
+            return NS_ERROR_FAILURE;
+        }
+
+        value = NS_ConvertUTF8toUTF16 (list[0]);
+
+        g_strfreev (list);
+    }
+    else {
+        WARNING ("invalid type for string property '%s': '%s'\n",
+                 XGetAtomName (mDisplay, prop),
+                 XGetAtomName (mDisplay, actual_type));
+        XFree (data);
+        return NS_ERROR_FAILURE;
+    }
 
     XFree (data);
 

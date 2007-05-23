@@ -37,7 +37,8 @@ static char *atom_names[] = {
     "_NET_WORKAREA",
     "WM_COLORMAP_WINDOWS",
     "WM_PROTOCOLS",
-    "_MOTIF_WM_HINTS"
+    "_MOTIF_WM_HINTS",
+    "UTF8_STRING"
 };
 
 typedef union {
@@ -82,5 +83,6 @@ typedef union {
         Atom WM_COLORMAP_WINDOWS;
         Atom WM_PROTOCOLS;
         Atom _MOTIF_WM_HINTS;
+        Atom UTF8_STRING;
     } x;
 } XAtoms;

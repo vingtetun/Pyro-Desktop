@@ -1,5 +1,14 @@
 2007-05-23  Chris Toshok  <toshok@ximian.com>
 
+	* compzilla/src/XAtoms.h: add UTF8_STRING.
+
+	* compzilla/src/compzillaWindow.cpp (GetStringProperty): fix this
+	so it handles by XA_STRING and UTF8_STRING properties, and use the
+	gdk method to convert from an encoded X property to utf8, which we
+	then convert to UTF16.
+
+2007-05-23  Chris Toshok  <toshok@ximian.com>
+
 	[ pretty huge commit ]
 	
 	* compzilla/public/compzillaIWindowEvents.idl: remove the property
