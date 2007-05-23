@@ -1,5 +1,11 @@
 2007-05-23  Chris Toshok  <toshok@ximian.com>
 
+	* compzilla/chrome/content/frame.js (frameDragMouseMoveListener):
+	exit out early if dx and dy are 0, which they seem to be on mouse
+	clicks without drag in the title bar.
+
+2007-05-23  Chris Toshok  <toshok@ximian.com>
+
 	[ This gets window titles working for both JS and native windows ]
 	
 	* compzilla/chrome/content/frame.js (everywhere): use XA_

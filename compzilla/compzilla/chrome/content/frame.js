@@ -512,6 +512,17 @@ function _connectFrameDragListeners (frame)
 	    var dx = ev.clientX - frameDragPosition.x;
 	    var dy = ev.clientY - frameDragPosition.y;
 
+	    // not sure why, but if we just click in the title bar we
+	    // get a mousemove event, with 0 delta.  check for this
+	    // and return early so we don't moveResize the frame just
+	    // for a transient click.
+	    if (dx == 0 && dy == 0) {
+		ev.preventDefault ();
+		ev.stopPropagation ();
+
+		return;
+	    }
+
 	    frameDragPosition.x = ev.clientX;
 	    frameDragPosition.y = ev.clientY;
 
