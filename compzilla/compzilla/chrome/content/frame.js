@@ -523,6 +523,8 @@ function _connectFrameDragListeners (frame)
             rect.height = frame.offsetHeight;
 
 	    if (frameDragPosition.operation == "move-resize") {
+                frame.moving = true;
+
                 rect.x += dx;
                 rect.y += dy;
 	    } else {
@@ -582,17 +584,14 @@ function _connectFrameDragListeners (frame)
         if (!op)
             return;
 
-	frameDragPosition.x = ev.clientX;
-	frameDragPosition.y = ev.clientY;
-
-        if (op == "move") {
-            if (!frame.allowMove)
-                return;
-            frame.moving = true;
-        } else if (!frame.allowResize)
+        if (op == "move" && !frame.allowMove)
+            return;
+        else if (!frame.allowResize)
             return;
 
         frameDragPosition.operation = op + "-resize";
+	frameDragPosition.x = ev.clientX;
+	frameDragPosition.y = ev.clientY;
 
 	document.addEventListener ("mousemove", frameDragMouseMoveListener, true);
 	document.addEventListener ("mouseup", frameDragMouseUpListener, true);
