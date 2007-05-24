@@ -1,9 +1,6 @@
 /* -*- mode: javascript; c-basic-offset: 4; indent-tabs-mode: t; -*- */
 
 
-cls = Components.classes['@pyrodesktop.org/compzillaService'];
-svc = cls.getService(Components.interfaces.compzillaIControl);
-
 var _focusedFrame;
 
 function getDescendentById (root, id)
@@ -22,28 +19,14 @@ function getDescendentById (root, id)
 }
 
 
-function findPos (obj) 
-{
-    var curleft = curtop = 0;
-    if (obj.offsetParent) {
-        curleft = obj.offsetLeft;
-        curtop = obj.offsetTop;
-        while (obj = obj.offsetParent) {
-            curleft += obj.offsetLeft;
-            curtop += obj.offsetTop;
-        }
-    }
-    return [curleft, curtop];
-}
-
-
 var FrameMethods = {
     destroy: function () {
 	Debug ("frame",
 	       "frame.destroy");
 
-	if (this._content && this._content.destroy) {
-	    this._content.destroy ();
+	if (this._content) {
+	    if (this._content.ondestroy)
+		this._content.ondestroy ();
             this._content = null;
 	}
 
@@ -61,7 +44,8 @@ var FrameMethods = {
 	       "frame.moveResize: x=" + x + ", y=" + y + ", w=" + width + ", h=" + height);
 
 	if (this._moveResize (x, y, width, height)) {
-            this._configureNativeWindow ();
+	    if (this._content.onmoveresize)
+		this._content.onmoveresize (this.overrideRedirect);
         }
     },
 
@@ -90,17 +74,11 @@ var FrameMethods = {
         if (this.offsetWidth != width) {
             this.style.width = width + "px";
             changed = true;
-
-	    if (this._content.nativeWindow)
-		this._content.width = this._content.offsetWidth;
         }
 
         if (this.offsetHeight != height) {
             this.style.height = height + "px";
             changed = true;
-
-	    if (this._content.nativeWindow)
-		this._content.height = this._content.offsetHeight;
         }
 
         Debug ("frame", 
@@ -112,35 +90,13 @@ var FrameMethods = {
     },
 
 
-    _configureNativeWindow: function () {
-        if (!this._content.nativeWindow || this.overrideRedirect)
-            return;
-
-        var pos = findPos (this._content);
-        Debug("FindPos: " + pos);
-
-        Debug("Calling ConfigureWindow: xid=" +
-              this._content.nativeWindow.nativeWindowId + ", x=" +
-              pos[0] + ", y=" +
-              pos[1] + ", width=" +
-              this._content.width + ", height=" +
-              this._content.height);
-
-        svc.ConfigureWindow (this._content.nativeWindow.nativeWindowId,
-                             pos[0],
-                             pos[1],
-                             this._content.width,
-                             this._content.height,
-                             0);
-    },
-    
 
     _resetChromeless: function () {
         if (this.overrideRedirect ||
-            this.wmWindowType == Atoms._NET_WM_WINDOW_TYPE_DOCK ||
-            this.wmWindowType == Atoms._NET_WM_WINDOW_TYPE_DESKTOP ||
-            this.wmWindowType == Atoms._NET_WM_WINDOW_TYPE_SPLASH ||
-            this.wmWindowType == Atoms._NET_WM_WINDOW_TYPE_TOOLBAR) {
+            this._content.wmWindowType == "dock" ||
+            this._content.wmWindowType == "desktop" ||
+            this._content.wmWindowType == "splash" ||
+            this._content.wmWindowType == "toolbar") {
             this.chromeless = true;
         } else {
             this.chromeless = false;
@@ -151,7 +107,7 @@ var FrameMethods = {
     _recomputeAllowedActions: function () {
 	/* this only applies for native windows, and those windows
 	   which have had mwm hints/wmWindowType set. */
-	if (!this.wmWindowType)
+	if (!this._content.wmWindowType)
 	    return;
 
 	// XXX first consider the mwm hints
@@ -159,11 +115,11 @@ var FrameMethods = {
 	// next override using metacity's rules for assigning features
 	// based on EWMH's window types.
         var isSpecial = 
-            (this.wmWindowType == Atoms._NET_WM_WINDOW_TYPE_DESKTOP ||
-             this.wmWindowType == Atoms._NET_WM_WINDOW_TYPE_DOCK ||
-             this.wmWindowType == Atoms._NET_WM_WINDOW_TYPE_SPLASH);
+            (this._content.wmWindowType == "desktop" ||
+             this._content.wmWindowType == "dock" ||
+             this._content.wmWindowType == "splash");
         var isNormal = 
-            this.wmWindowType == Atoms._NET_WM_WINDOW_TYPE_NORMAL;
+            this._content.wmWindowType == "normal";
 
         this.allowClose = !isSpecial;
         this.allowShade = !isSpecial;
@@ -181,18 +137,45 @@ var FrameMethods = {
     },
 
     show: function () {
+	if (this.style.display == "block")
+	    return;
+
 	Debug ("frame", "frame.show");
+
+	if (this._content.onshow)
+	    this._content.onshow();
 
 	this.style.display = "block";
     },
 
 
     hide: function () {
+	if (this.style.display == "none")
+	    return;
+
 	Debug ("frame", "frame.hide");
 
 	this.style.display = "none";
+
+	if (this._content.onhide)
+	    this._content.onhide();
     },
 
+    maximize: function () {
+
+	// XXX more stuff here
+
+	if (this._content.onmaximize)
+	    this._content.onmaximize();
+    },
+
+    fullscreen: function () {
+
+	// XXX more stuff here
+
+	if (this._content.onfullscreen)
+	    this._content.onfullscreen ();
+    },
 
     getPyroAttribute: function (name) {
         return this.getAttributeNS ("http://www.pyrodesktop.org/compzilla", name);
@@ -236,6 +219,7 @@ function _addFrameMethods (frame)
     frame.mapPropertyToPyroAttribute ("allowShade", "allow-shade");
     frame.mapPropertyToPyroAttribute ("inactive", "inactive");
     frame.mapPropertyToPyroAttribute ("moving", "moving");
+    frame.mapPropertyToPyroAttribute ("wmClass", "wm-class"); /* XXX we should rethink the name of this */
 
 
     frame.addProperty ("chromeless",
@@ -283,6 +267,10 @@ function _addFrameMethods (frame)
 			   if (!t || t == "")
 			       t = "[Unknown]";
 
+			   if (t == this._title.getAttributeNS ("http://www.pyrodesktop.org/compzilla", 
+								"caption"))
+			       return;
+
 			   Debug ("setting caption of " + this._title + " to " + t);
 
 			   this._title.setAttributeNS ("http://www.pyrodesktop.org/compzilla", 
@@ -292,62 +280,6 @@ function _addFrameMethods (frame)
 			       if (el.className == "windowTitleSpan")
 				   el.innerHTML = t;
 			   }
-		       });
-
-
-    // properties which map directly to X11 window properties.
-
-    // wmClass is the odd one, being reflected into the wm-class
-    // attribute.  everything else is kept internal, and exposed
-    // through other means.
-    //
-
-    frame.addProperty ("wmClass",
-		       /* getter */
-		       function () {
-			   return this.getPyroAttribute ("wm-class");
-                       },
-		       /* setter */
-		       function (wmclass) {
-			   this.setPyroAttribute ("wm-class", wmclass);
-		       });
-
-    frame.addProperty ("wmName",
-		       /* getter */
-		       function () {
-			   if (!this._content || !this._content.nativeWindow)
-			       return null;
-
-			   var name = this._xprops[Atoms._NET_WM_NAME];
-
-			   // fall back to XA_WM_NAME if _NET_WM_NAME is undefined.
-			   if (name == null)
-			       name = this._xprops[Atoms.XA_WM_NAME];
-
-			   return name;
-		       });
-
-    frame.addProperty ("wmStruts",
-		       /* getter */
-		       function () {
-			   if (!this._content || !this._content.nativeWindow)
-			       return null;
-
-			   var struts = this._xprops[Atoms._NET_WM_STRUT_PARTIAL];
-			   // fall back to _NET_WM_STRUT if _PARTIAL isn't there.
-			   if (struts == null)
-			       struts = this._xprops[Atoms._NET_WM_STRUT];
-
-			   return struts;
-		       });
-
-    frame.addProperty ("wmWindowType",
-		       /* getter */
-		       function () {
-			   if (!this._content || !this._content.nativeWindow)
-			       return null;
-
-			   return this._xprops[Atoms._NET_WM_WINDOW_TYPE];
 		       });
 }
 
@@ -363,8 +295,6 @@ function CompzillaFrame (content)
     frame._titleBox = getDescendentById (frame, "windowTitleBox");
     frame._title = getDescendentById (frame, "windowTitle");
 
-    frame._xprops = new Array ();
-
     // Add our methods
     _addFrameMethods (frame);
     
@@ -372,11 +302,10 @@ function CompzillaFrame (content)
         frame.id = "XID:" + content.nativeWindow.nativeWindowId;
 
 	_connectNativeWindowListeners (frame);
-	_connectXProperties (frame);
 	frame._resetChromeless ();
         frame._recomputeAllowedActions ();
 
-	frame.title = frame.wmName;
+	frame.title = content.wmName;
     }
 
     if (frame._title) {
@@ -521,9 +450,13 @@ function _connectFrameDragListeners (frame)
 }
 
 
+/* XXX this method should either be moved to content.js, or content.js
+   should also listen for events it cares about (like
+   propertychange) */
+
 function _connectNativeWindowListeners (frame)
 {
-    var nativewin = frame.content.nativeWindow;
+    var nativewin = frame._content.nativeWindow;
 
     nativewin.addEventListener (
 	"destroy",
@@ -583,12 +516,12 @@ function _connectNativeWindowListeners (frame)
 		Debug ("frame", "propertychange.handleEvent: ev.atom=" + ev.atom);
 
 		// the property has changed (or been deleted).  nuke it from our cache
-		frame._xprops.Invalidate (ev.atom);
+		frame._content.XProps.Invalidate (ev.atom);
 
 		switch (ev.atom) {
 		case Atoms.XA_WM_NAME:
 		case Atoms._NET_WM_NAME:
-		    frame.title = frame.wmName;
+		    frame.title = frame._content.wmName;
 
 		    Debug ("frame", "propertychange: setting title:" + frame.title);
 
@@ -599,17 +532,12 @@ function _connectNativeWindowListeners (frame)
 		    frame._recomputeAllowedActions ();
 
 		    Debug ("frame", "propertychange: setting window type:" + 
-			   frame.wmWindowType);
+			   frame._content.wmWindowType);
 
 		    break;
 
 		case Atoms.XA_WM_CLASS:
-		    var wmClass = frame._xprops[Atoms.XA_WM_CLASS];
-
-		    if (wmClass == null)
-			frame.wmClass = "";
-		    else
-			frame.wmClass = wmClass.instanceName + " " + wmClass.className;
+		    frame.wmClass = frame._content.wmClass;
 
 		    Debug ("frame", "propertychange: setting wmClass: '" +  
 			   frame.wmClass + "'");
@@ -621,61 +549,3 @@ function _connectNativeWindowListeners (frame)
 	true);
 };
 
-
-function _connectXProperties (frame)
-{
-    frame._xprops = new XProps (frame.content);
-
-    frame._xprops.Add (Atoms._NET_WM_NAME,
-		       function (prop_bag) {
-			   return prop_bag.getProperty (".text");
-		       });
-
-    frame._xprops.Add (Atoms.XA_WM_NAME,
-		       function (prop_bag) {
-			   return prop_bag.getProperty (".text");
-		       });
-
-    frame._xprops.Add (Atoms.XA_WM_CLASS,
-		       function (prop_bag) {
-                           return { instanceName: prop_bag.getProperty (".instanceName"),
-                                    className: prop_bag.getProperty (".className")
-                                  };
-		       });
-
-    frame._xprops.Add (Atoms._NET_WM_WINDOW_TYPE,
-		       function (prop_bag) {
-			   // XXX _NET_WM_WINDOW_TYPE is actually an array of atoms
-			   return prop_bag.getPropertyAsUint32 (".atom");
-		       });
-
-    frame._xprops.Add (Atoms._NET_WM_STRUT,
-		       function (prop_bag) {
-			   return { partial: false,
-				    left: prop_bag.getPropertyAsUint32 (".left"),
-				    right: prop_bag.getPropertyAsUint32 (".right"),
-				    top: prop_bag.getPropertyAsUint32 (".top"),
-				    bottom: prop_bag.getPropertyAsUint32 (".bottom"),
-				  };
-		       });
-
-    frame._xprops.Add (Atoms._NET_WM_STRUT_PARTIAL,
-		       function (prop_bag) {
-			   return { partial: true,
-				    left: prop_bag.getPropertyAsUint32 (".left"),
-				    right: prop_bag.getPropertyAsUint32 (".right"),
-				    top: prop_bag.getPropertyAsUint32 (".top"),
-				    bottom: prop_bag.getPropertyAsUint32 (".bottom"),
-				    leftStartY: prop_bag.getPropertyAsUint32 (".leftStartY"),
-				    leftEndY: prop_bag.getPropertyAsUint32 (".leftEndY"),
-				    rightStartY: prop_bag.getPropertyAsUint32 (".rightStartY"),
-				    rightEndY: prop_bag.getPropertyAsUint32 (".rightEndY"),
-				    topStartX: prop_bag.getPropertyAsUint32 (".topStartX"),
-				    topEndX: prop_bag.getPropertyAsUint32 (".topEndX"),
-				    bottomStartX: prop_bag.getPropertyAsUint32 (".bottomStartX"),
-				    bottomEndX: prop_bag.getPropertyAsUint32 (".bottomEndX"),
-				  };
-		       });
-}
-
-		   

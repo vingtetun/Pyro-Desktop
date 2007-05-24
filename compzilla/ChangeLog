@@ -1,5 +1,18 @@
 2007-05-24  Chris Toshok  <toshok@ximian.com>
 
+	* compzilla/chrome/content/frame.js,
+	compzilla/chrome/content/content.js: incomplete but functional
+	first pass at moving all the nativeWindow stuff into content.js
+	from frame.js.  the big holdouts left are
+	_connectNativeWindowListeners and some initialization stuff in
+	CompzillaFrame ().
+
+	content objects now have the following methods they can implement:
+	ondestroy, onmoveresize, onhide, onshow, onmaximize, onfullscreen.
+	These get called when the relevant frame method is called.
+
+2007-05-24  Chris Toshok  <toshok@ximian.com>
+
 	* compzilla/src/compzillaWindow.cpp (GetCardinalListProperty):
 	useful function for dealing with properties that are n-Cardinals,
 	like STRUT/STRUT_PARTIAL/ICON_GEOMETRY).
