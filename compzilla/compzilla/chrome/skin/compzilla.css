@@ -3,7 +3,7 @@
 
 /*
  *===============================================================
- * START basic desktop/content theming
+ * START desktop and window layers theming
  *===============================================================
  */
 
@@ -83,6 +83,14 @@ body {
 	height: 100%;
 }
 
+
+
+/*
+ *===============================================================
+ * START window content theming
+ *===============================================================
+ */
+
 #windowContent {
 	background: #ffffff;
 	width: 100%;
@@ -93,10 +101,13 @@ body {
         outline-width: 0;
 }
 
-#debugLog {
-	width: 100%;
-	height: 90%;
-}
+
+
+/*
+ *===============================================================
+ * START debug window theming
+ *===============================================================
+ */
 
 #debugContent {
 	font-family: Andale Mono, monospace;
@@ -105,6 +116,21 @@ body {
 	height: 100%;
 }
 
+#debugLog {
+        position: absolute;
+        top: 0px;
+	bottom: 4em;
+        width: 100%;
+}
+
+#debugActions {
+        position: absolute;
+        bottom: 0px;
+        width: 100%;
+	height: 4em;
+        white-space: nowrap;
+        overflow: hidden;
+}
 
 
 /*
@@ -115,8 +141,9 @@ body {
 
 .uiDlg {
         position: absolute;
-	overflow: hidden;
         z-index: 1;
+        width: 200px;
+        height: 200px;
 }
 
 .uiDlgTop, .uiDlgTop > div, .uiDlgBottom, .uiDlgBottom > div {
@@ -126,15 +153,27 @@ body {
         height: 22px;
 }
 .uiDlgContent {
-        height: 100%;
+        position: absolute;
+        top: 30px;
+        bottom: 8px;
         width: 100%;
 }
-.uiDlgContentLeft, .uiDlgContentRight, .uiDlgContentCenter {
+.uiDlgBottom {
+        position: absolute;
+        bottom: 0px;
         width: 100%;
+}
+.uiDlgContentLeft, .uiDlgContentRight {
         height: 100%;
+}
+.uiDlgContentCenter {
+        position: absolute;
+        left: 0px;
+        right: 0px;
+        top: 0px;
+        bottom: 0px;
 }
 .uiDlgTopCenter, .uiDlgBarCenter, .uiDlgContentCenter, .uiDlgBottomCenter {
-        overflow: hidden;
         margin-left: 8px;
         margin-right: 8px;
 }

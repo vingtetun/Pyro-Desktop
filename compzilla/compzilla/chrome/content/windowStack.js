@@ -168,7 +168,7 @@ windowStack.getLayer = function (name) {
  *   highZIndex: the highest zIndex of a window in that range
  */
 windowStack.addLayer = function (name, minZIndex, maxZIndex) {
-    layer = new Object ();
+    var layer = new Object ();
     layer.name = name;
     layer.minZIndex = minZIndex;
     layer.maxZIndex = maxZIndex;

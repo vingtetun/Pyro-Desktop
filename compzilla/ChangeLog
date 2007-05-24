@@ -1,3 +1,33 @@
+2007-05-24  Alex Graveley  <alex@beatniksoftware.com>
+
+	Fix the Js/CSS side of move/resize...
+
+	* compzilla/chrome/skin/compzilla.css: Make the debug controls 4em
+	large and no-wrap and hidden overflow.  Set the contentLog to
+	top:0px and bottom:4em. 
+	(.uiDlgContent): Make this absolute, top:30px, bottom:8px, so we
+	can make the content fill it.
+	(.uiDlgContentCenter): Make this absolute too, so we can fill all
+	the parent space.
+	(.uiDlgBottom): Absolute, at the bottom.
+
+	* compzilla/chrome/content/frame.js (moveResize): Only call
+	_configureNativeWindow if _moveResize returns true.
+	(_moveResize): Return true if something changed.  Keep this
+	simple, only setting the frame extents, and updating the _content
+	height/width from it's offsetHeight/Width.
+	(frameDragMouseMoveListener): Just read the frame's offsets, the
+	CSS will figure the rest out.
+	(propertychange): Switch on atom, instead of ifs.
+
+	* compzilla/chrome/content/start.js: Quick workaround for initial
+	resizing to adjust for frame border size.
+
+	* compzilla/chrome/content/start.xul: Add debug controls in
+	debugActions div, so we can style it.
+
+	* compzilla/chrome/content/windowStack.js: Use var for layer.
+
 2007-05-23  Chris Toshok  <toshok@ximian.com>
 
 	* compzilla/chrome/content/frame.js (frameDragMouseMoveListener):

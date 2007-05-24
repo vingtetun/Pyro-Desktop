@@ -24,11 +24,20 @@ function compzillaLoad()
 
 		windowStack.stackWindow (frame);
 
-		// ev is a compzillaIWindowConfigureEvent
-		frame.moveResize (ev.x, ev.y, ev.width, ev.height);
 		if (ev.mapped) {
 		    frame.show ();
 		}
+
+		// ev is a compzillaIWindowConfigureEvent
+		/*
+		frame.moveResize (
+		    ev.x - frame.content.offsetLeft,
+		    ev.y - frame.content.offsetTop,
+		    ev.width - frame.content.offsetWidth + frame.offsetWidth,
+		    ev.height - frame.content.offsetHeight + frame.offsetHeight);
+		*/
+		frame.moveResize (ev.x - 8, ev.y - 30, ev.width + 16, ev.height + 38);
+		//frame.moveResize (ev.x, ev.y, ev.width, ev.height);
 
 		if (!ev.overrideRedirect) {
 		    _clientList.push (ev.window.nativeWindowId);

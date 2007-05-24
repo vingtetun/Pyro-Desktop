@@ -70,64 +70,60 @@ var FrameMethods = {
 	Debug ("frame", 
 	       "frame.moveResize: x=" + x + ", y=" + y + ", w=" + width + ", h=" + height);
 
-	this._moveResize (x, y, width, height);
-        this._configureNativeWindow ();
+	if (this._moveResize (x, y, width, height)) {
+            this._configureNativeWindow ();
+        }
     },
 
 
     _moveResize: function (x, y, width, height) {
         // Coordinates are relative to the frame
 
-        Debug ("BEFORE _moveResize: this.offsetHeight=" + this.offsetHeight + 
-               " this._contentBox.style.height=" + this._contentBox.style.height + 
-               " this._contentBox.offsetHeight=" + this._contentBox.offsetHeight);
+        /*
+        Debug ("BEFORE _moveResize: " + 
+               " this._content.offsetHeight=" + this._content.offsetHeight + 
+               " this._content.offsetWidth=" + this._content.offsetWidth);
+        */
+
+        var changed = false;
 
 	if (this.offsetLeft != x) {
 	    this.style.left = x + "px";
+            changed = true;
 	}
 
 	if (this.offsetTop != y) {
 	    this.style.top = y + "px";
+            changed = true;
 	}
 
         if (this.offsetWidth != width) {
-	    // calculate the content box's width based on the delta to the new frame width.
-            var content_width = this._contentBox.offsetWidth + (width - this.offsetWidth);
-
-            this._contentBox.style.width = content_width + "px";
+            this.style.width = width + "px";
+            changed = true;
 
 	    if (this._content.nativeWindow)
-		this._content.width = content_width;
-
-            this.style.width = width + "px";
+		this._content.width = this._content.offsetWidth;
         }
 
         if (this.offsetHeight != height) {
-	    // calculate the content box's width based on the delta to the new frame width.
-            var content_height = this._contentBox.offsetHeight + (height - this.offsetHeight);
-
-            this._contentBox.style.height = content_height + "px";
+            this.style.height = height + "px";
+            changed = true;
 
 	    if (this._content.nativeWindow)
-		this._content.height = content_height;
-
-            this.style.height = height + "px";
+		this._content.height = this._content.offsetHeight;
         }
 
-        Debug ("AFTER _moveResize: this.offsetHeight=" + this.offsetHeight + 
-               " this._contentBox.style.height=" + this._contentBox.style.height + 
-               " this._contentBox.offsetHeight=" + this._contentBox.offsetHeight);
+        Debug ("frame", 
+               "AFTER _moveResize: " + 
+               " this._content.offsetHeight=" + this._content.offsetHeight + 
+               ", this._content.offsetWidth=" + this._content.offsetWidth);
+
+        return changed;
     },
 
 
     _configureNativeWindow: function () {
-        if (!this._content.nativeWindow)
-            return;
-
-        this._content.width = this._content.offsetWidth;
-        this._content.height = this._content.offsetHeight;
-
-        if (this.overrideRedirect)
+        if (!this._content.nativeWindow || this.overrideRedirect)
             return;
 
         var pos = findPos (this._content);
@@ -252,7 +248,9 @@ function _addFrameMethods (frame)
 
 			   Debug ("setting caption of " + this._title + " to " + t);
 
-			   this._title.setAttributeNS ("http://www.pyrodesktop.org/compzilla", "caption", t);
+			   this._title.setAttributeNS ("http://www.pyrodesktop.org/compzilla", 
+						       "caption", 
+						       t);
 			   for (var el = this._title.firstChild; el; el = el.nextSibling) {
 			       if (el.className == "windowTitleSpan")
 				   el.innerHTML = t;
@@ -290,7 +288,8 @@ function _addFrameMethods (frame)
 			   }
 
 			   if (!this._wm_name) {
-			       prop_val = this._content.nativeWindow.GetProperty (Atoms.XA_WM_NAME);
+			       var prop_val = 
+				   this._content.nativeWindow.GetProperty (Atoms.XA_WM_NAME);
 			       if (prop_val)
 				   this._wm_name = prop_val.getProperty (".text");
 			   }
@@ -440,13 +439,11 @@ function CompzillaFrame (content)
 {
     var frame = document.getElementById ("windowFrame").cloneNode (true);
 
+    frame._contentBox = getDescendentById (frame, "windowContentBox");
+    frame._contentBox.appendChild (content);
     frame._content = content;
 
     frame._titleBox = getDescendentById (frame, "windowTitleBox");
-
-    frame._contentBox = getDescendentById (frame, "windowContentBox");
-    frame._contentBox.appendChild (content);
-
     frame._title = getDescendentById (frame, "windowTitle");
 
     // Add our methods
@@ -480,8 +477,6 @@ function _connectFrameFocusListeners (frame)
             handleEvent: function (event) {
 		windowStack.moveToTop (frame);
 
-                Debug ("mousedown: inactive = " + frame.inactive);
-
                 // XXX this should live in some sort of focus handler, not here.
                 if (frame != _focusedFrame) {
                     if (_focusedFrame) {
@@ -512,44 +507,37 @@ function _connectFrameDragListeners (frame)
 	    var dx = ev.clientX - frameDragPosition.x;
 	    var dy = ev.clientY - frameDragPosition.y;
 
-	    // not sure why, but if we just click in the title bar we
-	    // get a mousemove event, with 0 delta.  check for this
-	    // and return early so we don't moveResize the frame just
-	    // for a transient click.
+            // Don't do anything if no delta.  
+            // Toshok was seeing this Minefield, but not with FF2.
 	    if (dx == 0 && dy == 0) {
-		ev.preventDefault ();
-		ev.stopPropagation ();
-
 		return;
 	    }
 
 	    frameDragPosition.x = ev.clientX;
 	    frameDragPosition.y = ev.clientY;
 
-	    var new_x = frame.offsetLeft,
-		new_y = frame.offsetTop,
-		new_width = frame.offsetWidth,
-		new_height = frame.offsetHeight;
+            var rect = new Object();
+            rect.x = frame.offsetLeft;
+            rect.y = frame.offsetTop;
+            rect.width = frame.offsetWidth;
+            rect.height = frame.offsetHeight;
 
 	    if (frameDragPosition.operation == "move-resize") {
-                new_x = frame.offsetLeft + dx;
-                new_y = frame.offsetTop + dy;
-		new_width = frame.offsetWidth;
-		new_height = frame.offsetHeight;
-	    }
-	    else {
+                rect.x += dx;
+                rect.y += dy;
+	    } else {
 		// calculate y/height
 		switch (frameDragPosition.operation) {
 		case "nw-resize":
 		case "ne-resize":
 		case "n-resize":
-		    new_height = frame._contentBox.offsetHeight - dy;
-		    new_y = frame.offsetTop + dy;
+		    rect.height -= dy;
+		    rect.y += dy;
 		    break;
 		case "sw-resize":
 		case "se-resize":
 		case "s-resize":
-		    new_height = frame._contentBox.offsetHeight + dy;
+		    rect.height += dy;
 		    break;
 		}
 
@@ -558,18 +546,18 @@ function _connectFrameDragListeners (frame)
 		case "nw-resize":
 		case "sw-resize":
 		case "w-resize":
-		    new_width = frame._contentBox.offsetWidth - dx;
-		    new_x = frame.offsetLeft + dx;
+		    rect.width -= dx;
+		    rect.x += dx;
 		    break;
 		case "ne-resize":
 		case "se-resize":
 		case "e-resize":
-		    new_width = frame._contentBox.offsetWidth + dx;
+		    rect.width += dx;
 		    break;
 		}
 	    }
 
-	    frame.moveResize (new_x, new_y, new_width, new_height);
+	    frame.moveResize (rect.x, rect.y, rect.width, rect.height);
 
 	    ev.preventDefault ();
 	    ev.stopPropagation ();
@@ -642,10 +630,10 @@ function _connectNativeWindowListeners (frame, nativewin)
 
                         // ev coords are relative to content, adjust for frame offsets
 			frame.moveResize (
-			    ev.x - frame._contentBox.offsetLeft,
-			    ev.y - frame._contentBox.offsetTop,
-			    ev.width - frame._contentBox.offsetWidth + frame.offsetWidth,
-			    ev.height - frame._contentBox.offsetHeight + frame.offsetHeight);
+			    ev.x - frame._content.offsetLeft,
+			    ev.y - frame._content.offsetTop,
+			    ev.width - frame._content.width + frame.offsetWidth,
+			    ev.height - frame._content.height + frame.offsetHeight);
 
 			// XXX handle stacking requests here too
 		    }
@@ -687,38 +675,35 @@ function _connectNativeWindowListeners (frame, nativewin)
 		    handleEvent: function (ev) {
 			Debug ("frame", "propertychange.handleEvent: ev.atom=" + ev.atom);
 
-			if (ev.atom == Atoms.XA_WM_NAME ||
-			    ev.atom == Atoms._NET_WM_NAME) {
-
+                        switch (ev.atom) {
+                        case Atoms.XA_WM_NAME:
+                        case Atoms._NET_WM_NAME:
 			    frame._wm_name = null; /* uncached value */
-
 			    frame.title = frame.wmName;
 
 			    Debug ("frame", "propertychange: setting title:" + frame.title);
-			    return;
-			}
+			    break;
 
-			if (ev.atom == Atoms._NET_WM_WINDOW_TYPE) {
-
+			case Atoms._NET_WM_WINDOW_TYPE:
 			    this._net_wm_window_type = null; /* uncached value */
-
 			    frame._recomputeAllowedActions ();
-			    return;
-			}
 
-			if (ev.atom == Atoms.XA_WM_CLASS) {
-			    var prop_val =
-				frame.content.nativeWindow.GetProperty (Atoms.XA_WM_CLASS);
+			    Debug ("frame", "propertychange: setting window type:" + 
+                                   frame.wmWindowType);
+			    break;
+
+                        case Atoms.XA_WM_CLASS:
+			    var prop_val = 
+			        frame.content.nativeWindow.GetProperty (Atoms.XA_WM_CLASS);
 			    if (prop_val)
-				frame.wmClass = (prop_val.getProperty (".instanceName") +
-						 " " +
+				frame.wmClass = (prop_val.getProperty (".instanceName") + " " +
 						 prop_val.getProperty (".className"));
 			    else
 				frame.wmClass = "";
 
 			    Debug ("frame", "propertychange: setting wmClass: '" +  
                                    frame.wmClass + "'");
-			    return;
+			    break;
 			}
 		    }
 		},
