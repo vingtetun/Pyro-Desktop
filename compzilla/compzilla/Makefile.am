@@ -14,6 +14,7 @@ content_DATA =					\
 	$(CONTENT_SRCDIR)/start.js		\
 	$(CONTENT_SRCDIR)/start.xul		\
 	$(CONTENT_SRCDIR)/atoms.js		\
+	$(CONTENT_SRCDIR)/xprops.js		\
 	$(CONTENT_SRCDIR)/content.js		\
 	$(CONTENT_SRCDIR)/debug.js		\
 	$(CONTENT_SRCDIR)/frame.js		\

@@ -1,3 +1,45 @@
+2007-05-24  Chris Toshok  <toshok@ximian.com>
+
+	* compzilla/src/compzillaWindow.cpp (GetCardinalListProperty):
+	useful function for dealing with properties that are n-Cardinals,
+	like STRUT/STRUT_PARTIAL/ICON_GEOMETRY).
+	(GetProperty): make use of GetCardinalListProperty, and implement
+	the STRUT stuff.
+
+	* compzilla/src/compzillaWindow.h (class compzillaWindow ):
+	prototype for GetCardinalListProperty.
+
+	* compzilla/chrome/content/start.xul: add xprops.js
+
+	* compzilla/chrome/content/frame.js: quite a few changes:
+
+	- remove the addCachedEventListener stuff and just use
+	addEventListener.  we only needed to worry about the cached event
+	listeners when we were reparenting the content between dock/frame
+	nodes.
+
+	- add a convenience method (mapPropertyToPyroAttribute) to
+	collapse the trivial object property <-> element attribute mapping
+	some of the properties had.
+
+	- reorder the addProperty calls in addFrameMethods to group them a
+	bit more logically (map directly to attribute, more computational
+	elements, and X properties).
+
+	- lastly, seriously clean up the X property stuff by creating a
+	separate (caching, but trivial to disable that) object.  This has
+	the side effect of removing duplicate and/or error prone code from
+	all the various property getters for X properties.  things look a
+	lot cleaner now.
+
+	- start in on support for _NET_WM_STRUTS[_PARTIAL]
+
+	* compzilla/chrome/content/xprops.js: the aforementioned separate
+	object for dealing with X properties, mapping them to JS objects,
+	and caching.
+
+	* compzilla/Makefile.am (content_DATA): add xprops.js
+
 2007-05-24  Alex Graveley  <alex@beatniksoftware.com>
 
 	* compzilla/chrome/content/frame.js: (frameDragMouseMoveListener):

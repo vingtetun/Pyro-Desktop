@@ -403,7 +403,7 @@ compzillaWindow::GetAtomProperty (Atom prop, PRUint32* value)
 
     *value = *(Atom*)data;
 
-    SPEW (" + %d\n", *value);
+    SPEW (" + %d (%s)\n", *value, XGetAtomName (mDisplay, *value));
 
     XFree (data);
 
@@ -1137,6 +1137,38 @@ compzillaWindow::UnmapWindow ()
 }
 
 
+nsresult
+compzillaWindow::GetCardinalListProperty (Atom prop, PRUint32 **values, PRUint32 expected_nitems)
+{
+    Atom actual_type;
+    int format;
+    unsigned long bytes_after_return;
+    unsigned char *data;
+    unsigned long nitems;
+
+    if (Success == XGetWindowProperty (mDisplay, mWindow, prop,
+                                       0, expected_nitems, false, XA_CARDINAL,
+                                       &actual_type, &format, &nitems, &bytes_after_return, 
+                                       &data)) {
+
+        if (nitems != expected_nitems) {
+            WARNING ("XGetWindowProperty (%s) returned %d items when we were expecting %d\n",
+                     XGetAtomName (mDisplay, prop),
+                     nitems,
+                     expected_nitems);
+
+            XFree (data);
+            return NS_ERROR_FAILURE;
+        }
+            
+        *values = (PRUint32*)data;
+        return NS_OK;
+    }
+
+    return NS_ERROR_FAILURE;
+}
+
+
 NS_IMETHODIMP
 compzillaWindow::GetProperty (PRUint32 iprop, nsIPropertyBag2 **bag2)
 {
@@ -1321,40 +1353,55 @@ compzillaWindow::GetProperty (PRUint32 iprop, nsIPropertyBag2 **bag2)
         else if (prop == atoms.x._NET_WM_ALLOWED_ACTIONS) {
         }
         else if (prop == atoms.x._NET_WM_STRUT) {
+            PRUint32 *cards;
+            PRUint32 nitems;
+
+            if (NS_OK == GetCardinalListProperty (prop, &cards, 4)) {
+                SET_BAG ();
+                SET_PROP (wbag, Uint32, ".left", cards[0]);
+                SET_PROP (wbag, Uint32, ".right", cards[1]);
+                SET_PROP (wbag, Uint32, ".top", cards[2]);
+                SET_PROP (wbag, Uint32, ".bottom", cards[3]);
+            
+                XFree (cards);
+            }
         }
         else if (prop == atoms.x._NET_WM_STRUT_PARTIAL) {
+            PRUint32 *cards;
+            PRUint32 nitems;
+
+            if (NS_OK == GetCardinalListProperty (prop, &cards, 12)) {
+                SET_BAG ();
+                SET_PROP (wbag, Uint32, ".left", cards[0]);
+                SET_PROP (wbag, Uint32, ".right", cards[1]);
+                SET_PROP (wbag, Uint32, ".top", cards[2]);
+                SET_PROP (wbag, Uint32, ".bottom", cards[3]);
+
+                SET_PROP (wbag, Uint32, ".leftStartY", cards[4]);
+                SET_PROP (wbag, Uint32, ".leftEndY", cards[5]);
+                SET_PROP (wbag, Uint32, ".rightStartY", cards[6]);
+                SET_PROP (wbag, Uint32, ".rightEndY", cards[7]);
+
+                SET_PROP (wbag, Uint32, ".topStartX", cards[8]);
+                SET_PROP (wbag, Uint32, ".topEndX", cards[9]);
+                SET_PROP (wbag, Uint32, ".bottomStartX", cards[10]);
+                SET_PROP (wbag, Uint32, ".bottomEndX", cards[11]);
+                
+                XFree (cards);
+            }
         }
         else if (prop == atoms.x._NET_WM_ICON_GEOMETRY) {
-            // 4 cardinals
+            PRUint32 *cards;
+            PRUint32 nitems;
 
-            PRUint32 *values;
-
-            char *instance, *_class;
-
-            Atom actual_type;
-            int format;
-            unsigned long nitems;
-            unsigned long bytes_after_return;
-            unsigned char *data;
-
-            XGetWindowProperty (mDisplay, mWindow, (Atom)prop,
-                                0, 4, false, XA_CARDINAL,
-                                &actual_type, &format, &nitems, &bytes_after_return, 
-                                &data);
-
-            if (nitems == 4) {
-                PRUint32 *cards = (PRUint32*)data;
+            if (NS_OK == GetCardinalListProperty (prop, &cards, 4)) {
                 SET_BAG ();
                 SET_PROP(wbag, Uint32, ".x", cards[0]);
                 SET_PROP(wbag, Uint32, ".y", cards[1]);
                 SET_PROP(wbag, Uint32, ".width", cards[2]);
                 SET_PROP(wbag, Uint32, ".height", cards[3]);
+                XFree (cards);
             }
-            else {
-                WARNING ("_NET_WM_ICON_GEOMETRY returned something other than 4 items");
-            }
-
-            XFree (data);
         }
         else if (prop == atoms.x._NET_WM_ICON) {
         }

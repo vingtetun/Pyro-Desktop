@@ -22,16 +22,6 @@ function getDescendentById (root, id)
 }
 
 
-/* probably a rather more useful function */
-function addCachedEventListener (o, eventid, cachedListener, newListener, usecapture)
-{
-    if (cachedListener != undefined)
-	o.removeEventListener (eventid, cachedListener, usecapture);
-    o.addEventListener (eventid, newListener, usecapture);
-    return newListener;
-}
-
-
 function findPos (obj) 
 {
     var curleft = curtop = 0;
@@ -190,7 +180,6 @@ var FrameMethods = {
 	}
     },
 
-
     show: function () {
 	Debug ("frame", "frame.show");
 
@@ -223,6 +212,11 @@ var FrameMethods = {
 	    this.__defineSetter__ (name, setter);
     },
 
+    mapPropertyToPyroAttribute: function (propname, attrname) {
+	this.__defineGetter__ (propname, function () { return this.getPyroAttribute (attrname); });
+	this.__defineSetter__ (propname, function (val) { this.setPyroAttribute (attrname, val); });
+    }
+
 };
 
 
@@ -233,6 +227,49 @@ function _addFrameMethods (frame)
     }
 
     // now add our public properties
+
+    // These map directly to pyro:attributes on the frame
+    frame.mapPropertyToPyroAttribute ("allowResize", "allow-resize");
+    frame.mapPropertyToPyroAttribute ("allowMaximize", "allow-maximize");
+    frame.mapPropertyToPyroAttribute ("allowMinimize", "allow-minimize");
+    frame.mapPropertyToPyroAttribute ("allowMove", "allow-move");
+    frame.mapPropertyToPyroAttribute ("allowShade", "allow-shade");
+    frame.mapPropertyToPyroAttribute ("inactive", "inactive");
+    frame.mapPropertyToPyroAttribute ("moving", "moving");
+
+
+    frame.addProperty ("chromeless",
+		       /* getter */
+		       function () {
+			   $(this).is ("chromeless");
+                       },
+		       /* setter */
+		       function (flag) {
+			   if (flag)
+			       $(this).addClass ("chromeless");
+			   else
+			       $(this).removeClass ("chromeless");
+		       });
+
+    frame.addProperty ("content",
+		       /* getter */
+		       function () {
+			   return this._content;
+		       }
+		       /* no setter */
+		       );
+
+    frame.addProperty ("overrideRedirect",
+		       /* getter */
+		       function () {
+                           return this._overrideRedirect;
+		       },
+		       /* setter */
+		       function (val) {
+                           this._overrideRedirect = val;
+                           this._resetChromeless ();
+		       });
+
     frame.addProperty ("title",
 		       /* getter */
 		       function () {
@@ -255,14 +292,15 @@ function _addFrameMethods (frame)
 			       if (el.className == "windowTitleSpan")
 				   el.innerHTML = t;
 			   }
-
-			   // XXX presumably this should set the
-			   // _NET_WM_NAME property on the native
-			   // window (by setting wmName?), although it
-			   // can't because the then the property
-			   // change code will fire and we'll end up
-			   // setting frame.title, etc, etc
 		       });
+
+
+    // properties which map directly to X11 window properties.
+
+    // wmClass is the odd one, being reflected into the wm-class
+    // attribute.  everything else is kept internal, and exposed
+    // through other means.
+    //
 
     frame.addProperty ("wmClass",
 		       /* getter */
@@ -277,161 +315,40 @@ function _addFrameMethods (frame)
     frame.addProperty ("wmName",
 		       /* getter */
 		       function () {
-			   if (!this._content.nativeWindow)
+			   if (!this._content || !this._content.nativeWindow)
 			       return null;
 
-			   if (!this._wm_name) {
-			       var prop_val =
-				   this._content.nativeWindow.GetProperty (Atoms._NET_WM_NAME);
-			       if (prop_val)
-				   this._wm_name = prop_val.getProperty (".text");
-			   }
+			   var name = this._xprops[Atoms._NET_WM_NAME];
 
-			   if (!this._wm_name) {
-			       var prop_val = 
-				   this._content.nativeWindow.GetProperty (Atoms.XA_WM_NAME);
-			       if (prop_val)
-				   this._wm_name = prop_val.getProperty (".text");
-			   }
+			   // fall back to XA_WM_NAME if _NET_WM_NAME is undefined.
+			   if (name == null)
+			       name = this._xprops[Atoms.XA_WM_NAME];
 
-			   Debug ("wm_name is " + this._wm_name);
-
-			   return this._wm_name;
-		       },
-		       /* setter */
-		       function (wmname) {
-			   // XXX see comment up above in frame.title
-			   // setter.
+			   return name;
 		       });
 
-    frame.addProperty ("allowResize",
+    frame.addProperty ("wmStruts",
 		       /* getter */
 		       function () {
-			   return this.getPyroAttribute ("allow-resize");
-		       },
-		       /* setter */
-		       function (val) {
-			   this.setPyroAttribute ("allow-resize", val);
-		       });
+			   if (!this._content || !this._content.nativeWindow)
+			       return null;
 
-    frame.addProperty ("allowMaximize",
-		       /* getter */
-		       function () {
-			   return this.getPyroAttribute ("allow-maximize");
-		       },
-		       /* setter */
-		       function (val) {
-			   this.setPyroAttribute ("allow-maximize", val);
-		       });
+			   var struts = this._xprops[Atoms._NET_WM_STRUT_PARTIAL];
+			   // fall back to _NET_WM_STRUT if _PARTIAL isn't there.
+			   if (struts == null)
+			       struts = this._xprops[Atoms._NET_WM_STRUT];
 
-    frame.addProperty ("allowMinimize",
-		       /* getter */
-		       function () {
-			   return this.getPyroAttribute ("allow-minimize");
-		       },
-		       /* setter */
-		       function (val) {
-			   this.setPyroAttribute ("allow-minimize", val);
-		       });
-
-    frame.addProperty ("allowMove",
-		       /* getter */
-		       function () {
-			   return this.getPyroAttribute ("allow-move");
-		       },
-		       /* setter */
-		       function (val) {
-			   this.setPyroAttribute ("allow-move", val);
-		       });
-
-    frame.addProperty ("allowShade",
-		       /* getter */
-		       function () {
-			   return this.getPyroAttribute ("allow-shade");
-		       },
-		       /* setter */
-		       function (val) {
-			   this.setPyroAttribute ("allow-shade", val);
-		       });
-
-    frame.addProperty ("inactive",
-		       /* getter */
-		       function () {
-			   return this.getPyroAttribute ("inactive");
-		       },
-		       /* setter */
-		       function (val) {
-			   this.setPyroAttribute ("inactive", val);
-		       });
-
-    frame.addProperty ("moving",
-		       /* getter */
-		       function () {
-			   return this.getPyroAttribute ("moving");
-		       },
-		       /* setter */
-		       function (val) {
-			   this.setPyroAttribute ("moving", val);
-		       });
-
-    frame.addProperty ("chromeless",
-		       /* getter */
-		       function () {
-			   $(this).is ("chromeless");
-                       },
-		       /* setter */
-		       function (flag) {
-			   if (flag)
-			       $(this).addClass ("chromeless");
-			   else
-			       $(this).removeClass ("chromeless");
+			   return struts;
 		       });
 
     frame.addProperty ("wmWindowType",
 		       /* getter */
 		       function () {
-                           if (!this._net_wm_window_type && this._content) {
-			       // XXX _NET_WM_WINDOW_TYPE is actually an array of atoms
-			       var prop_val = this._content.nativeWindow.GetProperty (
-			           Atoms._NET_WM_WINDOW_TYPE);
-			       if (prop_val)
-				   this._net_wm_window_type = 
-				       prop_val.getPropertyAsUint32 (".atom");
-                           }
+			   if (!this._content || !this._content.nativeWindow)
+			       return null;
 
-			   return this._net_wm_window_type;
-		       },
-		       /* setter */
-		       function (val) {
-			   // XXX we can't just update the cached
-			   // value.  we have to update the window's
-			   // property as well.  actually I can't
-			   // think of a reason why we'd be setting
-			   // this in compzilla.  we should just
-			   // remove the setter.
-                           this._net_wm_window_type = val;
-                           this._resetChromeless ();
-                           this._recomputeAllowedActions ();
+			   return this._xprops[Atoms._NET_WM_WINDOW_TYPE];
 		       });
-
-    frame.addProperty ("overrideRedirect",
-		       /* getter */
-		       function () {
-                           return this._overrideRedirect;
-		       },
-		       /* setter */
-		       function (val) {
-                           this._overrideRedirect = val;
-                           this._resetChromeless ();
-		       });
-
-    frame.addProperty ("content",
-		       /* getter */
-		       function () {
-			   return this._content;
-		       }
-		       /* no setter */
-		       );
 }
 
 
@@ -446,13 +363,17 @@ function CompzillaFrame (content)
     frame._titleBox = getDescendentById (frame, "windowTitleBox");
     frame._title = getDescendentById (frame, "windowTitle");
 
+    frame._xprops = new Array ();
+
     // Add our methods
     _addFrameMethods (frame);
     
     if (content.nativeWindow) {
         frame.id = "XID:" + content.nativeWindow.nativeWindowId;
 
-	_connectNativeWindowListeners (frame, content.nativeWindow);
+	_connectNativeWindowListeners (frame);
+	_connectXProperties (frame);
+	frame._resetChromeless ();
         frame._recomputeAllowedActions ();
 
 	frame.title = frame.wmName;
@@ -600,111 +521,161 @@ function _connectFrameDragListeners (frame)
 }
 
 
-function _connectNativeWindowListeners (frame, nativewin)
+function _connectNativeWindowListeners (frame)
 {
-    frame._nativeDestroyListener =
-	addCachedEventListener (
-	    nativewin,
-	    "destroy",
-	    frame._nativeDestroyListener,
-		{
-		    handleEvent: function (ev) {
-			Debug ("frame", "destroy.handleEvent (" + content + ")");
-			frame.destroy ();
-		    }
-		},
-	    true);
+    var nativewin = frame.content.nativeWindow;
 
-    frame._nativeConfigureListener =
-	addCachedEventListener (
-	    nativewin,
-	    "configure",
-	    frame._nativeConfigureListener,
-		{
-		    handleEvent: function (ev) {
-			Debug ("frame", "configure.handleEvent");
+    nativewin.addEventListener (
+	"destroy",
+        {
+	    handleEvent: function (ev) {
+		Debug ("frame", "destroy.handleEvent (" + content + ")");
+		frame.destroy ();
+	    }
+	},
+	true);
 
-                        // This is the only way we're notified of override changes
-                        frame.overrideRedirect = ev.overrideRedirect;
+    frame.addEventListener (
+	"configure",
+	{
+	    handleEvent: function (ev) {
+		Debug ("frame", "configure.handleEvent");
 
-                        // ev coords are relative to content, adjust for frame offsets
-			frame.moveResize (
-			    ev.x - frame._content.offsetLeft,
-			    ev.y - frame._content.offsetTop,
-			    ev.width - frame._content.width + frame.offsetWidth,
-			    ev.height - frame._content.height + frame.offsetHeight);
+		// This is the only way we're notified of override changes
+		frame.overrideRedirect = ev.overrideRedirect;
 
-			// XXX handle stacking requests here too
-		    }
-		},
-	    true);
+		// ev coords are relative to content, adjust for frame offsets
+		frame.moveResize (
+				  ev.x - frame._content.offsetLeft,
+				  ev.y - frame._content.offsetTop,
+				  ev.width - frame._content.width + frame.offsetWidth,
+				  ev.height - frame._content.height + frame.offsetHeight);
 
-    frame._nativeMapListener =
-	addCachedEventListener (
-	    nativewin,
-	    "map",
-	    frame._nativeMapListener,
-		{
-		    handleEvent: function (ev) {
-			Debug ("frame", "map.handleEvent");
-			frame.show ();
-		    }
-		},
-	    true);
+		// XXX handle stacking requests here too
+	    }
+	},
+	true);
 
-    frame._nativeUnmapListener =
-	addCachedEventListener (
-	    nativewin,
-	    "unmap",
-	    frame._nativeUnmapListener,
-		{
-		    handleEvent: function (ev) {
-			Debug ("frame", "unmap.handleEvent");
-			frame.hide ();
-		    }
-		},
-	    true);
+    nativewin.addEventListener (
+	"map",
+	{
+	    handleEvent: function (ev) {
+		Debug ("frame", "map.handleEvent");
+		frame.show ();
+	    }
+	},
+	true);
 
-    frame._nativePropertyChangeListener =
-	addCachedEventListener (
-	    nativewin,
-	    "propertychange",
-	    frame._nativePropertyChangeListener,
-		{
-		    handleEvent: function (ev) {
-			Debug ("frame", "propertychange.handleEvent: ev.atom=" + ev.atom);
+    nativewin.addEventListener (
+	"unmap",
+	{
+	    handleEvent: function (ev) {
+		Debug ("frame", "unmap.handleEvent");
+		frame.hide ();
+	    }
+	},
+	true);
 
-                        switch (ev.atom) {
-                        case Atoms.XA_WM_NAME:
-                        case Atoms._NET_WM_NAME:
-			    frame._wm_name = null; /* uncached value */
-			    frame.title = frame.wmName;
+    nativewin.addEventListener (
+	"propertychange",
+	{
+	    handleEvent: function (ev) {
+		Debug ("frame", "propertychange.handleEvent: ev.atom=" + ev.atom);
 
-			    Debug ("frame", "propertychange: setting title:" + frame.title);
-			    break;
+		// the property has changed (or been deleted).  nuke it from our cache
+		frame._xprops.Invalidate (ev.atom);
 
-			case Atoms._NET_WM_WINDOW_TYPE:
-			    this._net_wm_window_type = null; /* uncached value */
-			    frame._recomputeAllowedActions ();
+		switch (ev.atom) {
+		case Atoms.XA_WM_NAME:
+		case Atoms._NET_WM_NAME:
+		    frame.title = frame.wmName;
 
-			    Debug ("frame", "propertychange: setting window type:" + 
-                                   frame.wmWindowType);
-			    break;
+		    Debug ("frame", "propertychange: setting title:" + frame.title);
 
-                        case Atoms.XA_WM_CLASS:
-			    var prop_val = 
-			        frame.content.nativeWindow.GetProperty (Atoms.XA_WM_CLASS);
-			    if (prop_val)
-				frame.wmClass = (prop_val.getProperty (".instanceName") + " " +
-						 prop_val.getProperty (".className"));
-			    else
-				frame.wmClass = "";
+		    break;
 
-			    Debug ("frame", "propertychange: setting wmClass: '" +  
-                                   frame.wmClass + "'");
-			    break;
-			}
-		    }
-		},
-	    true);
+		case Atoms._NET_WM_WINDOW_TYPE:
+		    frame._resetChromeless ();
+		    frame._recomputeAllowedActions ();
+
+		    Debug ("frame", "propertychange: setting window type:" + 
+			   frame.wmWindowType);
+
+		    break;
+
+		case Atoms.XA_WM_CLASS:
+		    var wmClass = frame._xprops[Atoms.XA_WM_CLASS];
+
+		    if (wmClass == null)
+			frame.wmClass = "";
+		    else
+			frame.wmClass = wmClass.instanceName + " " + wmClass.className;
+
+		    Debug ("frame", "propertychange: setting wmClass: '" +  
+			   frame.wmClass + "'");
+			    
+		    break;
+		}
+	    }
+	},
+	true);
+};
+
+
+function _connectXProperties (frame)
+{
+    frame._xprops = new XProps (frame.content);
+
+    frame._xprops.Add (Atoms._NET_WM_NAME,
+		       function (prop_bag) {
+			   return prop_bag.getProperty (".text");
+		       });
+
+    frame._xprops.Add (Atoms.XA_WM_NAME,
+		       function (prop_bag) {
+			   return prop_bag.getProperty (".text");
+		       });
+
+    frame._xprops.Add (Atoms.XA_WM_CLASS,
+		       function (prop_bag) {
+                           return { instanceName: prop_bag.getProperty (".instanceName"),
+                                    className: prop_bag.getProperty (".className")
+                                  };
+		       });
+
+    frame._xprops.Add (Atoms._NET_WM_WINDOW_TYPE,
+		       function (prop_bag) {
+			   // XXX _NET_WM_WINDOW_TYPE is actually an array of atoms
+			   return prop_bag.getPropertyAsUint32 (".atom");
+		       });
+
+    frame._xprops.Add (Atoms._NET_WM_STRUT,
+		       function (prop_bag) {
+			   return { partial: false,
+				    left: prop_bag.getPropertyAsUint32 (".left"),
+				    right: prop_bag.getPropertyAsUint32 (".right"),
+				    top: prop_bag.getPropertyAsUint32 (".top"),
+				    bottom: prop_bag.getPropertyAsUint32 (".bottom"),
+				  };
+		       });
+
+    frame._xprops.Add (Atoms._NET_WM_STRUT_PARTIAL,
+		       function (prop_bag) {
+			   return { partial: true,
+				    left: prop_bag.getPropertyAsUint32 (".left"),
+				    right: prop_bag.getPropertyAsUint32 (".right"),
+				    top: prop_bag.getPropertyAsUint32 (".top"),
+				    bottom: prop_bag.getPropertyAsUint32 (".bottom"),
+				    leftStartY: prop_bag.getPropertyAsUint32 (".leftStartY"),
+				    leftEndY: prop_bag.getPropertyAsUint32 (".leftEndY"),
+				    rightStartY: prop_bag.getPropertyAsUint32 (".rightStartY"),
+				    rightEndY: prop_bag.getPropertyAsUint32 (".rightEndY"),
+				    topStartX: prop_bag.getPropertyAsUint32 (".topStartX"),
+				    topEndX: prop_bag.getPropertyAsUint32 (".topEndX"),
+				    bottomStartX: prop_bag.getPropertyAsUint32 (".bottomStartX"),
+				    bottomEndX: prop_bag.getPropertyAsUint32 (".bottomEndX"),
+				  };
+		       });
 }
+
+		   

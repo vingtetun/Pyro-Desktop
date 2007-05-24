@@ -99,6 +99,7 @@ public:
 
     nsresult GetAtomProperty (Atom prop, PRUint32* value);
     nsresult GetStringProperty (Atom prop, nsAString& value);
+    nsresult GetCardinalListProperty (Atom prop, PRUint32 **values, PRUint32 expected_nitems);
 
     nsCOMArray<nsISupports> mContentNodes;
     Display *mDisplay;
