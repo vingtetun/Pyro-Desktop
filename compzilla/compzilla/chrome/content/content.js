@@ -40,7 +40,7 @@ var ContentMethods = {
 	    return;
 
         var pos = findPos (this);
-        Debug("FindPos: " + pos);
+        Debug("FindPos: content left=" + pos.left + " top=" + pos.top);
 
         Debug("Calling ConfigureWindow: xid=" +
               this._nativewin.nativeWindowId + ", x=" +

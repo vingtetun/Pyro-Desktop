@@ -1,3 +1,28 @@
+2007-05-25  Alex Graveley  <alex@beatniksoftware.com>
+
+        Make resizing the X window via the frame work...
+
+	* compzilla/src/compzillaWindow.cpp (WindowConfigured): Take an
+	isNotify arg.  Only send the configure DOM event when not a
+	notify, or if it's an override window.  Only reset the pixmap if
+	it is a notify, and the sizes have changed.  Don't call
+	UpdateAttributes, but just update mAttr directly, and only if it's
+	a notify.
+
+	* compzilla/src/compzillaControl.cpp (Filter): Pass false for
+	isNotify to WindowConfigured for ConfigureRequest events.  Pass
+	true for ConfigureRequest.
+
+	* compzilla/chrome/content/frame.js: (configure handler): call
+	frame.moveResizeToContent, instead of moveResize to attempt to
+	move the frame to the correct location relative to the window.
+	(frameDragMouseMoveListener): switch on operation without
+	the "-resize" appended, this was dumb.	
+
+	* compzilla/chrome/content/start.js: Ditto, but it's broken for
+	the initial case for some reason, the frame still offsets the
+	window.
+
 2007-05-24  Chris Toshok  <toshok@ximian.com>
 
 	* compzilla/chrome/content/frame.js,

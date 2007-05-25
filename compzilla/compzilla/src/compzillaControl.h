@@ -37,7 +37,8 @@ private:
     void ForgetWindow (Window win);
     void MapWindow (Window win);
     void UnmapWindow (Window win);
-    void WindowConfigured (Window win,
+    void WindowConfigured (bool isNotify,
+                           Window win,
                            PRInt32 x, PRInt32 y,
                            PRInt32 width, PRInt32 height,
                            PRInt32 border,

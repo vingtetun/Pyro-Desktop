@@ -757,7 +757,8 @@ compzillaControl::UnmapWindow (Window win)
 
 
 void 
-compzillaControl::WindowConfigured (Window win,
+compzillaControl::WindowConfigured (bool isNotify,
+                                    Window win,
                                     PRInt32 x, PRInt32 y,
                                     PRInt32 width, PRInt32 height,
                                     PRInt32 border,
@@ -768,7 +769,8 @@ compzillaControl::WindowConfigured (Window win,
     if (compwin) {
         nsRefPtr<compzillaWindow> aboveCompWin = FindWindow (aboveWin);
 
-        compwin->WindowConfigured (x, y,
+        compwin->WindowConfigured (isNotify,
+                                   x, y,
                                    width, height,
                                    border,
                                    aboveCompWin,
@@ -852,18 +854,16 @@ compzillaControl::Filter (GdkXEvent *xevent, GdkEvent *event)
               x11_event->xconfigure.border_width,
               x11_event->xconfigure.override_redirect);
 
-        if (x11_event->xconfigure.override_redirect) {
-            // There is no ConfigureRequest for override_redirect windows, so
-            // just update the view with the new position.
-            WindowConfigured (x11_event->xconfigure.window,
-                              x11_event->xconfigure.x,
-                              x11_event->xconfigure.y,
-                              x11_event->xconfigure.width,
-                              x11_event->xconfigure.height,
-                              x11_event->xconfigure.border_width,
-                              x11_event->xconfigure.above,
-                              x11_event->xconfigure.override_redirect);
-        }
+        // This is driven by compzilla or from an override_redirect itself.
+        WindowConfigured (true,
+                          x11_event->xconfigure.window,
+                          x11_event->xconfigure.x,
+                          x11_event->xconfigure.y,
+                          x11_event->xconfigure.width,
+                          x11_event->xconfigure.height,
+                          x11_event->xconfigure.border_width,
+                          x11_event->xconfigure.above,
+                          x11_event->xconfigure.override_redirect);
         break;
     }
     case ConfigureRequest: {
@@ -877,7 +877,9 @@ compzillaControl::Filter (GdkXEvent *xevent, GdkEvent *event)
               x11_event->xconfigure.border_width,
               x11_event->xconfigure.override_redirect);
 
-        WindowConfigured (x11_event->xconfigure.window,
+        // This is driven by the X app, not compzilla.
+        WindowConfigured (false,
+                          x11_event->xconfigure.window,
                           x11_event->xconfigure.x,
                           x11_event->xconfigure.y,
                           x11_event->xconfigure.width,

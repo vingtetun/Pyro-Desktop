@@ -50,6 +50,24 @@ var FrameMethods = {
     },
 
 
+    moveResizeToContent: function (x, y, width, height) {
+        // ev coords are relative to content, adjust for frame offsets
+        var posframe = findPos (this);
+        var pos = findPos (this._content);
+        x -= posframe.left - pos.left;
+        y -= posframe.top - pos.top;
+
+        width += this.offsetWidth - this._content.offsetWidth;
+        height += this.offsetHeight - this._content.offsetHeight;
+
+        Debug ("frame",
+	       "moveResizeToContent: width=" + width + " height=" + height + 
+	       " x=" + x + " y=" + y);
+
+        this.moveResize (x, y, width, height);
+    },
+
+
     _moveResize: function (x, y, width, height) {
         // Coordinates are relative to the frame
 
@@ -83,7 +101,9 @@ var FrameMethods = {
 
         Debug ("frame", 
                "AFTER _moveResize: " + 
-               " this._content.offsetHeight=" + this._content.offsetHeight + 
+               " this._content.offsetLeft=" + this._content.offsetLeft + 
+               ", this._content.offsetTop=" + this._content.offsetTop + 
+               ", this._content.offsetHeight=" + this._content.offsetHeight + 
                ", this._content.offsetWidth=" + this._content.offsetWidth);
 
         return changed;
@@ -366,13 +386,12 @@ function _connectFrameDragListeners (frame)
 	    frameDragPosition.x = ev.clientX;
 	    frameDragPosition.y = ev.clientY;
 
-            var rect = new Object();
-            rect.x = frame.offsetLeft;
-            rect.y = frame.offsetTop;
-            rect.width = frame.offsetWidth;
-            rect.height = frame.offsetHeight;
+            var rect = { x:      frame.offsetLeft,
+			 y:      frame.offsetTop,
+			 width:  frame.offsetWidth,
+			 height: frame.offsetHeight };
 
-	    if (frameDragPosition.operation == "move-resize") {
+	    if (frameDragPosition.operation == "move") {
                 frame.moving = true;
 
                 rect.x += dx;
@@ -380,30 +399,30 @@ function _connectFrameDragListeners (frame)
 	    } else {
 		// calculate y/height
 		switch (frameDragPosition.operation) {
-		case "nw-resize":
-		case "ne-resize":
-		case "n-resize":
+		case "nw":
+		case "ne":
+		case "n":
 		    rect.height -= dy;
 		    rect.y += dy;
 		    break;
-		case "sw-resize":
-		case "se-resize":
-		case "s-resize":
+		case "sw":
+		case "se":
+		case "s":
 		    rect.height += dy;
 		    break;
 		}
 
 		// calculate x/width
 		switch (frameDragPosition.operation) {
-		case "nw-resize":
-		case "sw-resize":
-		case "w-resize":
+		case "nw":
+		case "sw":
+		case "w":
 		    rect.width -= dx;
 		    rect.x += dx;
 		    break;
-		case "ne-resize":
-		case "se-resize":
-		case "e-resize":
+		case "ne":
+		case "se":
+		case "e":
 		    rect.width += dx;
 		    break;
 		}
@@ -439,7 +458,7 @@ function _connectFrameDragListeners (frame)
         else if (!frame.allowResize)
             return;
 
-        frameDragPosition.operation = op + "-resize";
+        frameDragPosition.operation = op;
 	frameDragPosition.x = ev.clientX;
 	frameDragPosition.y = ev.clientY;
 
@@ -477,12 +496,7 @@ function _connectNativeWindowListeners (frame)
 		// This is the only way we're notified of override changes
 		frame.overrideRedirect = ev.overrideRedirect;
 
-		// ev coords are relative to content, adjust for frame offsets
-		frame.moveResize (
-				  ev.x - frame._content.offsetLeft,
-				  ev.y - frame._content.offsetTop,
-				  ev.width - frame._content.width + frame.offsetWidth,
-				  ev.height - frame._content.height + frame.offsetHeight);
+                frame.moveResizeToContent (ev.x, ev.y, ev.width, ev.height);
 
 		// XXX handle stacking requests here too
 	    }

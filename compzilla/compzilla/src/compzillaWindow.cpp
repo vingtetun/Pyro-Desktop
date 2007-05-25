@@ -1472,13 +1472,14 @@ compzillaWindow::WindowDamaged (XRectangle *rect)
 
 
 void
-compzillaWindow::WindowConfigured (PRInt32 x, PRInt32 y,
+compzillaWindow::WindowConfigured (bool isNotify,
+                                   PRInt32 x, PRInt32 y,
                                    PRInt32 width, PRInt32 height,
                                    PRInt32 border,
                                    compzillaWindow *aboveWin,
                                    bool override_redirect)
 {
-    if (mConfigureEvMgr.HasEventListeners ()) {
+    if ((!isNotify || override_redirect) && mConfigureEvMgr.HasEventListeners ()) {
         // abovewin doesn't work given that abovewin has a list of content
         // nodes...  but really, we shouldn't have to worry about this, as you
         // *can't* reliably specify a window to raise/lower above/below, since
@@ -1497,12 +1498,28 @@ compzillaWindow::WindowConfigured (PRInt32 x, PRInt32 y,
         }
     }
 
-    /*
-    if (mAttr.width != width || mAttr.height != height) {
-        ResetPixmap ();
-    }
-    */
+    // Notify means we may need new content if the size has changed.
+    if (isNotify) {
+        if (mAttr.width != width || mAttr.height != height) {
+            ResetPixmap ();
 
-    UpdateAttributes ();
-    ResetPixmap (); // Always call this??
+            // Force a refresh with new content, in a new pixmap.
+            // XXX: Is this needed?  Damage always sends a flush as needed?
+            /*
+              XRectangle rect;
+              rect.x = x;
+              rect.y = y;
+              rect.width = width;
+              rect.height = height;
+              WindowDamaged (&rect);
+            */
+        }
+
+        mAttr.x = x;
+        mAttr.y = y;
+        mAttr.width = width;
+        mAttr.height = height;
+        mAttr.border_width = border;
+        mAttr.override_redirect = override_redirect;
+    }
 }

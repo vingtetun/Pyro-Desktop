@@ -71,7 +71,8 @@ public:
     void UnmapWindow ();
     void PropertyChanged (Atom prop, bool deleted);
     void WindowDamaged (XRectangle *rect);
-    void WindowConfigured (PRInt32 x, PRInt32 y,
+    void WindowConfigured (bool isNotify,
+                           PRInt32 x, PRInt32 y,
                            PRInt32 width, PRInt32 height,
                            PRInt32 border,
                            compzillaWindow *aboveWin,
