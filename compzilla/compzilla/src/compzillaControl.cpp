@@ -775,7 +775,7 @@ compzillaControl::WindowConfigured (bool isNotify,
                                    border,
                                    aboveCompWin,
                                    override_redirect);
-    } else {
+    } else if (isNotify) {
         // Window we are not monitoring, so send the configure.
         ConfigureWindow (win, x, y, width, height, border);
     }
