@@ -1,15 +1,15 @@
 /* -*- mode: javascript; c-basic-offset: 4; indent-tabs-mode: t; -*- */
 
-const compzillaIControl = Components.interfaces.compzillaIControl;
+var svc = Components.classes['@pyrodesktop.org/compzillaService'].getService(
+    Components.interfaces.compzillaIControl);
+var _clientList = new Array ();
+
 
 function compzillaLoad()
 {
     var xulwin = document.getElementById ("desktopWindow");
     xulwin.width = screen.width;
     xulwin.height = screen.height;
-
-    svccls = Components.classes['@pyrodesktop.org/compzillaService'];
-    svc = svccls.getService (compzillaIControl);
 
     svc.addEventListener (
 	"windowcreate", 
@@ -123,7 +123,6 @@ function compzillaLoad()
 //     svc.SetRootWindowArrayProperty (Atoms._NET_SUPPORTED, Atoms.XA_ATOM , supported.length, supported);
 }
 
-var _clientList = new Array ();
 
 function _updateClientListProperty ()
 {

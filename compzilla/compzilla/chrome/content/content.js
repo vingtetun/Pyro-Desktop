@@ -1,7 +1,8 @@
 /* -*- mode: javascript; c-basic-offset: 4; indent-tabs-mode: t; -*- */
 
-cls = Components.classes['@pyrodesktop.org/compzillaService'];
-svc = cls.getService(Components.interfaces.compzillaIControl);
+var svc = Components.classes['@pyrodesktop.org/compzillaService'].getService(
+    Components.interfaces.compzillaIControl);
+
 
 function CompzillaWindowContent (nativewin) {
     Debug ("content", "Creating content for nativewin=" + nativewin.nativeWindowId);

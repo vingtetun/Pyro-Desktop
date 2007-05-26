@@ -7,8 +7,8 @@ Atoms = {
 
     _intern : function (atom_name) {
         if (this.svc == null) {
-            cls = Components.classes['@pyrodesktop.org/compzillaService'];
-            this.svc = cls.getService(Components.interfaces.compzillaIControl);
+            this.svc = Components.classes['@pyrodesktop.org/compzillaService'].getService(
+		Components.interfaces.compzillaIControl);
         }
 
         if (this.cache[atom_name] == null)
