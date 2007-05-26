@@ -1,5 +1,6 @@
 /* -*- mode: javascript; c-basic-offset: 4; indent-tabs-mode: t; -*- */
 
+
 function MinimizeCompzillaFrame (w) {
     /* first we create a canvas of the right size/location */
     var min = CompzillaWindowContent (w.content.nativeWindow);
@@ -27,30 +28,27 @@ function MinimizeCompzillaFrame (w) {
     w.hide ();
     min.style.display = "block";
 
-    /* for windows without the hint, iconify to the bottom left */
-    var dest_x = 0;
-    var dest_y = windowStack.offsetTop + windowStack.offsetHeight;
-    var dest_width = 0;
-    var dest_height = 0;
-
-    var propval = w.content.nativeWindow.GetProperty (Atoms._NET_WM_ICON_GEOMETRY);
-    if (propval) {
-	dest_x = propval.getPropertyAsUint32 (".x");
-	dest_y = propval.getPropertyAsUint32 (".y");
-	dest_width = propval.getPropertyAsUint32 (".width");
-	dest_height = propval.getPropertyAsUint32 (".height");
-
-	Debug ("minimize geometry = [" +
-	       dest_x + ", " +
-	       dest_y + ", " +
-	       dest_width + ", " +
-	       dest_height + "]");
+    var geom = w.content.XProps[Atoms._NET_WM_ICON_GEOMETRY];
+    if (!geom) {
+	/* for windows without the hint, iconify to the bottom left */
+	geom = {
+	    x: 0,
+	    y: windowStack.offsetTop + windowStack.offsetHeight,
+	    width: 0,
+	    height: 0
+	};
     }
 
-    $(min).animate ({ left: dest_x, 
-		      top: dest_y, 
-		      width: dest_width, 
-		      height: dest_height, 
+    Debug ("minimize geometry = [" +
+	   geom.x + ", " +
+	   geom.y + ", " +
+	   geom.width + ", " +
+	   geom.height + "]");
+
+    $(min).animate ({ left: geom.x, 
+		      top: geom.y, 
+		      width: geom.width, 
+		      height: geom.height, 
 		      opacity: 0 },
 		    250, 
 		    "linear",
@@ -59,10 +57,12 @@ function MinimizeCompzillaFrame (w) {
                     });
 }
 
+
 function hackMinimizeFrame ()
 {
     MinimizeCompzillaFrame (minFrame);
 }
+
 
 document.addEventListener("keypress", {
                               handleEvent: function (event) {

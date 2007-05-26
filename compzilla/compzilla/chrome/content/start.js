@@ -127,6 +127,12 @@ var _clientList = new Array ();
 
 function _updateClientListProperty ()
 {
-    svc.SetRootWindowArrayProperty (Atoms._NET_CLIENT_LIST, Atoms.XA_WINDOW, _clientList.length, _clientList);
-    svc.SetRootWindowArrayProperty (Atoms._NET_CLIENT_LIST_STACKING, Atoms.XA_WINDOW, _clientList.length, _clientList);
+    svc.SetRootWindowArrayProperty (Atoms._NET_CLIENT_LIST, 
+				    Atoms.XA_WINDOW, 
+				    _clientList.length, 
+				    _clientList);
+    svc.SetRootWindowArrayProperty (Atoms._NET_CLIENT_LIST_STACKING, 
+				    Atoms.XA_WINDOW, 
+				    _clientList.length, 
+				    _clientList);
 }

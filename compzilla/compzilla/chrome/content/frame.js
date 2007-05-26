@@ -110,7 +110,6 @@ var FrameMethods = {
     },
 
 
-
     _resetChromeless: function () {
         if (this.overrideRedirect ||
             this._content.wmWindowType == "dock" ||
@@ -156,6 +155,7 @@ var FrameMethods = {
 	}
     },
 
+
     show: function () {
 	if (this.style.display == "block")
 	    return;
@@ -181,6 +181,7 @@ var FrameMethods = {
 	    this._content.onhide();
     },
 
+
     maximize: function () {
 
 	// XXX more stuff here
@@ -189,6 +190,7 @@ var FrameMethods = {
 	    this._content.onmaximize();
     },
 
+
     fullscreen: function () {
 
 	// XXX more stuff here
@@ -196,6 +198,7 @@ var FrameMethods = {
 	if (this._content.onfullscreen)
 	    this._content.onfullscreen ();
     },
+
 
     getPyroAttribute: function (name) {
         return this.getAttributeNS ("http://www.pyrodesktop.org/compzilla", name);
@@ -215,11 +218,17 @@ var FrameMethods = {
 	    this.__defineSetter__ (name, setter);
     },
 
-    mapPropertyToPyroAttribute: function (propname, attrname) {
-	this.__defineGetter__ (propname, function () { return this.getPyroAttribute (attrname); });
-	this.__defineSetter__ (propname, function (val) { this.setPyroAttribute (attrname, val); });
-    }
 
+    mapPropertyToPyroAttribute: function (propname, attrname) {
+	this.__defineGetter__ (propname, 
+			       function () { 
+				   return this.getPyroAttribute (attrname); 
+			       });
+	this.__defineSetter__ (propname, 
+			       function (val) { 
+				   this.setPyroAttribute (attrname, val); 
+			       });
+    }
 };
 
 
@@ -239,7 +248,8 @@ function _addFrameMethods (frame)
     frame.mapPropertyToPyroAttribute ("allowShade", "allow-shade");
     frame.mapPropertyToPyroAttribute ("inactive", "inactive");
     frame.mapPropertyToPyroAttribute ("moving", "moving");
-    frame.mapPropertyToPyroAttribute ("wmClass", "wm-class"); /* XXX we should rethink the name of this */
+    /* XXX we should rethink the name of this */
+    frame.mapPropertyToPyroAttribute ("wmClass", "wm-class");
 
 
     frame.addProperty ("chromeless",
@@ -508,6 +518,7 @@ function _connectNativeWindowListeners (frame)
 	{
 	    handleEvent: function (ev) {
 		Debug ("frame", "map.handleEvent");
+		windowStack.moveToTop (frame);
 		frame.show ();
 	    }
 	},
