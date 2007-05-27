@@ -149,25 +149,44 @@
     </html:body>
 
     <commandset id="compzillaDesktopCommandSet">
-        <command id="cmd_showDesktop" oncommand="windowStack.toggleDesktop();" />
+        <command id="cmd_toggleDesktop" oncommand="windowStack.toggleDesktop();" />
+        <command id="cmd_toggleOverlay" oncommand="toggleOverlay();" />
+        <command id="cmd_toggleDebug" oncommand="debugToggleWindow();" />
+        <command id="cmd_toggleScale" oncommand="toggleScale();" />
     </commandset>
 
-    <commandset id="compzillaWindowCommandSet">
-        <command id="cmd_minimizeWindow" oncommand="alert('minimize');" />
-        <command id="cmd_restoreWindow" oncommand="alert('restore');" />
-        <command id="cmd_maximizeWindow" oncommand="alert('maximize');" />
-        <command id="cmd_closeWindow" oncommand="alert('close');" />
-    </commandset>
+    <keyset id="compzillaDesktopKeyset">
+        <key id="key_showDesktop" 
+             keycode="VK_F5" modifiers="control"
+             command="cmd_toggleDesktop" />
+        <key id="key_toggleOverlay" 
+             keycode="VK_F9" modifiers="control"
+             command="cmd_toggleOverlay" />
+        <key id="key_toggleDebug" 
+             keycode="VK_F10" modifiers="control"
+             command="cmd_toggleDebug" />
+        <key id="key_toggleScale" 
+             keycode="VK_F11" modifiers="control"
+             command="cmd_toggleScale" />
+    </keyset>
+
+    <xul:commandset id="compzillaWindowCommandSet">
+        <xul:command id="cmd_minimizeWindow" 
+                     oncommand="MinimizeCompzillaFrame(_focusedFrame);" />
+        <xul:command id="cmd_restoreWindow" oncommand="alert('restore');" />
+        <xul:command id="cmd_maximizeWindow" oncommand="alert(this);" />
+        <xul:command id="cmd_closeWindow" oncommand="alert('minimize');" />
+    </xul:commandset>
 
     <keyset id="compzillaWindowKeyset">
         <key id="key_minimizeWindow" 
-             keycode="VK_F9" modifiers="alt"
+             keycode="VK_F9" modifiers="shift alt"
              command="cmd_minimizeWindow" />
         <key id="key_maximizeWindow" 
-             keycode="VK_F10" modifiers="alt"
+             keycode="VK_F10" modifiers="shift alt"
              command="cmd_maximizeWindow" />
         <key id="key_closeWindow" 
-             keycode="VK_F4" modifiers="alt"
+             keycode="VK_F4" modifiers="shift alt"
              command="cmd_closeWindow" />
     </keyset>
 

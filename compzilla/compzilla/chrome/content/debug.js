@@ -114,6 +114,7 @@ function debugListWindows ()
 
 
 // XXX until we get commands working in the .xul file
+/*
 document.addEventListener("keypress", {
                               handleEvent: function (event) {
 				  if (event.keyCode == event.DOM_VK_F10 && event.ctrlKey) {
@@ -121,3 +122,4 @@ document.addEventListener("keypress", {
 				  }
 			      } },
 			      true);
+*/

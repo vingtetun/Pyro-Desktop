@@ -1,5 +1,16 @@
 2007-05-27  Alex Graveley  <alex@beatniksoftware.com>
 
+	* compzilla/chrome/content/debug.js: Comment out keypress handler.
+	* compzilla/chrome/content/minimize.js: Ditto.
+	* compzilla/chrome/content/overlay.js: Ditto.
+	* compzilla/chrome/content/scale.js: Ditto. Add toggleScale, callable
+	from a command handler.
+
+	* compzilla/chrome/content/start.xul: Hookup command handlers for
+	minimize, overlay, desktop, scale, and debug toggling.
+
+2007-05-27  Alex Graveley  <alex@beatniksoftware.com>
+
 	* compzilla/chrome/content/start.xul: Make commands work on
 	frame images.  These just show an alert for now.
 

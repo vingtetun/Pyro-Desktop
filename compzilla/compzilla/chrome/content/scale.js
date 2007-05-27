@@ -332,6 +332,15 @@ ss.opacity = 1.0;
 ss.speed = 1.5;
 ss.timestep = 1.2;
 
+function toggleScale () {
+    if (ss.state == "none") {
+	scaleStart ();
+    } else {
+	scaleTerminate ();
+    }
+}
+
+/*
 if (exposeLayer != null)
     document.addEventListener("keypress", {
                               handleEvent: function (event) {
@@ -346,3 +355,4 @@ if (exposeLayer != null)
 				  event.stopPropagation ();
 			      } },
 			      true);
+*/

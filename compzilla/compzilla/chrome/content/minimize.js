@@ -2,7 +2,7 @@
 
 
 function MinimizeCompzillaFrame (w) {
-    /* first we create a canvas of the right size/location */
+    /* first we create a canvas of the right size/location */	
     var min = CompzillaWindowContent (w.content.nativeWindow);
 
     min.style.position = "absolute";
@@ -64,6 +64,7 @@ function hackMinimizeFrame ()
 }
 
 
+/*
 document.addEventListener("keypress", {
                               handleEvent: function (event) {
 				  if (event.keyCode == event.DOM_VK_F8 && event.ctrlKey) {
@@ -71,3 +72,4 @@ document.addEventListener("keypress", {
 				  }
 			      } },
 			      true);
+*/

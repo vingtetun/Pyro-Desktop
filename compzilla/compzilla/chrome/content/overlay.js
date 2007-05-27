@@ -17,6 +17,7 @@ function toggleOverlay ()
 }
 
 
+/*
 document.addEventListener("keypress", {
                               handleEvent: function (event) {
 				  if (event.keyCode == event.DOM_VK_F9 && event.ctrlKey) {
@@ -25,3 +26,4 @@ document.addEventListener("keypress", {
 			      }
                           },
                           true);
+*/
