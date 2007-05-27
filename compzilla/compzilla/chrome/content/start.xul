@@ -69,15 +69,18 @@
                     <div class="uiDlgButtons">
                         <xul:image class="uiDlgButton uiDlgButtonMin"
                                    tooltiptext="&minimizeWindow.label;" 
-                                   onclick="goDoCommand('cmd_minimizeWindow');" />
+                                   command="cmd_minimizeWindow"
+                                   onclick="this.doCommand();" />
 
                         <xul:image class="uiDlgButton uiDlgButtonMax"
                                    tooltiptext="&maximizeWindow.label;" 
-                                   onclick="goDoCommand('cmd_maximizeWindow');" />
+                                   command="cmd_maximizeWindow"
+                                   onclick="this.doCommand();" />
 
                         <xul:image class="uiDlgButton uiDlgButtonClose"
                                    tooltiptext="&closeWindow.label;" 
-                                   onclick="goDoCommand('cmd_closeWindow');" />
+                                   command="cmd_closeWindow"
+                                   onclick="this.doCommand();" />
                     </div>
 
                     <xul:image id="compzillaWindowIcon"
@@ -150,10 +153,10 @@
     </commandset>
 
     <commandset id="compzillaWindowCommandSet">
-        <command id="cmd_minimizeWindow" oncommand="compzillaMinimizeWindow();" />
-        <command id="cmd_restoreWindow" oncommand="compzillaRestoreWindow();" />
-        <command id="cmd_maximizeWindow" oncommand="compzillaMaximizeWindow();" />
-        <command id="cmd_closeWindow" oncommand="compzillaCloseWindow();" />
+        <command id="cmd_minimizeWindow" oncommand="alert('minimize');" />
+        <command id="cmd_restoreWindow" oncommand="alert('restore');" />
+        <command id="cmd_maximizeWindow" oncommand="alert('maximize');" />
+        <command id="cmd_closeWindow" oncommand="alert('close');" />
     </commandset>
 
     <keyset id="compzillaWindowKeyset">
