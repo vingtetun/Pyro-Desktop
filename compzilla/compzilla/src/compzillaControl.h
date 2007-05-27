@@ -46,6 +46,7 @@ private:
                            bool override_redirect);
     void PropertyChanged (Window win, Atom prop, bool deleted);
     void WindowDamaged (Window win, XRectangle *rect);
+    void ClientMessaged (Window win, Atom type, int format, long *data/*[5]*/);
 
     GdkWindow *GetNativeWindow(nsIDOMWindow *window);
     nsresult GetNativeWidget(nsIDOMWindow *window, nsIWidget **widget);
@@ -85,6 +86,7 @@ private:
 
     compzillaEventManager mWindowCreateEvMgr;
     compzillaEventManager mWindowDestroyEvMgr;
+    compzillaEventManager mClientMessageEvMgr;
 
     static int composite_event, composite_error;
     static int xevie_event, xevie_error;

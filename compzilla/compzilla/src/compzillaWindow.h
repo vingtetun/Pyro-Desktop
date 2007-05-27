@@ -77,6 +77,7 @@ public:
                            PRInt32 border,
                            compzillaWindow *aboveWin,
                            bool override_redirect);
+    void ClientMessaged (Atom type, int format, long *data/*[5]*/);
 
     XWindowAttributes mAttr;
     bool mIsDestroyed;
@@ -114,6 +115,7 @@ public:
     compzillaEventManager mShowEvMgr;
     compzillaEventManager mHideEvMgr;
     compzillaEventManager mPropertyChangeEvMgr;
+    compzillaEventManager mClientMessageEvMgr;
 };
 
 nsresult CZ_NewCompzillaWindow(Display *display, Window win, compzillaWindow **retval);

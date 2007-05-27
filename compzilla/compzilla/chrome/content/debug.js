@@ -57,6 +57,9 @@ debugFrame.id = "debugFrame";
 debugFrame.title = "Debug Window";
 debugFrame.moveResize (200, 50, 300, 300);
 debugFrame.show ();
+debugFrame.allowClose =
+  debugFrame.allowMinimize =
+  debugFrame.allowMaximize = false;
 
 var windowStack = document.getElementById ("windowStack");
 windowStack.stackWindow (debugFrame);

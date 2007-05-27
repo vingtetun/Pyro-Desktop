@@ -104,7 +104,8 @@ compzillaWindow::compzillaWindow(Display *display, Window win)
       mConfigureEvMgr("configure"),
       mShowEvMgr("map"),
       mHideEvMgr("unmap"),
-      mPropertyChangeEvMgr("propertychange")
+      mPropertyChangeEvMgr("propertychange"),
+      mClientMessageEvMgr("clientmessage")
 {
     NS_INIT_ISUPPORTS ();
 
@@ -1060,6 +1061,8 @@ compzillaWindow::AddEventListener (const nsAString & type,
         return mHideEvMgr.AddEventListener (type, listener);
     } else if (type.EqualsLiteral ("propertychange")) {
         return mPropertyChangeEvMgr.AddEventListener (type, listener);
+    } else if (type.EqualsLiteral ("clientmessage")) {
+        return mClientMessageEvMgr.AddEventListener (type, listener);
     } 
     return NS_ERROR_INVALID_ARG;
 }
@@ -1080,6 +1083,8 @@ compzillaWindow::RemoveEventListener (const nsAString & type,
         return mHideEvMgr.RemoveEventListener (type, listener);
     } else if (type.EqualsLiteral ("propertychange")) {
         return mPropertyChangeEvMgr.RemoveEventListener (type, listener);
+    } else if (type.EqualsLiteral ("clientmessage")) {
+        return mClientMessageEvMgr.RemoveEventListener (type, listener);
     } 
     return NS_ERROR_INVALID_ARG;
 }
@@ -1434,6 +1439,23 @@ compzillaWindow::PropertyChanged (Atom prop, bool deleted)
                                                          deleted, 
                                                          getter_AddRefs (ev)))
             ev->Send (NS_LITERAL_STRING ("propertychange"), this, mPropertyChangeEvMgr);
+    }
+}
+
+void
+compzillaWindow::ClientMessaged (Atom type, int format, long *data/*[5]*/)
+{
+    if (mClientMessageEvMgr.HasEventListeners ()) {
+        nsRefPtr<compzillaWindowEvent> ev;
+        if (NS_OK == CZ_NewCompzillaClientMessageEvent (this, 
+                                                        type, format,
+                                                        data[0],
+                                                        data[1],
+                                                        data[2],
+                                                        data[3],
+                                                        data[4],
+                                                        getter_AddRefs (ev)))
+            ev->Send (NS_LITERAL_STRING ("clientmessage"), this, mClientMessageEvMgr);
     }
 }
 

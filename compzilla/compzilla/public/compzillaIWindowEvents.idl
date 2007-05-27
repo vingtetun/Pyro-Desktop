@@ -41,3 +41,15 @@ interface compzillaIWindowPropertyEvent : compzillaIWindowEvent
     readonly attribute long atom;
     readonly attribute boolean deleted;
 };
+
+[scriptable, uuid(cc0c1b9e-9d89-4800-94ce-89d47d17b976)]
+interface compzillaIWindowClientMessageEvent : compzillaIWindowEvent
+{
+    readonly attribute long messageType;
+    readonly attribute long format;
+    readonly attribute long d1;
+    readonly attribute long d2;
+    readonly attribute long d3;
+    readonly attribute long d4;
+    readonly attribute long d5;
+};

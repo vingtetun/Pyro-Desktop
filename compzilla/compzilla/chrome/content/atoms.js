@@ -98,8 +98,10 @@ Atoms = {
     get _NET_DESKTOP_NAMES () { return this._intern ("_NET_DESKTOP_NAMES"); },
     get _NET_DESKTOP_VIEWPORT () { return this._intern ("_NET_DESKTOP_VIEWPORT"); },
     get _NET_FRAME_EXTENTS () { return this._intern ("_NET_FRAME_EXTENTS"); },
+    get _NET_MOVERESIZE_WINDOW () { return this._intern ("_NET_MOVERESIZE_WINDOW"); },
     get _NET_NUMBER_OF_DESKTOPS () { return this._intern ("_NET_NUMBER_OF_DESKTOPS"); },
     get _NET_REQUEST_FRAME_EXTENTS () { return this._intern ("_NET_REQUEST_FRAME_EXTENTS"); },
+    get _NET_RESTACK_WINDOW () { return this._intern ("_NET_RESTACK_WINDOW"); },
     get _NET_SHOWING_DESKTOP () { return this._intern ("_NET_SHOWING_DESKTOP"); },
     get _NET_STARTUP_ID () { return this._intern ("_NET_STARTUP_ID"); },
     get _NET_SUPPORTED () { return this._intern ("_NET_SUPPORTED"); },
@@ -147,4 +149,19 @@ Atoms = {
     get _NET_WM_WINDOW_TYPE_TOOLBAR () { return this._intern ("_NET_WM_WINDOW_TYPE_TOOLBAR"); },
     get _NET_WM_WINDOW_TYPE_UTILITY () { return this._intern ("_NET_WM_WINDOW_TYPE_UTILITY"); },
     get _NET_WORKAREA () { return this._intern ("_NET_WORKAREA"); },
+
+
+    /* these aren't really atoms, they're #defines mentioned in EWMH-1.3 */
+    get _NET_WM_MOVERESIZE_SIZE_TOPLEFT ()     { return 0; },
+    get _NET_WM_MOVERESIZE_SIZE_TOP ()         { return 1; },
+    get _NET_WM_MOVERESIZE_SIZE_TOPRIGHT ()    { return 2; },
+    get _NET_WM_MOVERESIZE_SIZE_RIGHT ()       { return 3; },
+    get _NET_WM_MOVERESIZE_SIZE_BOTTOMRIGHT () { return 4; },
+    get _NET_WM_MOVERESIZE_SIZE_BOTTOM ()      { return 5; },
+    get _NET_WM_MOVERESIZE_SIZE_BOTTOMLEFT ()  { return 6; },
+    get _NET_WM_MOVERESIZE_SIZE_LEFT ()        { return 7; },
+    get _NET_WM_MOVERESIZE_MOVE ()             { return 8; },  /* movement only */
+    get _NET_WM_MOVERESIZE_SIZE_KEYBOARD ()    { return 9; },  /* size via keyboard */
+    get _NET_WM_MOVERESIZE_MOVE_KEYBOARD ()    { return 10; }, /* move via keyboard */
+
 }

@@ -74,7 +74,8 @@ XAtoms atoms;
 
 compzillaControl::compzillaControl()
     : mWindowCreateEvMgr ("windowcreate"),
-      mWindowDestroyEvMgr ("windowdestroy")
+      mWindowDestroyEvMgr ("windowdestroy"),
+      mClientMessageEvMgr ("clientmessage")
 {
     mWindowMap.Init(50);
 }
@@ -245,6 +246,8 @@ compzillaControl::AddEventListener (const nsAString & type,
         return mWindowCreateEvMgr.AddEventListener (type, listener);
     } else if (type.EqualsLiteral ("windowdestroy")) {
         return mWindowDestroyEvMgr.AddEventListener (type, listener);
+    } else if (type.EqualsLiteral ("clientmessage")) {
+        return mClientMessageEvMgr.AddEventListener (type, listener);
     }
     return NS_ERROR_INVALID_ARG;
 }
@@ -259,6 +262,8 @@ compzillaControl::RemoveEventListener (const nsAString & type,
         return mWindowCreateEvMgr.RemoveEventListener (type, listener);
     } else if (type.EqualsLiteral ("windowdestroy")) {
         return mWindowDestroyEvMgr.RemoveEventListener (type, listener);
+    } else if (type.EqualsLiteral ("clientmessage")) {
+        return mClientMessageEvMgr.RemoveEventListener (type, listener);
     }
     return NS_ERROR_INVALID_ARG;
 }
@@ -801,6 +806,32 @@ compzillaControl::WindowDamaged (Window win, XRectangle *rect)
     }
 }
 
+void
+compzillaControl::ClientMessaged (Window win,
+                                  Atom type, int format, long *data/*[5]*/)
+{
+    nsRefPtr<compzillaWindow> compwin = FindWindow (win);
+    if (compwin) {
+        compwin->ClientMessaged (type, format, data);
+    }
+    else {
+        if (mClientMessageEvMgr.HasEventListeners ()) {
+            nsRefPtr<compzillaWindowEvent> ev;
+
+            if (NS_OK == CZ_NewCompzillaClientMessageEvent (compwin,
+                                                            (long)type,
+                                                            format,
+                                                            data[0],
+                                                            data[1],
+                                                            data[2],
+                                                            data[3],
+                                                            data[4],
+                                                            getter_AddRefs(ev))) {
+                ev->Send (NS_LITERAL_STRING ("clientmessage"), this, mClientMessageEvMgr);
+            }
+        }
+    }
+}
 
 already_AddRefed<compzillaWindow>
 compzillaControl::FindWindow (Window win)
@@ -820,6 +851,18 @@ compzillaControl::Filter (GdkXEvent *xevent, GdkEvent *event)
     XEvent *x11_event = (XEvent*) xevent;
 
     switch (x11_event->type) {
+    case ClientMessage: {
+        SPEW ("ClientMessage: window=0x%0x, type=%s, format=%d\n",
+              x11_event->xclient.window,
+              XGetAtomName (mXDisplay, x11_event->xclient.message_type),
+              x11_event->xclient.format);
+
+        ClientMessaged (x11_event->xclient.window,
+                        x11_event->xclient.message_type,
+                        x11_event->xclient.format,
+                        x11_event->xclient.data.l);
+        break;
+    }
     case CreateNotify: {
         SPEW ("CreateNotify: window=0x%0x, x=%d, y=%d, width=%d, height=%d, override=%d\n",
                x11_event->xcreatewindow.window,

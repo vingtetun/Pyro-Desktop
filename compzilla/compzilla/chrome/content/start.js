@@ -55,72 +55,83 @@ function compzillaLoad()
 	},
 	true);
 
+    svc.addEventListener (
+	"clientmessage",
+	{
+	    handleEvent: function (ev) {
+		Debug ("Got root window client message of type " + ev.messageType);
+	    }
+	},
+	true);
+
     // Register as the window manager and generate windowcreate events for
     // existing windows.
     svc.RegisterWindowManager (window);
 
     // we don't really support these...
 
-//     var supported = [ Atoms._NET_WM_NAME,
-// 		      Atoms._NET_CLOSE_WINDOW,
-// 		      Atoms._NET_WM_STATE,
-// 		      Atoms._NET_WM_STATE_SHADED,
-// 		      Atoms._NET_WM_STATE_MAXIMIZED_VERT,
-// 		      Atoms._NET_WM_STATE_MAXIMIZED_HORZ,
-// 		      Atoms._NET_WM_DESKTOP,
-// 		      Atoms._NET_NUMBER_OF_DESKTOPS,
+    var supported = [ Atoms._NET_ACTIVE_WINDOW,
+ 		      Atoms._NET_CLIENT_LIST,
+ 		      Atoms._NET_CLIENT_LIST_STACKING,
+		      Atoms._NET_CLOSE_WINDOW,
+ 		      Atoms._NET_WM_MOVERESIZE,
+		      Atoms._NET_WM_NAME,
+		      Atoms._NET_WM_STATE,
+ 		      Atoms._NET_WM_STATE_MAXIMIZED_HORZ,
+ 		      Atoms._NET_WM_STATE_MAXIMIZED_VERT,
+ 		      Atoms._NET_WM_STATE_MODAL,
+		      Atoms._NET_WM_STATE_SHADED,
+ 		      Atoms._NET_WM_STATE_SKIP_PAGER,
+ 		      Atoms._NET_WM_STATE_SKIP_TASKBAR,
+ 		      Atoms._NET_WM_STRUT,
+ 		      Atoms._NET_WM_STRUT_PARTIAL,
+ 		      Atoms._NET_WM_WINDOW_TYPE,
+ 		      Atoms._NET_WM_WINDOW_TYPE_DESKTOP,
+ 		      Atoms._NET_WM_WINDOW_TYPE_DIALOG,
+ 		      Atoms._NET_WM_WINDOW_TYPE_DOCK,
+ 		      Atoms._NET_WM_WINDOW_TYPE_MENU,
+ 		      Atoms._NET_WM_WINDOW_TYPE_NORMAL,
+ 		      Atoms._NET_WM_WINDOW_TYPE_TOOLBAR,
+
 // 		      Atoms._NET_CURRENT_DESKTOP,
-// 		      Atoms._NET_WM_WINDOW_TYPE,
-// 		      Atoms._NET_WM_WINDOW_TYPE_DESKTOP,
-// 		      Atoms._NET_WM_WINDOW_TYPE_DOCK,
-// 		      Atoms._NET_WM_WINDOW_TYPE_TOOLBAR,
-// 		      Atoms._NET_WM_WINDOW_TYPE_MENU,
-// 		      Atoms._NET_WM_WINDOW_TYPE_DIALOG,
-// 		      Atoms._NET_WM_WINDOW_TYPE_NORMAL,
-// 		      Atoms._NET_WM_STATE_MODAL,
-// 		      Atoms._NET_CLIENT_LIST,
-// 		      Atoms._NET_CLIENT_LIST_STACKING,
-// 		      Atoms._NET_WM_STATE_SKIP_TASKBAR,
-// 		      Atoms._NET_WM_STATE_SKIP_PAGER,
-// 		      Atoms._NET_WM_ICON_NAME,
-// 		      Atoms._NET_WM_ICON,
-// 		      Atoms._NET_WM_ICON_GEOMETRY,
-// 		      Atoms._NET_WM_MOVERESIZE,
-// 		      Atoms._NET_ACTIVE_WINDOW,
-// 		      Atoms._NET_WM_STRUT,
-// 		      Atoms._NET_WM_STATE_HIDDEN,
-// 		      Atoms._NET_WM_WINDOW_TYPE_UTILITY,
-// 		      Atoms._NET_WM_WINDOW_TYPE_SPLASH,
-// 		      Atoms._NET_WM_STATE_FULLSCREEN,
-// 		      Atoms._NET_WM_PING,
-// 		      Atoms._NET_WM_PID,
-// 		      Atoms._NET_WORKAREA,
-// 		      Atoms._NET_SHOWING_DESKTOP,
+// 		      Atoms._NET_DESKTOP_GEOMETRY,
 // 		      Atoms._NET_DESKTOP_LAYOUT,
 // 		      Atoms._NET_DESKTOP_NAMES,
-// 		      Atoms._NET_WM_ALLOWED_ACTIONS,
+// 		      Atoms._NET_DESKTOP_VIEWPORT
+// 		      Atoms._NET_FRAME_EXTENTS,
+// 		      Atoms._NET_NUMBER_OF_DESKTOPS,
+// 		      Atoms._NET_REQUEST_FRAME_EXTENTS,
+// 		      Atoms._NET_SHOWING_DESKTOP,
+// 		      Atoms._NET_STARTUP_ID,
+// 		      Atoms._NET_WM_ACTION_CHANGE_DESKTOP,
+// 		      Atoms._NET_WM_ACTION_CLOSE,
+// 		      Atoms._NET_WM_ACTION_FULLSCREEN,
+// 		      Atoms._NET_WM_ACTION_MAXIMIZE_HORZ,
+// 		      Atoms._NET_WM_ACTION_MAXIMIZE_VERT,
+// 		      Atoms._NET_WM_ACTION_MINIMIZE,
 // 		      Atoms._NET_WM_ACTION_MOVE,
 // 		      Atoms._NET_WM_ACTION_RESIZE,
 // 		      Atoms._NET_WM_ACTION_SHADE,
 // 		      Atoms._NET_WM_ACTION_STICK,
-// 		      Atoms._NET_WM_ACTION_MAXIMIZE_HORZ,
-// 		      Atoms._NET_WM_ACTION_MAXIMIZE_VERT,
-// 		      Atoms._NET_WM_ACTION_CHANGE_DESKTOP,
-// 		      Atoms._NET_WM_ACTION_CLOSE,
+// 		      Atoms._NET_WM_ALLOWED_ACTIONS,
+// 		      Atoms._NET_WM_DESKTOP,
+// 		      Atoms._NET_WM_ICON,
+// 		      Atoms._NET_WM_ICON_GEOMETRY,
+// 		      Atoms._NET_WM_ICON_NAME,
+// 		      Atoms._NET_WM_PID,
+// 		      Atoms._NET_WM_PING,
 // 		      Atoms._NET_WM_STATE_ABOVE,
 // 		      Atoms._NET_WM_STATE_BELOW,
-// 		      Atoms._NET_STARTUP_ID,
-// 		      Atoms._NET_WM_STRUT_PARTIAL,
-// 		      Atoms._NET_WM_ACTION_FULLSCREEN,
-// 		      Atoms._NET_WM_ACTION_MINIMIZE,
-// 		      Atoms._NET_FRAME_EXTENTS,
-// 		      Atoms._NET_REQUEST_FRAME_EXTENTS,
-// 		      Atoms._NET_WM_USER_TIME,
 // 		      Atoms._NET_WM_STATE_DEMANDS_ATTENTION,
-// 		      Atoms._NET_DESKTOP_GEOMETRY,
-// 		      Atoms._NET_DESKTOP_VIEWPORT ];
+// 		      Atoms._NET_WM_STATE_FULLSCREEN,
+// 		      Atoms._NET_WM_STATE_HIDDEN,
+// 		      Atoms._NET_WM_USER_TIME,
+// 		      Atoms._NET_WM_WINDOW_TYPE_SPLASH,
+// 		      Atoms._NET_WM_WINDOW_TYPE_UTILITY,
+// 		      Atoms._NET_WORKAREA,
+		      ];
 
-//     svc.SetRootWindowArrayProperty (Atoms._NET_SUPPORTED, Atoms.XA_ATOM , supported.length, supported);
+    svc.SetRootWindowArrayProperty (Atoms._NET_SUPPORTED, Atoms.XA_ATOM , supported.length, supported);
 }
 
 

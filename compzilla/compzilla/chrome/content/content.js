@@ -4,6 +4,8 @@ var svc = Components.classes['@pyrodesktop.org/compzillaService'].getService(
     Components.interfaces.compzillaIControl);
 
 
+var xNone = 0;
+
 function CompzillaWindowContent (nativewin) {
     Debug ("content", "Creating content for nativewin=" + nativewin.nativeWindowId);
 
@@ -72,6 +74,18 @@ var ContentMethods = {
 
     onfullscreen: function () {
 	// XXX update the _NET_WM_WINDOW_STATE property
+    },
+
+    onlostfocus: function () {
+	// update _NET_ACTIVE_WINDOW on the root window
+	var focused_list = [ xNone ];
+	svc.SetRootWindowArrayProperty (Atoms._NET_ACTIVE_WINDOW, Atoms.XA_WINDOW, focused_list.length, focused_list);
+    },
+
+    ongotfocus: function () {
+	// update _NET_ACTIVE_WINDOW on the root window
+	var focused_list = [ this._nativewin.nativeWindowId ];
+	svc.SetRootWindowArrayProperty (Atoms._NET_ACTIVE_WINDOW, Atoms.XA_WINDOW, focused_list.length, focused_list);
     },
 
     addProperty: function (name, getter, setter) {

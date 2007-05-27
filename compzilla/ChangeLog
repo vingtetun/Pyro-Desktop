@@ -1,3 +1,41 @@
+2007-05-27  Chris Toshok  <toshok@ximian.com>
+
+	* compzilla/src/compzillaControl.cpp,
+	compzilla/src/compzillaControl.h: add root level client message
+	event manager, or call into compzillaWindow when there's a
+	relevant window.
+
+	* compzilla/src/compzillaWindow.cpp,
+	compzilla/src/compzillaWindow.h: add client message event manager
+	and code to emit the event.
+
+	* compzilla/src/compzillaWindowEvents.cpp,
+	compzilla/src/compzillaWindowEvents.h: add the client message
+	event subclass, and split this code up to use subclasses of
+	compzillaWindowEvent.
+
+	* compzilla/public/compzillaIWindowEvents.idl: add
+	compzillaIWindowClientMessageEvent.  I don't like the d[1-5] data
+	fields, but I hate the xpidl array stuff even more.
+
+	* compzilla/chrome/content/start.js: add root window clientmessage
+	handler, and actually advertise some EWMH features as supported.
+
+	* compzilla/chrome/content/frame.js: add code to call
+	content.ongotfocus and onlostfocus.  Add the allow-close mapping
+	so frame.allowClose works.  last, add stub for the clientmessage
+	event, so we can start filling in EWMH handlers.
+
+	* compzilla/chrome/content/debug.js: this window can't be
+	minimized/maximized/closed (at least not in the normal sense.
+	maybe we should hook up close to toggleDebug or something.)
+
+	* compzilla/chrome/content/content.js: add ongotfocus and
+	onlostfocus handlers that update _NET_ACTIVE_WINDOW on the root
+	window.
+
+	* compzilla/chrome/content/atoms.js: add some more EWMH atoms.
+
 2007-05-27  Alex Graveley  <alex@beatniksoftware.com>
 
 	* compzilla/chrome/content/debug.js: Comment out keypress handler.

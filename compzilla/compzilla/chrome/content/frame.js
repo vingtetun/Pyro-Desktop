@@ -244,6 +244,7 @@ function _addFrameMethods (frame)
     frame.mapPropertyToPyroAttribute ("allowResize", "allow-resize");
     frame.mapPropertyToPyroAttribute ("allowMaximize", "allow-maximize");
     frame.mapPropertyToPyroAttribute ("allowMinimize", "allow-minimize");
+    frame.mapPropertyToPyroAttribute ("allowClose", "allow-close");
     frame.mapPropertyToPyroAttribute ("allowMove", "allow-move");
     frame.mapPropertyToPyroAttribute ("allowShade", "allow-shade");
     frame.mapPropertyToPyroAttribute ("inactive", "inactive");
@@ -363,6 +364,8 @@ function _connectFrameFocusListeners (frame)
                         // Send FocusOut
                         _focusedFrame._content.blur ();
                         _focusedFrame.inactive = true;
+			if (_focusedFrame._content.onlostfocus)
+			    _focusedFrame._content.onlostfocus ();
                     }
 
                     // Send FocusIn
@@ -370,6 +373,8 @@ function _connectFrameFocusListeners (frame)
                     frame.inactive = false;
 
                     _focusedFrame = frame;
+		    if (_focusedFrame._content.ongotfocus)
+			_focusedFrame._content.ongotfocus ();
                 }
             }
         },
@@ -572,5 +577,15 @@ function _connectNativeWindowListeners (frame)
 	    }
 	},
 	true);
+
+    nativewin.addEventListener (
+	"clientmessage",
+        {
+	    handleEvent: function (ev) {
+		Debug ("frame", "clientmessage (" + ev.messageType + ")");
+	    }
+	},
+	true);
+
 };
 
