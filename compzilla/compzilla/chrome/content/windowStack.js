@@ -111,7 +111,7 @@ windowStack.moveToTop = function(w) {
 windowStack.__defineGetter__ ("showingDesktop",
 			      function () { return windowStack._showingDesktop; });
 windowStack.__defineSetter__ ("showingDesktop",
-			      function ()
+			      function (v) { });
 
 windowStack.toggleDesktop = function () {
     showingDesktop = !showingDesktop;

@@ -10,24 +10,23 @@ function _addUtilMethods (o)
 	    if (setter != undefined)
 		this.__defineSetter__ (name, setter);
 	},
+
+	getPosition: function () {
+	    var curleft = curtop = 0;
+	    var obj = this;
+	    if (obj.offsetParent) {
+		curleft = obj.offsetLeft;
+		curtop = obj.offsetTop;
+		while (obj = obj.offsetParent) {
+		    curleft += obj.offsetLeft;
+		    curtop += obj.offsetTop;
+		}
+	    }
+	    return { left: curleft, top: curtop };
+	}
     };
 
     for (var m in UtilMethods) {
-	o[m] = Utilmethods[m];
+	o[m] = UtilMethods[m];
     }
-}
-
-
-function findPos (obj) 
-{
-    var curleft = curtop = 0;
-    if (obj.offsetParent) {
-        curleft = obj.offsetLeft;
-        curtop = obj.offsetTop;
-        while (obj = obj.offsetParent) {
-            curleft += obj.offsetLeft;
-            curtop += obj.offsetTop;
-        }
-    }
-    return { left: curleft, top: curtop };
 }

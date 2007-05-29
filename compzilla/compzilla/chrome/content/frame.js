@@ -60,8 +60,8 @@ var FrameMethods = {
 
     moveResizeToContent: function (x, y, width, height) {
         // ev coords are relative to content, adjust for frame offsets
-        var posframe = findPos (this);
-        var pos = findPos (this._content);
+        var posframe = this.getPosition ();
+        var pos = this._content.getPosition ();
         x -= posframe.left - pos.left;
         y -= posframe.top - pos.top;
 

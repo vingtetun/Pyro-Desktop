@@ -43,7 +43,7 @@ var ContentMethods = {
 	if (overrideRedirect)
 	    return;
 
-        var pos = findPos (this);
+        var pos = this.getPosition();
         Debug("FindPos: content left=" + pos.left + " top=" + pos.top);
 
         Debug("Calling ConfigureWindow: xid=" +

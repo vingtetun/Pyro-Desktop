@@ -1,5 +1,19 @@
 2007-05-29  Chris Toshok  <toshok@ximian.com>
 
+	* compzilla/chrome/content/windowStack.js: fix up my half baked
+	commit for the showingDesktop property.  we should switch to that
+	instead of toggleDesktop, so we can actually set it to a
+	particular value instead of just toggling it.
+
+	* compzilla/chrome/content/util.js,
+	compzilla/chrome/content/frame.js,
+	compzilla/chrome/content/content.js: actually what are we
+	thinking?  rename findPos to getPosition, and make it a UtilMethod
+	that gets added to frame and content objects.  Also, fix a js
+	typo.  I should test before i commit.
+
+2007-05-29  Chris Toshok  <toshok@ximian.com>
+
 	* compzilla/Makefile.am (content_DATA): add util.js.
 
 	* compzilla/chrome/content/start.xul: load util.js.
