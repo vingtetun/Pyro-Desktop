@@ -1,3 +1,28 @@
+2007-05-29  Alex Graveley  <alex@beatniksoftware.com>
+
+	* compzilla/chrome/content/start.xul: Include jquery.easing.1.1.js
+	and jquery.1.1.2.js.  Switch desktop <key> to use
+	phase="capturing".
+
+	* compzilla/chrome/content/jquery.easing.1.1.js: Add this jquery
+	plugin for nice animation effects.
+
+	* compzilla/chrome/content/jquery.1.1.2.js: Replace jquery.pack.js
+	with this unpacked latest version.  We don't need to worry about
+	transfer times, so readability is good here.
+
+	* compzilla/chrome/content/minimize.js: Use screen.height for
+	fallback coords, since windowStack.ofsetHeight can be outside the
+	visible screen.  Use the "easeout" animation from the
+	jquery.easing plugin.  Set the duration to 1 second so you can
+	see it happen.
+
+	* compzilla/chrome/content/scale.js: Use screen.width/height here
+	for the same reason.
+
+	* compzilla/chrome/skin/compzilla.css: Don't change the cursor by
+	default for .uiDlgButton, only when it is visible.
+
 2007-05-29  Chris Toshok  <toshok@ximian.com>
 
 	* compzilla/chrome/content/atoms.js (Atoms): add the

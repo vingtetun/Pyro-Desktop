@@ -20,8 +20,8 @@ function layoutSlots () {
 
     var x1 = 0;
     var y1 = 0;
-    var x2 = windowStack.offsetWidth;
-    var y2 = windowStack.offsetHeight;
+    var x2 = screen.width;
+    var y2 = screen.height;
 
     y      = y1 + ss.spacing;
     height = Math.floor (((y2 - y1) - (lines + 1) * ss.spacing) / lines);

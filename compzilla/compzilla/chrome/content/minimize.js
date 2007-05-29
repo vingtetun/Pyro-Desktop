@@ -33,7 +33,7 @@ function MinimizeCompzillaFrame (w) {
 	/* for windows without the hint, iconify to the bottom left */
 	geom = {
 	    x: 0,
-	    y: windowStack.offsetTop + windowStack.offsetHeight,
+	    y: screen.height,
 	    width: 0,
 	    height: 0
 	};
@@ -48,10 +48,10 @@ function MinimizeCompzillaFrame (w) {
     $(min).animate ({ left: geom.x, 
 		      top: geom.y, 
 		      width: geom.width, 
-		      height: geom.height, 
+		      height: geom.height,
 		      opacity: 0 },
-		    250, 
-		    "linear",
+		    1000, 
+		    "easeout",
 		    function () {
                         min.parentNode.removeChild (min);
                     });

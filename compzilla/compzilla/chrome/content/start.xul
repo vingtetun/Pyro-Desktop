@@ -157,15 +157,19 @@
 
     <keyset id="compzillaDesktopKeyset">
         <key id="key_showDesktop" 
+             phase="capturing"
              keycode="VK_F5" modifiers="control"
              command="cmd_toggleDesktop" />
         <key id="key_toggleOverlay" 
+             phase="capturing"
              keycode="VK_F9" modifiers="control"
              command="cmd_toggleOverlay" />
         <key id="key_toggleDebug" 
+             phase="capturing"
              keycode="VK_F10" modifiers="control"
              command="cmd_toggleDebug" />
         <key id="key_toggleScale" 
+             phase="capturing"
              keycode="VK_F11" modifiers="control"
              command="cmd_toggleScale" />
     </keyset>
@@ -175,7 +179,7 @@
                      oncommand="MinimizeCompzillaFrame(_focusedFrame);" />
         <xul:command id="cmd_restoreWindow" oncommand="alert('restore');" />
         <xul:command id="cmd_maximizeWindow" oncommand="alert(this);" />
-        <xul:command id="cmd_closeWindow" oncommand="alert('minimize');" />
+        <xul:command id="cmd_closeWindow" oncommand="alert('close');" />
     </xul:commandset>
 
     <keyset id="compzillaWindowKeyset">
@@ -205,7 +209,11 @@
     <!-- need globalOverlay.js for goDoCommand -->
     <script type="application/x-javascript" src="chrome://global/content/globalOverlay.js" />
 
-    <script type="application/x-javascript" src="chrome://compzilla/content/jquery.pack.js" />
+    <!-- Use jQuery for effects -->
+    <script type="application/x-javascript" src="chrome://compzilla/content/jquery.1.1.2.js" />
+    <!-- 3rd party jQuery plugin for animation easing effects -->
+    <script type="application/x-javascript" src="chrome://compzilla/content/jquery.easing.1.1.js" />
+
     <script type="application/x-javascript" src="chrome://compzilla/content/atoms.js" />
     <script type="application/x-javascript" src="chrome://compzilla/content/xprops.js" />
     <script type="application/x-javascript" src="chrome://compzilla/content/windowStack.js" />

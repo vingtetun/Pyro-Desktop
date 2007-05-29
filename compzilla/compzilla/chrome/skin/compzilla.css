@@ -387,7 +387,6 @@ body {
 }
 
 .uiDlgButton {
-        cursor: pointer;
         height: 19px;
         width: 19px;
         display: inline;
@@ -395,6 +394,7 @@ body {
 }
 
 .uiDlgButtonMenu {
+        cursor: pointer;
         visibility: visible;
         position: absolute;
         height: 18px;
@@ -416,15 +416,19 @@ body {
 }
 
 .uiDlg[pyro|allow-minimize="true"] .uiDlgButtonMin {
+        cursor: pointer;
         visibility: visible;
 }
 .uiDlg[pyro|allow-maximize="true"] .uiDlgButtonMax {
+        cursor: pointer;
         visibility: visible;
 }
 .uiDlg[pyro|allow-close="true"] .uiDlgButtonClose {
+        cursor: pointer;
         visibility: visible;
 }
 .uiDlg[pyro|allow-restore="true"] .uiDlgButtonRestore {
+        cursor: pointer;
         visibility: visible;
 }
 
