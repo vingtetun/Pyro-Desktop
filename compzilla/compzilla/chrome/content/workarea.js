@@ -55,6 +55,8 @@ WorkArea.prototype = {
 	       this.bounds.height +
 	       " }");
 
+
+	// update the root window property
 	var vals = [ this.bounds.left, this.bounds.top, this.bounds.width, this.bounds.height ];
 	svc.SetRootWindowArrayProperty (Atoms._NET_WORKAREA, Atoms.XA_CARDINAL, vals.length, vals);
 
