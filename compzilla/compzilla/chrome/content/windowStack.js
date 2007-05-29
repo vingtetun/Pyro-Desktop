@@ -6,10 +6,6 @@
  *  stackWindow (w) - this is the entry point to use when initially
  *                    adding a window to the stack.
  *
- *  replaceWindow (w1, w2) - replaces window @w1 with @w2.  if @w1 is
- *                           not presently in the stack, this has the
- *                           same behavior as stackWindow(@w2).
- *
  *  removeWindow (w) - removes @w from the window stack.
  *
  *  moveAbove (w, above) - moves @w above @above in the stacking order.
@@ -41,31 +37,6 @@ windowStack.stackWindow = function (w) {
     windowStack.appendChild (w);
 
     _maybeRestackLayer (l);
-}
-
-
-windowStack.replaceWindow = function (w1, w2) {
-    if (w1 == w2)
-	return;
-
-    if (w1.layer == undefined) {
-	Debug ("windowStack",
-	       "w1 not in a layer.  just adding w2");
-	windowStack.stackWindow (w2);
-    }
-    else {
-	w2.style.zIndex = w1.style.zIndex;
-	try {
-	    windowStack.replaceChild (w2, w1);
-	} catch (ex) { 
-	    /* 
-	     * swallow any exception raised here.  it should only raise one if
-	     * w1.layer doesn't contain w1, which shouldn't ever happen. 
-	     */ 
-	}
-	w2.layer = w1.layer;
-	w1.layer = undefined;
-    }
 }
 
 
@@ -277,9 +248,9 @@ function _determineLayer (w) {
     if (w.content != null && w.content.id == "debugContent") 
 	// special case for the debug window, which sits above everything
 	return debugLayer;
-    if (w._net_wm_window_type == Atoms._NET_WM_WINDOW_TYPE_DESKTOP)
+    if (w.content.wmWindowType == "desktop")
 	return desktopLayer;
-    else if (w._net_wm_window_type == Atoms._NET_WM_WINDOW_TYPE_DOCK)
+    else if (w.content.wmWindowType == "dock")
 	return dockLayer;
     /* XXX we need cases 1 and 4 here */
     else

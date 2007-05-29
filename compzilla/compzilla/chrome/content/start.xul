@@ -176,10 +176,10 @@
 
     <xul:commandset id="compzillaWindowCommandSet">
         <xul:command id="cmd_minimizeWindow" 
-                     oncommand="MinimizeCompzillaFrame(_focusedFrame);" />
+                     oncommand="_focusedFrame.hide();" />
         <xul:command id="cmd_restoreWindow" oncommand="alert('restore');" />
-        <xul:command id="cmd_maximizeWindow" oncommand="alert(this);" />
-        <xul:command id="cmd_closeWindow" oncommand="alert('close');" />
+        <xul:command id="cmd_maximizeWindow" oncommand="_focusedFrame.maximize();" />
+        <xul:command id="cmd_closeWindow" oncommand="_focusedFrame.close();" />
     </xul:commandset>
 
     <keyset id="compzillaWindowKeyset">
@@ -218,8 +218,9 @@
     <script type="application/x-javascript" src="chrome://compzilla/content/xprops.js" />
     <script type="application/x-javascript" src="chrome://compzilla/content/windowStack.js" />
     <script type="application/x-javascript" src="chrome://compzilla/content/frame.js" />
-    <script type="application/x-javascript" src="chrome://compzilla/content/content.js" />
     <script type="application/x-javascript" src="chrome://compzilla/content/debug.js" />
+    <script type="application/x-javascript" src="chrome://compzilla/content/workarea.js" />
+    <script type="application/x-javascript" src="chrome://compzilla/content/content.js" />
     <script type="application/x-javascript" src="chrome://compzilla/content/scale.js" />
     <script type="application/x-javascript" src="chrome://compzilla/content/overlay.js" />
     <script type="application/x-javascript" src="chrome://compzilla/content/minimize.js" />

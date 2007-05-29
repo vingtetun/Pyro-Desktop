@@ -10,19 +10,20 @@ extension_DATA =				\
 contentdir=$(extensiondir)/chrome/content
 CONTENT_SRCDIR=$(EXTENSION_SRCDIR)/chrome/content
 content_DATA =					\
-	$(CONTENT_SRCDIR)/jquery.1.1.2.js	\
-	$(CONTENT_SRCDIR)/jquery.easing.1.1.js	\
-	$(CONTENT_SRCDIR)/start.js		\
-	$(CONTENT_SRCDIR)/start.xul		\
 	$(CONTENT_SRCDIR)/atoms.js		\
-	$(CONTENT_SRCDIR)/xprops.js		\
 	$(CONTENT_SRCDIR)/content.js		\
 	$(CONTENT_SRCDIR)/debug.js		\
 	$(CONTENT_SRCDIR)/frame.js		\
+	$(CONTENT_SRCDIR)/jquery.1.1.2.js	\
+	$(CONTENT_SRCDIR)/jquery.easing.1.1.js	\
 	$(CONTENT_SRCDIR)/minimize.js		\
 	$(CONTENT_SRCDIR)/overlay.js		\
+	$(CONTENT_SRCDIR)/scale.js		\
+	$(CONTENT_SRCDIR)/start.js		\
+	$(CONTENT_SRCDIR)/start.xul		\
 	$(CONTENT_SRCDIR)/windowStack.js	\
-	$(CONTENT_SRCDIR)/scale.js
+	$(CONTENT_SRCDIR)/workarea.js		\
+	$(CONTENT_SRCDIR)/xprops.js
 
 skindir=$(extensiondir)/chrome/skin
 SKIN_SRCDIR=$(EXTENSION_SRCDIR)/chrome/skin

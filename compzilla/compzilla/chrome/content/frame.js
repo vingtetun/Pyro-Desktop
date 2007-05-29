@@ -130,6 +130,11 @@ var FrameMethods = {
         }
     },
 
+    _updateStrutInfo: function () {
+
+	//workarea.UpdateStrutInfo (this, this._content.wmStruts);
+
+    },
 
     _recomputeAllowedActions: function () {
 	/* this only applies for native windows, and those windows
@@ -171,7 +176,7 @@ var FrameMethods = {
 	Debug ("frame", "frame.show");
 
 	if (this._content.onshow)
-	    this._content.onshow();
+	    this._content.onshow ();
 
 	this.style.display = "block";
     },
@@ -183,19 +188,30 @@ var FrameMethods = {
 
 	Debug ("frame", "frame.hide");
 
-	this.style.display = "none";
+	MinimizeCompzillaFrame (this);
 
 	if (this._content.onhide)
-	    this._content.onhide();
+	    this._content.onhide ();
     },
 
 
     maximize: function () {
+	Debug ("maximizing frame to " +
+	       "{ " +
+	       workarea.bounds.left + ", " +
+	       workarea.bounds.top  + " - " +
+	       workarea.bounds.width + "x" +
+	       workarea.bounds.height +
+	       " }");
 
-	// XXX more stuff here
+
+	this.moveResize (workarea.bounds.left,
+			 workarea.bounds.top,
+			 workarea.bounds.width,
+			 workarea.bounds.height);
 
 	if (this._content.onmaximize)
-	    this._content.onmaximize();
+	    this._content.onmaximize ();
     },
 
 
@@ -269,7 +285,7 @@ function _addFrameMethods (frame)
 		       /* setter */
 		       function (val) {
 			   if (val != this.visible) {
-			       val ? show() : hide ();
+			       val ? this.show() : this.hide ();
 			   }
 		       });
 
@@ -356,6 +372,8 @@ function CompzillaFrame (content)
 
 	frame._resetChromeless ();
         frame._recomputeAllowedActions ();
+
+	frame._updateStrutInfo ();
 
 	frame.title = content.wmName;
     }
@@ -565,6 +583,10 @@ function _observeNativeWindow (frame)
 		
 		Debug ("frame", "propertychange: setting title:" + frame.title);
 			     
+		break;
+
+	    case Atoms._NET_WM_STRUT:
+		frame._updateStrutInfo ();
 		break;
 
 	    case Atoms._NET_WM_WINDOW_TYPE:

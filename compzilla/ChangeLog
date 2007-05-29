@@ -1,3 +1,22 @@
+2007-05-29  Chris Toshok  <toshok@ximian.com>
+
+	* compzilla/Makefile.am (content_DATA): add workarea.js, and sort
+	these.
+
+	* compzilla/chrome/content/workarea.js: new file.
+
+	* compzilla/chrome/content/windowStack.js: fix this to not use
+	Atoms for wmWindowType anymore, and also remove the replaceWindow
+	method, we don't need it/use it.
+
+	* compzilla/chrome/content/frame.js: fix js error, and add some
+	pseudo fleshed out maximize/strut handling.
+
+	* compzilla/chrome/content/start.xul: just for kicks hook up
+	maximize/minimize (change to the frame method here) and close.
+
+	* compzilla/chrome/content/start.js: fix js error.
+
 2007-05-29  Alex Graveley  <alex@beatniksoftware.com>
 
 	* compzilla/src/compzillaControl.cpp/h: Don't implement

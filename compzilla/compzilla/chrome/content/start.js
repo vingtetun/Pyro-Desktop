@@ -22,7 +22,7 @@ function compzillaLoad()
 	    windowStack.stackWindow (frame);
 
 	    if (!frame.overrideRedirect) {
-		_clientList.push (ev.window.nativeWindowId);
+		_clientList.push (win.nativeWindowId);
 		_updateClientListProperty ();
 	    }
 	},

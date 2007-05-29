@@ -32,3 +32,5 @@ compzillaIWindowManager.h
 compzillaIRenderingContext.h
 compzilla/public/compzillaIWindowEvents.h
 compzilla/compzilla
+compzilla/public/compzillaIControlObserver.h
+compzilla/public/compzillaIWindowObserver.h
