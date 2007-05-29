@@ -73,9 +73,10 @@ SUFFIXES= .idl .xpt
 
 IDL_FILES =						\
 	$(srcdir)/public/compzillaIControl.idl		\
+	$(srcdir)/public/compzillaIControlObserver.idl	\
 	$(srcdir)/public/compzillaIWindow.idl		\
 	$(srcdir)/public/compzillaIWindowEvents.idl	\
-	$(srcdir)/public/compzillaIWindowManager.idl    \
+	$(srcdir)/public/compzillaIWindowObserver.idl   \
 	$(srcdir)/public/compzillaIRenderingContext.idl
 
 IDL_H_FILES = $(IDL_FILES:.idl=.h)
