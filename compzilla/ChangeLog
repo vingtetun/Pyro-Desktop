@@ -1,5 +1,13 @@
 2007-05-29  Alex Graveley  <alex@beatniksoftware.com>
 
+	* compzilla/public/compzillaIWindowObserver.idl: 
+	* compzilla/public/compzillaIControlObserver.idl: New ifaces for
+	observer-based eventing.
+
+	* compzilla/public/compzillaIWindowManager.idl: Kill this.
+
+2007-05-29  Alex Graveley  <alex@beatniksoftware.com>
+
 	* compzilla/chrome/content/start.xul: Include jquery.easing.1.1.js
 	and jquery.1.1.2.js.  Switch desktop <key> to use
 	phase="capturing".

@@ -1,0 +1,20 @@
+/* -*- mode: IDL; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
+
+#include "nsISupports.idl"
+
+
+[scriptable, uuid(01b0fc7e-0db6-404b-b814-d45d08e90bdf)]
+interface compzillaIControlObserver : nsISupports
+{
+    void windowCreate(in nsISupports window);
+    void windowDestroy(in nsISupports window);
+
+    void rootClientMessage (in long messageType,
+                            in long format,
+                            in long d1,
+                            in long d2,
+                            in long d3,
+                            in long d4,
+                            in long d5);
+};
+
