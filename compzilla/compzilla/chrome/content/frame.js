@@ -21,8 +21,16 @@ function getDescendentById (root, id)
 
 var FrameMethods = {
     destroy: function () {
-	Debug ("frame",
-	       "frame.destroy");
+	Debug ("frame", "frame.destroy");
+
+	if (this._observer) {
+	    try {
+		this.content.nativeWindow.removeObserver (this._observer);
+	    } catch (e) {
+		// Observer may have been automatically removed
+	    }
+	    this._observer = null;
+	}
 
 	if (this._content) {
 	    if (this._content.ondestroy)
@@ -253,6 +261,18 @@ function _addFrameMethods (frame)
     frame.mapPropertyToPyroAttribute ("wmClass", "wm-class");
 
 
+    frame.addProperty ("visible",
+		       /* getter */
+		       function () {
+			   return this.style.display == "block";
+                       },
+		       /* setter */
+		       function (val) {
+			   if (val != this.visible) {
+			       val ? show() : hide ();
+			   }
+		       });
+
     frame.addProperty ("chromeless",
 		       /* getter */
 		       function () {
@@ -332,7 +352,8 @@ function CompzillaFrame (content)
     if (content.nativeWindow) {
         frame.id = "XID:" + content.nativeWindow.nativeWindowId;
 
-	_connectNativeWindowListeners (frame);
+	frame._observer = _observeNativeWindow (frame);
+
 	frame._resetChromeless ();
         frame._recomputeAllowedActions ();
 
@@ -484,159 +505,154 @@ function _connectFrameDragListeners (frame)
 }
 
 
-/* XXX this method should either be moved to content.js, or content.js
-   should also listen for events it cares about (like
-   propertychange) */
+/* 
+ * XXX this should either be moved to content.js, or content.js
+ * should also listen for events it cares about (like
+ * propertychange) 
+ */
 
-function _connectNativeWindowListeners (frame)
+function _observeNativeWindow (frame)
 {
-    var nativewin = frame._content.nativeWindow;
+    var observer = {
+        destroy: function () {
+	    Debug ("frame", "destroy.handleEvent (" + frame._content.nativeWindow + ")");
+	    frame.destroy ();
+	},
 
-    nativewin.addEventListener (
-	"destroy",
-        {
-	    handleEvent: function (ev) {
-		Debug ("frame", "destroy.handleEvent (" + content + ")");
-		frame.destroy ();
+        configure: function (mapped,
+			     overrideRedirect,
+			     x,
+			     y,
+			     width,
+			     height,
+			     borderWidth,
+			     aboveWindow) {
+	    Debug ("frame", "configure.handleEvent");
+
+	    // This is the only way we're notified of override changes
+	    frame.overrideRedirect = overrideRedirect;
+
+	    // This may not match the current state if the window was created
+	    // before compzilla.
+	    frame.visible = mapped;
+
+	    frame.moveResizeToContent (x, y, width, height);
+
+	    // XXX handle stacking requests here too
+	},
+
+        map: function () {
+	    Debug ("frame", "map.handleEvent");
+	    windowStack.moveToTop (frame);
+	    frame.show ();
+	},
+
+        unmap: function () {
+	    Debug ("frame", "unmap.handleEvent");
+	    frame.hide ();
+	},
+
+	propertyChange: function (atom, isDeleted) {
+	    Debug ("frame", "propertychange.handleEvent: atom=" + atom);
+
+	    // the property has changed (or been deleted).  nuke it from cache
+	    frame._content.XProps.Invalidate (atom);
+
+	    switch (atom) {
+	    case Atoms.XA_WM_NAME:
+	    case Atoms._NET_WM_NAME:
+		frame.title = frame._content.wmName;
+		
+		Debug ("frame", "propertychange: setting title:" + frame.title);
+			     
+		break;
+
+	    case Atoms._NET_WM_WINDOW_TYPE:
+		frame._resetChromeless ();
+		frame._recomputeAllowedActions ();
+
+		Debug ("frame", "propertychange: setting window type:" + 
+		       frame._content.wmWindowType);
+
+		break;
+
+	    case Atoms.XA_WM_CLASS:
+		frame.wmClass = frame._content.wmClass;
+
+		Debug ("frame", "propertychange: setting wmClass: '" +  
+		       frame.wmClass + "'");
+		
+		break;
 	    }
 	},
-	true);
 
-    frame.addEventListener (
-	"configure",
-	{
-	    handleEvent: function (ev) {
-		Debug ("frame", "configure.handleEvent");
+	clientMessageRecv: function (messageType, format, d1, d1, d3, d4) {
+	    Debug ("frame", "clientmessage type:" + messageType + 
+		   " [d1:"+d1 + ", d2:"+d2 + ", d3:"+d3 + ", d4:"+d4 + "]");
 
-		// This is the only way we're notified of override changes
-		frame.overrideRedirect = ev.overrideRedirect;
+	    switch (messageType) {
+	    case Atoms._NET_CLOSE_WINDOW:
+		frame.close ();
+		break;
 
-                frame.moveResizeToContent (ev.x, ev.y, ev.width, ev.height);
+	    case Atoms._NET_MOVERESIZE_WINDOW:
+		/* d1 == gravity and flags */
+		/* d2 == x */
+		/* d3 == y */
+		/* d4 == width */
+		/* d5 == height */
+		break;
 
-		// XXX handle stacking requests here too
+	    case Atoms._NET_WM_MOVERESIZE:
+		/* d1 = x_root */
+		/* d2 = y_root */
+		/* d3 = direction */
+		/* d4 = button */
+		/* d5 = source indication */
+		break;
+
+	    case Atoms._NET_RESTACK_WINDOW:
+		/* d1 == source indication */
+		/* d2 == sibling window */
+		/* d3 == detail */
+		break;
+
+	    case Atoms._NET_REQUEST_FRAME_EXTENTS:
+		/* The Window Manager MUST respond by estimating
+		   the prospective frame extents and setting the
+		   window's _NET_FRAME_EXTENTS property
+		   accordingly. */
+		break;
+
+	    case Atoms._NET_WM_DESKTOP:
+		/* A Client can request a change of desktop for a
+		   non-withdrawn window by sending a
+		   _NET_WM_DESKTOP client message to the root
+		   window: */
+
+		/* d1 == new_desktop */
+		/* d2 == source indication */
+		break;
+
+	    case Atoms._NET_WM_STATE:
+		/* d1 == the action, _NET_WM_STATE_{REMOVE,ADD,TOGGLE} */
+		/* d2 == first property to alter */
+		/* d3 == second property to alter */
+		break;
 	    }
-	},
-	true);
+	}
+    };
 
-    nativewin.addEventListener (
-	"map",
-	{
-	    handleEvent: function (ev) {
-		Debug ("frame", "map.handleEvent");
-		windowStack.moveToTop (frame);
-		frame.show ();
-	    }
-	},
-	true);
-
-    nativewin.addEventListener (
-	"unmap",
-	{
-	    handleEvent: function (ev) {
-		Debug ("frame", "unmap.handleEvent");
-		frame.hide ();
-	    }
-	},
-	true);
-
-    nativewin.addEventListener (
-	"propertychange",
-	{
-	    handleEvent: function (ev) {
-		Debug ("frame", "propertychange.handleEvent: ev.atom=" + ev.atom);
-
-		// the property has changed (or been deleted).  nuke it from our cache
-		frame._content.XProps.Invalidate (ev.atom);
-
-		switch (ev.atom) {
-		case Atoms.XA_WM_NAME:
-		case Atoms._NET_WM_NAME:
-		    frame.title = frame._content.wmName;
-
-		    Debug ("frame", "propertychange: setting title:" + frame.title);
-
-		    break;
-
-		case Atoms._NET_WM_WINDOW_TYPE:
-		    frame._resetChromeless ();
-		    frame._recomputeAllowedActions ();
-
-		    Debug ("frame", "propertychange: setting window type:" + 
-			   frame._content.wmWindowType);
-
-		    break;
-
-		case Atoms.XA_WM_CLASS:
-		    frame.wmClass = frame._content.wmClass;
-
-		    Debug ("frame", "propertychange: setting wmClass: '" +  
-			   frame.wmClass + "'");
-			    
-		    break;
-		}
-	    }
-	},
-	true);
-
-    nativewin.addEventListener (
-	"clientmessage",
-        {
-	    handleEvent: function (ev) {
-		Debug ("frame", "clientmessage (" + ev.messageType + ")");
-
-		switch (ev.messageType) {
-		case Atoms._NET_CLOSE_WINDOW:
-		    frame.close ();
-		    break;
-
-		case Atoms._NET_MOVERESIZE_WINDOW:
-		    /* d1 == gravity and flags */
-		    /* d2 == x */
-		    /* d3 == y */
-		    /* d4 == width */
-		    /* d5 == height */
-		    break;
-
-		case Atoms._NET_WM_MOVERESIZE:
-		    /* d1 = x_root */
-		    /* d2 = y_root */
-		    /* d3 = direction */
-		    /* d4 = button */
-		    /* d5 = source indication */
-		    break;
-
-		case Atoms._NET_RESTACK_WINDOW:
-		    /* d1 == source indication */
-		    /* d2 == sibling window */
-		    /* d3 == detail */
-		    break;
-
-		case Atoms._NET_REQUEST_FRAME_EXTENTS:
-		    /* The Window Manager MUST respond by estimating
-		       the prospective frame extents and setting the
-		       window's _NET_FRAME_EXTENTS property
-		       accordingly. */
-		    break;
-
-		case Atoms._NET_WM_DESKTOP:
-		    /* A Client can request a change of desktop for a
-		       non-withdrawn window by sending a
-		       _NET_WM_DESKTOP client message to the root
-		       window: */
-
-		    /* d1 == new_desktop */
-		    /* d2 == source indication */
-		    break;
-
-		case Atoms._NET_WM_STATE:
-		    /* d1 == the action, _NET_WM_STATE_{REMOVE,ADD,TOGGLE} */
-		    /* d2 == first property to alter */
-		    /* d3 == second property to alter */
-		    break;
-		}
-	    }
-	},
-	true);
-
+    /*
+     * observer.configure will be called immediately to inform
+     * of the current state.
+     */
+    try {
+	frame.content.nativeWindow.addObserver (observer);
+	return observer;
+    } catch (e) {
+	Debug ("ERROR adding observer: " + e);
+	return null;
+    }
 };
 

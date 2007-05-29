@@ -10,8 +10,8 @@ extension_DATA =				\
 contentdir=$(extensiondir)/chrome/content
 CONTENT_SRCDIR=$(EXTENSION_SRCDIR)/chrome/content
 content_DATA =					\
-	$(CONTENT_SRCDIR)/jquery.1.1.2.js       \
-	$(CONTENT_SRCDIR)/jquery.easing.1.1.js  \
+	$(CONTENT_SRCDIR)/jquery.1.1.2.js	\
+	$(CONTENT_SRCDIR)/jquery.easing.1.1.js	\
 	$(CONTENT_SRCDIR)/start.js		\
 	$(CONTENT_SRCDIR)/start.xul		\
 	$(CONTENT_SRCDIR)/atoms.js		\
@@ -75,7 +75,6 @@ IDL_FILES =						\
 	$(srcdir)/public/compzillaIControl.idl		\
 	$(srcdir)/public/compzillaIControlObserver.idl	\
 	$(srcdir)/public/compzillaIWindow.idl		\
-	$(srcdir)/public/compzillaIWindowEvents.idl	\
 	$(srcdir)/public/compzillaIWindowObserver.idl   \
 	$(srcdir)/public/compzillaIRenderingContext.idl
 
@@ -139,8 +138,6 @@ libcompzilla_la_CPPFLAGS =			\
 nodist_libcompzilla_la_SOURCES = $(IDL_H_FILES)
 
 libcompzilla_la_SOURCES =				\
-	$(srcdir)/src/compzillaEventManager.cpp		\
-	$(srcdir)/src/compzillaEventManager.h		\
 	$(srcdir)/src/compzillaControl.cpp		\
 	$(srcdir)/src/compzillaControl.h		\
 	$(srcdir)/src/compzillaModule.cpp		\
@@ -148,8 +145,6 @@ libcompzilla_la_SOURCES =				\
 	$(srcdir)/src/compzillaRenderingContext.cpp	\
 	$(srcdir)/src/compzillaWindow.h			\
 	$(srcdir)/src/compzillaWindow.cpp		\
-	$(srcdir)/src/compzillaWindowEvents.h		\
-	$(srcdir)/src/compzillaWindowEvents.cpp		\
 	$(srcdir)/src/nsKeycodes.h			\
 	$(srcdir)/src/XAtoms.h
 

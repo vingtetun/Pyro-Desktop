@@ -1,14 +1,13 @@
 /* -*- mode: C++; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
 
 #include <nsCOMPtr.h>
+#include <nsCOMArray.h>
 #define MOZILLA_INTERNAL_API
 #include <nsRefPtrHashtable.h>
 #undef MOZILLA_INTERNAL_API
-#include <nsIDOMEventTarget.h>
 #include <nsIWidget.h>
 
 #include "compzillaIControl.h"
-#include "compzillaEventManager.h"
 #include "compzillaWindow.h"
 
 extern "C" {
@@ -18,13 +17,11 @@ extern "C" {
 
 
 class compzillaControl
-    : public compzillaIControl,
-      public nsIDOMEventTarget
+    : public compzillaIControl
 {
 public:
     NS_DECL_ISUPPORTS
     NS_DECL_COMPZILLAICONTROL
-    NS_DECL_NSIDOMEVENTTARGET
 
     compzillaControl ();
     virtual ~compzillaControl ();
@@ -83,10 +80,7 @@ private:
 
     nsCOMPtr<nsIDOMWindow> mDOMWindow;
     nsRefPtrHashtable<nsUint32HashKey, compzillaWindow> mWindowMap;
-
-    compzillaEventManager mWindowCreateEvMgr;
-    compzillaEventManager mWindowDestroyEvMgr;
-    compzillaEventManager mClientMessageEvMgr;
+    nsCOMArray<compzillaIControlObserver> mObservers;
 
     static int composite_event, composite_error;
     static int xevie_event, xevie_error;

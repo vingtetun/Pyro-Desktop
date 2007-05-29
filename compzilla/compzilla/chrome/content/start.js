@@ -11,89 +11,66 @@ function compzillaLoad()
     xulwin.width = screen.width;
     xulwin.height = screen.height;
 
-    svc.addEventListener (
-	"windowcreate", 
-	{
-	    handleEvent: function (ev) {
-		// NOTE: Be careful to not do anything which will create a new
-		//       toplevel window, to avoid an infinite loop.
+    svc.addObserver ({
+	windowCreate: function (win) {
+	    // NOTE: Be careful to not do anything which will create a new
+	    //       toplevel window, to avoid an infinite loop.
 
-		var content = CompzillaWindowContent (ev.window);
-		var frame = CompzillaFrame (content);
-		frame.overrideRedirect = ev.overrideRedirect;
+	    var content = CompzillaWindowContent (win);
+	    var frame = CompzillaFrame (content);
 
-		windowStack.stackWindow (frame);
+	    windowStack.stackWindow (frame);
 
-		if (ev.mapped) {
-		    frame.show ();
-		}
-
-		// ev is a compzillaIWindowConfigureEvent
-		frame.moveResizeToContent (ev.x, ev.y, ev.width, ev.height);
-
-		if (!ev.overrideRedirect) {
-		    _clientList.push (ev.window.nativeWindowId);
-		    _updateClientListProperty ();
-		}
-	    }
-        },
-	true);
-
-    svc.addEventListener (
-	"windowdestroy",
-	{
-	    handleEvent: function (ev) {
-		// NOTE: Be careful to not do anything which will create a new
-		//       toplevel window, to avoid an infinite loop.
-
-		var idx = _clientList.indexOf (ev.window.nativeWindowId);
-		if (idx != -1) {
-		    _clientList.splice (idx, 1);
-		    _updateClientListProperty ();
-		}
+	    if (!frame.overrideRedirect) {
+		_clientList.push (ev.window.nativeWindowId);
+		_updateClientListProperty ();
 	    }
 	},
-	true);
 
-    svc.addEventListener (
-	"clientmessage",
-	{
-	    handleEvent: function (ev) {
-		Debug ("Got root window client message of type " + ev.messageType);
-
-		switch (ev.messageType) {
-		case Atoms._NET_ACTIVE_WINDOW:
-		    /* d1 == 1 for normal apps, 2 for pagers and their ilk */
-		    /* d2 == timestamp */
-		    /* d3 == XID */
-		    break;
-
-		case Atoms._NET_CURRENT_DESKTOP:
-		    /* d1 == desktop index */
-		    /* d2 == timestamp */
-		    break;
-
-		case Atoms._NET_DESKTOP_VIEWPORT:
-		    /* d1 == new desktop vx */
-		    /* d2 == new desktop vy */
-		    break;
-
-		case Atoms._NET_DESKTOP_GEOMETRY:
-		    /* d1 == new desktop width */
-		    /* d2 == new desktop height */
-		    break;
-
-		case Atoms._NET_NUMBER_OF_DESKTOPS:
-		    /* d1 == new number of desktops */
-		    break;
-
-		case Atoms._NET_SHOWING_DESKTOP:
-		    /* d1 == boolean 0 or 1 */
-		    break;
-		}
+	windowDestroy: function (win) {
+	    var idx = _clientList.indexOf (win.nativeWindowId);
+	    if (idx != -1) {
+		_clientList.splice (idx, 1);
+		_updateClientListProperty ();
 	    }
 	},
-	true);
+
+	rootClientMessageRecv: function (messageType, format, d1, d1, d3, d4) {
+	    Debug ("Got root window clientmessage type:" + messageType + 
+		   " [d1:"+d1 + ", d2:"+d2 + ", d3:"+d3 + ", d4:"+d4 + "]");
+
+	    switch (messageType) {
+	    case Atoms._NET_ACTIVE_WINDOW:
+		/* d1 == 1 for normal apps, 2 for pagers and their ilk */
+		/* d2 == timestamp */
+		/* d3 == XID */
+		break;
+
+	    case Atoms._NET_CURRENT_DESKTOP:
+		/* d1 == desktop index */
+		/* d2 == timestamp */
+		break;
+
+	    case Atoms._NET_DESKTOP_VIEWPORT:
+		/* d1 == new desktop vx */
+		/* d2 == new desktop vy */
+		break;
+
+	    case Atoms._NET_DESKTOP_GEOMETRY:
+		/* d1 == new desktop width */
+		/* d2 == new desktop height */
+		break;
+
+	    case Atoms._NET_NUMBER_OF_DESKTOPS:
+		/* d1 == new number of desktops */
+		break;
+
+	    case Atoms._NET_SHOWING_DESKTOP:
+		/* d1 == boolean 0 or 1 */
+		break;
+	    }
+	},
+    });
 
     // Register as the window manager and generate windowcreate events for
     // existing windows.
@@ -162,7 +139,10 @@ function compzillaLoad()
 // 		      Atoms._NET_WORKAREA,
 		      ];
 
-    svc.SetRootWindowArrayProperty (Atoms._NET_SUPPORTED, Atoms.XA_ATOM , supported.length, supported);
+    svc.SetRootWindowArrayProperty (Atoms._NET_SUPPORTED, 
+				    Atoms.XA_ATOM , 
+				    supported.length, 
+				    supported);
 }
 
 

@@ -15,7 +15,6 @@
 
 #include "compzillaControl.h"
 #include "compzillaRenderingContext.h"
-#include "compzillaWindowEvents.h"
 
 
 NS_GENERIC_FACTORY_CONSTRUCTOR(compzillaControl);
@@ -25,7 +24,6 @@ NS_GENERIC_FACTORY_CONSTRUCTOR(compzillaRenderingContext);
 NS_DECL_CLASSINFO(compzillaRenderingContext)
 
 NS_DECL_CLASSINFO(compzillaWindow)
-NS_DECL_CLASSINFO(compzillaWindowEvent)
 
 
 static NS_METHOD 
@@ -84,16 +82,6 @@ static const nsModuleComponentInfo components[] = {
         NS_CI_INTERFACE_GETTER_NAME(compzillaWindow),
         nsnull,
         &NS_CLASSINFO_NAME(compzillaWindow),
-        nsIClassInfo::PLUGIN_OBJECT
-    },
-    {
-        "Compzilla Native Window Event",
-        COMPZILLA_WINDOW_EVENT_CID,
-        COMPZILLA_WINDOW_EVENT_CONTRACTID,
-        nsnull, nsnull, nsnull, nsnull,
-        NS_CI_INTERFACE_GETTER_NAME(compzillaWindowEvent),
-        nsnull,
-        &NS_CLASSINFO_NAME(compzillaWindowEvent),
         nsIClassInfo::PLUGIN_OBJECT
     },
 };

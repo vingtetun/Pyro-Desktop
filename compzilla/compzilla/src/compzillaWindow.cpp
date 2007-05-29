@@ -14,8 +14,8 @@
 #include "nsKeycodes.h"
 
 #include <nsMemory.h>
-#include <nsIDOMEventTarget.h>
 #include <nsICanvasElement.h>
+#include <nsIDOMEventTarget.h>
 #include <nsISupportsUtils.h>
 #include <nsComponentManagerUtils.h>
 #include <nsHashPropertyBag.h>
@@ -62,23 +62,23 @@ extern XAtoms atoms;
 NS_IMPL_ADDREF(compzillaWindow)
 NS_IMPL_RELEASE(compzillaWindow)
 NS_INTERFACE_MAP_BEGIN(compzillaWindow)
-    NS_INTERFACE_MAP_ENTRY_AMBIGUOUS(nsISupports, nsIDOMEventTarget)
+    NS_INTERFACE_MAP_ENTRY_AMBIGUOUS(nsISupports, compzillaIWindow)
     NS_INTERFACE_MAP_ENTRY(compzillaIWindow)
-    NS_INTERFACE_MAP_ENTRY(nsIDOMEventTarget)
     NS_INTERFACE_MAP_ENTRY_AMBIGUOUS(nsIDOMEventListener, nsIDOMKeyListener)
     NS_INTERFACE_MAP_ENTRY(nsIDOMKeyListener)
     NS_INTERFACE_MAP_ENTRY(nsIDOMMouseListener)
     NS_INTERFACE_MAP_ENTRY(nsIDOMUIListener)
     NS_IMPL_QUERY_CLASSINFO(compzillaWindow)
 NS_INTERFACE_MAP_END
-NS_IMPL_CI_INTERFACE_GETTER3(compzillaWindow, 
+NS_IMPL_CI_INTERFACE_GETTER2(compzillaWindow, 
                              compzillaIWindow,
-                             nsIDOMEventTarget,
                              nsIDOMEventListener)
 
 
 nsresult
-CZ_NewCompzillaWindow(Display *display, Window win, compzillaWindow** retval)
+CZ_NewCompzillaWindow(Display *display, 
+                      Window win, 
+                      compzillaWindow** retval)
 {
     compzillaWindow *window = new compzillaWindow (display, win);
     if (!window)
@@ -99,13 +99,7 @@ compzillaWindow::compzillaWindow(Display *display, Window win)
       mPixmap(None),
       mDamage(None),
       mLastEntered(None),
-      mIsDestroyed(false),
-      mDestroyEvMgr("destroy"),
-      mConfigureEvMgr("configure"),
-      mShowEvMgr("map"),
-      mHideEvMgr("unmap"),
-      mPropertyChangeEvMgr("propertychange"),
-      mClientMessageEvMgr("clientmessage")
+      mIsDestroyed(false)
 {
     NS_INIT_ISUPPORTS ();
 
@@ -123,20 +117,16 @@ compzillaWindow::compzillaWindow(Display *display, Window win)
 
 compzillaWindow::~compzillaWindow()
 {
-    SPEW ("compzillaWindow::~compzillaWindow %p, xid=%p\n", this, mWindow);
+    NS_ASSERT_OWNINGTHREAD(compzillaWindow);
 
-    // Allow a caller to remove O(N^2) behavior by removing end-to-start.
-    for (PRUint32 i = mContentNodes.Count() - 1; i != PRUint32(-1); --i) {
-        SPEW ("disconnecting content node %d\n", i);
-        nsCOMPtr<nsISupports> aContent = mContentNodes.ObjectAt(i);
-        ConnectListeners (false, aContent);
-    }
-    mContentNodes.Clear ();
+    SPEW ("compzillaWindow::~compzillaWindow %p, xid=%p\n", this, mWindow);
 
     // This is the only resource that stays around after window destruction.
     ResetPixmap ();
 
     if (!mIsDestroyed) {
+        DestroyWindow ();
+
         // Let the window render itself
         XCompositeUnredirectWindow (mDisplay, mWindow, CompositeRedirectManual);
 
@@ -153,6 +143,8 @@ compzillaWindow::~compzillaWindow()
         XShapeSelectInput (mDisplay, mWindow, NoEventMask);
         XUngrabButton (mDisplay, AnyButton, AnyModifier, mWindow);
     }
+
+    SPEW ("compzillaWindow::~compzillaWindow DONE\n");
 }
 
 
@@ -276,6 +268,8 @@ NS_IMETHODIMP
 compzillaWindow::AddContentNode (nsISupports* aContent)
 {
     SPEW ("compzillaWindow::AddContentNode %p - %p\n", this, aContent);
+
+    RemoveContentNode (aContent);
     mContentNodes.AppendObject (aContent);
     ConnectListeners (true, aContent);
 
@@ -304,6 +298,46 @@ compzillaWindow::RemoveContentNode (nsISupports* aContent)
         if (mContentNodes.ObjectAt(i) == aContent) {
             mContentNodes.RemoveObjectAt (i);
             ConnectListeners (false, aContent);
+            return NS_OK;
+        }
+    }
+
+    return NS_ERROR_FAILURE;
+}
+
+
+NS_IMETHODIMP
+compzillaWindow::AddObserver (compzillaIWindowObserver *aObserver)
+{
+    SPEW ("compzillaWindow::AddObserver %p - %p\n", this, aObserver);
+
+    RemoveObserver (aObserver);
+    mObservers.AppendObject (aObserver);
+
+    /* 
+     * When initially adding an observer, we need to force a configure event to
+     * update map/override redirect state. 
+     */
+    aObserver->Configure (mAttr.map_state == IsViewable,
+                          mAttr.override_redirect,
+                          mAttr.x, mAttr.y,
+                          mAttr.width, mAttr.height,
+                          mAttr.border_width,
+                          NULL);
+
+    return NS_OK;
+}
+
+
+NS_IMETHODIMP
+compzillaWindow::RemoveObserver (compzillaIWindowObserver *aObserver)
+{
+    SPEW ("compzillaWindow::RemoveObserver %p\n", this);
+
+    // Allow a caller to remove O(N^2) behavior by removing end-to-start.
+    for (PRUint32 i = mObservers.Count() - 1; i != PRUint32(-1); --i) {
+        if (mObservers.ObjectAt(i) == aObserver) {
+            mObservers.RemoveObjectAt (i);
             return NS_OK;
         }
     }
@@ -666,7 +700,7 @@ NS_IMETHODIMP
 compzillaWindow::KeyPress(nsIDOMEvent* aDOMEvent)
 {
     SPEW ("compzillaWindow::KeyPress: Ignored!!!\n");
-    return NS_ERROR_NOT_IMPLEMENTED;
+    return NS_OK;
 }
 
 
@@ -1040,63 +1074,6 @@ compzillaWindow::OnDOMMouseScroll (nsIDOMEvent *aDOMEvent)
 }
 
 
-/*
- * 
- * nsIDOMEventTarget Implementation...
- *
- */
-
-NS_IMETHODIMP
-compzillaWindow::AddEventListener (const nsAString & type, 
-                                   nsIDOMEventListener *listener, 
-                                   PRBool useCapture)
-{
-    if (type.EqualsLiteral ("destroy")) {
-        return mDestroyEvMgr.AddEventListener (type, listener);
-    } else if (type.EqualsLiteral ("configure")) {
-        return mConfigureEvMgr.AddEventListener (type, listener);
-    } else if (type.EqualsLiteral ("map")) {
-        return mShowEvMgr.AddEventListener (type, listener);
-    } else if (type.EqualsLiteral ("unmap")) {
-        return mHideEvMgr.AddEventListener (type, listener);
-    } else if (type.EqualsLiteral ("propertychange")) {
-        return mPropertyChangeEvMgr.AddEventListener (type, listener);
-    } else if (type.EqualsLiteral ("clientmessage")) {
-        return mClientMessageEvMgr.AddEventListener (type, listener);
-    } 
-    return NS_ERROR_INVALID_ARG;
-}
-
-
-NS_IMETHODIMP
-compzillaWindow::RemoveEventListener (const nsAString & type, 
-                                      nsIDOMEventListener *listener, 
-                                      PRBool useCapture)
-{
-    if (type.EqualsLiteral ("destroy")) {
-        return mDestroyEvMgr.RemoveEventListener (type, listener);
-    } else if (type.EqualsLiteral ("configure")) {
-        return mConfigureEvMgr.RemoveEventListener (type, listener);
-    } else if (type.EqualsLiteral ("map")) {
-        return mShowEvMgr.RemoveEventListener (type, listener);
-    } else if (type.EqualsLiteral ("unmap")) {
-        return mHideEvMgr.RemoveEventListener (type, listener);
-    } else if (type.EqualsLiteral ("propertychange")) {
-        return mPropertyChangeEvMgr.RemoveEventListener (type, listener);
-    } else if (type.EqualsLiteral ("clientmessage")) {
-        return mClientMessageEvMgr.RemoveEventListener (type, listener);
-    } 
-    return NS_ERROR_INVALID_ARG;
-}
-
-
-NS_IMETHODIMP
-compzillaWindow::DispatchEvent (nsIDOMEvent *evt, PRBool *_retval)
-{
-    return NS_ERROR_NOT_IMPLEMENTED;
-}
-
-
 void
 compzillaWindow::DestroyWindow ()
 {
@@ -1104,11 +1081,19 @@ compzillaWindow::DestroyWindow ()
 
     mIsDestroyed = true;
 
-    if (mDestroyEvMgr.HasEventListeners ()) {
-        nsRefPtr<compzillaWindowEvent> ev;
-        if (NS_OK == CZ_NewCompzillaWindowEvent (this, getter_AddRefs (ev)))
-            ev->Send (NS_LITERAL_STRING ("destroy"), this, mDestroyEvMgr);
+    for (PRUint32 i = mObservers.Count() - 1; i != PRUint32(-1); --i) {
+        nsCOMPtr<compzillaIWindowObserver> observer = mObservers.ObjectAt(i);
+        observer->Destroy ();
     }
+    mObservers.Clear ();
+
+    // Allow a caller to remove O(N^2) behavior by removing end-to-start.
+    for (PRUint32 i = mContentNodes.Count() - 1; i != PRUint32(-1); --i) {
+        SPEW ("disconnecting content node %d\n", i);
+        nsCOMPtr<nsISupports> aContent = mContentNodes.ObjectAt(i);
+        ConnectListeners (false, aContent);
+    }
+    mContentNodes.Clear ();
 
     // Damage is not valid if the window is already destroyed
     mDamage = 0;
@@ -1121,10 +1106,9 @@ compzillaWindow::MapWindow ()
     mAttr.map_state = IsViewable;
     EnsureDamage ();
 
-    if (mShowEvMgr.HasEventListeners ()) {
-        nsRefPtr<compzillaWindowEvent> ev;
-        if (NS_OK == CZ_NewCompzillaWindowEvent (this, getter_AddRefs (ev)))
-            ev->Send (NS_LITERAL_STRING ("map"), this, mShowEvMgr);
+    for (PRUint32 i = mObservers.Count() - 1; i != PRUint32(-1); --i) {
+        nsCOMPtr<compzillaIWindowObserver> observer = mObservers.ObjectAt(i);
+        observer->Map ();
     }
 }
 
@@ -1134,16 +1118,17 @@ compzillaWindow::UnmapWindow ()
 {
     mAttr.map_state = IsUnmapped;
 
-    if (mHideEvMgr.HasEventListeners ()) {
-        nsRefPtr<compzillaWindowEvent> ev;
-        if (NS_OK == CZ_NewCompzillaWindowEvent (this, getter_AddRefs (ev)))
-            ev->Send (NS_LITERAL_STRING ("unmap"), this, mHideEvMgr);
+    for (PRUint32 i = mObservers.Count() - 1; i != PRUint32(-1); --i) {
+        nsCOMPtr<compzillaIWindowObserver> observer = mObservers.ObjectAt(i);
+        observer->Unmap ();
     }
 }
 
 
 nsresult
-compzillaWindow::GetCardinalListProperty (Atom prop, PRUint32 **values, PRUint32 expected_nitems)
+compzillaWindow::GetCardinalListProperty (Atom prop, 
+                                          PRUint32 **values, 
+                                          PRUint32 expected_nitems)
 {
     Atom actual_type;
     int format;
@@ -1432,30 +1417,24 @@ compzillaWindow::GetProperty (PRUint32 iprop, nsIPropertyBag2 **bag2)
 void
 compzillaWindow::PropertyChanged (Atom prop, bool deleted)
 {
-    if (mPropertyChangeEvMgr.HasEventListeners ()) {
-        nsRefPtr<compzillaWindowEvent> ev;
-        if (NS_OK == CZ_NewCompzillaPropertyChangeEvent (this, 
-                                                         prop, 
-                                                         deleted, 
-                                                         getter_AddRefs (ev)))
-            ev->Send (NS_LITERAL_STRING ("propertychange"), this, mPropertyChangeEvMgr);
+    for (PRUint32 i = mObservers.Count() - 1; i != PRUint32(-1); --i) {
+        nsCOMPtr<compzillaIWindowObserver> observer = mObservers.ObjectAt(i);
+        observer->PropertyChange (prop, deleted);
     }
 }
+
 
 void
 compzillaWindow::ClientMessaged (Atom type, int format, long *data/*[5]*/)
 {
-    if (mClientMessageEvMgr.HasEventListeners ()) {
-        nsRefPtr<compzillaWindowEvent> ev;
-        if (NS_OK == CZ_NewCompzillaClientMessageEvent (this, 
-                                                        type, format,
-                                                        data[0],
-                                                        data[1],
-                                                        data[2],
-                                                        data[3],
-                                                        data[4],
-                                                        getter_AddRefs (ev)))
-            ev->Send (NS_LITERAL_STRING ("clientmessage"), this, mClientMessageEvMgr);
+    for (PRUint32 i = mObservers.Count() - 1; i != PRUint32(-1); --i) {
+        nsCOMPtr<compzillaIWindowObserver> observer = mObservers.ObjectAt(i);
+        observer->ClientMessageRecv (type, format,
+                                     data[0],
+                                     data[1],
+                                     data[2],
+                                     data[3],
+                                     data[4]);
     }
 }
 
@@ -1501,22 +1480,24 @@ compzillaWindow::WindowConfigured (bool isNotify,
                                    compzillaWindow *aboveWin,
                                    bool override_redirect)
 {
-    if ((!isNotify || override_redirect) && mConfigureEvMgr.HasEventListeners ()) {
+    if (!isNotify || override_redirect) {
         // abovewin doesn't work given that abovewin has a list of content
         // nodes...  but really, we shouldn't have to worry about this, as you
         // *can't* reliably specify a window to raise/lower above/below, since
         // clients can't depend on the fact that other topevel windows are
         // siblings of each other.
-        nsRefPtr<compzillaWindowEvent> ev;
-        if (NS_OK == CZ_NewCompzillaConfigureEvent (this,
-                                                    mAttr.map_state == IsViewable,
-                                                    override_redirect,
-                                                    x, y,
-                                                    width, height,
-                                                    border,
-                                                    aboveWin,
-                                                    getter_AddRefs (ev))) {
-            ev->Send (NS_LITERAL_STRING ("configure"), this, mConfigureEvMgr);
+        nsCOMPtr<compzillaIWindow> above = aboveWin;
+
+        for (PRUint32 i = mObservers.Count() - 1; i != PRUint32(-1); --i) {
+            nsCOMPtr<compzillaIWindowObserver> observer = mObservers.ObjectAt(i);
+
+            // FIXME: Respect the return value
+            observer->Configure (mAttr.map_state == IsViewable,
+                                 override_redirect,
+                                 x, y,
+                                 width, height,
+                                 border,
+                                 above);
         }
     }
 

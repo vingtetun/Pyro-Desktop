@@ -1,7 +1,8 @@
 /* -*- mode: C++; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
 
 #include <nsCOMPtr.h>
-#include <nsIDOMEventTarget.h>
+#include <nsCOMArray.h>
+#include <nsIDOMDocument.h>
 #include <nsIDOMKeyEvent.h>
 #include <nsIDOMKeyListener.h>
 #include <nsIDOMMouseEvent.h>
@@ -13,9 +14,8 @@ extern "C" {
 #include <X11/extensions/Xdamage.h>
 }
 
-#include "compzillaEventManager.h"
 #include "compzillaIWindow.h"
-#include "compzillaWindowEvents.h"
+#include "compzillaIWindowObserver.h"
 
 
 // From X.h
@@ -31,7 +31,6 @@ extern "C" {
 
 class compzillaWindow
     : public compzillaIWindow,
-      public nsIDOMEventTarget,
       public nsIDOMKeyListener,
       public nsIDOMMouseListener,
       public nsIDOMUIListener
@@ -39,7 +38,6 @@ class compzillaWindow
 public:
     NS_DECL_ISUPPORTS
     NS_DECL_COMPZILLAIWINDOW
-    NS_DECL_NSIDOMEVENTTARGET
     NS_DECL_NSIDOMEVENTLISTENER
 
     compzillaWindow (Display *display, Window window);
@@ -104,19 +102,16 @@ public:
     nsresult GetCardinalListProperty (Atom prop, PRUint32 **values, PRUint32 expected_nitems);
 
     nsCOMArray<nsISupports> mContentNodes;
+    nsCOMArray<compzillaIWindowObserver> mObservers;
     Display *mDisplay;
     Window mWindow;
+
     Pixmap mPixmap;
     Damage mDamage;
     Window mLastEntered;
-
-    compzillaEventManager mDestroyEvMgr;
-    compzillaEventManager mConfigureEvMgr;
-    compzillaEventManager mShowEvMgr;
-    compzillaEventManager mHideEvMgr;
-    compzillaEventManager mPropertyChangeEvMgr;
-    compzillaEventManager mClientMessageEvMgr;
 };
 
-nsresult CZ_NewCompzillaWindow(Display *display, Window win, compzillaWindow **retval);
+nsresult CZ_NewCompzillaWindow(Display *display, 
+                               Window win, 
+                               compzillaWindow **retval);
 

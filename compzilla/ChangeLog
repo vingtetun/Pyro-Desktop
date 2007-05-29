@@ -1,5 +1,31 @@
 2007-05-29  Alex Graveley  <alex@beatniksoftware.com>
 
+	* compzilla/src/compzillaControl.cpp/h: Don't implement
+	nsIDOMEventTarget, and replace all DOM event code with calls on
+	each registered observer.  Implement add/removeObserver by adding
+	observers to an nsCOMArray.
+
+	* compzilla/src/compzillaWindow.cpp/h: Also call DestroyWindow in
+	destructor if !mIsDestroyed.  Return NS_OK from KeyPress, instead
+	of NOT_IMPLEMENTED.  Clear content nodes and observers in
+	DestroyWindow.
+
+	* compzilla/src/compzillaModule.cpp: Don't expose
+	compzillaIWindowEvents.
+
+	* compzilla/public/compzillaIWindow.idl: New methods: addObserver,
+	removeObserver.
+	* compzilla/public/compzillaIControl.idl: Ditto.
+
+	* compzilla/chrome/content/start.js: Call svx.addObserver.
+
+	* compzilla/chrome/content/frame.js: Use nativewin.addObserver
+	instead of conntecting to nativewin events, and stick the observer
+	in frame._observer.  Add "visible" property to frame, setting it
+	calls show/hide.
+
+2007-05-29  Alex Graveley  <alex@beatniksoftware.com>
+
 	* compzilla/public/compzillaIWindowObserver.idl: 
 	* compzilla/public/compzillaIControlObserver.idl: New ifaces for
 	observer-based eventing.

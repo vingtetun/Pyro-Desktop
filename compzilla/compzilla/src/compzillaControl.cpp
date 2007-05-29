@@ -52,7 +52,7 @@ extern "C" {
 #endif
 
 
-NS_IMPL_ISUPPORTS2_CI(compzillaControl, compzillaIControl, nsIDOMEventTarget);
+NS_IMPL_ISUPPORTS1_CI(compzillaControl, compzillaIControl);
 
 
 int compzillaControl::sErrorCnt;
@@ -73,9 +73,6 @@ int compzillaControl::render_error;
 XAtoms atoms;
 
 compzillaControl::compzillaControl()
-    : mWindowCreateEvMgr ("windowcreate"),
-      mWindowDestroyEvMgr ("windowdestroy"),
-      mClientMessageEvMgr ("clientmessage")
 {
     mWindowMap.Init(50);
 }
@@ -231,48 +228,37 @@ compzillaControl::ConfigureWindow (PRUint32 xid,
 }
 
 
-/*
- * 
- * nsIDOMEventTarget Implementation...
- *
- */
-
-NS_IMETHODIMP
-compzillaControl::AddEventListener (const nsAString & type, 
-                                    nsIDOMEventListener *listener, 
-                                    PRBool useCapture)
+NS_IMETHODIMP 
+compzillaControl::AddObserver (compzillaIControlObserver *aObserver)
 {
-    if (type.EqualsLiteral ("windowcreate")) {
-        return mWindowCreateEvMgr.AddEventListener (type, listener);
-    } else if (type.EqualsLiteral ("windowdestroy")) {
-        return mWindowDestroyEvMgr.AddEventListener (type, listener);
-    } else if (type.EqualsLiteral ("clientmessage")) {
-        return mClientMessageEvMgr.AddEventListener (type, listener);
-    }
-    return NS_ERROR_INVALID_ARG;
+    SPEW ("compzillaWindow::AddObserver %p - %p\n", this, aObserver);
+
+    RemoveObserver (aObserver);
+    mObservers.AppendObject (aObserver);
+
+    /* 
+     * When initially adding an observer, call windowCreate for all existing
+     * windows?
+     */
+
+    return NS_OK;
 }
 
 
-NS_IMETHODIMP
-compzillaControl::RemoveEventListener (const nsAString & type, 
-                                       nsIDOMEventListener *listener, 
-                                       PRBool useCapture)
+NS_IMETHODIMP 
+compzillaControl::RemoveObserver (compzillaIControlObserver *aObserver)
 {
-    if (type.EqualsLiteral ("windowcreate")) {
-        return mWindowCreateEvMgr.RemoveEventListener (type, listener);
-    } else if (type.EqualsLiteral ("windowdestroy")) {
-        return mWindowDestroyEvMgr.RemoveEventListener (type, listener);
-    } else if (type.EqualsLiteral ("clientmessage")) {
-        return mClientMessageEvMgr.RemoveEventListener (type, listener);
+    SPEW ("compzillaControl::RemoveObserver %p\n", this);
+
+    // Allow a caller to remove O(N^2) behavior by removing end-to-start.
+    for (PRUint32 i = mObservers.Count() - 1; i != PRUint32(-1); --i) {
+        if (mObservers.ObjectAt(i) == aObserver) {
+            mObservers.RemoveObjectAt (i);
+            return NS_OK;
+        }
     }
-    return NS_ERROR_INVALID_ARG;
-}
 
-
-NS_IMETHODIMP
-compzillaControl::DispatchEvent (nsIDOMEvent *evt, PRBool *_retval)
-{
-    return NS_ERROR_NOT_IMPLEMENTED;
+    return NS_ERROR_FAILURE;
 }
 
 
@@ -688,19 +674,12 @@ compzillaControl::AddWindow (Window win)
     }
 
     mWindowMap.Put (win, compwin);
+    
+    compzillaIWindow *iwin = compwin;
 
-    if (mWindowCreateEvMgr.HasEventListeners ()) {
-        nsRefPtr<compzillaWindowEvent> ev;
-        if (NS_OK == CZ_NewCompzillaConfigureEvent (compwin,
-                                                    compwin->mAttr.map_state == IsViewable,
-                                                    compwin->mAttr.override_redirect != 0,
-                                                    compwin->mAttr.x, compwin->mAttr.y,
-                                                    compwin->mAttr.width, compwin->mAttr.height,
-                                                    compwin->mAttr.border_width,
-                                                    NULL, 
-                                                    getter_AddRefs(ev))) {
-            ev->Send (NS_LITERAL_STRING ("windowcreate"), this, mWindowCreateEvMgr);
-        }
+    for (PRUint32 i = mObservers.Count() - 1; i != PRUint32(-1); --i) {
+        nsCOMPtr<compzillaIControlObserver> observer = mObservers.ObjectAt(i);
+        observer->WindowCreate (iwin);
     }
 
     if (compwin->mAttr.map_state == IsViewable) {
@@ -716,11 +695,11 @@ compzillaControl::DestroyWindow (Window win)
     if (compwin) {
         compwin->DestroyWindow ();
 
-        if (mWindowDestroyEvMgr.HasEventListeners ()) {
-            nsRefPtr<compzillaWindowEvent> ev;
-            if (NS_OK == CZ_NewCompzillaWindowEvent (compwin, getter_AddRefs(ev))) {
-                ev->Send (NS_LITERAL_STRING ("windowdestroy"), this, mWindowDestroyEvMgr);
-            }
+        compzillaIWindow *iwin = compwin;
+
+        for (PRUint32 i = mObservers.Count() - 1; i != PRUint32(-1); --i) {
+            nsCOMPtr<compzillaIControlObserver> observer = mObservers.ObjectAt(i);
+            observer->WindowDestroy (iwin);
         }
 
         SPEW ("BEFORE REMOVING %p\n", compwin.get());
@@ -815,20 +794,15 @@ compzillaControl::ClientMessaged (Window win,
         compwin->ClientMessaged (type, format, data);
     }
     else {
-        if (mClientMessageEvMgr.HasEventListeners ()) {
-            nsRefPtr<compzillaWindowEvent> ev;
-
-            if (NS_OK == CZ_NewCompzillaClientMessageEvent (compwin,
-                                                            (long)type,
-                                                            format,
-                                                            data[0],
-                                                            data[1],
-                                                            data[2],
-                                                            data[3],
-                                                            data[4],
-                                                            getter_AddRefs(ev))) {
-                ev->Send (NS_LITERAL_STRING ("clientmessage"), this, mClientMessageEvMgr);
-            }
+        for (PRUint32 i = mObservers.Count() - 1; i != PRUint32(-1); --i) {
+            nsCOMPtr<compzillaIControlObserver> observer = mObservers.ObjectAt(i);
+            observer->RootClientMessage ((long)type,
+                                         format,
+                                         data[0],
+                                         data[1],
+                                         data[2],
+                                         data[3],
+                                         data[4]);
         }
     }
 }

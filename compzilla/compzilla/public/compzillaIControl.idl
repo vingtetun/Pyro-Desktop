@@ -1,7 +1,8 @@
 /* -*- mode: IDL; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
+
 #include "nsISupports.idl"
 #include "nsIDOMWindow.idl"
-#include "compzillaIWindowManager.idl"
+#include "compzillaIControlObserver.idl"
 
 
 [scriptable, uuid(8bf6de0a-ed8f-47af-8757-41551542d196)]
@@ -22,7 +23,13 @@ interface compzillaIControl : nsISupports
                           in PRUint32 width, in PRUint32 height, 
                           in PRUint32 border);
 
-    void SetRootWindowArrayProperty (in PRInt32 prop, in PRInt32 type, in PRUint32 count, [array, size_is (count)] in PRUInt32 valueArray);
+    void SetRootWindowArrayProperty (in PRInt32 prop, 
+                                     in PRInt32 type, 
+                                     in PRUint32 count, 
+                                     [array, size_is (count)] in PRUInt32 valueArray);
+
+    void addObserver (in compzillaIControlObserver observer);
+    void removeObserver (in compzillaIControlObserver observer);
 };
 
 
