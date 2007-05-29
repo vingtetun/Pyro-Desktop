@@ -61,11 +61,13 @@ var ContentMethods = {
     },
 
     onhide: function () {
-	// XXX unmap the window, remove the _NET_WM_WINDOW_STATE property
+	// XXX remove the _NET_WM_WINDOW_STATE property from the window
+	svc.UnmapWindow (this._nativewin.nativeWindowId);
     },
 
     onshow: function () {
-	// XXX map the window, calculate and add the _NET_WM_WINDOW_STATE property
+	// XXX calculate and add the _NET_WM_WINDOW_STATE property to the window
+	svc.MapWindow (this._nativewin.nativeWindowId);
     },
 
     onmaximize: function () {

@@ -1,5 +1,22 @@
 2007-05-29  Chris Toshok  <toshok@ximian.com>
 
+	* compzilla/src/compzillaControl.cpp: implement MapWindow and
+	UnmapWindow.
+
+	* compzilla/public/compzillaIControl.idl: add MapWindow and
+	UnmapWindow.
+
+	* compzilla/chrome/content/frame.js: add a minimize method to
+	match maximize.  make hide work the way mac osx's does.  no
+	animation, just hide the window.  so now frame.minimize ->
+	MinimizeCompzillaFrame -> frame.hide, no infinite recursion.
+
+	* compzilla/chrome/content/content.js: call svc.UnmapWindow and
+	svc.MapWindow in response to content.onhide and content.onshow,
+	respectively.
+
+2007-05-29  Chris Toshok  <toshok@ximian.com>
+
 	* compzilla/chrome/content/frame.js: add override arg to map().
 
 	* compzilla/src/compzillaControl.cpp/.h: same.

@@ -100,6 +100,8 @@ function compzillaLoad()
  		      Atoms._NET_WM_WINDOW_TYPE_MENU,
  		      Atoms._NET_WM_WINDOW_TYPE_NORMAL,
  		      Atoms._NET_WM_WINDOW_TYPE_TOOLBAR,
+ 		      Atoms._NET_WM_WINDOW_TYPE_SPLASH,
+ 		      Atoms._NET_WM_WINDOW_TYPE_UTILITY,
 
 // 		      Atoms._NET_CURRENT_DESKTOP,
 // 		      Atoms._NET_DESKTOP_GEOMETRY,
@@ -109,7 +111,7 @@ function compzillaLoad()
 // 		      Atoms._NET_FRAME_EXTENTS,
 // 		      Atoms._NET_NUMBER_OF_DESKTOPS,
 // 		      Atoms._NET_REQUEST_FRAME_EXTENTS,
-// 		      Atoms._NET_SHOWING_DESKTOP,
+ 		      Atoms._NET_SHOWING_DESKTOP,
 // 		      Atoms._NET_STARTUP_ID,
 // 		      Atoms._NET_WM_ACTION_CHANGE_DESKTOP,
 // 		      Atoms._NET_WM_ACTION_CLOSE,
@@ -134,9 +136,7 @@ function compzillaLoad()
 // 		      Atoms._NET_WM_STATE_FULLSCREEN,
 // 		      Atoms._NET_WM_STATE_HIDDEN,
 // 		      Atoms._NET_WM_USER_TIME,
-// 		      Atoms._NET_WM_WINDOW_TYPE_SPLASH,
-// 		      Atoms._NET_WM_WINDOW_TYPE_UTILITY,
-// 		      Atoms._NET_WORKAREA,
+ 		      Atoms._NET_WORKAREA,
 		      ];
 
     svc.SetRootWindowArrayProperty (Atoms._NET_SUPPORTED, 

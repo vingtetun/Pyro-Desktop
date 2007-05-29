@@ -188,12 +188,17 @@ var FrameMethods = {
 
 	Debug ("frame", "frame.hide");
 
-	MinimizeCompzillaFrame (this);
-
 	if (this._content.onhide)
 	    this._content.onhide ();
     },
 
+
+    minimize: function () {
+	MinimizeCompzillaFrame (this);
+
+	if (this._content.onminimize)
+	    this._content.onminimize ();
+    },
 
     maximize: function () {
 	Debug ("maximizing frame to " +

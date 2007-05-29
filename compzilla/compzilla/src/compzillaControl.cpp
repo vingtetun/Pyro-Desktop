@@ -228,6 +228,20 @@ compzillaControl::ConfigureWindow (PRUint32 xid,
 }
 
 
+NS_IMETHODIMP
+compzillaControl::MapWindow (PRUint32 xid)
+{
+    XMapWindow (mXDisplay, xid);
+}
+
+
+NS_IMETHODIMP
+compzillaControl::UnmapWindow (PRUint32 xid)
+{
+    XUnmapWindow (mXDisplay, xid);
+}
+
+
 NS_IMETHODIMP 
 compzillaControl::AddObserver (compzillaIControlObserver *aObserver)
 {
