@@ -163,5 +163,10 @@ Atoms = {
     get _NET_WM_MOVERESIZE_MOVE ()             { return 8; },  /* movement only */
     get _NET_WM_MOVERESIZE_SIZE_KEYBOARD ()    { return 9; },  /* size via keyboard */
     get _NET_WM_MOVERESIZE_MOVE_KEYBOARD ()    { return 10; }, /* move via keyboard */
+    get _NET_WM_MOVERESIZE_CANCEL ()           { return 11; }, /* cancel operation */
 
+    /* state change operations */
+    get _NET_WM_STATE_REMOVE ()                { return 0; },  /* remove/unset property */
+    get _NET_WM_STATE_ADD ()                   { return 1; },  /* add/set property */
+    get _NET_WM_STATE_TOGGLE ()                { return 2; },  /* toggle property  */
 }

@@ -583,6 +583,57 @@ function _connectNativeWindowListeners (frame)
         {
 	    handleEvent: function (ev) {
 		Debug ("frame", "clientmessage (" + ev.messageType + ")");
+
+		switch (ev.messageType) {
+		case Atoms._NET_CLOSE_WINDOW:
+		    frame.close ();
+		    break;
+
+		case Atoms._NET_MOVERESIZE_WINDOW:
+		    /* d1 == gravity and flags */
+		    /* d2 == x */
+		    /* d3 == y */
+		    /* d4 == width */
+		    /* d5 == height */
+		    break;
+
+		case Atoms._NET_WM_MOVERESIZE:
+		    /* d1 = x_root */
+		    /* d2 = y_root */
+		    /* d3 = direction */
+		    /* d4 = button */
+		    /* d5 = source indication */
+		    break;
+
+		case Atoms._NET_RESTACK_WINDOW:
+		    /* d1 == source indication */
+		    /* d2 == sibling window */
+		    /* d3 == detail */
+		    break;
+
+		case Atoms._NET_REQUEST_FRAME_EXTENTS:
+		    /* The Window Manager MUST respond by estimating
+		       the prospective frame extents and setting the
+		       window's _NET_FRAME_EXTENTS property
+		       accordingly. */
+		    break;
+
+		case Atoms._NET_WM_DESKTOP:
+		    /* A Client can request a change of desktop for a
+		       non-withdrawn window by sending a
+		       _NET_WM_DESKTOP client message to the root
+		       window: */
+
+		    /* d1 == new_desktop */
+		    /* d2 == source indication */
+		    break;
+
+		case Atoms._NET_WM_STATE:
+		    /* d1 == the action, _NET_WM_STATE_{REMOVE,ADD,TOGGLE} */
+		    /* d2 == first property to alter */
+		    /* d3 == second property to alter */
+		    break;
+		}
 	    }
 	},
 	true);

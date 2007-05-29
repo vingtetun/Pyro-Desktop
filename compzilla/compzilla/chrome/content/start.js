@@ -60,6 +60,37 @@ function compzillaLoad()
 	{
 	    handleEvent: function (ev) {
 		Debug ("Got root window client message of type " + ev.messageType);
+
+		switch (ev.messageType) {
+		case Atoms._NET_ACTIVE_WINDOW:
+		    /* d1 == 1 for normal apps, 2 for pagers and their ilk */
+		    /* d2 == timestamp */
+		    /* d3 == XID */
+		    break;
+
+		case Atoms._NET_CURRENT_DESKTOP:
+		    /* d1 == desktop index */
+		    /* d2 == timestamp */
+		    break;
+
+		case Atoms._NET_DESKTOP_VIEWPORT:
+		    /* d1 == new desktop vx */
+		    /* d2 == new desktop vy */
+		    break;
+
+		case Atoms._NET_DESKTOP_GEOMETRY:
+		    /* d1 == new desktop width */
+		    /* d2 == new desktop height */
+		    break;
+
+		case Atoms._NET_NUMBER_OF_DESKTOPS:
+		    /* d1 == new number of desktops */
+		    break;
+
+		case Atoms._NET_SHOWING_DESKTOP:
+		    /* d1 == boolean 0 or 1 */
+		    break;
+		}
 	    }
 	},
 	true);

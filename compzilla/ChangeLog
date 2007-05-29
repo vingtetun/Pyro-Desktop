@@ -1,3 +1,15 @@
+2007-05-29  Chris Toshok  <toshok@ximian.com>
+
+	* compzilla/chrome/content/atoms.js (Atoms): add the
+	MOVERESIZE_CANCEL operation, and add the _NET_WM_STATE change
+	operation constants.
+
+	* compzilla/chrome/content/frame.js: add some comments about in
+	the client message event handler for the different applicable
+	message types.
+
+	* compzilla/chrome/content/start.js: same.
+
 2007-05-27  Chris Toshok  <toshok@ximian.com>
 
 	* compzilla/src/compzillaControl.cpp,
