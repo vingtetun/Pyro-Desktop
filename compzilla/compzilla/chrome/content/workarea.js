@@ -58,7 +58,7 @@ WorkArea.prototype = {
 
 	// update the root window property
 	var vals = [ this.bounds.left, this.bounds.top, this.bounds.width, this.bounds.height ];
-	svc.SetRootWindowArrayProperty (Atoms._NET_WORKAREA, Atoms.XA_CARDINAL, vals.length, vals);
+	svc.SetRootWindowProperty (Atoms._NET_WORKAREA, Atoms.XA_CARDINAL, vals.length, vals);
 
 	// XXX somehow we should tell maximized windows to resize
 	// themselves here.

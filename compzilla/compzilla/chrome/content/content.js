@@ -82,13 +82,13 @@ var ContentMethods = {
     onlostfocus: function () {
 	// update _NET_ACTIVE_WINDOW on the root window
 	var focused_list = [ xNone ];
-	svc.SetRootWindowArrayProperty (Atoms._NET_ACTIVE_WINDOW, Atoms.XA_WINDOW, focused_list.length, focused_list);
+	svc.SetRootWindowProperty (Atoms._NET_ACTIVE_WINDOW, Atoms.XA_WINDOW, focused_list.length, focused_list);
     },
 
     ongotfocus: function () {
 	// update _NET_ACTIVE_WINDOW on the root window
 	var focused_list = [ this._nativewin.nativeWindowId ];
-	svc.SetRootWindowArrayProperty (Atoms._NET_ACTIVE_WINDOW, Atoms.XA_WINDOW, focused_list.length, focused_list);
+	svc.SetRootWindowProperty (Atoms._NET_ACTIVE_WINDOW, Atoms.XA_WINDOW, focused_list.length, focused_list);
     },
 }
 

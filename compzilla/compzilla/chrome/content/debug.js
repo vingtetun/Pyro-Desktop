@@ -35,13 +35,13 @@ function debugToggle (el) {
 
 
 function debugSelectLog (log) {
-    Debug ("deselecting debug log '" + log + "'");
+    Debug ("selecting debug log '" + log + "'");
     Debug[log] = true;
 }
 
 
 function debugDeselectLog (log) {
-    Debug ("selecting debug log '" + log + "'");
+    Debug ("deselecting debug log '" + log + "'");
     delete Debug[log];
 }
 
@@ -61,7 +61,6 @@ debugFrame.allowClose =
   debugFrame.allowMinimize =
   debugFrame.allowMaximize = false;
 
-var windowStack = document.getElementById ("windowStack");
 windowStack.stackWindow (debugFrame);
 
 

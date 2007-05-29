@@ -35,7 +35,7 @@ function compzillaLoad()
 	    }
 	},
 
-	rootClientMessageRecv: function (messageType, format, d1, d1, d3, d4) {
+	rootClientMessageRecv: function (messageType, format, d1, d2, d3, d4) {
 	    Debug ("Got root window clientmessage type:" + messageType + 
 		   " [d1:"+d1 + ", d2:"+d2 + ", d3:"+d3 + ", d4:"+d4 + "]");
 
@@ -66,7 +66,7 @@ function compzillaLoad()
 		break;
 
 	    case Atoms._NET_SHOWING_DESKTOP:
-		/* d1 == boolean 0 or 1 */
+		windowStack.showingDesktop = (d1 == 1);
 		break;
 	    }
 	},
@@ -75,8 +75,6 @@ function compzillaLoad()
     // Register as the window manager and generate windowcreate events for
     // existing windows.
     svc.RegisterWindowManager (window);
-
-    // we don't really support these...
 
     var supported = [ Atoms._NET_ACTIVE_WINDOW,
  		      Atoms._NET_CLIENT_LIST,
@@ -102,16 +100,16 @@ function compzillaLoad()
  		      Atoms._NET_WM_WINDOW_TYPE_TOOLBAR,
  		      Atoms._NET_WM_WINDOW_TYPE_SPLASH,
  		      Atoms._NET_WM_WINDOW_TYPE_UTILITY,
+ 		      Atoms._NET_DESKTOP_GEOMETRY,
+ 		      Atoms._NET_NUMBER_OF_DESKTOPS,
+ 		      Atoms._NET_CURRENT_DESKTOP,
+ 		      Atoms._NET_DESKTOP_VIEWPORT
+ 		      Atoms._NET_SHOWING_DESKTOP,
 
-// 		      Atoms._NET_CURRENT_DESKTOP,
-// 		      Atoms._NET_DESKTOP_GEOMETRY,
 // 		      Atoms._NET_DESKTOP_LAYOUT,
 // 		      Atoms._NET_DESKTOP_NAMES,
-// 		      Atoms._NET_DESKTOP_VIEWPORT
 // 		      Atoms._NET_FRAME_EXTENTS,
-// 		      Atoms._NET_NUMBER_OF_DESKTOPS,
 // 		      Atoms._NET_REQUEST_FRAME_EXTENTS,
- 		      Atoms._NET_SHOWING_DESKTOP,
 // 		      Atoms._NET_STARTUP_ID,
 // 		      Atoms._NET_WM_ACTION_CHANGE_DESKTOP,
 // 		      Atoms._NET_WM_ACTION_CLOSE,
@@ -139,21 +137,48 @@ function compzillaLoad()
  		      Atoms._NET_WORKAREA,
 		      ];
 
-    svc.SetRootWindowArrayProperty (Atoms._NET_SUPPORTED, 
-				    Atoms.XA_ATOM , 
-				    supported.length, 
-				    supported);
+    svc.SetRootWindowProperty (Atoms._NET_SUPPORTED, 
+			       Atoms.XA_ATOM , 
+			       supported.length, 
+			       supported);
+
+    svc.SetRootWindowProperty (Atoms._NET_SHOWING_DESKTOP,
+			       Atoms.XA_CARDINAL,
+			       1,
+			       [ windowStack.showingDesktop ]);
+
+    svc.SetRootWindowProperty (Atoms._NET_NUMBER_OF_DESKTOPS,
+			       Atoms.XA_CARDINAL,
+			       1,
+			       [ 1 ]);
+
+    svc.SetRootWindowProperty (Atoms._NET_DESKTOP_GEOMETRY,
+			       Atoms.XA_CARDINAL,
+			       2,
+			       [ screen.width, screen.height ]);
+
+    svc.SetRootWindowProperty (Atoms._NET_DESKTOP_VIEWPORT,
+			       Atoms.XA_CARDINAL,
+			       2,
+			       [0, 0]);
+
+    svc.SetRootWindowProperty (Atoms._NET_CURRENT_DESKTOP,
+			       Atoms.XA_CARDINAL,
+			       1,
+			       [ 0 ]);
+
+    svc.DeleteRootProperty (Atoms._NET_VIRTUAL_ROOTS);
 }
 
 
 function _updateClientListProperty ()
 {
-    svc.SetRootWindowArrayProperty (Atoms._NET_CLIENT_LIST, 
-				    Atoms.XA_WINDOW, 
-				    _clientList.length, 
-				    _clientList);
-    svc.SetRootWindowArrayProperty (Atoms._NET_CLIENT_LIST_STACKING, 
-				    Atoms.XA_WINDOW, 
-				    _clientList.length, 
-				    _clientList);
+    svc.SetRootWindowProperty (Atoms._NET_CLIENT_LIST, 
+			       Atoms.XA_WINDOW, 
+			       _clientList.length, 
+			       _clientList);
+    svc.SetRootWindowProperty (Atoms._NET_CLIENT_LIST_STACKING, 
+			       Atoms.XA_WINDOW, 
+			       _clientList.length, 
+			       _clientList);
 }

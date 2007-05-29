@@ -1,5 +1,48 @@
 2007-05-29  Chris Toshok  <toshok@ximian.com>
 
+	* compzilla/chrome/content/windowStack.js: add back in the
+	toggleDesktop method (it's used in start.xul), but have it just
+	set/get showingDesktop.  make the setter for showingDesktop update
+	the root window property.  use _addUtilMethods(windowStack) to get
+	us windowStack.addProperty, to clean up the showingDesktop
+	property.  Also, make the moveToBottom code a little better -
+	don't always restack.  we don't start allocating Z indices from
+	the bottom, but from 1/3rd of the way between bottom and top.  so
+	we can use the same maybeRestack logic in moveToBottom as
+	moveToTop.
+
+	* compzilla/chrome/content/workarea.js: track name change of
+	SetRootWindowProperty.
+
+	* compzilla/chrome/content/debug.js: fix the debug messages, and
+	there's no reason to reassign windowStack here.  it's already
+	defined.
+
+	* compzilla/chrome/content/content.js: track the name change of
+	SetRootWindowProperty.
+	
+	* compzilla/chrome/content/start.js: fix typo in
+	rootWindowClientMessageRecv parameter list (I can't believe JS
+	doesn't error out about this...) set up the initial root window
+	properties for many things.  also, implement the
+	_NET_SHOWING_DESKTOP client message handler.  just set the
+	windowStack.showingDesktop property.  also, track the name change
+	of SetRootWindowProperty.
+
+	* compzilla/public/compzillaIControlObserver.idl: fix method name
+	for client messages (add "Recv" to match the javascript.)
+
+	* compzilla/src/compzillaControl.cpp: track rename of
+	SetRootWindowArrayProperty, implement DeleteRootWindowProperty,
+	and fix typo that was causing client messages to not work after
+	the observer change.
+
+	* compzilla/public/compzillaIControl.idl: add
+	DeleteRootWindowProperty, rename SetRootWindowArrayProperty to
+	SetRootWindowProperty (drop "Array").
+
+2007-05-29  Chris Toshok  <toshok@ximian.com>
+
 	* compzilla/chrome/content/windowStack.js: fix up my half baked
 	commit for the showingDesktop property.  we should switch to that
 	instead of toggleDesktop, so we can actually set it to a

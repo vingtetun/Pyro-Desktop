@@ -26,10 +26,11 @@ interface compzillaIControl : nsISupports
     void MapWindow (in PRUint32 xid);
     void UnmapWindow (in PRUint32 xid);
 
-    void SetRootWindowArrayProperty (in PRInt32 prop, 
-                                     in PRInt32 type, 
-                                     in PRUint32 count, 
-                                     [array, size_is (count)] in PRUInt32 valueArray);
+    void SetRootWindowProperty (in PRInt32 prop, 
+                                in PRInt32 type, 
+                                in PRUint32 count, 
+                                [array, size_is (count)] in PRUInt32 valueArray);
+    void DeleteRootWindowProperty (in PRInt32 prop);
 
     void addObserver (in compzillaIControlObserver observer);
     void removeObserver (in compzillaIControlObserver observer);

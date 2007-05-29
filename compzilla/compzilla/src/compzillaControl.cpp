@@ -153,15 +153,25 @@ compzillaControl::InternAtom (const char *property, PRUint32 *value)
 
 
 NS_IMETHODIMP
-compzillaControl::SetRootWindowArrayProperty (PRInt32 prop, 
-                                              PRInt32 type, 
-                                              PRUint32 count, 
-                                              PRUint32* valueArray)
+compzillaControl::SetRootWindowProperty (PRInt32 prop, 
+                                         PRInt32 type, 
+                                         PRUint32 count, 
+                                         PRUint32* valueArray)
 {
     XChangeProperty (mXDisplay, GDK_DRAWABLE_XID (mRoot),
                      prop, type, 32,
                      PropModeReplace,
                      (unsigned char*)valueArray, count);
+
+    return NS_OK;
+}
+
+
+NS_IMETHODIMP
+compzillaControl::DeleteRootWindowProperty (PRInt32 prop)
+{
+    XDeleteProperty (mXDisplay, GDK_DRAWABLE_XID (mRoot),
+                     prop);
 
     return NS_OK;
 }
@@ -810,13 +820,13 @@ compzillaControl::ClientMessaged (Window win,
     else {
         for (PRUint32 i = mObservers.Count() - 1; i != PRUint32(-1); --i) {
             nsCOMPtr<compzillaIControlObserver> observer = mObservers.ObjectAt(i);
-            observer->RootClientMessage ((long)type,
-                                         format,
-                                         data[0],
-                                         data[1],
-                                         data[2],
-                                         data[3],
-                                         data[4]);
+            observer->RootClientMessageRecv ((long)type,
+                                             format,
+                                             data[0],
+                                             data[1],
+                                             data[2],
+                                             data[3],
+                                             data[4]);
         }
     }
 }

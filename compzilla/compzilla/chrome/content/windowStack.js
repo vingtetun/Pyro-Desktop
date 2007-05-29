@@ -20,13 +20,18 @@
  *  moveToTop (w) - moves @w to the top of its layer.  If @w is not in
  *                  the window stack, no action is taken.
  *
- *  showingDesktop - property.  true if the all windows above the desktop are hidden.
+ *  toggleDesktop () - toggles the visibility of windows above the
+ *                     desktop layer.
+ *
+ *  showingDesktop - property.  true if the all windows above the
+ *                   desktop are hidden.
  *
  */
 
 
 var windowStack = document.getElementById ("windowStack");
 
+_addUtilMethods (windowStack);
 
 windowStack.stackWindow = function (w) {
     var l = _determineLayer (w);
@@ -81,12 +86,10 @@ windowStack.moveToBottom = function(w) {
 
     if (w.layer.minZIndex != w.style.zIndex) {
 	// Not already the lowest window  
-	// Assign an invalid zIndex, which will be reassigned
-	// in restackLayer.
-	w.style.zIndex = w.layer.minZIndex - 1;
+	w.style.zIndex = w.layer.lowZIndex - 1;
 
-	// Restack now to assign valid zIndex to w
-	_restackLayer (w.layer);
+	// Restack if we've run out of valid zIndexes
+	_maybeRestackLayer (w.layer);
     }
 }
 
@@ -107,23 +110,35 @@ windowStack.moveToTop = function(w) {
     }
 }
 
-
-windowStack.__defineGetter__ ("showingDesktop",
-			      function () { return windowStack._showingDesktop; });
-windowStack.__defineSetter__ ("showingDesktop",
-			      function (v) { });
-
 windowStack.toggleDesktop = function () {
-    showingDesktop = !showingDesktop;
-
-    Debug ("windowStack",
-	   "toggling the desktop display");
-    for (var el = windowStack.firstChild; el != null; el = el.nextSibling) {
-	if (el.layer != desktopLayer) {
-	    el.style.display = showingDesktop ? "none" : "block";
-	}
-    }
+    windowStack.showingDesktop = !windowStack.showingDesktop;
 }
+
+// our one property
+
+windowStack.addProperty ("showingDesktop",
+			 /* getter */
+			 function () { return windowStack._showingDesktop; },
+			 /* setter */
+			 function (v) {
+			     if (v == windowStack._showingDesktop)
+				 return;
+
+			     windowStack._showingDesktop = v;
+
+			     for (var el = windowStack.firstChild; el != null; el = el.nextSibling) {
+				 if (el.layer && el.layer.minZIndex > desktopLayer.maxZIndex
+				     /* leave the debug windows there? */
+				     && el.layer != debugLayer) {
+				     el.style.display = windowStack._showingDesktop ? "none" : "block";
+				 }
+			     }
+
+			     svc.SetRootWindowProperty (Atoms._NET_SHOWING_DESKTOP,
+							Atoms.XA_CARDINAL,
+							1,
+							[ windowStack.showingDesktop ]);
+			 });
 
 
 // Utility functions for extensions
@@ -149,7 +164,8 @@ windowStack.addLayer = function (name, minZIndex, maxZIndex) {
     layer.name = name;
     layer.minZIndex = minZIndex;
     layer.maxZIndex = maxZIndex;
-    layer.highZIndex = minZIndex;
+    layer.highZIndex = 
+	layer.lowZIndex = Math.floor ((maxZIndex + maxZIndex) / 3);
 
     // Ensure we're not overlapping existing layers
     for (var idx = 0; idx < layers.length; idx++) {
@@ -216,8 +232,10 @@ function _restackLayer (l) {
     //       accidentally raise an older window above a newer one.
     windows.sort (_sortByZIndex);
 
-    var z = l.minZIndex - 1;
+    l.lowZIndex = (Math.floor ((l.maxZIndex + l.minZIndex) / 3) - 
+		   Math.floor (windows.length / 3));
 
+    var z = l.lowZIndex - 1;
     for (var idx = 0; idx < windows.length; idx++) {
 	windows[idx].style.zIndex = ++z;
     }
@@ -230,6 +248,11 @@ function _maybeRestackLayer (l) {
     if (l.highZIndex >= l.maxZIndex) {
 	Debug ("windowStack",
 	       "Maximum zIndex for layer '" + l.name + "' hit, restacking");
+	_restackLayer (l);
+    }
+    else if (l.lowZIndex <= l.minZIndex) {
+	Debug ("windowStack",
+	       "Minimum zIndex for layer '" + l.name + "' hit, restacking");
 	_restackLayer (l);
     }
 }
