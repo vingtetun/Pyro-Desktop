@@ -1,5 +1,22 @@
 2007-05-29  Chris Toshok  <toshok@ximian.com>
 
+	* compzilla/Makefile.am (content_DATA): add util.js.
+
+	* compzilla/chrome/content/start.xul: load util.js.
+
+	* compzilla/chrome/content/content.js: call _addUtilMethods on the
+	new frame, and remove findPos.
+
+	* compzilla/chrome/content/frame.js: call _addUtilMethods on the
+	new frame.
+
+	* compzilla/chrome/content/util.js: new file, generally useful
+	stuff.  put findPos here, and split out the addProperty methods
+	from both frame.js and content.js, and add an _addUtilMethods
+	function to add it.
+
+2007-05-29  Chris Toshok  <toshok@ximian.com>
+
 	* compzilla/src/compzillaControl.cpp: implement MapWindow and
 	UnmapWindow.
 

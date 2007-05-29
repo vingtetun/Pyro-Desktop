@@ -239,15 +239,6 @@ var FrameMethods = {
     },
 
 
-    addProperty: function (name, getter, setter) {
-	this.__defineGetter__ (name, getter);
-
-	/* allow setter to be undefined for read-only properties */
-	if (setter != undefined)
-	    this.__defineSetter__ (name, setter);
-    },
-
-
     mapPropertyToPyroAttribute: function (propname, attrname) {
 	this.__defineGetter__ (propname, 
 			       function () { 
@@ -368,6 +359,7 @@ function CompzillaFrame (content)
     frame._title = getDescendentById (frame, "windowTitle");
 
     // Add our methods
+    _addUtilMethods (frame);
     _addFrameMethods (frame);
     
     if (content.nativeWindow) {

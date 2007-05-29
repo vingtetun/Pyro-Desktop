@@ -21,6 +21,7 @@ content_DATA =					\
 	$(CONTENT_SRCDIR)/scale.js		\
 	$(CONTENT_SRCDIR)/start.js		\
 	$(CONTENT_SRCDIR)/start.xul		\
+	$(CONTENT_SRCDIR)/util.js		\
 	$(CONTENT_SRCDIR)/windowStack.js	\
 	$(CONTENT_SRCDIR)/workarea.js		\
 	$(CONTENT_SRCDIR)/xprops.js

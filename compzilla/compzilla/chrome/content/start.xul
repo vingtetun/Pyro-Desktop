@@ -214,6 +214,7 @@
     <!-- 3rd party jQuery plugin for animation easing effects -->
     <script type="application/x-javascript" src="chrome://compzilla/content/jquery.easing.1.1.js" />
 
+    <script type="application/x-javascript" src="chrome://compzilla/content/util.js" />
     <script type="application/x-javascript" src="chrome://compzilla/content/atoms.js" />
     <script type="application/x-javascript" src="chrome://compzilla/content/xprops.js" />
     <script type="application/x-javascript" src="chrome://compzilla/content/windowStack.js" />

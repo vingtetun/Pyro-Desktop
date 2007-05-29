@@ -20,7 +20,8 @@
  *  moveToTop (w) - moves @w to the top of its layer.  If @w is not in
  *                  the window stack, no action is taken.
  *
- *  toggleDesktop () - toggles all windows above the desktop-layer.
+ *  showingDesktop - property.  true if the all windows above the desktop are hidden.
+ *
  */
 
 
@@ -106,6 +107,11 @@ windowStack.moveToTop = function(w) {
     }
 }
 
+
+windowStack.__defineGetter__ ("showingDesktop",
+			      function () { return windowStack._showingDesktop; });
+windowStack.__defineSetter__ ("showingDesktop",
+			      function ()
 
 windowStack.toggleDesktop = function () {
     showingDesktop = !showingDesktop;

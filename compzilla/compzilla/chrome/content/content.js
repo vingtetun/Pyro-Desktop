@@ -15,6 +15,7 @@ function CompzillaWindowContent (nativewin) {
 
     nativewin.AddContentNode (content);
 
+    _addUtilMethods (content);
     _addContentMethods (content);
     _connectXProperties (content);
 
@@ -88,14 +89,6 @@ var ContentMethods = {
 	// update _NET_ACTIVE_WINDOW on the root window
 	var focused_list = [ this._nativewin.nativeWindowId ];
 	svc.SetRootWindowArrayProperty (Atoms._NET_ACTIVE_WINDOW, Atoms.XA_WINDOW, focused_list.length, focused_list);
-    },
-
-    addProperty: function (name, getter, setter) {
-	this.__defineGetter__ (name, getter);
-
-	/* allow setter to be undefined for read-only properties */
-	if (setter != undefined)
-	    this.__defineSetter__ (name, setter);
     },
 }
 
@@ -239,19 +232,4 @@ function _connectXProperties (content)
 				     height: prop_bag.getPropertyAsUint32 (".height")
 				   };
 		       });
-}
-
-
-function findPos (obj) 
-{
-    var curleft = curtop = 0;
-    if (obj.offsetParent) {
-        curleft = obj.offsetLeft;
-        curtop = obj.offsetTop;
-        while (obj = obj.offsetParent) {
-            curleft += obj.offsetLeft;
-            curtop += obj.offsetTop;
-        }
-    }
-    return { left: curleft, top: curtop };
 }
