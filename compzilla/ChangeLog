@@ -1,5 +1,15 @@
 2007-05-29  Chris Toshok  <toshok@ximian.com>
 
+	* compzilla/chrome/content/frame.js: add override arg to map().
+
+	* compzilla/src/compzillaControl.cpp/.h: same.
+
+	* compzilla/src/compzillaWindow.cpp/.h: same.
+
+	* compzilla/public/compzillaIWindowObserver.idl: same.
+
+2007-05-29  Chris Toshok  <toshok@ximian.com>
+
 	* compzilla/Makefile.am (content_DATA): add workarea.js, and sort
 	these.
 

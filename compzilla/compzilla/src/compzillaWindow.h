@@ -65,7 +65,7 @@ public:
     NS_IMETHOD FocusOut (nsIDOMEvent* aDOMEvent);
 
     void DestroyWindow ();
-    void MapWindow ();
+    void MapWindow (bool override_redirect);
     void UnmapWindow ();
     void PropertyChanged (Atom prop, bool deleted);
     void WindowDamaged (XRectangle *rect);

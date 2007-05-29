@@ -7,7 +7,7 @@
 interface compzillaIWindowObserver : nsISupports
 {
     void destroy ();
-    void map ();
+    void map (in boolean overrideRedirect);
     void unmap ();
 
     void configure (in boolean mapped,

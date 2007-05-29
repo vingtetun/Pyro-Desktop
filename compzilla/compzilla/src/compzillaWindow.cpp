@@ -1101,14 +1101,15 @@ compzillaWindow::DestroyWindow ()
 
 
 void
-compzillaWindow::MapWindow ()
+compzillaWindow::MapWindow (bool override_redirect)
 {
+    mAttr.override_redirect;
     mAttr.map_state = IsViewable;
     EnsureDamage ();
 
     for (PRUint32 i = mObservers.Count() - 1; i != PRUint32(-1); --i) {
         nsCOMPtr<compzillaIWindowObserver> observer = mObservers.ObjectAt(i);
-        observer->Map ();
+        observer->Map (override_redirect);
     }
 }
 

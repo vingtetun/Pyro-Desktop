@@ -32,7 +32,7 @@ private:
     void AddWindow (Window win);
     void DestroyWindow (Window win);
     void ForgetWindow (Window win);
-    void MapWindow (Window win);
+    void MapWindow (Window win, bool override_redirect);
     void UnmapWindow (Window win);
     void WindowConfigured (bool isNotify,
                            Window win,

@@ -683,7 +683,7 @@ compzillaControl::AddWindow (Window win)
     }
 
     if (compwin->mAttr.map_state == IsViewable) {
-        MapWindow (win);
+        MapWindow (win, compwin->mAttr.override_redirect);
     }
 }
 
@@ -721,11 +721,11 @@ compzillaControl::ForgetWindow (Window win)
 
 
 void
-compzillaControl::MapWindow (Window win)
+compzillaControl::MapWindow (Window win, bool override_redirect)
 {
     nsRefPtr<compzillaWindow> compwin = FindWindow (win);
     if (compwin) {
-        compwin->MapWindow ();
+        compwin->MapWindow (override_redirect);
     }
 }
 
@@ -947,7 +947,7 @@ compzillaControl::Filter (GdkXEvent *xevent, GdkEvent *event)
         SPEW ("MapNotify: window=0x%0x, override=%d\n", x11_event->xmap.window, 
               x11_event->xmap.override_redirect);
 
-        MapWindow (x11_event->xmap.window);
+        MapWindow (x11_event->xmap.window, x11_event->xmap.override_redirect);
         break;
     }
     case UnmapNotify: {

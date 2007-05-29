@@ -547,7 +547,7 @@ function _observeNativeWindow (frame)
 			     aboveWindow) {
 	    Debug ("frame", "configure.handleEvent");
 
-	    // This is the only way we're notified of override changes
+	    // track override changes
 	    frame.overrideRedirect = overrideRedirect;
 
 	    // This may not match the current state if the window was created
@@ -559,8 +559,12 @@ function _observeNativeWindow (frame)
 	    // XXX handle stacking requests here too
 	},
 
-        map: function () {
+        map: function (overrideRedirect) {
 	    Debug ("frame", "map.handleEvent");
+
+	    // track override changes
+	    frame.overrideRedirect = overrideRedirect;
+
 	    windowStack.moveToTop (frame);
 	    frame.show ();
 	},
