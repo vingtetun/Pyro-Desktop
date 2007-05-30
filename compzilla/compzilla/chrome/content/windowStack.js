@@ -137,7 +137,7 @@ windowStack.addProperty ("showingDesktop",
 			     svc.SetRootWindowProperty (Atoms._NET_SHOWING_DESKTOP,
 							Atoms.XA_CARDINAL,
 							1,
-							[ windowStack.showingDesktop ]);
+							[ windowStack.showingDesktop ? 1 : 0 ]);
 			 });
 
 

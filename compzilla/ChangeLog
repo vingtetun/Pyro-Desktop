@@ -1,3 +1,9 @@
+2007-05-30  Chris Toshok  <toshok@ximian.com>
+
+	* compzilla/chrome/content/windowStack.js: constrain the
+	_NET_SHOWING_DESKTOP property to 1 or 0, not whatever javascript
+	maps true/false to.
+
 2007-05-29  Chris Toshok  <toshok@ximian.com>
 
 	* compzilla/chrome/content/windowStack.js: add back in the
