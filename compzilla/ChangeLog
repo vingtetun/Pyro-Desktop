@@ -1,3 +1,11 @@
+2007-05-30  Alex Graveley  <alex@beatniksoftware.com>
+
+	* compzilla/chrome/content/start.xul: Make cmd_minimizeWindow call
+	_focusedFrame.minimize().
+
+	* compzilla/chrome/content/frame.js: Fix hide() by setting
+	style.display="none".
+
 2007-05-30  Chris Toshok  <toshok@ximian.com>
 
 	* compzilla/chrome/content/overlay.js: use $().

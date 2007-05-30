@@ -175,8 +175,7 @@
     </keyset>
 
     <xul:commandset id="compzillaWindowCommandSet">
-        <xul:command id="cmd_minimizeWindow" 
-                     oncommand="_focusedFrame.hide();" />
+        <xul:command id="cmd_minimizeWindow" oncommand="_focusedFrame.minimize();" />
         <xul:command id="cmd_restoreWindow" oncommand="alert('restore');" />
         <xul:command id="cmd_maximizeWindow" oncommand="_focusedFrame.maximize();" />
         <xul:command id="cmd_closeWindow" oncommand="_focusedFrame.close();" />

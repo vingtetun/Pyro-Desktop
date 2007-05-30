@@ -174,6 +174,8 @@ var FrameMethods = {
 
 	if (this._content.onhide)
 	    this._content.onhide ();
+
+	this.style.display = "none";
     },
 
 
@@ -184,6 +186,7 @@ var FrameMethods = {
 	    this._content.onminimize ();
     },
 
+
     maximize: function () {
 	Debug ("maximizing frame to " +
 	       "{ " +
@@ -192,7 +195,6 @@ var FrameMethods = {
 	       workarea.bounds.width + "x" +
 	       workarea.bounds.height +
 	       " }");
-
 
 	this.moveResize (workarea.bounds.left,
 			 workarea.bounds.top,
