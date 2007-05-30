@@ -72,7 +72,7 @@ function compzillaLoad()
 	},
     });
 
-    //workarea = new WorkArea ();
+    workarea = new WorkArea ();
 
     // Register as the window manager and generate windowcreate events for
     // existing windows.

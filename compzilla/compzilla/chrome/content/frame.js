@@ -116,7 +116,7 @@ var FrameMethods = {
 
     _updateStrutInfo: function () {
 
-	//workarea.UpdateStrutInfo (this, this._content.wmStruts);
+	workarea.UpdateStrutInfo (this, this._content.wmStruts);
 
     },
 
@@ -150,12 +150,22 @@ var FrameMethods = {
 	    this.allowMaximize = false;
 	    this.allowFullscreen = false;
 	}
+
+	// we don't allow maximized windows to be moved or resized
+	if (this.windowState == "maximized") {
+	    this.allowMove = false;
+	    this.allowResize = false;
+	}
     },
 
 
     show: function () {
 	if (this.style.display == "block")
 	    return;
+
+	// this happens when we uniconify a window
+	if (this.windowState != "normal")
+	    this.restore();
 
 	Debug ("frame", "frame.show");
 
@@ -180,35 +190,73 @@ var FrameMethods = {
 
 
     minimize: function () {
+	if (this.windowState == "minimized")
+	    return;
+
+	this.restoreBounds = { left: this.offsetLeft,
+			       top: this.offsetTop,
+			       width: this.offsetWidth,
+			       height: this.offsetHeight };
+
+	this.windowState = "minimized";
+
 	MinimizeCompzillaFrame (this);
 
 	if (this._content.onminimize)
 	    this._content.onminimize ();
     },
 
-
     maximize: function () {
-	Debug ("maximizing frame to " +
-	       "{ " +
-	       workarea.bounds.left + ", " +
-	       workarea.bounds.top  + " - " +
-	       workarea.bounds.width + "x" +
-	       workarea.bounds.height +
-	       " }");
+	if (this.windowState == "maximized")
+	    return;
 
-	this.moveResize (workarea.bounds.left,
-			 workarea.bounds.top,
-			 workarea.bounds.width,
-			 workarea.bounds.height);
+	this.restoreBounds = { left: this.offsetLeft,
+			       top: this.offsetTop,
+			       width: this.offsetWidth,
+			       height: this.offsetHeight };
+
+	this.windowState = "maximized";
+
+	MaximizeCompzillaFrame (this);
 
 	if (this._content.onmaximize)
 	    this._content.onmaximize ();
     },
 
 
-    fullscreen: function () {
+    toggleMaximized: function () {
+	if (this.windowState == "maximized")
+	    this.restore ();
+	else if (this.windowState == "normal")
+	    this.maximize ();
+    },
 
-	// XXX more stuff here
+
+    restore: function () {
+	if (this.windowState == "normal")
+	    return;
+
+	RestoreCompzillaFrame (this);
+    },
+
+
+    fullscreen: function () {
+	if (this.windowState == "fullscreen")
+	    return;
+
+	this.restoreBounds = { left: this.offsetLeft,
+			       top: this.offsetTop,
+			       width: this.offsetWidth,
+			       height: this.offsetHeight };
+
+	this.windowState = "fullscreen";
+
+	// XXX this should do more, like hide the chrome, or resize
+	// the window such that the chrome is offscreen.
+	this.moveResize (workarea.bounds.left,
+			 workarea.bounds.top,
+			 workarea.bounds.width,
+			 workarea.bounds.height);
 
 	if (this._content.onfullscreen)
 	    this._content.onfullscreen ();
@@ -253,6 +301,8 @@ function _addFrameMethods (frame)
     frame.mapPropertyToPyroAttribute ("allowShade", "allow-shade");
     frame.mapPropertyToPyroAttribute ("inactive", "inactive");
     frame.mapPropertyToPyroAttribute ("moving", "moving");
+    frame.mapPropertyToPyroAttribute ("windowState", "window-state");
+
     /* XXX we should rethink the name of this */
     frame.mapPropertyToPyroAttribute ("wmClass", "wm-class");
 
@@ -351,10 +401,10 @@ function CompzillaFrame (content)
 
 	frame._observer = _observeNativeWindow (frame);
 
+	frame._updateStrutInfo ();
+
 	frame._resetChromeless ();
         frame._recomputeAllowedActions ();
-
-	frame._updateStrutInfo ();
 
 	frame.title = content.wmName;
     }
@@ -593,7 +643,7 @@ function _observeNativeWindow (frame)
 	    }
 	},
 
-	clientMessageRecv: function (messageType, format, d1, d1, d3, d4) {
+	clientMessageRecv: function (messageType, format, d1, d2, d3, d4) {
 	    Debug ("frame", "clientmessage type:" + messageType + 
 		   " [d1:"+d1 + ", d2:"+d2 + ", d3:"+d3 + ", d4:"+d4 + "]");
 

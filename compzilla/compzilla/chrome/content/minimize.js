@@ -1,5 +1,7 @@
 /* -*- mode: javascript; c-basic-offset: 4; indent-tabs-mode: t; -*- */
 
+// poorly named file, but include MaximizeCompzillaFrame and
+// RestoreCompzillaFrame here.
 
 function MinimizeCompzillaFrame (w) {
     /* first we create a canvas of the right size/location */	
@@ -57,19 +59,48 @@ function MinimizeCompzillaFrame (w) {
                     });
 }
 
+var animate = false;
 
-function hackMinimizeFrame ()
-{
-    MinimizeCompzillaFrame (minFrame);
+function RestoreCompzillaFrame (w) {
+    if (animate) {
+	$(w).animate ({ left: w.restoreBounds.left, 
+			top: w.restoreBounds.top, 
+			width: w.restoreBounds.width, 
+			height: w.restoreBounds.height },
+		      500, 
+		      "easeout",
+		      function () {
+			  w.windowState = "normal";
+			  delete w.restoreBounds;
+		      });
+    }
+    else {
+	w.windowState = "normal";
+
+	w.moveResize (w.restoreBounds.left,
+		      w.restoreBounds.top,
+		      w.restoreBounds.width,
+		      w.restoreBounds.height);
+
+	delete w.restoreBounds;
+    }
 }
 
-
-/*
-document.addEventListener("keypress", {
-                              handleEvent: function (event) {
-				  if (event.keyCode == event.DOM_VK_F8 && event.ctrlKey) {
-				    hackMinimizeFrame ();
-				  }
-			      } },
-			      true);
-*/
+function MaximizeCompzillaFrame (w) {
+    if (animate) {
+	$(w).animate ({ left: workarea.bounds.left, 
+			top: workarea.bounds.top, 
+			width: workarea.bounds.width, 
+			height: workarea.bounds.height },
+		      500, 
+		      "easeout",
+		      function () {
+		      });
+    }
+    else {
+	w.moveResize (workarea.bounds.left, 
+		      workarea.bounds.top, 
+		      workarea.bounds.width, 
+		      workarea.bounds.height);
+    }
+}

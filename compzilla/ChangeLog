@@ -1,3 +1,21 @@
+2007-05-30  Chris Toshok  <toshok@ximian.com>
+
+	* compzilla/chrome/content/start.js: initialize our workarea.
+
+	* compzilla/chrome/content/minimize.js: reuse this file to hold
+	RestoreCompzillaFrame and MaximizeCompzillaFrame.
+
+	* compzilla/chrome/content/start.xul: use the maximize button as a
+	toggle.  Also set the initial window-state to normal.
+
+	* compzilla/chrome/content/frame.js: implement state switching
+	(maximize,minimize,fullscreen,normal) and restoring to normal from
+	the others.  also, realy fix that typo in parameter names to
+	clientMessageRecv.
+
+	* compzilla/chrome/content/workarea.js: make this so it doesn't
+	crash on startup.
+
 2007-05-30  Alex Graveley  <alex@beatniksoftware.com>
 
 	* compzilla/src/compzillaRenderingContext.cpp (Redraw): Fallback

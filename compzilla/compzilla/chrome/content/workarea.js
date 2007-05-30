@@ -4,15 +4,7 @@ function WorkArea ()
 {
     this.frameInfo = {};
 
-    this.bounds = { left: 0,
-		    top: 0,
-		    width: windowStack.offsetWidth,
-		    height: windowStack.offsetHeight };
-
-    windowStack.parentNode.onresize = function (e) {
-	Debug ("PARENT NODE RESIZED");
-	workarea.UpdateBounds ();
-    }
+    this.InitBounds ();
 }
 WorkArea.prototype = {
 
@@ -29,12 +21,15 @@ WorkArea.prototype = {
 	this.UpdateBounds ();
     },
 
-
-    UpdateBounds: function () {
+    InitBounds: function () {
 	this.bounds = { left: 0,
 			top: 0,
-			width: windowStack.offsetWidth,
-			height: windowStack.offsetHeight };
+			width: screen.width,
+			height: screen.height };
+    },
+
+    UpdateBounds: function () {
+	this.InitBounds ();
 						     
 	for (var f in this.frameInfo) {
 	    var strut = this.frameInfo[f];
