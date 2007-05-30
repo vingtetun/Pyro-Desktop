@@ -44,7 +44,7 @@ NS_IMPL_ISUPPORTS3_CI (compzillaRenderingContext,
 		       nsICanvasRenderingContextInternal)
 
 
-compzillaRenderingContext::compzillaRenderingContext()
+compzillaRenderingContext::compzillaRenderingContext ()
     : mWidth(0), 
       mHeight(0), 
       mCanvasElement(nsnull)
@@ -52,7 +52,7 @@ compzillaRenderingContext::compzillaRenderingContext()
 }
 
 
-compzillaRenderingContext::~compzillaRenderingContext()
+compzillaRenderingContext::~compzillaRenderingContext ()
 {
 }
 
@@ -73,7 +73,7 @@ compzillaRenderingContext::SetDimensions (PRInt32 width, PRInt32 height)
 
 #if false
     // Check that the dimensions are sane
-    if (!CheckSaneImageSize(width, height))
+    if (!CheckSaneImageSize (width, height))
         return NS_ERROR_FAILURE;
 #endif
 
@@ -85,7 +85,7 @@ compzillaRenderingContext::SetDimensions (PRInt32 width, PRInt32 height)
 
 
 nsIFrame*
-compzillaRenderingContext::GetCanvasLayoutFrame()
+compzillaRenderingContext::GetCanvasLayoutFrame ()
 {
     nsIFrame *fr = nsnull;
     if (mCanvasElement) {
@@ -100,11 +100,16 @@ compzillaRenderingContext::Redraw (nsRect r)
 {
     // then invalidate the region and do a sync redraw
     // (uh, why sync?)
-    nsIFrame *frame = GetCanvasLayoutFrame();
+    nsIFrame *frame = GetCanvasLayoutFrame ();
     if (frame) {
 #if MOZILLA_1_8_BRANCH
         nsPresContext *presctx = frame->GetPresContext ();
-        r *= presctx->PixelsToTwips ();
+        float p2t = presctx->PixelsToTwips ();
+        /* 
+         * 15 is the default for 96DPI:
+         *   ((72 (point-to-twip) * 20 (twips-per-point)) * 96) 
+         */
+        r *= p2t ? p2t : 15.0;
 #else
         nsPresContext *presctx = frame->PresContext ();
         r *= presctx->AppUnitsPerCSSPixel ();
@@ -117,10 +122,10 @@ compzillaRenderingContext::Redraw (nsRect r)
         // so we basically recreate it here.  I would suggest
         // an InvalidateExternal for the trunk.
 #ifndef DEBUG
-        nsIPresShell *shell = presctx->GetPresShell();
+        nsIPresShell *shell = presctx->GetPresShell ();
         if (shell) {
             PRBool suppressed = PR_FALSE;
-            shell->IsPaintingSuppressed(&suppressed);
+            shell->IsPaintingSuppressed (&suppressed);
             if (suppressed)
                 return NS_OK;
         }
@@ -132,7 +137,7 @@ compzillaRenderingContext::Redraw (nsRect r)
         flags = NS_VMREFRESH_IMMEDIATE;
 #endif
 
-        if (frame->HasView()) {
+        if (frame->HasView ()) {
             nsIView* view = frame->GetViewExternal ();
             view->GetViewManager ()->UpdateView (view, r, flags);
         } else {
@@ -214,7 +219,7 @@ compzillaRenderingContext::Render (nsIRenderingContext *rc)
         nsIDeviceContext *dctx = nsnull;
         rc->GetDeviceContext (dctx);
 
-        sx = sy = dctx->DevUnitsToTwips();
+        sx = sy = dctx->DevUnitsToTwips ();
         tx->TransformNoXLate (&sx, &sy);
     }
 

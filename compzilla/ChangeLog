@@ -1,5 +1,11 @@
 2007-05-30  Alex Graveley  <alex@beatniksoftware.com>
 
+	* compzilla/src/compzillaRenderingContext.cpp (Redraw): Fallback
+	to 15.0 twips if nsPresContext::PixelsToTwips returns 0.  I have
+	no idea why this happens, but it does.
+
+2007-05-30  Alex Graveley  <alex@beatniksoftware.com>
+
 	* compzilla/chrome/content/start.xul: Make cmd_minimizeWindow call
 	_focusedFrame.minimize().
 
