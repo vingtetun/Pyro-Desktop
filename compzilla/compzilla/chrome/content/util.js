@@ -26,7 +26,5 @@ function _addUtilMethods (o)
 	}
     };
 
-    for (var m in UtilMethods) {
-	o[m] = UtilMethods[m];
-    }
+    jQuery.extend (o, UtilMethods);
 }

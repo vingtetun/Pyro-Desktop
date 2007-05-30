@@ -3,6 +3,7 @@
 
 var _focusedFrame;
 
+
 var FrameMethods = {
     destroy: function () {
 	Debug ("frame", "frame.destroy");
@@ -28,7 +29,6 @@ var FrameMethods = {
 	windowStack.removeWindow (this);
     },
 
-
     moveResize: function (x, y, width, height) {
         // Coordinates are relative to the frame
 
@@ -40,7 +40,6 @@ var FrameMethods = {
 		this._content.onmoveresize (this.overrideRedirect);
         }
     },
-
 
     moveResizeToContent: function (x, y, width, height) {
         // ev coords are relative to content, adjust for frame offsets
@@ -58,7 +57,6 @@ var FrameMethods = {
 
         this.moveResize (x, y, width, height);
     },
-
 
     _moveResize: function (x, y, width, height) {
         // Coordinates are relative to the frame
@@ -100,7 +98,6 @@ var FrameMethods = {
 
         return changed;
     },
-
 
     _resetChromeless: function () {
         if (this.overrideRedirect ||
@@ -158,7 +155,6 @@ var FrameMethods = {
 	}
     },
 
-
     show: function () {
 	if (this.style.display == "block")
 	    return;
@@ -175,7 +171,6 @@ var FrameMethods = {
 	this.style.display = "block";
     },
 
-
     hide: function () {
 	if (this.style.display == "none")
 	    return;
@@ -187,7 +182,6 @@ var FrameMethods = {
 
 	this.style.display = "none";
     },
-
 
     minimize: function () {
 	if (this.windowState == "minimized")
@@ -223,7 +217,6 @@ var FrameMethods = {
 	    this._content.onmaximize ();
     },
 
-
     toggleMaximized: function () {
 	if (this.windowState == "maximized")
 	    this.restore ();
@@ -231,14 +224,12 @@ var FrameMethods = {
 	    this.maximize ();
     },
 
-
     restore: function () {
 	if (this.windowState == "normal")
 	    return;
 
 	RestoreCompzillaFrame (this);
     },
-
 
     fullscreen: function () {
 	if (this.windowState == "fullscreen")
@@ -262,16 +253,13 @@ var FrameMethods = {
 	    this._content.onfullscreen ();
     },
 
-
     getPyroAttribute: function (name) {
         return this.getAttributeNS ("http://www.pyrodesktop.org/compzilla", name);
     },
 
-
     setPyroAttribute: function (name, value) {
         this.setAttributeNS ("http://www.pyrodesktop.org/compzilla", name, value);
     },
-
 
     mapPropertyToPyroAttribute: function (propname, attrname) {
 	this.__defineGetter__ (propname, 

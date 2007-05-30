@@ -1,3 +1,7 @@
+2007-05-30  Alex Graveley  <alex@beatniksoftware.com>
+
+	* compzilla/chrome/content/util.js: Use jQuery.extend here too.
+
 2007-05-30  Chris Toshok  <toshok@ximian.com>
 
 	* compzilla/chrome/content/start.js: initialize our workarea.
