@@ -103,7 +103,7 @@ function compzillaLoad()
  		      Atoms._NET_DESKTOP_GEOMETRY,
  		      Atoms._NET_NUMBER_OF_DESKTOPS,
  		      Atoms._NET_CURRENT_DESKTOP,
- 		      Atoms._NET_DESKTOP_VIEWPORT
+ 		      Atoms._NET_DESKTOP_VIEWPORT,
  		      Atoms._NET_SHOWING_DESKTOP,
 
 // 		      Atoms._NET_DESKTOP_LAYOUT,
