@@ -9,7 +9,7 @@ var xNone = 0;
 function CompzillaWindowContent (nativewin) {
     Debug ("content", "Creating content for nativewin=" + nativewin.nativeWindowId);
 
-    var content = document.getElementById ("windowContent").cloneNode (true);
+    var content = $("#windowContent").clone()[0];
 
     content._nativewin = nativewin;
 
@@ -94,9 +94,7 @@ var ContentMethods = {
 
 
 function _addContentMethods (content) {
-    for (var m in ContentMethods) {
-	content[m] = ContentMethods[m];
-    }
+    jQuery.extend (content, ContentMethods);
 
     content.addProperty ("nativeWindow",
 			 /* getter */
@@ -225,8 +223,7 @@ function _connectXProperties (content)
 
     content.XProps.Add (Atoms._NET_WM_ICON_GEOMETRY,
 			function (prop_bag) {
-			    return { partial: false,
-				     x: prop_bag.getPropertyAsUint32 (".x"),
+			    return { x: prop_bag.getPropertyAsUint32 (".x"),
 				     y: prop_bag.getPropertyAsUint32 (".y"),
 				     width: prop_bag.getPropertyAsUint32 (".width"),
 				     height: prop_bag.getPropertyAsUint32 (".height")

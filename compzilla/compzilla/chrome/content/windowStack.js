@@ -29,7 +29,7 @@
  */
 
 
-var windowStack = document.getElementById ("windowStack");
+var windowStack = $("#windowStack")[0];
 
 _addUtilMethods (windowStack);
 
@@ -84,13 +84,15 @@ windowStack.moveToBottom = function(w) {
     if (w.layer == undefined)
 	return;
 
-    if (w.layer.minZIndex != w.style.zIndex) {
-	// Not already the lowest window  
-	w.style.zIndex = w.layer.lowZIndex - 1;
-
-	// Restack if we've run out of valid zIndexes
-	_maybeRestackLayer (w.layer);
+    if (w.layer.minZIndex == w.style.zIndex) {
+	// already the lowest window  
+	return;
     }
+
+    w.style.zIndex = w.layer.lowZIndex - 1;
+
+    // Restack if we've run out of valid zIndexes
+    _maybeRestackLayer (w.layer);
 }
 
 
@@ -98,16 +100,18 @@ windowStack.moveToTop = function(w) {
     if (w.layer == undefined)
 	return;
 
+    if (w.layer.highZIndex == w.style.zIndex) {
+	// already the top window
+	return;
+    }
+
     Debug ("windowStack",
 	   "windowStack.moveToTop: layer=" + w.layer.name + " zIndex=" + w.style.zIndex);
 
-    if (w.layer.highZIndex != w.style.zIndex) {
-	// Not already the top window
-	w.style.zIndex = ++w.layer.highZIndex;
+    w.style.zIndex = ++w.layer.highZIndex;
 
-	// Restack if we've run out of valid zIndexes
-	_maybeRestackLayer (w.layer);
-    }
+    // Restack if we've run out of valid zIndexes
+    _maybeRestackLayer (w.layer);
 }
 
 windowStack.toggleDesktop = function () {

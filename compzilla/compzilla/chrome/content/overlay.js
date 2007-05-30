@@ -1,8 +1,8 @@
 /* -*- mode: javascript; c-basic-offset: 4; indent-tabs-mode: t; -*- */
 
 
-var overlayLayer = document.getElementById ("overlayLayer");
-var overlayContent = document.getElementById ("overlayContent");
+var overlayLayer = $("#overlayLayer")[0];
+var overlayContent = $("#overlayContent", overlayLayer)[0];
 
 
 function toggleOverlay ()

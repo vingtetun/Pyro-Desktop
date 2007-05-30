@@ -2,7 +2,7 @@
 
 /* adapted from compiz's scale plugin */
 
-var exposeLayer = document.getElementById ("exposeLayer");
+var exposeLayer = $("#exposeLayer")[0];
 
 var ss = new Object ();
 
@@ -200,7 +200,7 @@ function scaleTerminate () {
 				function () {
 				    if (--callback_count == 0) {
 					for (var i = 0; i < ss.windows.length; i ++) {
-					    ss.windows[i].destroy ();
+					    ss.windows[i].ondestroy ();
 					    exposeLayer.removeChild (ss.windows[i]);
 					}
 					ss.reverseWindows = new Array ();

@@ -1,5 +1,29 @@
 2007-05-30  Chris Toshok  <toshok@ximian.com>
 
+	* compzilla/chrome/content/overlay.js: use $().
+
+	* compzilla/chrome/content/debug.js: use $().
+
+	* compzilla/chrome/content/frame.js: use $() instead of both
+	document.getElementById and getDescendentById.  also, use
+	jquery.Extend instead of the loop that adds methods.
+
+	* compzilla/chrome/content/content.js: use $(), and jquery's clone
+	method, and use jQuery.extend instead of the loop adding methods.
+	Also remove the c&p extra field in _NET_WM_ICON_GEOMETRY's value.
+
+	* compzilla/chrome/content/start.js: fix typo with
+	DeleteRootWindowProperty method name, and use $().
+
+	* compzilla/chrome/content/frame.js: get rid of getElementById
+
+	* compzilla/chrome/content/windowStack.js: change the sense of
+	some if's so that we return in the then block.  saves us
+	indendation levels.  also use $().
+
+	* compzilla/chrome/content/scale.js: call ondestroy instead of
+	destroy.  fixes js error. use $().
+
 	* compzilla/chrome/content/windowStack.js: constrain the
 	_NET_SHOWING_DESKTOP property to 1 or 0, not whatever javascript
 	maps true/false to.

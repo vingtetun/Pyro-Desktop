@@ -47,8 +47,8 @@ function debugDeselectLog (log) {
 
 
 // Build the debug window
-var debugContent = document.getElementById ("debugContent");
-var debugLog = document.getElementById ("debugLog");
+var debugContent = $("#debugContent")[0];
+var debugLog = $("#debugLog", debugContent)[0];
 
 // Make a frame for the debug window
 var debugFrame = CompzillaFrame (debugContent);

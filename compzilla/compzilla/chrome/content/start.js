@@ -7,7 +7,7 @@ var _clientList = new Array ();
 
 function compzillaLoad()
 {
-    var xulwin = document.getElementById ("desktopWindow");
+    var xulwin = $("#desktopWindow")[0];
     xulwin.width = screen.width;
     xulwin.height = screen.height;
 
@@ -71,6 +71,8 @@ function compzillaLoad()
 	    }
 	},
     });
+
+    //workarea = new WorkArea ();
 
     // Register as the window manager and generate windowcreate events for
     // existing windows.
@@ -167,7 +169,7 @@ function compzillaLoad()
 			       1,
 			       [ 0 ]);
 
-    svc.DeleteRootProperty (Atoms._NET_VIRTUAL_ROOTS);
+    svc.DeleteRootWindowProperty (Atoms._NET_VIRTUAL_ROOTS);
 }
 
 

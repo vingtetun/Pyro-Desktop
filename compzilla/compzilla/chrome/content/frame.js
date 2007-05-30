@@ -3,22 +3,6 @@
 
 var _focusedFrame;
 
-function getDescendentById (root, id)
-{
-    if (root.id == id)
-	return root;
-
-    for (var el = root.firstChild; el != null; el = el.nextSibling) {
-	var rv = getDescendentById (el, id);
-	if (rv != null) {
-	    return rv;
-	}
-    }
-
-    return null;
-}
-
-
 var FrameMethods = {
     destroy: function () {
 	Debug ("frame", "frame.destroy");
@@ -254,9 +238,7 @@ var FrameMethods = {
 
 function _addFrameMethods (frame)
 {
-    for (var m in FrameMethods) {
-	frame[m] = FrameMethods[m];
-    }
+    jQuery.extend (frame, FrameMethods);
 
     // now add our public properties
 
@@ -349,14 +331,14 @@ function _addFrameMethods (frame)
 
 function CompzillaFrame (content)
 {
-    var frame = document.getElementById ("windowFrame").cloneNode (true);
+    var frame = $("#windowFrame").clone()[0];
 
-    frame._contentBox = getDescendentById (frame, "windowContentBox");
+    frame._contentBox = $("#windowContentBox", frame)[0];
     frame._contentBox.appendChild (content);
     frame._content = content;
 
-    frame._titleBox = getDescendentById (frame, "windowTitleBox");
-    frame._title = getDescendentById (frame, "windowTitle");
+    frame._titleBox = $("#windowTitleBox", frame)[0];
+    frame._title = $("#windowTitle", frame)[0];
 
     // Add our methods
     _addUtilMethods (frame);
