@@ -59,18 +59,36 @@ function MinimizeCompzillaFrame (w) {
                     });
 }
 
-var animate = false;
+
+var animate = true;
+
+
+/* 
+ * Custom jQuery animation that resizes the focused frame canvas with it's
+ * current style size, to attempt to give a smooth transition while
+ * maximizing/minimizing
+ */
+jQuery.easing["easeout-canvasresize"] = function(x, t, b, c, d) {
+    if (_focusedFrame) {
+	_focusedFrame._updateContentSize ();
+    }
+
+    return jQuery.easing["easeout"](x, t, b, c, d);
+}
+
 
 function RestoreCompzillaFrame (w) {
     if (animate) {
+	w.windowState = "normal";
+
 	$(w).animate ({ left: w.restoreBounds.left, 
 			top: w.restoreBounds.top, 
 			width: w.restoreBounds.width, 
 			height: w.restoreBounds.height },
 		      500, 
-		      "easeout",
+		      "easeout-canvasresize",
 		      function () {
-			  w.windowState = "normal";
+			  w._updateContentSize ();
 			  delete w.restoreBounds;
 		      });
     }
@@ -86,15 +104,19 @@ function RestoreCompzillaFrame (w) {
     }
 }
 
+
 function MaximizeCompzillaFrame (w) {
     if (animate) {
 	$(w).animate ({ left: workarea.bounds.left, 
 			top: workarea.bounds.top, 
 			width: workarea.bounds.width, 
-			height: workarea.bounds.height },
+			height: workarea.bounds.height
+		      },
 		      500, 
-		      "easeout",
+		      "easeout-canvasresize",
 		      function () {
+			  w.windowState = "maximized";
+			  w._updateContentSize ();
 		      });
     }
     else {

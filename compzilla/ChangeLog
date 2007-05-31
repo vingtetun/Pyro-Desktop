@@ -1,5 +1,20 @@
 2007-05-31  Alex Graveley  <alex@beatniksoftware.com>
 
+	* compzilla/chrome/content/frame.js: Add _updateContentSize, which
+	increments _ignoreConfigureCount, and calls _content.onmoveresize. In the
+	configure event handler, ignore the event if _ignoreConfigureCount
+	> 0, and decrement it.  Call _updateContentSize at the end of show.
+
+	* compzilla/chrome/content/minimize.js: Add a custom jQuery easing
+	method that calls _focusedFrame._updateContentSize.  Set animate
+	to true, and use the custom animation.  Call w._updateContentSize
+	in the animation finished callback.
+
+	* compzilla/chrome/content/content.js: Don't spew so much in
+	onmoveresize.
+
+2007-05-31  Alex Graveley  <alex@beatniksoftware.com>
+
 	* compzilla/chrome/skin/compzilla.css: Hide side/bottom frame
 	borders for maximized windows.
 

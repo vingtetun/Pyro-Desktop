@@ -44,9 +44,8 @@ var ContentMethods = {
 	    return;
 
         var pos = this.getPosition();
-        Debug("FindPos: content left=" + pos.left + " top=" + pos.top);
 
-        Debug("Calling ConfigureWindow: xid=" +
+        Debug("frame", "Calling ConfigureWindow: xid=" +
               this._nativewin.nativeWindowId + ", x=" +
               pos.left + ", y=" +
               pos.top + ", width=" +

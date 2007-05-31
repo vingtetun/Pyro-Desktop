@@ -36,8 +36,7 @@ var FrameMethods = {
 	       "frame.moveResize: x=" + x + ", y=" + y + ", w=" + width + ", h=" + height);
 
 	if (this._moveResize (x, y, width, height)) {
-	    if (this._content.onmoveresize)
-		this._content.onmoveresize (this.overrideRedirect);
+	    this._updateContentSize ();
         }
     },
 
@@ -97,6 +96,15 @@ var FrameMethods = {
                ", this._content.offsetWidth=" + this._content.offsetWidth);
 
         return changed;
+    },
+
+    _ignoreConfigureCount: 0,
+
+    _updateContentSize: function () {
+	if (this._content.onmoveresize) {
+	    this._ignoreConfigureCount++;
+	    this._content.onmoveresize (this.overrideRedirect);
+	}
     },
 
     _resetChromeless: function () {
@@ -169,6 +177,8 @@ var FrameMethods = {
 	    this._content.onshow ();
 
 	this.style.display = "block";
+
+	this._updateContentSize ();
     },
 
     hide: function () {
@@ -208,8 +218,6 @@ var FrameMethods = {
 			       top: this.offsetTop,
 			       width: this.offsetWidth,
 			       height: this.offsetHeight };
-
-	this.windowState = "maximized";
 
 	MaximizeCompzillaFrame (this);
 
@@ -501,6 +509,7 @@ function _connectFrameDragListeners (frame)
 		}
 	    }
 
+	    frame._ignoreConfigureCount++;
 	    frame.moveResize (rect.x, rect.y, rect.width, rect.height);
 
 	    ev.preventDefault ();
@@ -564,6 +573,11 @@ function _observeNativeWindow (frame)
 			     height,
 			     borderWidth,
 			     aboveWindow) {
+	    if (frame._ignoreConfigureCount > 0) {
+		frame._ignoreConfigureCount--;
+		return;
+	    }
+
 	    Debug ("frame", "configure.handleEvent");
 
 	    // track override changes
