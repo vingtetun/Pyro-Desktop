@@ -1,5 +1,14 @@
 2007-05-31  Alex Graveley  <alex@beatniksoftware.com>
 
+	* compzilla/src/compzillaWindow.cpp (GetSubwindowAtPoint): Make
+	this more robust to failures, avoiding infinite loops if the
+	window has disappeared.
+	(SendMouseEvent): Fix mouse clicks by using GetTarget instead of
+	GetCurrentTarget.  Previously, with FF 2.0.0.3+, motion events
+	would work correctly, but clicks were always relative to 0,0.
+
+2007-05-31  Alex Graveley  <alex@beatniksoftware.com>
+
 	* compzilla/chrome/content/content.js: Add all the window types.
 
 	* compzilla/chrome/content/atoms.js (Atoms): Make this awesome.

@@ -736,16 +736,17 @@ compzillaWindow::GetSubwindowAtPoint (int *x, int *y)
     Window last_child, child, new_child;
     last_child = child = mWindow;
 
-    while (child) {
-        XTranslateCoordinates (mDisplay, 
-                               last_child, 
-                               child, 
-                               *x, *y, x, y, 
-                               &new_child);
+    do {
+        if (!XTranslateCoordinates (mDisplay, 
+                                    last_child, 
+                                    child, 
+                                    *x, *y, x, y, 
+                                    &new_child))
+            break;
 
         last_child = child;
         child = new_child;
-    }
+    } while (child != last_child);
 
     return last_child;
 }
@@ -772,7 +773,7 @@ compzillaWindow::SendMouseEvent (int eventType, nsIDOMMouseEvent *mouseEv, bool 
     mouseEv->GetClientY (&y);
 
     nsIDOMEventTarget *target;
-    mouseEv->GetCurrentTarget (&target);
+    mouseEv->GetTarget (&target);
     TranslateClientXYToWindow (&x, &y, target);
 
     mouseEv->GetButton (&button);
