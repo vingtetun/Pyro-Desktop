@@ -162,6 +162,12 @@ function _addContentMethods (content) {
 			     case Atoms._NET_WM_WINDOW_TYPE_SPLASH: return "splash";
 			     case Atoms._NET_WM_WINDOW_TYPE_TOOLBAR: return "toolbar";
 			     case Atoms._NET_WM_WINDOW_TYPE_UTILITY: return "utility";
+			     case Atoms._NET_WM_WINDOW_TYPE_DROPDOWN_MENU: return "dropdownmenu";
+			     case Atoms._NET_WM_WINDOW_TYPE_POPUP_MENU: return "popupmenu";
+			     case Atoms._NET_WM_WINDOW_TYPE_TOOLTIP: return "tooltip";
+			     case Atoms._NET_WM_WINDOW_TYPE_NOTIFICATION: return "notification";
+			     case Atoms._NET_WM_WINDOW_TYPE_COMBO: return "combo";
+			     case Atoms._NET_WM_WINDOW_TYPE_DND: return "dnd";
 
 			     case Atoms._NET_WM_WINDOW_TYPE_NORMAL:
 			     default:

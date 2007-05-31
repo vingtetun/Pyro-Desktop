@@ -1,5 +1,11 @@
 2007-05-31  Alex Graveley  <alex@beatniksoftware.com>
 
+	* compzilla/chrome/content/content.js: Add all the window types.
+
+	* compzilla/chrome/content/atoms.js (Atoms): Make this awesome.
+
+2007-05-31  Alex Graveley  <alex@beatniksoftware.com>
+
 	* compzilla/src/compzillaControl.cpp (Filter): Ignore
 	CreateNotify, ConfigureRequest, and MapRequest events if the
 	event's parent attr is not root.
