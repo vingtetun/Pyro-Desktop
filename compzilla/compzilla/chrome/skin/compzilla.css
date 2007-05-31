@@ -173,16 +173,16 @@ body {
         top: 0px;
         bottom: 0px;
 }
-.uiDlgTopCenter, .uiDlgBarCenter, .uiDlgContentCenter, .uiDlgBottomCenter {
+.uiDlgCenter {
         margin-left: 8px;
         margin-right: 8px;
 }
-.uiDlgTopLeft, .uiDlgBarLeft, .uiDlgContentLeft, .uiDlgBottomLeft {
+.uiDlgBorderLeft {
         position: absolute;
         left: 0px;
         width: 8px;
 }
-.uiDlgTopRight, .uiDlgBarRight, .uiDlgContentRight, .uiDlgBottomRight {
+.uiDlgBorderRight {
         position: absolute;
         right: 0px;
         width: 8px;
@@ -195,6 +195,10 @@ body {
         display: none;
 }
 
+
+/*
+ * Active Windows -- Use focused border images
+ */
 
 .uiDlgTopLeft {
         background: transparent url(chrome://compzilla/skin/nw.gif) no-repeat scroll top left;
@@ -237,6 +241,10 @@ body {
 }
 
 
+/*
+ * Cursors for move/resize borders
+ */
+
 .uiDlg[pyro|allow-move="true"] *[pyro|resize="move"] {
         cursor: -moz-grab;
 }
@@ -272,10 +280,15 @@ body {
 }
 
 
-.chromeless .uiDlgTop, .chromeless .uiDlgBar, .chromeless .uiDlgBottom  {
-        display: none;
-}
-.chromeless .uiDlgContentLeft, .chromeless .uiDlgContentRight  {
+/*
+ * Chromeless Windows -- Hide all borders
+ */
+
+.chromeless .uiDlgTop, 
+.chromeless .uiDlgBar, 
+.chromeless .uiDlgBottom,
+.chromeless .uiDlgContentLeft,
+.chromeless .uiDlgContentRight {
         display: none;
 }
 .chromeless .uiDlgContentCenter {
@@ -287,6 +300,28 @@ body {
         background:#EAEAEB none repeat scroll 0%;
 }
 
+
+/* 
+ * Maximized Windows -- Hide the side and bottom borders
+ */
+
+.uiDlg[pyro|window-state="maximized"] .uiDlgBottom,
+.uiDlg[pyro|window-state="maximized"] .uiDlgHandle,
+.uiDlg[pyro|window-state="maximized"] .uiDlgBorderLeft,
+.uiDlg[pyro|window-state="maximized"] .uiDlgBorderRight {
+        display: none;
+}
+.uiDlg[pyro|window-state="maximized"] .uiDlgCenter {
+        margin: 0px;
+}
+.uiDlg[pyro|window-state="maximized"] .uiDlgContent {
+        bottom: 0px;
+}
+
+
+/* 
+ * Inactive Windows -- Use grey border images
+ */
 
 .uiDlg[pyro|inactive="true"] .uiDlgTopLeft {
         background: transparent url(chrome://compzilla/skin/dis_nw.gif) no-repeat scroll top left;

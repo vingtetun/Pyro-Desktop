@@ -57,15 +57,15 @@
              pyro:moving="false">
 
             <div class="uiDlgTop">
-                <div class="uiDlgTopLeft" pyro:resize="nw"/>
-                <div class="uiDlgTopRight" pyro:resize="ne"/>
-                <div class="uiDlgTopCenter" pyro:resize="n"/>
+                <div class="uiDlgTopLeft uiDlgBorderLeft" pyro:resize="nw"/>
+                <div class="uiDlgTopRight uiDlgBorderRight" pyro:resize="ne"/>
+                <div class="uiDlgTopCenter uiDlgCenter" pyro:resize="n"/>
             </div>
 
             <div class="uiDlgBar">
-                <div class="uiDlgBarLeft" pyro:resize="w"/>
-                <div class="uiDlgBarRight" pyro:resize="e"/>
-                <div class="uiDlgBarCenter" id="windowTitleBox" pyro:resize="move">
+                <div class="uiDlgBarLeft uiDlgBorderLeft" pyro:resize="w"/>
+                <div class="uiDlgBarRight uiDlgBorderRight" pyro:resize="e"/>
+                <div class="uiDlgBarCenter uiDlgCenter" id="windowTitleBox" pyro:resize="move">
 
                     <div class="uiDlgButtons">
                         <xul:image class="uiDlgButton uiDlgButtonMin"
@@ -100,17 +100,17 @@
             </div>
 
             <div class="uiDlgContent">
-                <div class="uiDlgContentLeft" pyro:resize="w"/>
-                <div class="uiDlgContentRight" pyro:resize="e"/>
-                <div class="uiDlgContentCenter" id="windowContentBox">
+                <div class="uiDlgContentLeft uiDlgBorderLeft" pyro:resize="w"/>
+                <div class="uiDlgContentRight uiDlgBorderRight" pyro:resize="e"/>
+                <div class="uiDlgContentCenter uiDlgCenter" id="windowContentBox">
                     <!-- The content node will be inserted here. -->
                 </div>
             </div>
 
             <div class="uiDlgBottom">
-                <div class="uiDlgBottomLeft" pyro:resize="sw"/>
-                <div class="uiDlgBottomRight" pyro:resize="se"/>
-                <div class="uiDlgBottomCenter" pyro:resize="s"/>
+                <div class="uiDlgBottomLeft uiDlgBorderLeft" pyro:resize="sw"/>
+                <div class="uiDlgBottomRight uiDlgBorderRight" pyro:resize="se"/>
+                <div class="uiDlgBottomCenter uiDlgCenter" pyro:resize="s"/>
             </div>
 
             <img class="uiDlgHandle" src="chrome://compzilla/skin/handle.gif" pyro:resize="se"/>
@@ -175,21 +175,24 @@
              command="cmd_toggleScale" />
     </keyset>
 
-    <xul:commandset id="compzillaWindowCommandSet">
-        <xul:command id="cmd_minimizeWindow" oncommand="_focusedFrame.minimize();" />
-        <xul:command id="cmd_restoreWindow" oncommand="alert('restore');" />
-        <xul:command id="cmd_maximizeWindow" oncommand="_focusedFrame.toggleMaximized();" />
-        <xul:command id="cmd_closeWindow" oncommand="_focusedFrame.close();" />
-    </xul:commandset>
+    <commandset id="compzillaWindowCommandSet">
+        <command id="cmd_minimizeWindow" oncommand="_focusedFrame.minimize();" />
+        <command id="cmd_restoreWindow" oncommand="alert('restore');" />
+        <command id="cmd_maximizeWindow" oncommand="_focusedFrame.toggleMaximized();" />
+        <command id="cmd_closeWindow" oncommand="_focusedFrame.close();" />
+    </commandset>
 
     <keyset id="compzillaWindowKeyset">
         <key id="key_minimizeWindow" 
+             phase="capturing"
              keycode="VK_F9" modifiers="shift alt"
              command="cmd_minimizeWindow" />
         <key id="key_maximizeWindow" 
+             phase="capturing"
              keycode="VK_F10" modifiers="shift alt"
              command="cmd_maximizeWindow" />
         <key id="key_closeWindow" 
+             phase="capturing"
              keycode="VK_F4" modifiers="shift alt"
              command="cmd_closeWindow" />
     </keyset>
