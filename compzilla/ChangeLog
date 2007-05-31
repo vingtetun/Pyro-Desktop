@@ -1,5 +1,13 @@
 2007-05-31  Alex Graveley  <alex@beatniksoftware.com>
 
+	* compzilla/src/compzillaControl.cpp (Filter): Ignore
+	CreateNotify, ConfigureRequest, and MapRequest events if the
+	event's parent attr is not root.
+
+	Rename minimize.js to minmax.js.
+
+2007-05-31  Alex Graveley  <alex@beatniksoftware.com>
+
 	* compzilla/chrome/content/frame.js: Add _updateContentSize, which
 	increments _ignoreConfigureCount, and calls _content.onmoveresize. In the
 	configure event handler, ignore the event if _ignoreConfigureCount

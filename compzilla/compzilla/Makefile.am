@@ -16,7 +16,7 @@ content_DATA =					\
 	$(CONTENT_SRCDIR)/frame.js		\
 	$(CONTENT_SRCDIR)/jquery.1.1.2.js	\
 	$(CONTENT_SRCDIR)/jquery.easing.1.1.js	\
-	$(CONTENT_SRCDIR)/minimize.js		\
+	$(CONTENT_SRCDIR)/minmax.js		\
 	$(CONTENT_SRCDIR)/overlay.js		\
 	$(CONTENT_SRCDIR)/scale.js		\
 	$(CONTENT_SRCDIR)/start.js		\

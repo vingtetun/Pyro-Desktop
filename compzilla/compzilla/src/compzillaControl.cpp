@@ -783,7 +783,7 @@ compzillaControl::WindowConfigured (bool isNotify,
                                    border,
                                    aboveCompWin,
                                    override_redirect);
-    } else if (isNotify) {
+    } else if (!isNotify) {
         // Window we are not monitoring, so send the configure.
         ConfigureWindow (win, x, y, width, height, border);
     }
@@ -862,8 +862,10 @@ compzillaControl::Filter (GdkXEvent *xevent, GdkEvent *event)
         break;
     }
     case CreateNotify: {
-        SPEW ("CreateNotify: window=0x%0x, x=%d, y=%d, width=%d, height=%d, override=%d\n",
+        SPEW ("CreateNotify: window=0x%0x, parent=%p, x=%d, y=%d, width=%d, height=%d, "
+              "override=%d\n",
                x11_event->xcreatewindow.window,
+               x11_event->xcreatewindow.parent,
                x11_event->xcreatewindow.x,
                x11_event->xcreatewindow.y,
                x11_event->xcreatewindow.width,
@@ -875,7 +877,9 @@ compzillaControl::Filter (GdkXEvent *xevent, GdkEvent *event)
             return GDK_FILTER_REMOVE;
         }
 
-        AddWindow (x11_event->xcreatewindow.window);
+        if (x11_event->xcreatewindow.parent == GDK_DRAWABLE_XID (mRoot)) {
+            AddWindow (x11_event->xcreatewindow.window);
+        }
         break;
     }
     case DestroyNotify: {
@@ -909,25 +913,26 @@ compzillaControl::Filter (GdkXEvent *xevent, GdkEvent *event)
     }
     case ConfigureRequest: {
         SPEW ("ConfigureRequest: window=%p, x=%d, y=%d, width=%d, height=%d, "
-              "border=%d, override=%d\n",
-              x11_event->xconfigure.window,
-              x11_event->xconfigure.x,
-              x11_event->xconfigure.y,
-              x11_event->xconfigure.width,
-              x11_event->xconfigure.height,
-              x11_event->xconfigure.border_width,
-              x11_event->xconfigure.override_redirect);
+              "border=%d\n",
+              x11_event->xconfigurerequest.window,
+              x11_event->xconfigurerequest.x,
+              x11_event->xconfigurerequest.y,
+              x11_event->xconfigurerequest.width,
+              x11_event->xconfigurerequest.height,
+              x11_event->xconfigurerequest.border_width);
 
-        // This is driven by the X app, not compzilla.
-        WindowConfigured (false,
-                          x11_event->xconfigure.window,
-                          x11_event->xconfigure.x,
-                          x11_event->xconfigure.y,
-                          x11_event->xconfigure.width,
-                          x11_event->xconfigure.height,
-                          x11_event->xconfigure.border_width,
-                          x11_event->xconfigure.above,
-                          x11_event->xconfigure.override_redirect);
+        if (x11_event->xconfigurerequest.parent == GDK_DRAWABLE_XID (mRoot)) {
+            // This is driven by the X app, not compzilla.
+            WindowConfigured (false,
+                              x11_event->xconfigurerequest.window,
+                              x11_event->xconfigurerequest.x,
+                              x11_event->xconfigurerequest.y,
+                              x11_event->xconfigurerequest.width,
+                              x11_event->xconfigurerequest.height,
+                              x11_event->xconfigurerequest.border_width,
+                              x11_event->xconfigurerequest.above,
+                              false);
+        }
         break;
     }
     case ReparentNotify: {
@@ -965,7 +970,9 @@ compzillaControl::Filter (GdkXEvent *xevent, GdkEvent *event)
         break;
     }
     case MapRequest:
-        XMapRaised (mXDisplay, x11_event->xmaprequest.window);
+        if (x11_event->xmaprequest.parent == GDK_DRAWABLE_XID (mRoot)) {
+            XMapRaised (mXDisplay, x11_event->xmaprequest.window);
+        }
         break;
     case MapNotify: {
         SPEW ("MapNotify: window=0x%0x, override=%d\n", x11_event->xmap.window, 
