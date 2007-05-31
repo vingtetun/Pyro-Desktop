@@ -66,10 +66,11 @@ private:
     static int ClearErrors (Display *dpy);
     static int sErrorCnt;
 
-    GdkDisplay *mDisplay;
     Display *mXDisplay;
 
     GdkWindow *mRoot;
+    Window mXRoot;
+
     GdkWindow *mMainwin;
     Window mMainwinParent;
     Window mOverlay;

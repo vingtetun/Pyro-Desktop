@@ -111,8 +111,8 @@ compzillaControl::RegisterWindowManager(nsIDOMWindow *window)
     mDOMWindow = window;
 
     mRoot = gdk_get_default_root_window();
-    mDisplay = gdk_display_get_default ();
-    mXDisplay = GDK_DISPLAY_XDISPLAY (mDisplay);
+    mXRoot = GDK_DRAWABLE_XID (mRoot);
+    mXDisplay = GDK_DISPLAY_XDISPLAY (gdk_display_get_default ());
 
     // Get ALL events for ALL windows
     gdk_window_add_filter (NULL, gdk_filter_func, this);
@@ -158,7 +158,7 @@ compzillaControl::SetRootWindowProperty (PRInt32 prop,
                                          PRUint32 count, 
                                          PRUint32* valueArray)
 {
-    XChangeProperty (mXDisplay, GDK_DRAWABLE_XID (mRoot),
+    XChangeProperty (mXDisplay, mXRoot,
                      prop, type, 32,
                      PropModeReplace,
                      (unsigned char*)valueArray, count);
@@ -170,7 +170,7 @@ compzillaControl::SetRootWindowProperty (PRInt32 prop,
 NS_IMETHODIMP
 compzillaControl::DeleteRootWindowProperty (PRInt32 prop)
 {
-    XDeleteProperty (mXDisplay, GDK_DRAWABLE_XID (mRoot),
+    XDeleteProperty (mXDisplay, mXRoot,
                      prop);
 
     return NS_OK;
@@ -451,7 +451,7 @@ compzillaControl::InitWindowState ()
         unsigned int nchildren;
 
         XQueryTree (mXDisplay, 
-                    GDK_WINDOW_XID (mRoot), 
+                    mXRoot, 
                     &root_notused, 
                     &parent_notused, 
                     &children, 
@@ -486,7 +486,7 @@ compzillaControl::InitManagerWindow ()
     //        compiz's display.c:addDisplay.
 
     mManagerWindow = XCreateWindow (mXDisplay,
-                                    GDK_WINDOW_XID (mRoot),
+                                    mXRoot,
                                     -100, -100, 1, 1,
                                     0,
                                     CopyFromParent,
@@ -528,7 +528,7 @@ bool
 compzillaControl::InitOutputWindow ()
 {
     // Create the overlay window, and make the X server stop drawing windows
-    mOverlay = XCompositeGetOverlayWindow (mXDisplay, GDK_WINDOW_XID (mRoot));
+    mOverlay = XCompositeGetOverlayWindow (mXDisplay, mXRoot);
     if (!mOverlay) {
         ERROR ("failed call to XCompositeGetOverlayWindow\n");
         return false;
@@ -809,6 +809,7 @@ compzillaControl::WindowDamaged (Window win, XRectangle *rect)
     }
 }
 
+
 void
 compzillaControl::ClientMessaged (Window win,
                                   Atom type, int format, long *data/*[5]*/)
@@ -877,7 +878,7 @@ compzillaControl::Filter (GdkXEvent *xevent, GdkEvent *event)
             return GDK_FILTER_REMOVE;
         }
 
-        if (x11_event->xcreatewindow.parent == GDK_DRAWABLE_XID (mRoot)) {
+        if (x11_event->xcreatewindow.parent == mXRoot) {
             AddWindow (x11_event->xcreatewindow.window);
         }
         break;
@@ -921,7 +922,7 @@ compzillaControl::Filter (GdkXEvent *xevent, GdkEvent *event)
               x11_event->xconfigurerequest.height,
               x11_event->xconfigurerequest.border_width);
 
-        if (x11_event->xconfigurerequest.parent == GDK_DRAWABLE_XID (mRoot)) {
+        if (x11_event->xconfigurerequest.parent == mXRoot) {
             // This is driven by the X app, not compzilla.
             WindowConfigured (false,
                               x11_event->xconfigurerequest.window,
@@ -961,7 +962,7 @@ compzillaControl::Filter (GdkXEvent *xevent, GdkEvent *event)
 
         nsRefPtr<compzillaWindow> compwin = FindWindow (x11_event->xreparent.window);
 
-        if (x11_event->xreparent.parent == GDK_DRAWABLE_XID (mRoot) && !compwin) {
+        if (x11_event->xreparent.parent == mXRoot && !compwin) {
             AddWindow (x11_event->xreparent.window);
         } else if (compwin) {
             DestroyWindow (x11_event->xreparent.window);
@@ -970,7 +971,7 @@ compzillaControl::Filter (GdkXEvent *xevent, GdkEvent *event)
         break;
     }
     case MapRequest:
-        if (x11_event->xmaprequest.parent == GDK_DRAWABLE_XID (mRoot)) {
+        if (x11_event->xmaprequest.parent == mXRoot) {
             XMapRaised (mXDisplay, x11_event->xmaprequest.window);
         }
         break;
@@ -1065,7 +1066,17 @@ compzillaControl::Filter (GdkXEvent *xevent, GdkEvent *event)
                   damage_ev->area.width, damage_ev->area.height);
 #endif
 
-            WindowDamaged (damage_ev->drawable, &damage_ev->area);
+            int cnt = 0;
+            do {
+                WindowDamaged (damage_ev->drawable, &damage_ev->area);
+                cnt++;
+            } while (XCheckTypedEvent (mXDisplay, 
+                                       damage_event + XDamageNotify,
+                                       x11_event));
+
+            if (cnt > 1) {
+                SPEW("DAMAGE: Handled %d pending events!\n", cnt);
+            }
 
             return GDK_FILTER_REMOVE;
         }

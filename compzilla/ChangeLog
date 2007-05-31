@@ -1,5 +1,12 @@
 2007-05-31  Alex Graveley  <alex@beatniksoftware.com>
 
+	* compzilla/src/compzillaControl.cpp (Filter): Call
+	XCheckTypedEvent in a loop to aggregate pending damage events.
+	Seems to make keypresses feel faster.  Also, remove the calls to
+	GDK_DRAWABLE_XID(mRoot) everywhere, and just cache the value.
+
+2007-05-31  Alex Graveley  <alex@beatniksoftware.com>
+
 	* compzilla/chrome/content/xprops.js: Make this awesome too.
 
 2007-05-31  Alex Graveley  <alex@beatniksoftware.com>
