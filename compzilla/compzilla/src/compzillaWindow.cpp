@@ -1104,7 +1104,7 @@ compzillaWindow::DestroyWindow ()
 void
 compzillaWindow::MapWindow (bool override_redirect)
 {
-    mAttr.override_redirect;
+    mAttr.override_redirect = override_redirect;
     mAttr.map_state = IsViewable;
     EnsureDamage ();
 
