@@ -746,7 +746,7 @@ compzillaWindow::GetSubwindowAtPoint (int *x, int *y)
 
         last_child = child;
         child = new_child;
-    } while (child != last_child);
+    } while (child && child != last_child);
 
     return last_child;
 }
