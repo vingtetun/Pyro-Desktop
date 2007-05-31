@@ -1,5 +1,9 @@
 2007-05-31  Alex Graveley  <alex@beatniksoftware.com>
 
+	* compzilla/chrome/content/xprops.js: Make this awesome too.
+
+2007-05-31  Alex Graveley  <alex@beatniksoftware.com>
+
 	* compzilla/src/compzillaWindow.cpp (GetSubwindowAtPoint): Make
 	this more robust to failures, avoiding infinite loops if the
 	window has disappeared.

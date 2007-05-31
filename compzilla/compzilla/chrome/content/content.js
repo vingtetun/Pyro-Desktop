@@ -6,6 +6,7 @@ var svc = Components.classes['@pyrodesktop.org/compzillaService'].getService(
 
 var xNone = 0;
 
+
 function CompzillaWindowContent (nativewin) {
     Debug ("content", "Creating content for nativewin=" + nativewin.nativeWindowId);
 
@@ -17,7 +18,8 @@ function CompzillaWindowContent (nativewin) {
 
     _addUtilMethods (content);
     _addContentMethods (content);
-    _connectXProperties (content);
+
+    content.XProps = new XProps (nativewin);
 
     return content;
 }
@@ -174,70 +176,4 @@ function _addContentMethods (content) {
 				 return "normal";
 			     }
 			 });
-}
-
-
-function _connectXProperties (content)
-{
-    content.XProps = new XProps (content);
-
-    content.XProps.Add (Atoms._NET_WM_NAME,
-			function (prop_bag) {
-			    return prop_bag.getProperty (".text");
-			});
-
-    content.XProps.Add (Atoms.XA_WM_NAME,
-			function (prop_bag) {
-			    return prop_bag.getProperty (".text");
-			});
-
-    content.XProps.Add (Atoms.XA_WM_CLASS,
-			function (prop_bag) {
-			    return { instanceName: prop_bag.getProperty (".instanceName"),
-                                     className: prop_bag.getProperty (".className")
-                                   };
-			});
-
-    content.XProps.Add (Atoms._NET_WM_WINDOW_TYPE,
-			function (prop_bag) {
-			    // XXX _NET_WM_WINDOW_TYPE is actually an array of atoms
-			    return prop_bag.getPropertyAsUint32 (".atom");
-			});
-
-    content.XProps.Add (Atoms._NET_WM_STRUT,
-			function (prop_bag) {
-			    return { partial: false,
-				     left: prop_bag.getPropertyAsUint32 (".left"),
-				     right: prop_bag.getPropertyAsUint32 (".right"),
-				     top: prop_bag.getPropertyAsUint32 (".top"),
-				     bottom: prop_bag.getPropertyAsUint32 (".bottom"),
-				   };
-			});
-
-    content.XProps.Add (Atoms._NET_WM_STRUT_PARTIAL,
-			function (prop_bag) {
-			    return { partial: true,
-				     left: prop_bag.getPropertyAsUint32 (".left"),
-				     right: prop_bag.getPropertyAsUint32 (".right"),
-				     top: prop_bag.getPropertyAsUint32 (".top"),
-				     bottom: prop_bag.getPropertyAsUint32 (".bottom"),
-				     leftStartY: prop_bag.getPropertyAsUint32 (".leftStartY"),
-				     leftEndY: prop_bag.getPropertyAsUint32 (".leftEndY"),
-				     rightStartY: prop_bag.getPropertyAsUint32 (".rightStartY"),
-				     rightEndY: prop_bag.getPropertyAsUint32 (".rightEndY"),
-				     topStartX: prop_bag.getPropertyAsUint32 (".topStartX"),
-				     topEndX: prop_bag.getPropertyAsUint32 (".topEndX"),
-				     bottomStartX: prop_bag.getPropertyAsUint32 (".bottomStartX"),
-				     bottomEndX: prop_bag.getPropertyAsUint32 (".bottomEndX"),
-				   };
-		       });
-
-    content.XProps.Add (Atoms._NET_WM_ICON_GEOMETRY,
-			function (prop_bag) {
-			    return { x: prop_bag.getPropertyAsUint32 (".x"),
-				     y: prop_bag.getPropertyAsUint32 (".y"),
-				     width: prop_bag.getPropertyAsUint32 (".width"),
-				     height: prop_bag.getPropertyAsUint32 (".height")
-				   };
-		       });
 }
