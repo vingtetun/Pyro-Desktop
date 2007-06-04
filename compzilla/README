@@ -17,6 +17,10 @@ The Pyro Desktop homepage can be found at http://pyrodesktop.org.
 Building
 ========
 
+To compile the Compzilla Firefox extension, you must have the Firefox 
+devel package installed for your distribution, as well as the XComposite 
+and XDamage X11 extension headers. 
+
 $ ./autogen.sh
 $ make
 $ sudo make install
