@@ -64,6 +64,9 @@ windowStack.moveAbove = function(w, above) {
     // then assign the above window's to above.style.zIndex, then
     // call restoreWindow.)
     windowStack.insertAfter (w, above);
+
+    if (w.content && w.content.onmoveabove)
+	w.content.onmoveabove (above);
 }
 
 
@@ -93,6 +96,10 @@ windowStack.moveToBottom = function(w) {
 
     // Restack if we've run out of valid zIndexes
     _maybeRestackLayer (w.layer);
+
+
+    if (w.content && w.content.onmovetobottom)
+	w.content.onmovetobottom ();
 }
 
 
@@ -112,6 +119,9 @@ windowStack.moveToTop = function(w) {
 
     // Restack if we've run out of valid zIndexes
     _maybeRestackLayer (w.layer);
+
+    if (w.content && w.content.onmovetotop)
+	w.content.onmovetotop ();
 }
 
 windowStack.toggleDesktop = function () {

@@ -213,6 +213,31 @@ compzillaControl::SendConfigureNotify (PRUint32 xid,
     XSendEvent (mXDisplay, xid, False, StructureNotifyMask, &ev);
 }
 
+NS_IMETHODIMP
+compzillaControl::MoveToTop (PRUint32 xid)
+{
+    XWindowChanges changes;
+
+    changes.sibling = None;
+    changes.stack_mode = Above;
+
+    XConfigureWindow (mXDisplay, xid,
+                      CWStackMode,
+                      &changes);
+}
+
+NS_IMETHODIMP
+compzillaControl::MoveToBottom (PRUint32 xid)
+{
+    XWindowChanges changes;
+
+    changes.sibling = None;
+    changes.stack_mode = Below;
+
+    XConfigureWindow (mXDisplay, xid,
+                      CWStackMode,
+                      &changes);
+}
 
 NS_IMETHODIMP
 compzillaControl::ConfigureWindow (PRUint32 xid,

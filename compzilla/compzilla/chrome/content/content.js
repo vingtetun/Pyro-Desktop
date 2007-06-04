@@ -97,6 +97,14 @@ var ContentMethods = {
 				   focused_list.length, 
 				   focused_list);
     },
+
+    onmovetotop: function () {
+	svc.MoveToTop (this._nativewin.nativeWindowId);
+    },
+
+    onmovetobottom: function () {
+	svc.MoveToBottom (this._nativewin.nativeWindowId);
+    }
 }
 
 

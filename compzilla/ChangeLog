@@ -1,3 +1,19 @@
+2007-06-03  Chris Toshok  <toshok@ximian.com>
+
+	* compzilla/public/compzillaIControl.idl: add
+	MoveToTop/MoveToBottom.
+
+	* compzilla/chrome/content/content.js: handle onmovetotop and
+	onmovetobottom by calling svc.MoveToTop and svc.MoveToBottom,
+	respectively.
+
+	* compzilla/chrome/content/windowStack.js: call
+	content.onmovetotop, content.onmovetobottom, and
+	content.onmoveabove.
+
+	* compzilla/src/compzillaControl.cpp (MoveToTop): new method.
+	(MoveToBottom): same.
+
 2007-05-31  Alex Graveley  <alex@beatniksoftware.com>
 
 	* compzilla/src/compzillaControl.cpp (Filter): Call

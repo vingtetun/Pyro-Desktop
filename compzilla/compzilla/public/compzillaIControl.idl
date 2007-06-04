@@ -23,6 +23,9 @@ interface compzillaIControl : nsISupports
                           in PRUint32 width, in PRUint32 height, 
                           in PRUint32 border);
 
+    void MoveToTop (in PRUint32 xid);
+    void MoveToBottom (in PRUint32 xid);
+
     void MapWindow (in PRUint32 xid);
     void UnmapWindow (in PRUint32 xid);
 
