@@ -1,3 +1,9 @@
+2007-06-09  Alex Graveley  <alex@beatniksoftware.com>
+
+	* compzilla/src/compzillaRenderingContext.cpp (SetDrawable):
+	Create xlib surface/pattern here, and use it from Render.  Vlad
+	says creating these can be costly.
+
 2007-06-03  Chris Toshok  <toshok@ximian.com>
 
 	* compzilla/public/compzillaIControl.idl: add

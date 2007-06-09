@@ -5,6 +5,17 @@
 #include "nsICanvasRenderingContextInternal.h"
 #undef MOZILLA_INTERNAL_API
 
+#ifdef MOZ_CAIRO_GFX
+#include <thebes/gfxContext.h>
+#include <thebes/gfxASurface.h>
+#include <thebes/gfxPlatform.h>
+#include <thebes/gfxXlibSurface.h>
+#else
+#include <nsTransform2D.h>
+#include <cairo-xlib.h>
+#include <cairo-xlib-xrender.h>
+#endif
+
 #include "compzillaIRenderingContext.h"
 
 extern "C" {
@@ -33,9 +44,12 @@ public:
     NS_IMETHOD SetDrawable (Display *dpy, Drawable drawable, Visual *visual) = 0;
 };
 
+
 #ifndef MOZILLA_1_8_BRANCH
-NS_DEFINE_STATIC_IID_ACCESSOR(compzillaIRenderingContextInternal, COMPZILLA_RENDERING_CONTEXT_INTERNAL_IID)
+NS_DEFINE_STATIC_IID_ACCESSOR(compzillaIRenderingContextInternal, 
+                              COMPZILLA_RENDERING_CONTEXT_INTERNAL_IID)
 #endif
+
 
 class compzillaRenderingContext :
     public compzillaIRenderingContext,
@@ -90,6 +104,13 @@ private:
     Display *mXDisplay;
     Visual *mXVisual;
     Pixmap mXDrawable;
+
+#ifdef MOZ_CAIRO_GFX
+    nsRefPtr<gfxXlibSurface> mGfxSurf;
+    nsRefPtr<gfxPattern> mGfxPat;
+#else
+    cairo_surface_t *mCairoSurf;
+#endif
 
     PRInt32 mWidth, mHeight;
 };

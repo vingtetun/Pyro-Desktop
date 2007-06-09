@@ -17,16 +17,6 @@
 #include <gdk/gdk.h>
 #include <gdk/gdkx.h>
 
-#ifdef MOZ_CAIRO_GFX
-#include <thebes/gfxContext.h>
-#include <thebes/gfxASurface.h>
-#include <thebes/gfxPlatform.h>
-#include <thebes/gfxXlibSurface.h>
-#else
-#include <nsTransform2D.h>
-#include <cairo-xlib.h>
-#include <cairo-xlib-xrender.h>
-#endif
 
 #if WITH_SPEW
 #define SPEW(format...) printf("   - " format)
@@ -54,10 +44,17 @@ compzillaRenderingContext::compzillaRenderingContext ()
 
 compzillaRenderingContext::~compzillaRenderingContext ()
 {
+#ifdef MOZ_CAIRO_GFX
+    // nsRefPtrs take care of cleaning up
+#else
+    if (mCairoSurf) {
+        cairo_surface_destroy (mCairoSurf);
+    }
+#endif
 }
 
 
-NS_METHOD
+NS_IMETHODIMP
 compzillaRenderingContext::SetCanvasElement (nsICanvasElement* aParentCanvas)
 {
     mCanvasElement = aParentCanvas;
@@ -66,7 +63,7 @@ compzillaRenderingContext::SetCanvasElement (nsICanvasElement* aParentCanvas)
 }
 
 
-NS_METHOD 
+NS_IMETHODIMP
 compzillaRenderingContext::SetDimensions (PRInt32 width, PRInt32 height)
 {
     //    SPEW ("SetDimensions (%d,%d)\n", width, height);
@@ -95,7 +92,7 @@ compzillaRenderingContext::GetCanvasLayoutFrame ()
 }
 
 
-NS_METHOD
+NS_IMETHODIMP
 compzillaRenderingContext::Redraw (nsRect r)
 {
     // then invalidate the region and do a sync redraw
@@ -161,7 +158,7 @@ compzillaRenderingContext::Redraw (nsRect r)
  * have a good place to put it; though maybe I want a CanvasContextImpl that
  * all this stuff can derive from?
  */
-NS_METHOD 
+NS_IMETHODIMP
 compzillaRenderingContext::Render (nsIRenderingContext *rc)
 {
     nsresult rv = NS_OK;
@@ -171,28 +168,28 @@ compzillaRenderingContext::Render (nsIRenderingContext *rc)
     gfxContext* ctx = (gfxContext*) rc->GetNativeGraphicData (
         nsIRenderingContext::NATIVE_THEBES_CONTEXT);
 
-    gfxXlibSurface *xlib_surf = new gfxXlibSurface (mXDisplay, mXDrawable, mXVisual);
-    nsRefPtr<gfxPattern> pat = new gfxPattern (xlib_surf);
-
     // XXX I don't want to use PixelSnapped here, but layout doesn't guarantee
     // pixel alignment for this stuff!
     ctx->NewPath ();
-    ctx->PixelSnappedRectangleAndSetPattern (gfxRect(0, 0, mWidth, mHeight), pat);
+    ctx->PixelSnappedRectangleAndSetPattern (gfxRect(0, 0, mWidth, mHeight), mGfxPat);
     ctx->Fill ();
-    delete xlib_surf;
 #else
     // non-Thebes; this becomes exciting
 
     GdkDrawable *gdkdraw = nsnull;
 #ifdef MOZILLA_1_8_BRANCH
     rv = rc->RetrieveCurrentNativeGraphicData ((void**) &gdkdraw);
-    if (NS_FAILED (rv) || !gdkdraw)
+    if (NS_FAILED (rv) || !gdkdraw) {
+        ERROR ("RetrieveCurrentNativeGraphicData failed.\n");
         return NS_ERROR_FAILURE;
+    }
 #else
     gdkdraw = (GdkDrawable*) rc->GetNativeGraphicData (
         nsIRenderingContext::NATIVE_GDK_DRAWABLE);
-    if (!gdkdraw)
+    if (!gdkdraw) {
+        ERROR ("GetNativeGraphicData failed.\n");
         return NS_ERROR_FAILURE;
+    }
 #endif
 
     gint w, h;
@@ -230,32 +227,27 @@ compzillaRenderingContext::Render (nsIRenderingContext *rc)
     cairo_rectangle (dest_cr, 0, 0, mWidth, mHeight);
     cairo_clip (dest_cr);
 
-    cairo_surface_t *xlib_surf = 
-        cairo_xlib_surface_create (mXDisplay, mXDrawable, mXVisual, mWidth, mHeight);
-
-    cairo_set_source_surface (dest_cr, xlib_surf, 0, 0);
+    cairo_set_source_surface (dest_cr, mCairoSurf, 0, 0);
     cairo_paint (dest_cr);
 
     if (dest_cr)
         cairo_destroy (dest_cr);
     if (dest)
         cairo_surface_destroy (dest);
-
-    cairo_surface_destroy (xlib_surf);
 #endif
 
     return rv;
 }
 
 
-NS_METHOD 
+NS_IMETHODIMP
 compzillaRenderingContext::RenderToSurface (struct _cairo_surface *surf)
 {
    return NS_ERROR_NOT_IMPLEMENTED;
 }
 
 
-NS_METHOD 
+NS_IMETHODIMP
 compzillaRenderingContext::GetInputStream (const nsACString& aMimeType,
 					   const nsAString& aEncoderOptions,
 					   nsIInputStream **aStream)
@@ -264,12 +256,32 @@ compzillaRenderingContext::GetInputStream (const nsACString& aMimeType,
 }
 
 
+/*
+ * FIXME: This currently gets called before each Redraw, so do nothing if the
+ *        values haven't changed.  This is broken.  SetDrawable should only be
+ *        called when the backing pixmap gets recreated.  
+ */
 NS_IMETHODIMP
 compzillaRenderingContext::SetDrawable (Display *dpy,
                                         Drawable drawable,
                                         Visual *visual)
 {
+    if (mXDisplay == dpy && mXDrawable == drawable && mXVisual == visual)
+        return NS_OK;
+
     mXDisplay = dpy;
     mXDrawable = drawable;
     mXVisual = visual;
+
+#ifdef MOZ_CAIRO_GFX
+    mGfxSurf = new gfxXlibSurface (mXDisplay, mXDrawable, mXVisual);
+    mGfxPat = new gfxPattern (mGfxSurf);
+#else
+    if (mCairoSurf) {
+        cairo_surface_destroy (mCairoSurf);
+    }
+    mCairoSurf = cairo_xlib_surface_create (mXDisplay, mXDrawable, mXVisual, mWidth, mHeight);
+#endif
+
+    return NS_OK;
 }
