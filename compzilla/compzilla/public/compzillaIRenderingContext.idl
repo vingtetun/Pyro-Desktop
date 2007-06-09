@@ -1,17 +1,12 @@
 /* -*- mode: IDL; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
 #include "nsISupports.idl"
-#include "nsIDOMHTMLCanvasElement.idl"
+
 
 [scriptable, uuid(4fa17c67-d131-4c96-a197-15f2ae1dd561)]
 interface compzillaIRenderingContext : nsISupports
 {
-    /*
-  readonly attribute nsIDOMHTMLCanvasElement canvas;
-
-  void invalidateRect (in PRInt32 src_x, in PRInt32 src_y,
-                       in PRUint32 w, in PRUint32 h);
-    */
 };
+
 
 %{ C++
 //1b3391c9-5ff0-42ca-8356-b4334f3a0424
