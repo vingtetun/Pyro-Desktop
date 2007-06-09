@@ -92,6 +92,8 @@ body {
  */
 
 #windowContent {
+        -moz-user-select: none;
+        user-select: none;
 	background: #ffffff;
 	width: 100%;
 	height: 100%;
@@ -284,19 +286,19 @@ body {
  * Chromeless Windows -- Hide all borders
  */
 
-.chromeless .uiDlgTop, 
-.chromeless .uiDlgBar, 
-.chromeless .uiDlgBottom,
-.chromeless .uiDlgContentLeft,
-.chromeless .uiDlgContentRight {
+.uiDlg.chromeless .uiDlgTop, 
+.uiDlg.chromeless .uiDlgBar, 
+.uiDlg.chromeless .uiDlgBottom,
+.uiDlg.chromeless .uiDlgContentLeft,
+.uiDlg.chromeless .uiDlgContentRight {
         display: none;
 }
-.chromeless .uiDlgContentCenter {
+.uiDlg.chromeless .uiDlgContentCenter {
         display: block;
         margin: 0px;
         background:#ECECEC none repeat scroll 0%;
 }
-.chromeless[pyro|inactive="true"] .uiDlgContentCenter {
+.uiDlg.chromeless[pyro|inactive="true"] .uiDlgContentCenter {
         background:#EAEAEB none repeat scroll 0%;
 }
 
