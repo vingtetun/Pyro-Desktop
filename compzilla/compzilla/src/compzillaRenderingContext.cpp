@@ -35,10 +35,18 @@ NS_IMPL_ISUPPORTS3_CI (compzillaRenderingContext,
 
 
 compzillaRenderingContext::compzillaRenderingContext ()
-    : mWidth(0), 
-      mHeight(0), 
-      mCanvasElement(nsnull)
+    : mCanvasElement(NULL),
+      mXDisplay(NULL),
+      mXVisual(NULL),
+      mXDrawable(None),
+      mWidth(0), 
+      mHeight(0)
 {
+#ifdef MOZ_CAIRO_GFX
+    // nsRefPtrs take care of initing to null
+#else
+    mCairoSurf = NULL;
+#endif
 }
 
 
