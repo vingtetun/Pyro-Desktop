@@ -16,6 +16,8 @@ AC_PROG_INSTALL
 PKG_CHECK_MODULES(GDK, gdk-2.0 >= 2.8.0)
 
 PKG_CHECK_MODULES(NSPR, firefox-nspr >= 1.5.0)
+AC_SUBST(NSPR_LIBS)
+AC_SUBST(NSPR_CFLAGS)
 
 FIREFOX_XPCOM="firefox-xpcom >= 1.5.0"
 
@@ -24,9 +26,24 @@ GECKO_LIBDIR=`$PKG_CONFIG --variable=libdir "$FIREFOX_XPCOM"`
 GECKO_INCLUDEDIR=`$PKG_CONFIG --variable=includedir "$FIREFOX_XPCOM"`
 GECKO_EXEC_PREFIX=`$PKG_CONFIG --variable=exec_prefix "$FIREFOX_XPCOM"`
 
+## Installed firefox has xpidl in lib/firefox directory
 XPIDL="$GECKO_LIBDIR"/xpidl
 if ! test -f "$XPIDL"; then
-   AC_MSG_ERROR([You need to have xpidl])
+   ## Built firefox has xpidl in bin directory
+   XPIDL="$GECKO_EXEC_PREFIX"/xpidl
+   if ! test -f "$XPIDL"; then
+      AC_MSG_ERROR([Cannot find xpidl executable])
+   fi
+fi
+
+## Installed firefox has firefox in bin directory
+FIREFOX="$GECKO_EXEC_PREFIX"/bin/firefox
+if ! test -f "$FIREFOX"; then
+   ## Built firefox has firefox in exec_prefix
+   FIREFOX="$GECKO_EXEC_PREFIX"/firefox
+   if ! test -f "$FIREFOX"; then
+      AC_MSG_ERROR([Cannot find firefox executable])
+   fi
 fi
 
 AC_SUBST(GECKO_IDLDIR)
@@ -34,6 +51,7 @@ AC_SUBST(GECKO_LIBDIR)
 AC_SUBST(GECKO_INCLUDEDIR)
 AC_SUBST(GECKO_EXEC_PREFIX)
 AC_SUBST(XPIDL)
+AC_SUBST(FIREFOX)
 
 
 AC_CACHE_CHECK(if Gecko was compiled to use Thebes, ac_cv_gecko_thebes, [
@@ -73,6 +91,7 @@ echo "
         prefix:                   ${prefix}
         compiler:                 ${CC}
 	xpidl:			  ${XPIDL}
+        firefox:                  ${FIREFOX}
 	Gecko includes:		  ${GECKO_INCLUDEDIR}
 	Gecko idl files:	  ${GECKO_IDLDIR}
 	Gecko using thebes:       ${ac_cv_gecko_thebes}

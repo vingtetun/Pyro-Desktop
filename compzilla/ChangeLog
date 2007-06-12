@@ -1,3 +1,11 @@
+2007-06-12  Alex Graveley  <alex@beatniksoftware.com>
+
+	* compzilla/compzilla.in: Run @FIREFOX@.
+
+	* configure.in: Check for xpidl in libdir and exec_prefix.  Check
+	for firefox in exec_prefix and exec_prefix/bin.  This let's us
+	build against mozilla build trees and system installed packages.
+
 2007-06-09  Alex Graveley  <alex@beatniksoftware.com>
 
 	* compzilla/src/compzillaRenderingContext.cpp (SetDrawable):

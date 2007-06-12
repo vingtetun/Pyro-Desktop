@@ -1,1 +1,3 @@
-@GECKO_EXEC_PREFIX@/bin/firefox -chrome chrome://compzilla/content/start.xul
+#!/bin/sh
+
+@FIREFOX@ -chrome chrome://compzilla/content/start.xul $@
