@@ -1,3 +1,9 @@
+2007-06-18  Alex Graveley  <alex@beatniksoftware.com>
+
+	* COPYING: Add MPL/GPL/LGPL tri-license text.
+
+	* compzilla/chrome/skin/meebo/COPYING: Add GPL license text.
+
 2007-06-12  Alex Graveley  <alex@beatniksoftware.com>
 
 	* compzilla/compzilla.in: Run @FIREFOX@.
