@@ -119,7 +119,7 @@
         <!-- windowContent is cloned to represent native window contents, and
              reparented into a windowFrame clone -->
 
-        <canvas id="windowContent" tabindex="1" style="display: none;" />
+        <canvas id="windowContent" class="windowContent" tabindex="1" style="display: none;" />
 
         <!-- Contents of the debug window. Manually reparented into a window
              frame we create for it in debug.js -->

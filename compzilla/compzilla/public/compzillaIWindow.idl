@@ -2,6 +2,7 @@
 
 #include "nsISupports.idl"
 #include "nsIPropertyBag2.idl"
+#include "nsIDOMHTMLCanvasElement.idl"
 
 #include "compzillaIWindowObserver.idl"
 
@@ -9,8 +10,8 @@
 [scriptable, uuid(95aa8ead-40a9-41c6-a643-e3dd531e0afd)]
 interface compzillaIWindow : nsISupports
 {
-    void AddContentNode (in nsISupports content);
-    void RemoveContentNode (in nsISupports content);
+    void AddContentNode (in nsIDOMHTMLCanvasElement content);
+    void RemoveContentNode (in nsIDOMHTMLCanvasElement content);
 
     void addObserver (in compzillaIWindowObserver observer);
     void removeObserver (in compzillaIWindowObserver observer);

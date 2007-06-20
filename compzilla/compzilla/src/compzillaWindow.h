@@ -8,6 +8,7 @@
 #include <nsIDOMMouseEvent.h>
 #include <nsIDOMMouseListener.h>
 #include <nsIDOMUIListener.h>
+#include <nsIDOMHTMLCanvasElement.h>
 
 extern "C" {
 #include <X11/Xlib.h>
@@ -90,7 +91,7 @@ public:
     Window GetSubwindowAtPoint (int *x, int *y);
     unsigned int DOMKeyCodeToKeySym (PRUint32 vkCode);
 
-    void RedrawContentNode (nsISupports *aContent, XRectangle *rect);
+    void RedrawContentNode (nsIDOMHTMLCanvasElement *aContent, XRectangle *rect);
 
     void UpdateAttributes ();
     void ResetPixmap ();
@@ -101,7 +102,7 @@ public:
     nsresult GetStringProperty (Atom prop, nsAString& value);
     nsresult GetCardinalListProperty (Atom prop, PRUint32 **values, PRUint32 expected_nitems);
 
-    nsCOMArray<nsISupports> mContentNodes;
+    nsCOMArray<nsIDOMHTMLCanvasElement> mContentNodes;
     nsCOMArray<compzillaIWindowObserver> mObservers;
     Display *mDisplay;
     Window mWindow;

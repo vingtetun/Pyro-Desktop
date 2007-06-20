@@ -31,6 +31,7 @@ extern "C" {
 
 #include "XAtoms.h"
 
+#include <gdk/gdk.h>
 #include <gdk/gdkkeys.h>
 #include <gdk/gdkproperty.h>
 #include <gdk/gdkx.h>
@@ -107,7 +108,10 @@ compzillaWindow::compzillaWindow(Display *display, Window win)
     XCompositeRedirectWindow (display, win, CompositeRedirectManual);
 
     // Compiz selects only these.  Need more?
-    XSelectInput (display, win, (PropertyChangeMask | EnterWindowMask | FocusChangeMask));
+    XSelectInput (display, win, (PropertyChangeMask | 
+                                 EnterWindowMask | 
+                                 LeaveWindowMask |
+                                 FocusChangeMask));
     XShapeSelectInput (display, win, ShapeNotifyMask);
 
     memset (&mAttr, 0, sizeof (XWindowAttributes));
@@ -194,7 +198,7 @@ compzillaWindow::EnsurePixmap()
         // Set up persistent offscreen window contents pixmap.
         mPixmap = XCompositeNameWindowPixmap (mDisplay, mWindow);
         if (mPixmap == None) {
-            ERROR ("unable to get backing pixmap for window %p\n", mWindow);
+            ERROR ("Cannot get backing pixmap for window %p\n", mWindow);
         }
     }
 }
@@ -265,7 +269,7 @@ compzillaWindow::GetNativeWindowId (PRInt32 *aId)
 
 
 NS_IMETHODIMP
-compzillaWindow::AddContentNode (nsISupports* aContent)
+compzillaWindow::AddContentNode (nsIDOMHTMLCanvasElement* aContent)
 {
     SPEW ("compzillaWindow::AddContentNode %p - %p\n", this, aContent);
 
@@ -289,7 +293,7 @@ compzillaWindow::AddContentNode (nsISupports* aContent)
 
 
 NS_IMETHODIMP
-compzillaWindow::RemoveContentNode (nsISupports* aContent)
+compzillaWindow::RemoveContentNode (nsIDOMHTMLCanvasElement* aContent)
 {
     SPEW ("compzillaWindow::RemoveContentNode %p\n", this);
 
@@ -568,7 +572,7 @@ compzillaWindow::SendKeyEvent (int eventType, nsIDOMKeyEvent *keyEv)
                                             xkeysym,
                                             &keys,
                                             &n_keys)) {
-        ERROR ("Unknown keyval '%d' ignored.", xkeysym);
+        ERROR ("Unknown keyval '%d' ignored.\n", xkeysym);
         return;
     }
 
@@ -928,6 +932,24 @@ compzillaWindow::SendMouseEvent (int eventType, nsIDOMMouseEvent *mouseEv, bool 
           mWindow, destChild, x, y, state, button + 1, timestamp);
 #endif
 
+    if (eventType == ButtonPress) {
+        gdk_pointer_ungrab (GDK_CURRENT_TIME);
+        gdk_keyboard_ungrab (GDK_CURRENT_TIME);
+
+        // Start a passive grab.  The window's app can override this.
+        XGrabButton (mDisplay, AnyButton, AnyModifier, 
+                     mWindow, True, 
+                     (ButtonPressMask |
+                      ButtonReleaseMask |
+                      EnterWindowMask | 
+                      LeaveWindowMask |
+                      PointerMotionMask),
+                     GrabModeAsync, 
+                     GrabModeAsync, 
+                     None,
+                     None);
+    }
+
     XSendEvent (mDisplay, destChild, True, xevMask, &xev);
     //XevieSendEvent(mDisplay, &xev, XEVIE_MODIFIED);
 
@@ -1091,8 +1113,7 @@ compzillaWindow::DestroyWindow ()
     // Allow a caller to remove O(N^2) behavior by removing end-to-start.
     for (PRUint32 i = mContentNodes.Count() - 1; i != PRUint32(-1); --i) {
         SPEW ("disconnecting content node %d\n", i);
-        nsCOMPtr<nsISupports> aContent = mContentNodes.ObjectAt(i);
-        ConnectListeners (false, aContent);
+        ConnectListeners (false, mContentNodes.ObjectAt(i));
     }
     mContentNodes.Clear ();
 
@@ -1442,19 +1463,11 @@ compzillaWindow::ClientMessaged (Atom type, int format, long *data/*[5]*/)
 
 
 void
-compzillaWindow::RedrawContentNode (nsISupports *aContent, XRectangle *rect)
+compzillaWindow::RedrawContentNode (nsIDOMHTMLCanvasElement *aContent, XRectangle *rect)
 {
-    nsCOMPtr<nsIDOMHTMLCanvasElement> canvas = 
-        do_QueryInterface (aContent);
-    if (!canvas) {
-        ERROR ("Content node %p is not a nsIDOMHTMLCanvasElement\n", 
-               aContent);
-        return;
-    }
-
     nsCOMPtr<compzillaIRenderingContextInternal> internal;
-    nsresult rv = canvas->GetContext (NS_LITERAL_STRING ("compzilla"), 
-                                      getter_AddRefs (internal));
+    nsresult rv = aContent->GetContext (NS_LITERAL_STRING ("compzilla"), 
+                                        getter_AddRefs (internal));
 
     if (NS_SUCCEEDED (rv)) {
         internal->SetDrawable (mDisplay, mPixmap, mAttr.visual);

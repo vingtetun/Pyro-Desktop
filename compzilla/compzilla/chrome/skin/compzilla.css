@@ -91,7 +91,7 @@ body {
  *===============================================================
  */
 
-#windowContent {
+.windowContent {
         -moz-user-select: none;
         user-select: none;
 	background: #ffffff;
@@ -99,7 +99,7 @@ body {
 	height: 100%;
 }
 
-#windowContent:focus {
+.windowContent:focus {
         outline-width: 0;
 }
 

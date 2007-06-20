@@ -1,3 +1,17 @@
+2007-06-20  Alex Graveley  <alex@beatniksoftware.com>
+
+	* compzilla/chrome/content/start.xul: Make windowContent have a
+	class of windowContent, and use this in compzilla.css instead of
+	the id.
+
+	* compzilla/public/compzillaIWindow.idl: Make
+	Add/RemoveContentNode take a nsIDOMHTMLCanvasElement instead of an
+	nsISupports.
+
+	* compzilla/src/compzillaWindow.cpp (SendMouseEvent): Ungrab the
+	pointer and start a passive grab on the window.  Makes menus work
+	a little better.  XSelectInput for LeaveWindowMask also as Enter.
+
 2007-06-18  Alex Graveley  <alex@beatniksoftware.com>
 
 	* COPYING: Add MPL/GPL/LGPL tri-license text.
