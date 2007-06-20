@@ -2,9 +2,8 @@
 
 #include <nspr.h>
 #include <jsapi.h>
-#define MOZILLA_INTERNAL_API
+#include <nsMemory.h>
 #include <nsHashPropertyBag.h>
-#undef MOZILLA_INTERNAL_API
 #include <nsIBaseWindow.h>
 #include <nsIDocShell.h>
 #include <nsIScriptGlobalObject.h>

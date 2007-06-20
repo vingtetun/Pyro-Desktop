@@ -2,9 +2,7 @@
 
 #include <nsCOMPtr.h>
 #include <nsCOMArray.h>
-#define MOZILLA_INTERNAL_API
 #include <nsRefPtrHashtable.h>
-#undef MOZILLA_INTERNAL_API
 #include <nsIWidget.h>
 
 #include "compzillaIControl.h"

@@ -1,5 +1,30 @@
 2007-06-20  Alex Graveley  <alex@beatniksoftware.com>
 
+	* compzilla/src/compzillaControl.cpp: Don't use
+	MOZILLA_INTERNAL_API.
+
+	* compzilla/src/compzillaEventManager.h: Ditto.
+
+	* compzilla/src/compzillaWindowEvents.h: Ditto.
+
+	* compzilla/src/compzillaWindow.cpp: Ditto.
+
+	* compzilla/src/compzillaRenderingContext.hcpp: Ditto.  Work around
+	bugs in nsICanvasRenderingContextInternal.h which includes private
+	string classes by #defineing the string header include checks, and
+	aliasing nsAFlatCString to nsACString, which is missed by
+	nsStringAPI.h.
+	
+	* compzilla/src/compzillaRenderingContext.cpp: Ditto.  Don't store
+	the gfxPattern, and just call DrawSurface which is basically the
+	same as calling NewPath-PixelSnappedRectangleAndSetPattern-Fill, I
+	think.  Also, for non-thebes Firefox, use the NATIVE_CAIRO_CONTEXT
+	instead of NATIVE_GDK_DRAWABLE.
+
+	* compzilla/src/compzillaModule.cpp: Ditto.
+
+2007-06-20  Alex Graveley  <alex@beatniksoftware.com>
+
 	* compzilla/chrome/content/start.xul: Make windowContent have a
 	class of windowContent, and use this in compzilla.css instead of
 	the id.

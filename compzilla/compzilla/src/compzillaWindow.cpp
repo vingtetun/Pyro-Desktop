@@ -1,7 +1,5 @@
 /* -*- mode: C++; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
 
-#define MOZILLA_INTERNAL_API
-
 #if MOZILLA_1_8_BRANCH
 #include <nsStringAPI.h>
 #else
@@ -13,10 +11,9 @@
 #include "compzillaRenderingContext.h"
 #include "nsKeycodes.h"
 
-#include <nsMemory.h>
 #include <nsICanvasElement.h>
 #include <nsIDOMEventTarget.h>
-#include <nsISupportsUtils.h>
+#include <nsIDOMHTMLCanvasElement.h>
 #include <nsComponentManagerUtils.h>
 #include <nsHashPropertyBag.h>
 

@@ -1,9 +1,14 @@
 /* -*- mode: C++; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
+
 #include "nsCOMPtr.h"
 
-#define MOZILLA_INTERNAL_API
+#ifndef MOZILLA_INTERNAL_API
+typedef nsACString nsAFlatCString; 
+#define nsString_h___ 1
+#define nsAString_h___ 1
+#define nsStringFwd_h___ 1
+#endif
 #include "nsICanvasRenderingContextInternal.h"
-#undef MOZILLA_INTERNAL_API
 
 #ifdef MOZ_CAIRO_GFX
 #include <thebes/gfxContext.h>
@@ -107,7 +112,6 @@ private:
 
 #ifdef MOZ_CAIRO_GFX
     nsRefPtr<gfxXlibSurface> mGfxSurf;
-    nsRefPtr<gfxPattern> mGfxPat;
 #else
     cairo_surface_t *mCairoSurf;
 #endif

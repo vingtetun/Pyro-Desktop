@@ -1,7 +1,7 @@
 /* -*- mode: C++; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
 
-#define MOZILLA_INTERNAL_API
 #include <nsMemory.h>
+
 #include "compzillaWindowEvents.h"
 
 #if WITH_SPEW

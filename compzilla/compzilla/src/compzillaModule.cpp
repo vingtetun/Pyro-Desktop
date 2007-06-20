@@ -1,7 +1,5 @@
 /* -*- mode: C++; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
 
-#define MOZILLA_INTERNAL_API
-
 #include <nspr.h>
 #include <nsCOMPtr.h>
 #include <nsXPCOMCID.h>
