@@ -11,6 +11,7 @@ function CompzillaWindowContent (nativewin) {
     Debug ("content", "Creating content for nativewin=" + nativewin.nativeWindowId);
 
     var content = $("#windowContent").clone()[0];
+    content.style.display = "block";
 
     content._nativewin = nativewin;
 
@@ -63,11 +64,15 @@ var ContentMethods = {
     },
 
     onhide: function () {
+	this.style.visibility = "hidden";
+
 	// XXX remove the _NET_WM_WINDOW_STATE property from the window
 	svc.UnmapWindow (this._nativewin.nativeWindowId);
     },
 
     onshow: function () {
+	this.style.visibility = "visible";
+
 	// XXX calculate and add the _NET_WM_WINDOW_STATE property to the window
 	svc.MapWindow (this._nativewin.nativeWindowId);
     },

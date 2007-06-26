@@ -1,6 +1,7 @@
 /* -*- mode: javascript; c-basic-offset: 4; indent-tabs-mode: t; -*- */
 
 
+var _PYRO_NAMESPACE = "http://www.pyrodesktop.org/compzilla";
 var _focusedFrame;
 
 
@@ -32,9 +33,6 @@ var FrameMethods = {
     moveResize: function (x, y, width, height) {
         // Coordinates are relative to the frame
 
-	Debug ("frame", 
-	       "frame.moveResize: x=" + x + ", y=" + y + ", w=" + width + ", h=" + height);
-
 	if (this._moveResize (x, y, width, height)) {
 	    this._updateContentSize ();
         }
@@ -42,6 +40,17 @@ var FrameMethods = {
 
     moveResizeToContent: function (x, y, width, height) {
         // ev coords are relative to content, adjust for frame offsets
+
+        Debug ("frame",
+	       "moveResizeToContent: [x:" + x + ", y:" + y + 
+	       ", width:" + width + ", height:" + height + "]");
+
+	var wasVisible = this.visible;
+	if (!wasVisible) {
+	    this.style.display = "block";
+	    this.style.visibility = "hidden";
+	}
+
         var posframe = this.getPosition ();
         var pos = this._content.getPosition ();
         x -= posframe.left - pos.left;
@@ -50,21 +59,20 @@ var FrameMethods = {
         width += this.offsetWidth - this._content.offsetWidth;
         height += this.offsetHeight - this._content.offsetHeight;
 
-        Debug ("frame",
-	       "moveResizeToContent: width=" + width + " height=" + height + 
-	       " x=" + x + " y=" + y);
-
         this.moveResize (x, y, width, height);
+
+	if (!wasVisible) {
+	    this.style.display = "none";
+	    this.style.visibility = "visible";
+	}
     },
 
     _moveResize: function (x, y, width, height) {
         // Coordinates are relative to the frame
 
-        /*
-        Debug ("BEFORE _moveResize: " + 
-               " this._content.offsetHeight=" + this._content.offsetHeight + 
-               " this._content.offsetWidth=" + this._content.offsetWidth);
-        */
+        Debug ("frame",
+	       "_moveResize: [x:" + x + ", y:" + y + 
+	       ", width:" + width + ", height:" + height + "]");
 
         var changed = false;
 
@@ -88,13 +96,6 @@ var FrameMethods = {
             changed = true;
         }
 
-        Debug ("frame", 
-               "AFTER _moveResize: " + 
-               " this._content.offsetLeft=" + this._content.offsetLeft + 
-               ", this._content.offsetTop=" + this._content.offsetTop + 
-               ", this._content.offsetHeight=" + this._content.offsetHeight + 
-               ", this._content.offsetWidth=" + this._content.offsetWidth);
-
         return changed;
     },
 
@@ -102,7 +103,8 @@ var FrameMethods = {
 
     _updateContentSize: function () {
 	if (this._content.onmoveresize) {
-	    this._ignoreConfigureCount++;
+	    if (!this.overrideRedirect) 
+		this._ignoreConfigureCount++;
 	    this._content.onmoveresize (this.overrideRedirect);
 	}
     },
@@ -120,9 +122,7 @@ var FrameMethods = {
     },
 
     _updateStrutInfo: function () {
-
 	workarea.UpdateStrutInfo (this, this._content.wmStruts);
-
     },
 
     _recomputeAllowedActions: function () {
@@ -173,8 +173,9 @@ var FrameMethods = {
 
 	Debug ("frame", "frame.show");
 
-	if (this._content.onshow)
+	if (!this.overrideRedirect && this._content.onshow) {
 	    this._content.onshow ();
+	}
 
 	this.style.display = "block";
 
@@ -187,8 +188,9 @@ var FrameMethods = {
 
 	Debug ("frame", "frame.hide");
 
-	if (this._content.onhide)
+	if (!this.overrideRedirect && this._content.onhide) {
 	    this._content.onhide ();
+	}
 
 	this.style.display = "none";
     },
@@ -262,11 +264,11 @@ var FrameMethods = {
     },
 
     getPyroAttribute: function (name) {
-        return this.getAttributeNS ("http://www.pyrodesktop.org/compzilla", name);
+        return this.getAttributeNS (_PYRO_NAMESPACE, name);
     },
 
     setPyroAttribute: function (name, value) {
-        this.setAttributeNS ("http://www.pyrodesktop.org/compzilla", name, value);
+        this.setAttributeNS (_PYRO_NAMESPACE, name, value);
     },
 
     mapPropertyToPyroAttribute: function (propname, attrname) {
@@ -343,8 +345,10 @@ function _addFrameMethods (frame)
 		       },
 		       /* setter */
 		       function (val) {
-                           this._overrideRedirect = val;
-                           this._resetChromeless ();
+			   if (this._overrideRedirect != val) {
+			       this._overrideRedirect = val;
+			       this._resetChromeless ();
+			   }
 		       });
 
     frame.addProperty ("title",
@@ -360,15 +364,12 @@ function _addFrameMethods (frame)
 			   if (!t || t == "")
 			       t = "[Unknown]";
 
-			   if (t == this._title.getAttributeNS ("http://www.pyrodesktop.org/compzilla", 
-								"caption"))
+			   if (t == this._title.getAttributeNS (_PYRO_NAMESPACE, "caption"))
 			       return;
 
 			   Debug ("setting caption of " + this._title + " to " + t);
 
-			   this._title.setAttributeNS ("http://www.pyrodesktop.org/compzilla", 
-						       "caption", 
-						       t);
+			   this._title.setAttributeNS (_PYRO_NAMESPACE, "caption", t);
 			   for (var el = this._title.firstChild; el; el = el.nextSibling) {
 			       if (el.className == "windowTitleSpan")
 				   el.innerHTML = t;
@@ -531,7 +532,7 @@ function _connectFrameDragListeners (frame)
     };
 
     frame.onmousedown = function (ev) {
-        var op = ev.target.getAttributeNS ("http://www.pyrodesktop.org/compzilla", "resize");
+        var op = ev.target.getAttributeNS (_PYRO_NAMESPACE, "resize");
         if (!op)
             return;
 
@@ -573,7 +574,7 @@ function _observeNativeWindow (frame)
 			     height,
 			     borderWidth,
 			     aboveWindow) {
-	    if (frame._ignoreConfigureCount > 0) {
+	    if (!overrideRedirect && frame._ignoreConfigureCount > 0) {
 		frame._ignoreConfigureCount--;
 		return;
 	    }
@@ -599,12 +600,12 @@ function _observeNativeWindow (frame)
 	    frame.overrideRedirect = overrideRedirect;
 
 	    windowStack.moveToTop (frame);
-	    frame.show ();
+	    frame.visible = true;
 	},
 
         unmap: function () {
 	    Debug ("frame", "unmap.handleEvent");
-	    frame.hide ();
+	    frame.visible = false;
 	},
 
 	propertyChange: function (atom, isDeleted) {
