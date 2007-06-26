@@ -1,3 +1,14 @@
+2007-06-25  Alex Graveley  <alex@beatniksoftware.com>
+
+	* compzilla/chrome/content/content.js: Set the style.display to
+	"block" right away.  Set style.visibility in onshow/hide.
+
+	* compzilla/chrome/content/frame.js: Use _PYRO_NAMESPACE instead
+	of duplicting the string.
+	(moveResizeToContent) Toggle visibility of the frame so we can get
+	accurate offsets if it's hidden.
+	Don't call _content.onshow/hide for override_redirect windows.
+
 2007-06-20  Alex Graveley  <alex@beatniksoftware.com>
 
 	* compzilla/src/compzillaControl.cpp: Don't use
