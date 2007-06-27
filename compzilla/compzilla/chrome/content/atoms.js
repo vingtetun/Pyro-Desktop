@@ -124,6 +124,8 @@ Atoms.Intern ("_NET_RESTACK_WINDOW");
 Atoms.Intern ("_NET_SHOWING_DESKTOP");
 Atoms.Intern ("_NET_STARTUP_ID");
 Atoms.Intern ("_NET_SUPPORTED");
+Atoms.Intern ("_NET_VIRTUAL_ROOTS");
+Atoms.Intern ("_NET_WORKAREA");
 
 Atoms.Intern ("_NET_WM_ACTION_CHANGE_DESKTOP");
 Atoms.Intern ("_NET_WM_ACTION_CLOSE");
@@ -179,5 +181,3 @@ Atoms.Intern ("_NET_WM_WINDOW_TYPE_TOOLTIP");
 Atoms.Intern ("_NET_WM_WINDOW_TYPE_NOTIFICATION");
 Atoms.Intern ("_NET_WM_WINDOW_TYPE_COMBO");
 Atoms.Intern ("_NET_WM_WINDOW_TYPE_DND");
-
-Atoms.Intern ("_NET_WORKAREA");

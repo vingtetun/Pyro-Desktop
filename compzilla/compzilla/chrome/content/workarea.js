@@ -1,5 +1,6 @@
 /* -*- mode: javascript; c-basic-offset: 4; indent-tabs-mode: t; -*- */
 
+
 function WorkArea ()
 {
     this.frameInfo = {};
@@ -60,3 +61,7 @@ WorkArea.prototype = {
     }
 
 };
+
+
+// Global, accessed by frame.js
+var workarea = new WorkArea ();

@@ -1,3 +1,26 @@
+2007-06-27  Alex Graveley  <alex@beatniksoftware.com>
+
+	* compzilla/chrome/content/atoms.js (Atoms): Intern
+	_NET_VIRTUAL_ROOTS.
+
+	Fixup some JS var bugs.
+
+2007-06-27  Alex Graveley  <alex@beatniksoftware.com>
+
+	* compzilla/src/compzillaControl.cpp (ConvertNsRegion): Add.
+	(SetOverlayInput): Add.
+	(SetRootWindowProperty): Call SetOverlayInput in response to
+	_NET_ACTIVE_WINDOW changes, if OVERLAY_INPUT_REGION is defined.
+	(AddWindow): Don't call MapWindow from here.
+
+	* compzilla/src/compzillaWindow.cpp (SendMouseEvent): Call
+	XGrabKey to match XGrabButton.
+	(EnsurePixmap): Drop the UpdateAttributes here.
+	(WindowConfigured): Call WindowDamaged with the full contents if
+	the size has changed.  
+	Add GetDisplayRegion to fill an nsRegion list with the exposed
+	rectangles.  Call MapWindow if the window is already visible.
+
 2007-06-25  Alex Graveley  <alex@beatniksoftware.com>
 
 	* compzilla/chrome/content/content.js: Set the style.display to

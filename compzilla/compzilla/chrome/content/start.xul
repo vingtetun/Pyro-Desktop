@@ -221,9 +221,9 @@
     <script type="application/x-javascript" src="chrome://compzilla/content/atoms.js" />
     <script type="application/x-javascript" src="chrome://compzilla/content/xprops.js" />
     <script type="application/x-javascript" src="chrome://compzilla/content/windowStack.js" />
+    <script type="application/x-javascript" src="chrome://compzilla/content/workarea.js" />
     <script type="application/x-javascript" src="chrome://compzilla/content/frame.js" />
     <script type="application/x-javascript" src="chrome://compzilla/content/debug.js" />
-    <script type="application/x-javascript" src="chrome://compzilla/content/workarea.js" />
     <script type="application/x-javascript" src="chrome://compzilla/content/content.js" />
     <script type="application/x-javascript" src="chrome://compzilla/content/scale.js" />
     <script type="application/x-javascript" src="chrome://compzilla/content/overlay.js" />

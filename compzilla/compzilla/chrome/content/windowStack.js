@@ -128,6 +128,8 @@ windowStack.toggleDesktop = function () {
     windowStack.showingDesktop = !windowStack.showingDesktop;
 }
 
+windowStack._showingDesktop = false;
+
 // our one property
 
 windowStack.addProperty ("showingDesktop",
@@ -200,15 +202,14 @@ windowStack.addLayer = function (name, minZIndex, maxZIndex) {
 
 // initialization
 
-var showingDesktop = false;
 var layers = new Array ();
 
-desktopLayer    = windowStack.addLayer ("desktopLayer",        0,  1000);
-belowLayer      = windowStack.addLayer ("belowLayer",       5000,  6000);
-normalLayer     = windowStack.addLayer ("normalLayer",     10000, 11000);
-dockLayer       = windowStack.addLayer ("dockLayer",       20000, 21000);
-fullscreenLayer = windowStack.addLayer ("fullscreenLayer", 25000, 25001);
-debugLayer      = windowStack.addLayer ("debugLayer",      60000, 61000);
+var desktopLayer    = windowStack.addLayer ("desktopLayer",        0,  1000);
+var belowLayer      = windowStack.addLayer ("belowLayer",       5000,  6000);
+var normalLayer     = windowStack.addLayer ("normalLayer",     10000, 11000);
+var dockLayer       = windowStack.addLayer ("dockLayer",       20000, 21000);
+var fullscreenLayer = windowStack.addLayer ("fullscreenLayer", 25000, 25001);
+var debugLayer      = windowStack.addLayer ("debugLayer",      60000, 61000);
 
 
 // private methods

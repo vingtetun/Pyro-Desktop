@@ -72,8 +72,6 @@ function compzillaLoad()
 	},
     });
 
-    workarea = new WorkArea ();
-
     // Register as the window manager and generate windowcreate events for
     // existing windows.
     svc.RegisterWindowManager (window);
@@ -107,7 +105,9 @@ function compzillaLoad()
  		      Atoms._NET_CURRENT_DESKTOP,
  		      Atoms._NET_DESKTOP_VIEWPORT,
  		      Atoms._NET_SHOWING_DESKTOP,
+ 		      Atoms._NET_WORKAREA,
 
+		      // FIXME: Implement!
 // 		      Atoms._NET_DESKTOP_LAYOUT,
 // 		      Atoms._NET_DESKTOP_NAMES,
 // 		      Atoms._NET_FRAME_EXTENTS,
@@ -136,7 +136,6 @@ function compzillaLoad()
 // 		      Atoms._NET_WM_STATE_FULLSCREEN,
 // 		      Atoms._NET_WM_STATE_HIDDEN,
 // 		      Atoms._NET_WM_USER_TIME,
- 		      Atoms._NET_WORKAREA,
 		      ];
 
     svc.SetRootWindowProperty (Atoms._NET_SUPPORTED, 
