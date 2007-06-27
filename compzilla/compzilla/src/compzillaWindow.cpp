@@ -17,6 +17,10 @@
 #include <nsComponentManagerUtils.h>
 #include <nsHashPropertyBag.h>
 
+#ifdef OVERLAY_INPUT_REGION
+#include <nsDisplayList.h>
+#endif
+
 extern "C" {
 #include <stdio.h>
 #include <X11/Xatom.h>
@@ -113,6 +117,10 @@ compzillaWindow::compzillaWindow(Display *display, Window win)
 
     memset (&mAttr, 0, sizeof (XWindowAttributes));
     UpdateAttributes ();
+
+    if (mAttr.map_state == IsViewable) {
+        EnsureDamage ();
+    }
 }
 
 
@@ -188,8 +196,6 @@ compzillaWindow::EnsurePixmap()
     if (mPixmap) {
         return;
     }
-
-    UpdateAttributes ();
 
     if (mAttr.map_state == IsViewable) {
         // Set up persistent offscreen window contents pixmap.
@@ -874,8 +880,6 @@ compzillaWindow::SendMouseEvent (int eventType, nsIDOMMouseEvent *mouseEv, bool 
 	xev.xmotion.same_screen = True;
 	break;
     case EnterNotify:
-        //XSetInputFocus (mDisplay, mWindow, RevertToParent, timestamp);
-        // nobreak
     case LeaveNotify:
         xev.xcrossing.display = mDisplay;
         xev.xcrossing.window = destChild;
@@ -945,6 +949,11 @@ compzillaWindow::SendMouseEvent (int eventType, nsIDOMMouseEvent *mouseEv, bool 
                      GrabModeAsync, 
                      None,
                      None);
+
+        XGrabKey (mDisplay, AnyKey, AnyModifier, 
+                  mWindow, True, 
+                  GrabModeAsync, 
+                  GrabModeAsync);
     }
 
     XSendEvent (mDisplay, destChild, True, xevMask, &xev);
@@ -1459,6 +1468,37 @@ compzillaWindow::ClientMessaged (Atom type, int format, long *data/*[5]*/)
 }
 
 
+#ifdef OVERLAY_INPUT_REGION
+void 
+compzillaWindow::GetDisplayRegion (nsRegion &reg)
+{
+    for (PRUint32 i = mContentNodes.Count() - 1; i != PRUint32(-1); --i) {
+        nsIFrame *frame = NULL;
+        nsCOMPtr<nsICanvasElement> canvas = do_QueryInterface (mContentNodes.ObjectAt(i));
+        canvas->GetPrimaryCanvasFrame (&frame);
+        if (!frame)
+            continue;
+
+        nsDisplayListBuilder listBldr = nsDisplayListBuilder (frame, 
+                                                              PR_TRUE /* events? */, 
+                                                              PR_FALSE /* caret? */);
+        nsDisplayListCollection listSet = nsDisplayListCollection ();
+
+        frame->BuildDisplayList (&listBldr, nsRect (), listSet);
+
+        nsDisplayList *listBg = listSet.BorderBackground ();
+        if (!listBg)
+            continue;
+
+        listBg->OptimizeVisibility (&listBldr, &reg);
+
+        nsIntRect screenRect = frame->GetScreenRectExternal ();
+        reg.MoveBy (screenRect.x, screenRect.y);
+    }
+}
+#endif /* OVERLAY_INPUT_REGION */
+
+
 void
 compzillaWindow::RedrawContentNode (nsIDOMHTMLCanvasElement *aContent, XRectangle *rect)
 {
@@ -1515,21 +1555,18 @@ compzillaWindow::WindowConfigured (bool isNotify,
 
     // Notify means we may need new content if the size has changed.
     if (isNotify) {
-        if (mAttr.width != width || mAttr.height != height) {
+        if (width != mAttr.width  || height != mAttr.height || override_redirect) {
             ResetPixmap ();
 
             // Force a refresh with new content, in a new pixmap.
-            // XXX: Is this needed?  Damage always sends a flush as needed?
-            /*
-              XRectangle rect;
-              rect.x = x;
-              rect.y = y;
-              rect.width = width;
-              rect.height = height;
-              WindowDamaged (&rect);
-            */
+            XRectangle rect;
+            rect.x = x;
+            rect.y = y;
+            rect.width = width;
+            rect.height = height;
+            WindowDamaged (&rect);
         }
-
+            
         mAttr.x = x;
         mAttr.y = y;
         mAttr.width = width;

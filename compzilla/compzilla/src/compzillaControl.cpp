@@ -162,6 +162,14 @@ compzillaControl::SetRootWindowProperty (PRInt32 prop,
                      PropModeReplace,
                      (unsigned char*)valueArray, count);
 
+#ifdef OVERLAY_INPUT_REGION
+    if (prop == atoms.x._NET_ACTIVE_WINDOW && 
+        type == XA_WINDOW) {
+        nsRefPtr<compzillaWindow> compwin = FindWindow (valueArray[0]);
+        SetOverlayInput (compwin);
+    }
+#endif /* OVERLAY_INPUT_REGION */
+
     return NS_OK;
 }
 
@@ -212,6 +220,7 @@ compzillaControl::SendConfigureNotify (PRUint32 xid,
     XSendEvent (mXDisplay, xid, False, StructureNotifyMask, &ev);
 }
 
+
 NS_IMETHODIMP
 compzillaControl::MoveToTop (PRUint32 xid)
 {
@@ -225,6 +234,7 @@ compzillaControl::MoveToTop (PRUint32 xid)
                       &changes);
 }
 
+
 NS_IMETHODIMP
 compzillaControl::MoveToBottom (PRUint32 xid)
 {
@@ -237,6 +247,7 @@ compzillaControl::MoveToBottom (PRUint32 xid)
                       CWStackMode,
                       &changes);
 }
+
 
 NS_IMETHODIMP
 compzillaControl::ConfigureWindow (PRUint32 xid,
@@ -646,6 +657,46 @@ compzillaControl::HideOutputWindow()
 }
 
 
+#ifdef OVERLAY_INPUT_REGION
+XserverRegion 
+compzillaControl::ConvertNsRegion (nsRegion &region)
+{
+    XRectangle rects [region.GetNumRects ()];
+    int i = 0;
+
+    nsRegionRectIterator iter = nsRegionRectIterator (region);
+    while (const nsRect *rect = iter.Next()) {
+        rects[i].x = rect->x;
+        rects[i].y = rect->y;
+        rects[i].width = rect->width;
+        rects[i].height = rect->height;
+        i++;
+    }
+
+    return XFixesCreateRegion (mXDisplay, rects, i);
+}
+
+
+void
+compzillaControl::SetOverlayInput (compzillaWindow *win)
+{
+    nsRegion region;
+
+    if (win) {
+        win->GetDisplayRegion (region);
+    }
+
+    XserverRegion xregion = ConvertNsRegion (region);
+
+    XFixesSetWindowShapeRegion (mXDisplay,
+                                mOverlay,
+                                ShapeInput,
+                                0, 0, 
+                                xregion);
+}
+#endif /* OVERLAY_INPUT_REGION */
+
+
 int 
 compzillaControl::ErrorHandler (Display *dpy, XErrorEvent *err)
 {
@@ -728,10 +779,6 @@ compzillaControl::AddWindow (Window win)
     for (PRUint32 i = mObservers.Count() - 1; i != PRUint32(-1); --i) {
         nsCOMPtr<compzillaIControlObserver> observer = mObservers.ObjectAt(i);
         observer->WindowCreate (iwin);
-    }
-
-    if (compwin->mAttr.map_state == IsViewable) {
-        MapWindow (win, compwin->mAttr.override_redirect);
     }
 }
 

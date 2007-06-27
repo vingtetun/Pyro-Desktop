@@ -55,6 +55,11 @@ private:
     void ShowOutputWindow ();
     void HideOutputWindow ();
 
+#ifdef OVERLAY_INPUT_REGION
+    XserverRegion ConvertNsRegion (nsRegion &region);
+    void SetOverlayInput (compzillaWindow *win);
+#endif
+
     GdkFilterReturn Filter (GdkXEvent *xevent, GdkEvent *event);
 
     static GdkFilterReturn gdk_filter_func (GdkXEvent *xevent, 
