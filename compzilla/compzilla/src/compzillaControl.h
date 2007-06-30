@@ -60,6 +60,8 @@ private:
     void SetOverlayInput (compzillaWindow *win);
 #endif
 
+    void EnableOverlayInput (bool receiveInput);
+
     GdkFilterReturn Filter (GdkXEvent *xevent, GdkEvent *event);
 
     static GdkFilterReturn gdk_filter_func (GdkXEvent *xevent, 

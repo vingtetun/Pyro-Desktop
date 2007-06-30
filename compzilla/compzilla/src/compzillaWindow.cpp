@@ -109,10 +109,7 @@ compzillaWindow::compzillaWindow(Display *display, Window win)
     XCompositeRedirectWindow (display, win, CompositeRedirectManual);
 
     // Compiz selects only these.  Need more?
-    XSelectInput (display, win, (PropertyChangeMask | 
-                                 EnterWindowMask | 
-                                 LeaveWindowMask |
-                                 FocusChangeMask));
+    XSelectInput (display, win, (PropertyChangeMask | FocusChangeMask));
     XShapeSelectInput (display, win, ShapeNotifyMask);
 
     memset (&mAttr, 0, sizeof (XWindowAttributes));

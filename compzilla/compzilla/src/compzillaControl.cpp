@@ -457,7 +457,8 @@ compzillaControl::InitWindowState ()
     long ev_mask = (SubstructureRedirectMask |
                     SubstructureNotifyMask |
                     StructureNotifyMask |
-                    PropertyChangeMask);
+                    PropertyChangeMask |
+                    FocusChangeMask);
     XSelectInput (mXDisplay, GDK_WINDOW_XID (mRoot), ev_mask);
 
     if (ClearErrors (mXDisplay)) {
@@ -695,6 +696,30 @@ compzillaControl::SetOverlayInput (compzillaWindow *win)
                                 xregion);
 }
 #endif /* OVERLAY_INPUT_REGION */
+
+
+void
+compzillaControl::EnableOverlayInput (bool receiveInput)
+{
+    XserverRegion xregion;
+
+    if (receiveInput) {
+        XRectangle rect = { 0, 0, 
+                            DisplayWidth (mXDisplay, 0), 
+                            DisplayHeight (mXDisplay, 0) };
+        xregion = XFixesCreateRegion (mXDisplay, &rect, 1);
+    } else {
+        xregion = XFixesCreateRegion (mXDisplay, NULL, 0);
+    }
+
+    XFixesSetWindowShapeRegion (mXDisplay,
+                                mOverlay,
+                                ShapeInput,
+                                0, 0, 
+                                xregion);
+
+    XFixesDestroyRegion (mXDisplay, xregion);
+}
 
 
 int 
@@ -1124,6 +1149,34 @@ compzillaControl::Filter (GdkXEvent *xevent, GdkEvent *event)
 
         break;
     }
+    case _FocusIn:
+        SPEW ("FocusIn: %s window=0x%0x, mode=%d, detail=%d\n", 
+              x11_event->xfocus.send_event ? "(SYNTHETIC)" : "REAL",
+              x11_event->xfocus.window, 
+              x11_event->xfocus.mode, 
+              x11_event->xfocus.detail);
+
+        // On FocusIn of root window due to ungrab, start receiving input again
+        if (x11_event->xfocus.window == mXRoot &&
+            x11_event->xfocus.mode == NotifyUngrab) {
+            SPEW ("FocusIn: focusing main window!\n");
+            EnableOverlayInput (true);
+        }
+        break;
+    case _FocusOut:
+        SPEW ("FocusOut: %s window=0x%0x, mode=%d, detail=%d\n", 
+              x11_event->xfocus.send_event ? "(SYNTHETIC)" : "REAL",
+              x11_event->xfocus.window, 
+              x11_event->xfocus.mode, 
+              x11_event->xfocus.detail);
+
+        // On FocusOut of Moz window due to ungrab, kill all input
+        if (x11_event->xfocus.window == GDK_DRAWABLE_XID (this->mMainwin) &&
+            x11_event->xfocus.mode == NotifyGrab) {
+            SPEW ("FocusOut: UNfocusing main window!\n");
+            EnableOverlayInput (false);
+        }
+        break;
     case Expose:
         ERROR ("Expose event win=%p\n", x11_event->xexpose.window);
         break;
