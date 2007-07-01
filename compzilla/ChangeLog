@@ -1,5 +1,13 @@
 2007-07-01  Alex Graveley  <alex@beatniksoftware.com>
 
+	* compzilla/src/compzillaControl.cpp/h,
+	compzilla/src/compzillaWindow.cpp/h: Remove OVERLAY_INPUT_REGION
+	code, which tries to create an nsDisplayList for the active
+	Xwindow's visible regions, and set the overlay's input mask to
+	allow input to flow through to the underlying window.
+
+2007-07-01  Alex Graveley  <alex@beatniksoftware.com>
+
 	* compzilla/Makefile.am (skin_DATA): Remove desktop.html.
 	(libcompzilla_la_LDFLAGS): Add -Wl,-Bsymbolic, which extensions
 	build with inside the moz tree.

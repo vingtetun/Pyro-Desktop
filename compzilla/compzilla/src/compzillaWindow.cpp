@@ -17,10 +17,6 @@
 #include <nsComponentManagerUtils.h>
 #include <nsHashPropertyBag.h>
 
-#ifdef OVERLAY_INPUT_REGION
-#include <nsDisplayList.h>
-#endif
-
 extern "C" {
 #include <stdio.h>
 #include <X11/Xatom.h>
@@ -1463,37 +1459,6 @@ compzillaWindow::ClientMessaged (Atom type, int format, long *data/*[5]*/)
                                      data[4]);
     }
 }
-
-
-#ifdef OVERLAY_INPUT_REGION
-void 
-compzillaWindow::GetDisplayRegion (nsRegion &reg)
-{
-    for (PRUint32 i = mContentNodes.Count() - 1; i != PRUint32(-1); --i) {
-        nsIFrame *frame = NULL;
-        nsCOMPtr<nsICanvasElement> canvas = do_QueryInterface (mContentNodes.ObjectAt(i));
-        canvas->GetPrimaryCanvasFrame (&frame);
-        if (!frame)
-            continue;
-
-        nsDisplayListBuilder listBldr = nsDisplayListBuilder (frame, 
-                                                              PR_TRUE /* events? */, 
-                                                              PR_FALSE /* caret? */);
-        nsDisplayListCollection listSet = nsDisplayListCollection ();
-
-        frame->BuildDisplayList (&listBldr, nsRect (), listSet);
-
-        nsDisplayList *listBg = listSet.BorderBackground ();
-        if (!listBg)
-            continue;
-
-        listBg->OptimizeVisibility (&listBldr, &reg);
-
-        nsIntRect screenRect = frame->GetScreenRectExternal ();
-        reg.MoveBy (screenRect.x, screenRect.y);
-    }
-}
-#endif /* OVERLAY_INPUT_REGION */
 
 
 void

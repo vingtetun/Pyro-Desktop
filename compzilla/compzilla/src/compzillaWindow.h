@@ -9,10 +9,6 @@
 #include <nsIDOMMouseListener.h>
 #include <nsIDOMUIListener.h>
 
-#ifdef OVERLAY_INPUT_REGION
-#include <nsRegion.h>
-#endif
-
 extern "C" {
 #include <X11/Xlib.h>
 #include <X11/extensions/Xdamage.h>
@@ -80,10 +76,6 @@ public:
                            compzillaWindow *aboveWin,
                            bool override_redirect);
     void ClientMessaged (Atom type, int format, long *data/*[5]*/);
-
-#ifdef OVERLAY_INPUT_REGION
-    void GetDisplayRegion (nsRegion &reg);
-#endif
 
     XWindowAttributes mAttr;
     bool mIsDestroyed;

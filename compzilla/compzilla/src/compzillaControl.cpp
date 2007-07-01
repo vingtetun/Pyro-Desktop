@@ -162,14 +162,6 @@ compzillaControl::SetRootWindowProperty (PRInt32 prop,
                      PropModeReplace,
                      (unsigned char*)valueArray, count);
 
-#ifdef OVERLAY_INPUT_REGION
-    if (prop == atoms.x._NET_ACTIVE_WINDOW && 
-        type == XA_WINDOW) {
-        nsRefPtr<compzillaWindow> compwin = FindWindow (valueArray[0]);
-        SetOverlayInput (compwin);
-    }
-#endif /* OVERLAY_INPUT_REGION */
-
     return NS_OK;
 }
 
@@ -581,9 +573,6 @@ compzillaControl::InitOutputWindow ()
     // Put the our window into the overlay
     XReparentWindow (mXDisplay, GDK_DRAWABLE_XID (mMainwin), mOverlay, 0, 0);
 
-    // FIXME: This causes BadMatch errors, because we aren't mapped yet.
-    //XSetInputFocus (mXDisplay, GDK_DRAWABLE_XID (mMainwin), RevertToPointerRoot, CurrentTime);
-
     ShowOutputWindow ();
 
     return true;
@@ -656,46 +645,6 @@ compzillaControl::HideOutputWindow()
 
     XFixesDestroyRegion (mXDisplay, region);
 }
-
-
-#ifdef OVERLAY_INPUT_REGION
-XserverRegion 
-compzillaControl::ConvertNsRegion (nsRegion &region)
-{
-    XRectangle rects [region.GetNumRects ()];
-    int i = 0;
-
-    nsRegionRectIterator iter = nsRegionRectIterator (region);
-    while (const nsRect *rect = iter.Next()) {
-        rects[i].x = rect->x;
-        rects[i].y = rect->y;
-        rects[i].width = rect->width;
-        rects[i].height = rect->height;
-        i++;
-    }
-
-    return XFixesCreateRegion (mXDisplay, rects, i);
-}
-
-
-void
-compzillaControl::SetOverlayInput (compzillaWindow *win)
-{
-    nsRegion region;
-
-    if (win) {
-        win->GetDisplayRegion (region);
-    }
-
-    XserverRegion xregion = ConvertNsRegion (region);
-
-    XFixesSetWindowShapeRegion (mXDisplay,
-                                mOverlay,
-                                ShapeInput,
-                                0, 0, 
-                                xregion);
-}
-#endif /* OVERLAY_INPUT_REGION */
 
 
 void
