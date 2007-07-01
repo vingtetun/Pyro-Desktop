@@ -54,10 +54,19 @@ var FrameMethods = {
         var posframe = this.getPosition ();
         var pos = this._content.getPosition ();
         x -= posframe.left - pos.left;
-        y -= posframe.top - pos.top;
+
+	// FIXME: Hardcoded height fixes menu position.
+        //y -= posframe.top - pos.top;
+	y -= 30;
 
         width += this.offsetWidth - this._content.offsetWidth;
         height += this.offsetHeight - this._content.offsetHeight;
+
+	// Constrain to size of workarea
+	x = Math.max (x, workarea.bounds.left);
+	y = Math.max (y, workarea.bounds.top);
+	width = Math.min (width, workarea.bounds.width);
+	height = Math.min (height, workarea.bounds.height);
 
         this.moveResize (x, y, width, height);
 

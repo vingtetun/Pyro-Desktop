@@ -1,5 +1,11 @@
 2007-07-01  Alex Graveley  <alex@beatniksoftware.com>
 
+	* compzilla/chrome/content/frame.js (moveResizeToContent):
+	Constrain location/size to workarea's size.  Hardcode y-=30 for
+	now to get correct menu placement working.
+
+2007-07-01  Alex Graveley  <alex@beatniksoftware.com>
+
 	* compzilla/Makefile.am (EXTRA_DIST): Set this so we can pass
 	distcheck.
 
