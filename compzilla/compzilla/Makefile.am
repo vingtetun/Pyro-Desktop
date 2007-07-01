@@ -30,7 +30,6 @@ skindir=$(extensiondir)/chrome/skin
 SKIN_SRCDIR=$(EXTENSION_SRCDIR)/chrome/skin
 skin_DATA =					\
 	$(SKIN_SRCDIR)/compzilla.css		\
-	$(SKIN_SRCDIR)/desktop.html		\
 	$(SKIN_SRCDIR)/desktop-background.jpg	\
 	$(SKIN_SRCDIR)/icon.png			\
 	$(SKIN_SRCDIR)/minimize.png		\
@@ -101,12 +100,18 @@ else
 GFX_LIBS=-lgkgfx
 endif
 
-libcompzilla_la_LDFLAGS = -avoid-version -module
-libcompzilla_la_LIBADD = $(XEXTENSIONS_LIBS) -L$(GECKO_LIBDIR) $(GFX_LIBS) -lxpcom_core
+libcompzilla_la_LDFLAGS = -avoid-version -module -Wl,-Bsymbolic
+libcompzilla_la_LIBADD = $(XEXTENSIONS_LIBS) $(NSPR_LIBS) -L$(GECKO_LIBDIR) -lxpcomglue_s $(GFX_LIBS)
+
+### Link static libthebes for static FF builds
+#libcompzilla_la_LIBADD = $(XEXTENSIONS_LIBS) $(NSPR_LIBS) -L$(GECKO_LIBDIR) -lxpcomglue_s libthebes.a
+
+### Lots of debug output
+# -DDEBUG -DWITH_SPEW
 
 libcompzilla_la_CPPFLAGS =			\
-	-DDEBUG					\
-	-DWITH_SPEW				\
+	-DDEBUG                                 \
+	-DWITH_SPEW                             \
 	-fshort-wchar				\
 	-fno-rtti 				\
 	-fno-exceptions 			\

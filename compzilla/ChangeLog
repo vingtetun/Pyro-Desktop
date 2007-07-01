@@ -1,5 +1,17 @@
 2007-07-01  Alex Graveley  <alex@beatniksoftware.com>
 
+	* compzilla/Makefile.am (skin_DATA): Remove desktop.html.
+	(libcompzilla_la_LDFLAGS): Add -Wl,-Bsymbolic, which extensions
+	build with inside the moz tree.
+	(libcompzilla_la_LIBADD): Add NSPR_LIBS and -lxpcomglue_s. We need
+	a better solution to this since Ubuntu/Debian? doesn't include
+	libxpcomglue_s in it's devel pkg.
+
+	* compzilla/chrome/skin/desktop.html: Remove this, the desktop
+	background is now specified using CSS.
+
+2007-07-01  Alex Graveley  <alex@beatniksoftware.com>
+
 	* compzilla/components/compzillaWindowManager.js: Remove this,
 	it's no longer used since we moved to the event/observer model for
 	native->js comm.
