@@ -1,5 +1,10 @@
 2007-07-01  Alex Graveley  <alex@beatniksoftware.com>
 
+	* compzilla/Makefile.am (EXTRA_DIST): Set this so we can pass
+	distcheck.
+
+2007-07-01  Alex Graveley  <alex@beatniksoftware.com>
+
 	* compzilla/src/compzillaControl.cpp/h,
 	compzilla/src/compzillaWindow.cpp/h: Remove OVERLAY_INPUT_REGION
 	code, which tries to create an nsDisplayList for the active

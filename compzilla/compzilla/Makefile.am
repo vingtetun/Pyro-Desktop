@@ -46,6 +46,14 @@ PREFS_SRCDIR = $(EXTENSION_SRCDIR)/defaults/preferences
 prefs_DATA = $(PREFS_SRCDIR)/prefs.js
 
 
+EXTRA_DIST = 			\
+	$(extension_DATA)	\
+	$(content_DATA)		\
+	$(skin_DATA)		\
+	$(en_DATA)		\
+	$(prefs_DATA)
+
+
 #
 # The 'components' directory contains the generated .xpt typelibs,
 # libcompzilla.so
