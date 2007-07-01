@@ -1,5 +1,10 @@
 2007-07-01  Alex Graveley  <alex@beatniksoftware.com>
 
+	* compzilla/src/compzillaControl.cpp (InitWindowState): Set the
+	root window cursor, used when windows don't specify one.
+
+2007-07-01  Alex Graveley  <alex@beatniksoftware.com>
+
 	* compzilla/src/compzillaControl.cpp: InitOutputWindow ->
 	InitOverlay. Replace Show/HideOutputWindow with ShowOverlay.
 

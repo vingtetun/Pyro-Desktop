@@ -25,6 +25,7 @@ extern "C" {
 #include <X11/extensions/shape.h>
 #include <X11/extensions/Xcomposite.h>
 #include <X11/extensions/Xrender.h>
+#include <X11/cursorfont.h>
 }
 
 
@@ -455,6 +456,10 @@ compzillaControl::InitWindowState ()
 
         XFree (children);
     }
+
+    // Set the root window cursor, used when windows don't specify one.
+    Cursor normal = XCreateFontCursor (mXDisplay, XC_left_ptr);
+    XDefineCursor (mXDisplay, mXRoot, normal);
 
     XUngrabServer (mXDisplay);
 
