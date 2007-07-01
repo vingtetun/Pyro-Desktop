@@ -1,3 +1,17 @@
+2007-07-01  Alex Graveley  <alex@beatniksoftware.com>
+
+	* compzilla/components/compzillaWindowManager.js: Remove this,
+	it's no longer used since we moved to the event/observer model for
+	native->js comm.
+
+	* compzilla/src/compzillaEventManager.cpp,
+	compzilla/src/compzillaWindowEvents.cpp,
+	compzilla/src/compzillaEventManager.h,
+	compzilla/src/compzillaWindowEvents.h,
+	compzilla/public/compzillaIWindowEvents.idl: Delete these old
+	files held over from the event-based attempt, before we switched
+	to using observers.
+
 2007-06-27  Alex Graveley  <alex@beatniksoftware.com>
 
 	* compzilla/chrome/content/atoms.js (Atoms): Intern
