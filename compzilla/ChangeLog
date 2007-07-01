@@ -1,5 +1,14 @@
 2007-07-01  Alex Graveley  <alex@beatniksoftware.com>
 
+	* compzilla/src/compzillaControl.cpp: InitOutputWindow ->
+	InitOverlay. Replace Show/HideOutputWindow with ShowOverlay.
+
+	* configure.in, compzilla/src/compzillaControl.cpp/h,
+	compzilla/src/compzillaWindow.cpp/h, run-xephyr.sh: Remove unused
+	Xevie cruft.  Xevie support lives on in the "xevie" SVN branch.
+
+2007-07-01  Alex Graveley  <alex@beatniksoftware.com>
+
 	* compzilla/chrome/content/frame.js (moveResizeToContent):
 	Constrain location/size to workarea's size.  Hardcode y-=30 for
 	now to get correct menu placement working.

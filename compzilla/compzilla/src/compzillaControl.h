@@ -48,13 +48,11 @@ private:
 
     bool InitXAtoms ();
     bool InitXExtensions ();
-    bool InitOutputWindow ();
+    bool InitOverlay ();
     bool InitManagerWindow ();
     bool InitWindowState ();
 
-    void ShowOutputWindow ();
-    void HideOutputWindow ();
-
+    void ShowOverlay (bool show);
     void EnableOverlayInput (bool receiveInput);
 
     GdkFilterReturn Filter (GdkXEvent *xevent, GdkEvent *event);
@@ -84,7 +82,6 @@ private:
     nsCOMArray<compzillaIControlObserver> mObservers;
 
     static int composite_event, composite_error;
-    static int xevie_event, xevie_error;
     static int damage_event, damage_error;
     static int xfixes_event, xfixes_error;
     static int shape_event, shape_error;

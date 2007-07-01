@@ -22,9 +22,6 @@ extern "C" {
 #include <X11/Xatom.h>
 #include <X11/extensions/shape.h>
 #include <X11/extensions/Xcomposite.h>
-#if HAVE_XEVIE
-#include <X11/extensions/Xevie.h>
-#endif
 
 #include "XAtoms.h"
 
@@ -830,7 +827,6 @@ compzillaWindow::SendMouseEvent (int eventType, nsIDOMMouseEvent *mouseEv, bool 
             xev.xcrossing.same_screen = True;
 
             XSendEvent (mDisplay, mLastEntered, True, LeaveWindowMask, &xev);
-            //XevieSendEvent(mDisplay, &xev, XEVIE_MODIFIED);
         }
         
         mLastEntered = destChild;
@@ -950,7 +946,6 @@ compzillaWindow::SendMouseEvent (int eventType, nsIDOMMouseEvent *mouseEv, bool 
     }
 
     XSendEvent (mDisplay, destChild, True, xevMask, &xev);
-    //XevieSendEvent(mDisplay, &xev, XEVIE_MODIFIED);
 
     // Stop processing event
     if (eventType != MotionNotify) {

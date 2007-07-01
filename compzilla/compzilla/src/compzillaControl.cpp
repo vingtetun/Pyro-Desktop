@@ -25,12 +25,6 @@ extern "C" {
 #include <X11/extensions/shape.h>
 #include <X11/extensions/Xcomposite.h>
 #include <X11/extensions/Xrender.h>
-
-#define HAVE_XEVIE 0
-#define HAVE_XEVIE_WRITEONLY 0
-#if HAVE_XEVIE || HAVE_XEVIE_WRITEONLY
-#include <X11/extensions/Xevie.h>
-#endif
 }
 
 
@@ -57,8 +51,6 @@ NS_IMPL_ISUPPORTS1_CI(compzillaControl, compzillaIControl);
 int compzillaControl::sErrorCnt;
 int compzillaControl::composite_event;
 int compzillaControl::composite_error;
-int compzillaControl::xevie_event;
-int compzillaControl::xevie_error;
 int compzillaControl::damage_event;
 int compzillaControl::damage_error;
 int compzillaControl::xfixes_event;
@@ -85,11 +77,6 @@ compzillaControl::~compzillaControl()
     if (mMainwin) {
         gdk_window_unref(mMainwin);
     }
-
-#if HAVE_XEVIE || HAVE_XEVIE_WRITEONLY
-    // Stop intercepting mouse/keyboard events
-    XevieEnd (mXDisplay);
-#endif
 }
 
 
@@ -128,8 +115,8 @@ compzillaControl::RegisterWindowManager(nsIDOMWindow *window)
     }
 
     // Take over drawing
-    if (!InitOutputWindow ()) {
-        ERROR ("InitOutputWindow failed");
+    if (!InitOverlay ()) {
+        ERROR ("InitOverlay failed");
         exit (1); // return NS_ERROR_UNEXPECTED;
     }
 
@@ -407,19 +394,6 @@ compzillaControl::InitXExtensions ()
     SPEW ("damage extension: event = %d, error = %d\n",
            damage_event, damage_error);
 
-#if HAVE_XEVIE || HAVE_XEVIE_WRITEONLY
-    if (!XQueryExtension (mXDisplay, "XEVIE", &opcode, &xevie_event, &xevie_error)) {
-	ERR_RET ("No Xevie extension\n");
-    }
-
-    int evie_major, evie_minor;
-    if (!XevieQueryVersion (mXDisplay, &evie_major, &evie_minor)) {
-	ERR_RET ("No Xevie extension\n");
-    }
-    SPEW ("xevie extension: major = %d, minor = %d, opcode = %d, event = %d, error = %d\n",
-           evie_major, evie_minor, opcode, evie_event, evie_error);
-#endif
-
     if (!XFixesQueryExtension (mXDisplay, &xfixes_event, &xfixes_error)) {
 	ERR_RET ("No XFixes extension\n");
     }
@@ -459,18 +433,6 @@ compzillaControl::InitWindowState ()
         ev_mask &= ~(SubstructureRedirectMask);
         XSelectInput (mXDisplay, GDK_WINDOW_XID (mRoot), ev_mask);
     }
-
-#if HAVE_XEVIE
-    // Intercept mouse/keyboard events
-    XevieStart (mXDisplay);
-    XevieSelectInput (mXDisplay, (ButtonPressMask | 
-                                  ButtonReleaseMask |
-                                  KeyPressMask | 
-                                  KeyReleaseMask));
-#elif HAVE_XEVIE_WRITEONLY
-    XevieStart (mXDisplay);
-    //XevieSelectInput (mXDisplay, NoEventMask);
-#endif
 
     if (mIsWindowManager) {
         // Start managing any existing windows
@@ -553,7 +515,7 @@ compzillaControl::InitManagerWindow ()
 
 
 bool
-compzillaControl::InitOutputWindow ()
+compzillaControl::InitOverlay ()
 {
     // Create the overlay window, and make the X server stop drawing windows
     mOverlay = XCompositeGetOverlayWindow (mXDisplay, mXRoot);
@@ -573,77 +535,34 @@ compzillaControl::InitOutputWindow ()
     // Put the our window into the overlay
     XReparentWindow (mXDisplay, GDK_DRAWABLE_XID (mMainwin), mOverlay, 0, 0);
 
-    ShowOutputWindow ();
+    ShowOverlay (true);
+    EnableOverlayInput (true);
 
     return true;
 }
 
 
 void 
-compzillaControl::ShowOutputWindow()
+compzillaControl::ShowOverlay (bool show)
 {
-    // NOTE: Ripped off from compiz.  Not sure why this is needed.  Maybe to
-    //       support multiple monitors with different dimensions?
+    XserverRegion xregion;
 
-    // mMainwin isn't mapped yet
-    /*
-    XserverRegion region = XFixesCreateRegionFromWindow (mXDisplay,
-                                                         GDK_DRAWABLE_XID (mMainwin),
-                                                         WindowRegionBounding);
-    */
-
-#if HAVE_XEVIE
-    XserverRegion empty = XFixesCreateRegion (mXDisplay, NULL, 0);
+    if (show) {
+        XRectangle rect = { 0, 0, 
+                            DisplayWidth (mXDisplay, 0), 
+                            DisplayHeight (mXDisplay, 0) };
+        xregion = XFixesCreateRegion (mXDisplay, &rect, 1);
+    } else {
+        xregion = XFixesCreateRegion (mXDisplay, NULL, 0);
+    }
 
     XFixesSetWindowShapeRegion (mXDisplay,
                                 mOverlay,
                                 ShapeBounding,
                                 0, 0, 
-                                0);
+                                xregion);
 
-    XFixesSetWindowShapeRegion (mXDisplay,
-                                mOverlay,
-                                ShapeInput,
-                                0, 0, 
-                                empty);
-
-    XFixesDestroyRegion (mXDisplay, empty);
-#else 
-    XRectangle rect = { 0, 0, DisplayWidth (mXDisplay, 0), DisplayHeight (mXDisplay, 0) };
-    XserverRegion region = XFixesCreateRegion (mXDisplay, &rect, 1);
-
-    XFixesSetWindowShapeRegion (mXDisplay,
-                                mOverlay,
-                                ShapeBounding,
-                                0, 0, 
-                                region);
-
-    XFixesSetWindowShapeRegion (mXDisplay,
-                                mOverlay,
-                                ShapeInput,
-                                0, 0, 
-                                region);
-
-    XFixesDestroyRegion (mXDisplay, region);
-#endif
-}
-
-
-void 
-compzillaControl::HideOutputWindow()
-{
-    // NOTE: Ripped off from compiz.  Not sure why this is needed.  Maybe to
-    //       support multiple monitors with different dimensions?
-
-    XserverRegion region = XFixesCreateRegion (mXDisplay, NULL, 0);
-
-    XFixesSetWindowShapeRegion (mXDisplay,
-                                mOverlay,
-                                ShapeBounding,
-                                0, 0, 
-                                region);
-
-    XFixesDestroyRegion (mXDisplay, region);
+    XFixesDestroyRegion (mXDisplay, xregion);
 }
 
 
@@ -1074,28 +993,7 @@ compzillaControl::Filter (GdkXEvent *xevent, GdkEvent *event)
             break;
         }
 
-#if HAVE_XEVIE
-        // Redirect all mouse/kayboard events to our mozilla window.
-        /*
-        Window mainwin = GDK_WINDOW_XID (mMainwin);
-        if (x11_event->xany.window != mainwin) {
-            x11_event->xany.window = mainwin;
-            XevieSendEvent (mXDisplay, x11_event, XEVIE_MODIFIED);
-        } else {
-            XevieSendEvent (mXDisplay, x11_event, XEVIE_UNMODIFIED);
-        }
-        */
-        XevieSendEvent (mXDisplay, x11_event, XEVIE_UNMODIFIED);
-
-        nsCOMPtr<nsIWidget> widget;
-        if (NS_OK == GetNativeWidget (mDOMWindow, getter_AddRefs (widget))) {
-            // Call nsIWidget::DispatchEvent?
-        }
-
-        // Don't let Gtk process the original event.
-        return GDK_FILTER_REMOVE;
-#endif
-
+        /* Do nothing.  Let DOM event handling forward events correctly. */
         break;
     }
     case _FocusIn:
