@@ -395,6 +395,8 @@ function CompzillaFrame (content)
     frame._contentBox.appendChild (content);
     frame._content = content;
 
+    frame._icon = $("#windowIcon", frame)[0];
+
     frame._titleBox = $("#windowTitleBox", frame)[0];
     frame._title = $("#windowTitle", frame)[0];
 
@@ -630,6 +632,15 @@ function _observeNativeWindow (frame)
 		
 		Debug ("frame", "propertychange: setting title:" + frame.title);
 			     
+		break;
+
+	    case Atoms.XA_WM_ICON_NAME:
+	    case Atoms._NET_WM_ICON_NAME:
+		frame._icon.src = "moz-icon://stock/" + frame._content.wmIconName + "?size=16";
+		
+		Debug ("frame", "propertychange: setting icon name:" + 
+		       frame._content.wmIconName + ", requesting: " + frame._icon.src);
+
 		break;
 
 	    case Atoms._NET_WM_STRUT:

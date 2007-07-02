@@ -1,5 +1,12 @@
 2007-07-02  Alex Graveley  <alex@beatniksoftware.com>
 
+	* compzilla/chrome/content/frame.js: Handle ICON_NAME xprop
+	changes using the "moz-icon://stock/<stock-id>?size=16" scheme to
+	lookup gtk icon theme icons for window frames.
+
+	* compzilla/chrome/content/content.js: Add wmIconName property
+	that represents _NET_WM_ICON_NAME or XA_WM_ICON_NAME.
+
 	* compzilla/chrome/skin/compzilla.css: Make chromeless windows
 	have .9 opacity, and hide the resize grip.
  

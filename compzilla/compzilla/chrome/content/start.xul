@@ -84,9 +84,9 @@
                                    onclick="this.doCommand();" />
                     </div>
 
-                    <xul:image id="compzillaWindowIcon"
+                    <xul:image id="windowIcon"
                                class="uiDlgButton uiDlgButtonMenu"
-                               src="chrome://compzilla/skin/icon.png"
+                               src="moz-icon://stock/computer?size=16"
                                tooltiptext="&windowMenu.label;" 
                                popup="compzillaWindowMenu" />
 

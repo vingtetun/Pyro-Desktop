@@ -146,6 +146,17 @@ function _addContentMethods (content) {
 			     return name;
 			 });
 
+    content.addProperty ("wmIconName",
+			 /* getter */
+			 function () {
+			     var name = this.XProps[Atoms._NET_WM_ICON_NAME];
+
+			     // fall back to XA_WM_ICON_NAME if _NET isn't.
+			     if (name == null)
+				 name = this.XProps[Atoms.XA_WM_ICON_NAME];
+
+			     return name;
+			 });
 
     content.addProperty ("wmStruts",
 			 /* getter */
