@@ -2,13 +2,12 @@
 bin_SCRIPTS=compzilla
 
 extensiondir = $(GECKO_LIBDIR)/extensions/compzilla@pyrodesktop.org
-EXTENSION_SRCDIR=$(srcdir)
-extension_DATA =				\
-	$(EXTENSION_SRCDIR)/chrome.manifest	\
-	$(EXTENSION_SRCDIR)/install.rdf
+extension_DATA =			\
+	$(srcdir)/chrome.manifest	\
+	$(srcdir)/install.rdf
 
 contentdir=$(extensiondir)/chrome/content
-CONTENT_SRCDIR=$(EXTENSION_SRCDIR)/chrome/content
+CONTENT_SRCDIR=$(srcdir)/chrome/content
 content_DATA =					\
 	$(CONTENT_SRCDIR)/atoms.js		\
 	$(CONTENT_SRCDIR)/content.js		\
@@ -27,7 +26,7 @@ content_DATA =					\
 	$(CONTENT_SRCDIR)/xprops.js
 
 skindir=$(extensiondir)/chrome/skin
-SKIN_SRCDIR=$(EXTENSION_SRCDIR)/chrome/skin
+SKIN_SRCDIR=$(srcdir)/chrome/skin
 skin_DATA =					\
 	$(SKIN_SRCDIR)/compzilla.css		\
 	$(SKIN_SRCDIR)/desktop-background.jpg	\
@@ -38,21 +37,12 @@ skin_DATA =					\
 	$(SKIN_SRCDIR)/meebo/*
 
 endir=$(extensiondir)/chrome/locale/en-US
-EN_SRCDIR=$(EXTENSION_SRCDIR)/chrome/locale/en-US
+EN_SRCDIR=$(srcdir)/chrome/locale/en-US
 en_DATA = $(EN_SRCDIR)/start.dtd
 
 prefsdir = $(extensiondir)/defaults/preferences
-PREFS_SRCDIR = $(EXTENSION_SRCDIR)/defaults/preferences
+PREFS_SRCDIR = $(srcdir)/defaults/preferences
 prefs_DATA = $(PREFS_SRCDIR)/prefs.js
-
-
-EXTRA_DIST = 			\
-	$(extension_DATA)	\
-	$(content_DATA)		\
-	$(skin_DATA)		\
-	$(en_DATA)		\
-	$(prefs_DATA)		\
-	$(noinst_idl_DATA)
 
 
 #
@@ -79,6 +69,14 @@ noinst_idl_DATA =					\
 	$(IDL_SRCDIR)/compzillaIWindowObserver.idl   	\
 	$(IDL_SRCDIR)/compzillaIRenderingContext.idl
 
+IDL_H_DESTDIR = $(top_builddir)/compzilla/public
+IDL_H_FILES = $(subst $(IDL_SRCDIR), $(IDL_H_DESTDIR), $(noinst_idl_DATA:.idl=.h))
+IDL_XPT_FILES = $(IDL_H_FILES:.h=.xpt)
+
+XPIDL_INCLUDES =				\
+	-I$(GECKO_IDLDIR)			\
+	-I$(IDL_SRCDIR)
+
 %.h: %.idl
 	-mkdir "$(dir $@)"
 	$(XPIDL) $(XPIDL_INCLUDES) -m header -e $@ $<
@@ -87,21 +85,19 @@ noinst_idl_DATA =					\
 	-mkdir $(dir $@)
 	$(XPIDL) $(XPIDL_INCLUDES) -m typelib -e $@ $<
 
-XPIDL_INCLUDES =				\
-	-I$(GECKO_IDLDIR)			\
-	-I$(IDL_SRCDIR)
 
-IDL_H_FILES = 				    \
-	public/compzillaIControl.h	    \
-	public/compzillaIControlObserver.h  \
-	public/compzillaIWindow.h	    \
-	public/compzillaIWindowObserver.h   \
-	public/compzillaIRenderingContext.h
-IDL_XPT_FILES = $(IDL_H_FILES:.h=.xpt)
+EXTRA_DIST = 			\
+	$(extension_DATA)	\
+	$(content_DATA)		\
+	$(skin_DATA)		\
+	$(en_DATA)		\
+	$(prefs_DATA)		\
+	$(noinst_idl_DATA)
 
 BUILT_SOURCES = 		\
 	$(IDL_H_FILES) 		\
 	$(IDL_XPT_FILES)
+
 CLEANFILES = 			\
 	$(IDL_H_FILES) 		\
 	$(IDL_XPT_FILES)
@@ -157,7 +153,7 @@ libcompzilla_la_CPPFLAGS =			\
 	-I$(GECKO_INCLUDEDIR)/xpcom		\
 	-I$(GECKO_INCLUDEDIR)/xpconnect		\
 	\
-	-I$(top_builddir)/compzilla/public
+	-I$(IDL_H_DESTDIR)
 
 nodist_libcompzilla_la_SOURCES = $(IDL_H_FILES)
 
