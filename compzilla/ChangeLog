@@ -1,3 +1,11 @@
+2007-07-02  Alex Graveley  <alex@beatniksoftware.com>
+
+	* compzilla/chrome/skin/compzilla.css: Make chromeless windows
+	have .9 opacity, and hide the resize grip.
+ 
+	* compzilla/src/compzillaControl.cpp: Listen for
+	XFixesCursorNotify events, and print a spew.
+
 2007-07-01  Alex Graveley  <alex@beatniksoftware.com>
 
 	* compzilla/Makefile.am: Pass distcheck.

@@ -461,6 +461,11 @@ compzillaControl::InitWindowState ()
     Cursor normal = XCreateFontCursor (mXDisplay, XC_left_ptr);
     XDefineCursor (mXDisplay, mXRoot, normal);
 
+    // Get notified of global cursor changes.  
+    // FIXME: This is not very useful, as X has no way of fetching the Cursor
+    // for a given window.
+    XFixesSelectCursorInput (mXDisplay, mXRoot, XFixesDisplayCursorNotifyMask);
+
     XUngrabServer (mXDisplay);
 
     return true;
@@ -801,6 +806,7 @@ compzillaControl::ClientMessaged (Window win,
     }
 }
 
+
 already_AddRefed<compzillaWindow>
 compzillaControl::FindWindow (Window win)
 {
@@ -1055,6 +1061,11 @@ compzillaControl::Filter (GdkXEvent *xevent, GdkEvent *event)
             }
 
             return GDK_FILTER_REMOVE;
+        }
+        else if (x11_event->type == xfixes_event + XFixesCursorNotify) {
+            XFixesCursorNotifyEvent *cursor_ev = (XFixesCursorNotifyEvent *) x11_event;
+            const char *cursor_val = gdk_x11_get_xatom_name (cursor_ev->cursor_name);
+            SPEW ("CURSOR: got cursor switch to '%s', win=%p\n", cursor_val, cursor_ev->window);
         }
         else if (x11_event->type == shape_event + ShapeNotify) {
             NS_NOTYETIMPLEMENTED ("ShapeNotify event");

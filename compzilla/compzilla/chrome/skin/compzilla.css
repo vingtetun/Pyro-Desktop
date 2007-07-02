@@ -289,6 +289,7 @@ body {
 .uiDlg.chromeless .uiDlgTop, 
 .uiDlg.chromeless .uiDlgBar, 
 .uiDlg.chromeless .uiDlgBottom,
+.uiDlg.chromeless .uiDlgHandle,
 .uiDlg.chromeless .uiDlgContentLeft,
 .uiDlg.chromeless .uiDlgContentRight {
         display: none;
@@ -508,8 +509,13 @@ body {
         opacity: 0.8; 
 }
 
+/* make menus and tooltips translucent */
+.uiDlg.chromeless {
+        opacity: 0.9;
+}
+
 /* a little hack to see if we can get wm-class support working.
    gnome-terminal windows should be translucent */
-*[pyro|wm-class~="Gnome-terminal"] { 
-        opacity: 0.5; 
+.uiDlg[pyro|wm-class~="Gnome-terminal"] { 
+        opacity: 0.5;
 }
