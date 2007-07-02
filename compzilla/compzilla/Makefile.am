@@ -51,12 +51,13 @@ EXTRA_DIST = 			\
 	$(content_DATA)		\
 	$(skin_DATA)		\
 	$(en_DATA)		\
-	$(prefs_DATA)
+	$(prefs_DATA)		\
+	$(noinst_idl_DATA)
 
 
 #
 # The 'components' directory contains the generated .xpt typelibs,
-# libcompzilla.so
+# and libcompzilla.so.
 #
 
 componentdir = $(extensiondir)/components
@@ -65,34 +66,42 @@ component_LTLIBRARIES = libcompzilla.la
 
 
 #
-# Use 'xpidl' to generate .h and .xpt files from .idl files
+# Use 'xpidl' to generate .h and .xpt files from .idl files.  
+# NOTE: IDL files are not currently installed.
 #
+
+noinst_idldir = $(datadir)/idl/compzilla
+IDL_SRCDIR=$(srcdir)/public
+noinst_idl_DATA =					\
+	$(IDL_SRCDIR)/compzillaIControl.idl		\
+	$(IDL_SRCDIR)/compzillaIControlObserver.idl	\
+	$(IDL_SRCDIR)/compzillaIWindow.idl		\
+	$(IDL_SRCDIR)/compzillaIWindowObserver.idl   	\
+	$(IDL_SRCDIR)/compzillaIRenderingContext.idl
+
+%.h: %.idl
+	-mkdir "$(dir $@)"
+	$(XPIDL) $(XPIDL_INCLUDES) -m header -e $@ $<
+
+%.xpt: %.idl
+	-mkdir $(dir $@)
+	$(XPIDL) $(XPIDL_INCLUDES) -m typelib -e $@ $<
 
 XPIDL_INCLUDES =				\
 	-I$(GECKO_IDLDIR)			\
-	-I$(srcdir)/public
+	-I$(IDL_SRCDIR)
 
-SUFFIXES= .idl .xpt
-
-.idl.h:
-	$(XPIDL) $(XPIDL_INCLUDES) -m header -e $@ $<
-
-.idl.xpt:
-	$(XPIDL) $(XPIDL_INCLUDES)  -m typelib -e $@ $<
-
-IDL_FILES =						\
-	$(srcdir)/public/compzillaIControl.idl		\
-	$(srcdir)/public/compzillaIControlObserver.idl	\
-	$(srcdir)/public/compzillaIWindow.idl		\
-	$(srcdir)/public/compzillaIWindowObserver.idl   \
-	$(srcdir)/public/compzillaIRenderingContext.idl
-
-IDL_H_FILES = $(IDL_FILES:.idl=.h)
-IDL_XPT_FILES = $(IDL_FILES:.idl=.xpt)
+IDL_H_FILES = 				    \
+	public/compzillaIControl.h	    \
+	public/compzillaIControlObserver.h  \
+	public/compzillaIWindow.h	    \
+	public/compzillaIWindowObserver.h   \
+	public/compzillaIRenderingContext.h
+IDL_XPT_FILES = $(IDL_H_FILES:.h=.xpt)
 
 BUILT_SOURCES = 		\
 	$(IDL_H_FILES) 		\
-	$(IDL_XPT_FILES) 
+	$(IDL_XPT_FILES)
 CLEANFILES = 			\
 	$(IDL_H_FILES) 		\
 	$(IDL_XPT_FILES)
@@ -148,7 +157,7 @@ libcompzilla_la_CPPFLAGS =			\
 	-I$(GECKO_INCLUDEDIR)/xpcom		\
 	-I$(GECKO_INCLUDEDIR)/xpconnect		\
 	\
-	-I$(srcdir)/public
+	-I$(top_builddir)/compzilla/public
 
 nodist_libcompzilla_la_SOURCES = $(IDL_H_FILES)
 

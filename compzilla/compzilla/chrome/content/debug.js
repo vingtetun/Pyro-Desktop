@@ -1,7 +1,7 @@
 /* -*- mode: javascript; c-basic-offset: 4; indent-tabs-mode: t; -*- */
 
 
-Debug = function (log, str)
+var Debug = function (log, str)
 {
     /* we accept the 1 arg form, and use "all" for the log in that
        case. */

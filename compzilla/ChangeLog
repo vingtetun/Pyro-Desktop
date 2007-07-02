@@ -1,5 +1,16 @@
 2007-07-01  Alex Graveley  <alex@beatniksoftware.com>
 
+	* compzilla/Makefile.am: Pass distcheck.
+
+	* compzilla/chrome/content/windowStack.js: 
+	* compzilla/chrome/content/xprops.js:
+	* compzilla/chrome/content/debug.js: 
+	* compzilla/chrome/content/atoms.js: 
+	* compzilla/chrome/content/util.js: Fixup simple js warnings
+	caught by Firefox.
+
+2007-07-01  Alex Graveley  <alex@beatniksoftware.com>
+
 	* compzilla/src/compzillaControl.cpp (InitWindowState): Set the
 	root window cursor, used when windows don't specify one.
 

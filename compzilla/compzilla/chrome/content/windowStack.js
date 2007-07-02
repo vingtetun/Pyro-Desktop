@@ -165,6 +165,7 @@ windowStack.getLayer = function (name) {
 	    return layers[idx];
 	}
     }
+    return null;
 }
 
 
@@ -185,7 +186,7 @@ windowStack.addLayer = function (name, minZIndex, maxZIndex) {
 
     // Ensure we're not overlapping existing layers
     for (var idx = 0; idx < layers.length; idx++) {
-	l = layers[idx]
+	var l = layers[idx]
 	if (l.name == name) {
 	    throw "Layer name '" + name + "' already taken.";
 	}

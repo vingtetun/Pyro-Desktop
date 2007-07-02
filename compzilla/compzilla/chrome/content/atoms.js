@@ -1,7 +1,7 @@
 /* -*- mode: javascript; c-basic-offset: 4; indent-tabs-mode: t; -*- */
 
 
-Atoms = {
+var Atoms = {
     svc: Components.classes['@pyrodesktop.org/compzillaService'].getService(
 	     Components.interfaces.compzillaIControl),
 

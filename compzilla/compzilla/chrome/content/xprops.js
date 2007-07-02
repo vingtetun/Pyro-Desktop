@@ -61,7 +61,7 @@ XProps.prototype = {
  * PropertyFillers return a friendly object with properties pulled from the 
  * X atom's property bag.
  */
-PropertyFillers = {
+var PropertyFillers = {
     _NET_WM_NAME: function (prop_bag) {
 	return prop_bag.getProperty (".text");
     },

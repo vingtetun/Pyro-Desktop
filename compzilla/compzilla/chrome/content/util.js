@@ -14,13 +14,10 @@ function _addUtilMethods (o)
 	getPosition: function () {
 	    var curleft = curtop = 0;
 	    var obj = this;
-	    if (obj.offsetParent) {
-		curleft = obj.offsetLeft;
-		curtop = obj.offsetTop;
-		while (obj = obj.offsetParent) {
-		    curleft += obj.offsetLeft;
-		    curtop += obj.offsetTop;
-		}
+	    while (obj) {
+		curleft += obj.offsetLeft;
+		curtop += obj.offsetTop;
+		obj = obj.offsetParent;
 	    }
 	    return { left: curleft, top: curtop };
 	}
