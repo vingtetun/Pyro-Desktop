@@ -998,9 +998,11 @@ compzillaControl::Filter (GdkXEvent *xevent, GdkEvent *event)
                   x11_event->xbutton.button);
             break;
         case MotionNotify:
+#if DEBUG_EVENTS // Too much noise
             SPEW ("MotionNotify: window=0x%0x, x=%d, y=%d, state=%d\n", 
                   x11_event->xmotion.window, x11_event->xmotion.x, x11_event->xmotion.y, 
                   x11_event->xmotion.state);
+#endif
             break;
         }
 

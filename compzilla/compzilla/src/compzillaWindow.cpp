@@ -53,6 +53,12 @@ extern XAtoms atoms;
 #define ERROR(format...) do { } while (0)
 #endif
 
+#ifdef DEBUG_EVENTS
+#define SPEW_EVENT(format...) printf("  [EVENT] " format)
+#else
+#define SPEW_EVENT(format...) do { } while (0)
+#endif
+
 
 NS_IMPL_ADDREF(compzillaWindow)
 NS_IMPL_RELEASE(compzillaWindow)
@@ -80,8 +86,6 @@ CZ_NewCompzillaWindow(Display *display,
         return NS_ERROR_OUT_OF_MEMORY;
 
     NS_ADDREF(window);
-
-    SPEW ("CZ_NewCompzillaWindow %p, xid=%p\n", window, win);
 
     *retval = window;
     return NS_OK;
@@ -118,7 +122,7 @@ compzillaWindow::~compzillaWindow()
 {
     NS_ASSERT_OWNINGTHREAD(compzillaWindow);
 
-    SPEW ("compzillaWindow::~compzillaWindow %p, xid=%p\n", this, mWindow);
+    SPEW ("~compzillaWindow %p, xid=%p\n", this, mWindow);
 
     // This is the only resource that stays around after window destruction.
     ResetPixmap ();
@@ -143,7 +147,7 @@ compzillaWindow::~compzillaWindow()
         XUngrabButton (mDisplay, AnyButton, AnyModifier, mWindow);
     }
 
-    SPEW ("compzillaWindow::~compzillaWindow DONE\n");
+    SPEW ("~compzillaWindow DONE\n");
 }
 
 
@@ -238,7 +242,7 @@ compzillaWindow::ConnectListeners (bool connect, nsCOMPtr<nsISupports> aContent)
 	do_QueryInterface (NS_ISUPPORTS_CAST (nsIDOMKeyListener *, this));
 
     if (!target || !listener) {
-        SPEW ("compzillaWindow::ConnectListeners: Trying to %s invalid listener!\n",
+        SPEW ("ConnectListeners: Trying to %s invalid listener!\n",
               connect ? "connect" : "disconnect");
 	return;
     }
@@ -264,7 +268,7 @@ compzillaWindow::GetNativeWindowId (PRInt32 *aId)
 NS_IMETHODIMP
 compzillaWindow::AddContentNode (nsIDOMHTMLCanvasElement* aContent)
 {
-    SPEW ("compzillaWindow::AddContentNode %p - %p\n", this, aContent);
+    SPEW ("AddContentNode this=%p, canvas=%p\n", this, aContent);
 
     RemoveContentNode (aContent);
     mContentNodes.AppendObject (aContent);
@@ -288,7 +292,7 @@ compzillaWindow::AddContentNode (nsIDOMHTMLCanvasElement* aContent)
 NS_IMETHODIMP
 compzillaWindow::RemoveContentNode (nsIDOMHTMLCanvasElement* aContent)
 {
-    SPEW ("compzillaWindow::RemoveContentNode %p\n", this);
+    SPEW ("RemoveContentNode this=%p, canvas=%p\n", this, aContent);
 
     // Allow a caller to remove O(N^2) behavior by removing end-to-start.
     for (PRUint32 i = mContentNodes.Count() - 1; i != PRUint32(-1); --i) {
@@ -306,7 +310,7 @@ compzillaWindow::RemoveContentNode (nsIDOMHTMLCanvasElement* aContent)
 NS_IMETHODIMP
 compzillaWindow::AddObserver (compzillaIWindowObserver *aObserver)
 {
-    SPEW ("compzillaWindow::AddObserver %p - %p\n", this, aObserver);
+    SPEW ("AddObserver this=%p, observer=%p\n", this, aObserver);
 
     RemoveObserver (aObserver);
     mObservers.AppendObject (aObserver);
@@ -329,7 +333,7 @@ compzillaWindow::AddObserver (compzillaIWindowObserver *aObserver)
 NS_IMETHODIMP
 compzillaWindow::RemoveObserver (compzillaIWindowObserver *aObserver)
 {
-    SPEW ("compzillaWindow::RemoveObserver %p\n", this);
+    SPEW ("RemoveObserver this=%p, observer=%p\n", this, aObserver);
 
     // Allow a caller to remove O(N^2) behavior by removing end-to-start.
     for (PRUint32 i = mObservers.Count() - 1; i != PRUint32(-1); --i) {
@@ -346,7 +350,7 @@ compzillaWindow::RemoveObserver (compzillaIWindowObserver *aObserver)
 nsresult
 compzillaWindow::GetStringProperty (Atom prop, nsAString& value)
 {
-    SPEW ("GetStringProperty (prop = %s)\n", XGetAtomName (mDisplay, prop));
+    SPEW ("GetStringProperty this=%p, prop=%s\n", this, XGetAtomName (mDisplay, prop));
 
     Atom actual_type;
     int format;
@@ -408,7 +412,7 @@ compzillaWindow::GetStringProperty (Atom prop, nsAString& value)
 nsresult
 compzillaWindow::GetAtomProperty (Atom prop, PRUint32* value)
 {
-    SPEW ("GetAtomProperty (prop = %s)\n", XGetAtomName (mDisplay, prop));
+    SPEW ("GetAtomProperty this=%p, prop=%s\n", this, XGetAtomName (mDisplay, prop));
 
     Atom actual_type;
     int format;
@@ -468,8 +472,8 @@ compzillaWindow::HandleEvent (nsIDOMEvent* aDOMEvent)
         const char *cdata;
         NS_CStringGetData (ctype, &cdata);
 
-        SPEW ("compzillaWindow::HandleEvent: unhandled type=%s, target=%p!!!\n", 
-              cdata, target.get ());
+        SPEW_EVENT ("HandleEvent: Unhandled type=%s, target=%p!!!\n", 
+                    cdata, target.get ());
     }
     return NS_OK;
 }
@@ -578,8 +582,8 @@ compzillaWindow::SendKeyEvent (int eventType, nsIDOMKeyEvent *keyEv)
     }
     g_free (keys);
 
-    SPEW ("compzillaWindow::SendKeyEvent: gdk_keymap_get_entries_for_keyval keysym=%p, "
-          "keycode=%p\n", xkeysym, xkeycode);
+    SPEW_EVENT ("SendKeyEvent: gdk_keymap_get_entries_for_keyval keysym=%p, "
+                "keycode=%p\n", xkeysym, xkeycode);
 #else
     unsigned int xkeycode = XKeysymToKeycode (mDisplay, xkeysym);
 #endif
@@ -611,11 +615,11 @@ compzillaWindow::SendKeyEvent (int eventType, nsIDOMKeyEvent *keyEv)
         return;
     }
 
-    SPEW ("compzillaWindow::SendKeyEvent: %s%s win=%p, child=%p, state=%p, keycode=%u, "
-          "timestamp=%d\n", 
-          eventType == _KeyPress ? "PRESS" : "", 
-          eventType == KeyRelease ? "RELEASE" : "", 
-          mWindow, mWindow, state, xkeycode, timestamp);
+    SPEW_EVENT ("SendKeyEvent: %s%s win=%p, child=%p, state=%p, keycode=%u, "
+                "timestamp=%d\n", 
+                eventType == _KeyPress ? "PRESS" : "", 
+                eventType == KeyRelease ? "RELEASE" : "", 
+                mWindow, mWindow, state, xkeycode, timestamp);
 
     XSendEvent (mDisplay, mWindow, True, xevMask, &xev);
 
@@ -657,11 +661,12 @@ compzillaWindow::SendKeyEvent (int eventType, nsIDOMKeyEvent *keyEv)
         return;
     }
 
-    SPEW ("compzillaWindow::SendKeyEvent: %s%s win=%p, child=%p, state=%p, keycode=%u, "
-          "timestamp=%d\n", 
-          eventType == _KeyPress ? "PRESS" : "", 
-          eventType == KeyRelease ? "RELEASE" : "", 
-          mWindow, mWindow, gdkev->key.state, gdkev->key.hardware_keycode, gdkev->key.time);
+    SPEW_EVENT ("SendKeyEvent: %s%s win=%p, child=%p, state=%p, keycode=%u, "
+                "timestamp=%d\n", 
+                eventType == _KeyPress ? "PRESS" : "", 
+                eventType == KeyRelease ? "RELEASE" : "", 
+                mWindow, mWindow, gdkev->key.state, gdkev->key.hardware_keycode, 
+                gdkev->key.time);
 
     XSendEvent (mDisplay, mWindow, True, xevMask, &xev);
 
@@ -696,7 +701,7 @@ compzillaWindow::KeyUp (nsIDOMEvent* aDOMEvent)
 NS_IMETHODIMP
 compzillaWindow::KeyPress(nsIDOMEvent* aDOMEvent)
 {
-    SPEW ("compzillaWindow::KeyPress: Ignored!!!\n");
+    SPEW_EVENT ("DOM KeyPress: Ignored. Expecting KeyDown/KeyUp instead.\n");
     return NS_OK;
 }
 
@@ -916,11 +921,9 @@ compzillaWindow::SendMouseEvent (int eventType, nsIDOMMouseEvent *mouseEv, bool 
 	return;
     }
 
-#if DEBUG
-    SPEW ("compzillaWindow::SendMouseEvent: win=%p, child=%p, x=%d, y=%d, state=%p, "
-          "button=%u, timestamp=%d\n", 
-          mWindow, destChild, x, y, state, button + 1, timestamp);
-#endif
+    SPEW_EVENT ("SendMouseEvent: win=%p, child=%p, x=%d, y=%d, state=%p, "
+                "button=%u, timestamp=%d\n", 
+                mWindow, destChild, x, y, state, button + 1, timestamp);
 
     if (eventType == ButtonPress) {
         gdk_pointer_ungrab (GDK_CURRENT_TIME);
@@ -980,7 +983,7 @@ compzillaWindow::MouseUp (nsIDOMEvent* aDOMEvent)
 NS_IMETHODIMP
 compzillaWindow::MouseClick (nsIDOMEvent* aDOMEvent)
 {
-    SPEW ("compzillaWindow::MouseClick: Ignored\n");
+    SPEW_EVENT ("DOM MouseClick: Ignored. Expecting MouseDown/MouseUp instead.\n");
     return NS_ERROR_NOT_IMPLEMENTED;
 }
 
@@ -988,7 +991,7 @@ compzillaWindow::MouseClick (nsIDOMEvent* aDOMEvent)
 NS_IMETHODIMP
 compzillaWindow::MouseDblClick (nsIDOMEvent* aDOMEvent)
 {
-    SPEW ("compzillaWindow::MouseDblClick: Ignored\n");
+    SPEW_EVENT ("DOM MouseDblClick: Ignored. Expecting MouseDown/MouseUp instead.\n");
     return NS_ERROR_NOT_IMPLEMENTED;
 }
 
@@ -1018,7 +1021,7 @@ compzillaWindow::MouseOut (nsIDOMEvent* aDOMEvent)
 NS_IMETHODIMP
 compzillaWindow::Activate (nsIDOMEvent* aDOMEvent)
 {
-    SPEW ("compzillaWindow::Activate: W00T!!!\n");
+    SPEW_EVENT ("DOM Activate: Ignored.\n");
     return NS_ERROR_NOT_IMPLEMENTED;
 }
 
@@ -1026,7 +1029,7 @@ compzillaWindow::Activate (nsIDOMEvent* aDOMEvent)
 NS_IMETHODIMP
 compzillaWindow::FocusIn (nsIDOMEvent* aDOMEvent)
 {
-    SPEW ("compzillaWindow::FocusIn: win=%p\n", mWindow);
+    SPEW_EVENT ("DOM FocusIn: win=%p\n", mWindow);
 
     XEvent xev = { 0 };
     xev.xfocus.type = _FocusIn;
@@ -1046,7 +1049,7 @@ compzillaWindow::FocusIn (nsIDOMEvent* aDOMEvent)
 NS_IMETHODIMP
 compzillaWindow::FocusOut (nsIDOMEvent* aDOMEvent)
 {
-    SPEW ("compzillaWindow::FocusOut: win=%p\n", mWindow);
+    SPEW_EVENT ("DOM FocusOut: win=%p\n", mWindow);
 
     XEvent xev = { 0 };
     xev.xfocus.type = _FocusOut;
@@ -1079,7 +1082,7 @@ compzillaWindow::OnDOMMouseScroll (nsIDOMEvent *aDOMEvent)
     nsCOMPtr<nsIDOMMouseEvent> mouseEv = do_QueryInterface (aDOMEvent);
     NS_ASSERTION (mouseEv, "Invalid mouse event");
 
-    SPEW ("compzillaWindow::OnDOMMouseScroll: mouseEv=%p\n", mouseEv.get());
+    SPEW_EVENT ("OnDOMMouseScroll: mouseEv=%p\n", mouseEv.get());
 
     // NOTE: We don't receive events if them if a modifier key is down with
     //       Mozilla 1.8.
@@ -1094,7 +1097,8 @@ compzillaWindow::OnDOMMouseScroll (nsIDOMEvent *aDOMEvent)
 void
 compzillaWindow::DestroyWindow ()
 {
-    SPEW ("compzillaWindow::DestroyWindow %p\n", this);
+    SPEW ("DestroyWindow this=%p, observers=%d, canvases=%d\n", 
+          this, mObservers.Count(), mContentNodes.Count());
 
     mIsDestroyed = true;
 
@@ -1108,7 +1112,6 @@ compzillaWindow::DestroyWindow ()
 
     // Allow a caller to remove O(N^2) behavior by removing end-to-start.
     for (PRUint32 i = mContentNodes.Count() - 1; i != PRUint32(-1); --i) {
-        SPEW (" -- Disconnecting content node %d\n", i);
         ConnectListeners (false, mContentNodes.ObjectAt(i));
     }
     mContentNodes.Clear ();

@@ -1,5 +1,13 @@
 2007-07-03  Alex Graveley  <alex@beatniksoftware.com>
 
+	* compzilla/src/compzillaWindow.cpp: Add SPEW_EVENT, to avoid
+	clogging stdout, and do some cleanup on the debug output.
+
+	* compzilla/src/compzillaControl.cpp (Filter): Don't spew on
+	motion events for the same reason.
+
+2007-07-03  Alex Graveley  <alex@beatniksoftware.com>
+
 	* compzilla/src/compzillaWindow.cpp (DestroyWindow): Handle
 	reentrancy while calling Destroy on observers.
 
