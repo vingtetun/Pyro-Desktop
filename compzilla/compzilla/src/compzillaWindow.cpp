@@ -1098,15 +1098,17 @@ compzillaWindow::DestroyWindow ()
 
     mIsDestroyed = true;
 
-    for (PRUint32 i = mObservers.Count() - 1; i != PRUint32(-1); --i) {
-        nsCOMPtr<compzillaIWindowObserver> observer = mObservers.ObjectAt(i);
-        observer->Destroy ();
-    }
+    // Copy the observers so list iteration is reentrant.
+    nsCOMArray<compzillaIWindowObserver> observers(mObservers);
     mObservers.Clear ();
+
+    for (PRUint32 i = observers.Count() - 1; i != PRUint32(-1); --i) {
+        observers.ObjectAt(i)->Destroy ();
+    }
 
     // Allow a caller to remove O(N^2) behavior by removing end-to-start.
     for (PRUint32 i = mContentNodes.Count() - 1; i != PRUint32(-1); --i) {
-        SPEW ("disconnecting content node %d\n", i);
+        SPEW (" -- Disconnecting content node %d\n", i);
         ConnectListeners (false, mContentNodes.ObjectAt(i));
     }
     mContentNodes.Clear ();

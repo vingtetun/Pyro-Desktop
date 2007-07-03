@@ -1,5 +1,10 @@
 2007-07-03  Alex Graveley  <alex@beatniksoftware.com>
 
+	* compzilla/src/compzillaWindow.cpp (DestroyWindow): Handle
+	reentrancy while calling Destroy on observers.
+
+2007-07-03  Alex Graveley  <alex@beatniksoftware.com>
+
 	* compzilla/chrome/content/start.js: Add _NET_WM_ICON and
 	_NET_WM_ICON_NAME as supported.
 

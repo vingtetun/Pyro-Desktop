@@ -16,7 +16,7 @@ function XProps (nativewin)
 
     this._observer = {
 	propertyChange: function (atom, isDeleted) {
-	    Debug ("xprops: Invalidating atom " + atom);
+	    Debug ("xprops", "xprops: Invalidating atom " + atom);
 	    this.invalidate (atom);
 	}
     };
