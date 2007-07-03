@@ -1,3 +1,30 @@
+2007-07-03  Alex Graveley  <alex@beatniksoftware.com>
+
+	* compzilla/chrome/content/start.js: Add _NET_WM_ICON and
+	_NET_WM_ICON_NAME as supported.
+
+	* compzilla/chrome/content/xprops.js: Remove the "fillers"
+	functions and instead enumerate the properties in the property bag
+	and insert them into a standard JS object.  If there's only one
+	property and it's called "atom", "text", or "data", return it
+	directly.  Also, use an observer on the native window to
+	invalidate the cached values.
+
+	* compzilla/chrome/content/frame.js: Set title when *ICON_NAME is
+	set. Don't call Invalidate on content.XProps, as this is handled
+	automatically by xprops.js now.  Handle _NET_WM_ICON but just
+	Debug() for now.
+
+	* compzilla/chrome/content/minmax.js: Use getNativeProperty.
+
+	* compzilla/chrome/content/content.js: Expose xprops via
+	getNativeProperty. Add wmIcon property.
+
+	* compzilla/src/compzillaWindow.cpp (GetProperty): Don't prefix
+	property bag names with ".".  Set strut "partial" flag here,
+	instead of in xprops.js.  Handle _NET_WM_ICON, by storing the
+	content as a string.
+
 2007-07-02  Alex Graveley  <alex@beatniksoftware.com>
 
 	* compzilla/chrome/content/frame.js: Handle ICON_NAME xprop

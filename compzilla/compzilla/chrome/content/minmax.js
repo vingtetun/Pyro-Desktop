@@ -30,7 +30,7 @@ function MinimizeCompzillaFrame (w) {
     w.hide ();
     min.style.display = "block";
 
-    var geom = w.content.XProps[Atoms._NET_WM_ICON_GEOMETRY];
+    var geom = w.content.getNativeProperty (Atoms._NET_WM_ICON_GEOMETRY);
     if (!geom) {
 	/* for windows without the hint, iconify to the bottom left */
 	geom = {

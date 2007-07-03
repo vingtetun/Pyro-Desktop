@@ -1215,7 +1215,7 @@ compzillaWindow::GetProperty (PRUint32 iprop, nsIPropertyBag2 **bag2)
         nsString str;
         if (NS_OK == GetStringProperty (prop, str)) {
             SET_BAG ();
-            SET_PROP(wbag, AString, ".text", str);
+            SET_PROP(wbag, AString, "text", str);
         }
         break;
     }
@@ -1301,8 +1301,8 @@ compzillaWindow::GetProperty (PRUint32 iprop, nsIPropertyBag2 **bag2)
         _class = instance + strlen (instance) + 1;
 
         SET_BAG ();
-        SET_PROP (wbag, AString, ".instanceName", NS_ConvertASCIItoUTF16 (instance));
-        SET_PROP (wbag, AString, ".className", NS_ConvertASCIItoUTF16 (_class));
+        SET_PROP (wbag, AString, "instanceName", NS_ConvertASCIItoUTF16 (instance));
+        SET_PROP (wbag, AString, "className", NS_ConvertASCIItoUTF16 (_class));
 
         XFree (data);
 
@@ -1316,7 +1316,7 @@ compzillaWindow::GetProperty (PRUint32 iprop, nsIPropertyBag2 **bag2)
         nsString str;
         if (NS_OK == GetStringProperty (prop, str)) {
             SET_BAG ();
-            SET_PROP(wbag, AString, ".text", str);
+            SET_PROP(wbag, AString, "text", str);
         }
     }
     default:
@@ -1341,7 +1341,7 @@ compzillaWindow::GetProperty (PRUint32 iprop, nsIPropertyBag2 **bag2)
             nsString str;
             if (NS_OK == GetStringProperty (prop, str)) {
                 SET_BAG ();
-                SET_PROP(wbag, AString, ".text", str);
+                SET_PROP(wbag, AString, "text", str);
             }
         }
         else if (prop == atoms.x._NET_WM_DESKTOP) {
@@ -1352,7 +1352,7 @@ compzillaWindow::GetProperty (PRUint32 iprop, nsIPropertyBag2 **bag2)
             PRUint32 atom;
             if (NS_OK == GetAtomProperty (prop, &atom)) {
                 SET_BAG ();
-                SET_PROP(wbag, Uint32, ".atom", atom);
+                SET_PROP(wbag, Uint32, "atom", atom);
             }
         }
         else if (prop == atoms.x._NET_WM_STATE) {
@@ -1365,10 +1365,10 @@ compzillaWindow::GetProperty (PRUint32 iprop, nsIPropertyBag2 **bag2)
 
             if (NS_OK == GetCardinalListProperty (prop, &cards, 4)) {
                 SET_BAG ();
-                SET_PROP (wbag, Uint32, ".left", cards[0]);
-                SET_PROP (wbag, Uint32, ".right", cards[1]);
-                SET_PROP (wbag, Uint32, ".top", cards[2]);
-                SET_PROP (wbag, Uint32, ".bottom", cards[3]);
+                SET_PROP (wbag, Uint32, "left", cards[0]);
+                SET_PROP (wbag, Uint32, "right", cards[1]);
+                SET_PROP (wbag, Uint32, "top", cards[2]);
+                SET_PROP (wbag, Uint32, "bottom", cards[3]);
             
                 XFree (cards);
             }
@@ -1379,20 +1379,22 @@ compzillaWindow::GetProperty (PRUint32 iprop, nsIPropertyBag2 **bag2)
 
             if (NS_OK == GetCardinalListProperty (prop, &cards, 12)) {
                 SET_BAG ();
-                SET_PROP (wbag, Uint32, ".left", cards[0]);
-                SET_PROP (wbag, Uint32, ".right", cards[1]);
-                SET_PROP (wbag, Uint32, ".top", cards[2]);
-                SET_PROP (wbag, Uint32, ".bottom", cards[3]);
+                SET_PROP (wbag, Bool, "partial", true);
 
-                SET_PROP (wbag, Uint32, ".leftStartY", cards[4]);
-                SET_PROP (wbag, Uint32, ".leftEndY", cards[5]);
-                SET_PROP (wbag, Uint32, ".rightStartY", cards[6]);
-                SET_PROP (wbag, Uint32, ".rightEndY", cards[7]);
+                SET_PROP (wbag, Uint32, "left", cards[0]);
+                SET_PROP (wbag, Uint32, "right", cards[1]);
+                SET_PROP (wbag, Uint32, "top", cards[2]);
+                SET_PROP (wbag, Uint32, "bottom", cards[3]);
 
-                SET_PROP (wbag, Uint32, ".topStartX", cards[8]);
-                SET_PROP (wbag, Uint32, ".topEndX", cards[9]);
-                SET_PROP (wbag, Uint32, ".bottomStartX", cards[10]);
-                SET_PROP (wbag, Uint32, ".bottomEndX", cards[11]);
+                SET_PROP (wbag, Uint32, "leftStartY", cards[4]);
+                SET_PROP (wbag, Uint32, "leftEndY", cards[5]);
+                SET_PROP (wbag, Uint32, "rightStartY", cards[6]);
+                SET_PROP (wbag, Uint32, "rightEndY", cards[7]);
+
+                SET_PROP (wbag, Uint32, "topStartX", cards[8]);
+                SET_PROP (wbag, Uint32, "topEndX", cards[9]);
+                SET_PROP (wbag, Uint32, "bottomStartX", cards[10]);
+                SET_PROP (wbag, Uint32, "bottomEndX", cards[11]);
                 
                 XFree (cards);
             }
@@ -1403,14 +1405,32 @@ compzillaWindow::GetProperty (PRUint32 iprop, nsIPropertyBag2 **bag2)
 
             if (NS_OK == GetCardinalListProperty (prop, &cards, 4)) {
                 SET_BAG ();
-                SET_PROP(wbag, Uint32, ".x", cards[0]);
-                SET_PROP(wbag, Uint32, ".y", cards[1]);
-                SET_PROP(wbag, Uint32, ".width", cards[2]);
-                SET_PROP(wbag, Uint32, ".height", cards[3]);
+                SET_PROP (wbag, Bool, "partial", false);
+                SET_PROP(wbag, Uint32, "x", cards[0]);
+                SET_PROP(wbag, Uint32, "y", cards[1]);
+                SET_PROP(wbag, Uint32, "width", cards[2]);
+                SET_PROP(wbag, Uint32, "height", cards[3]);
                 XFree (cards);
             }
         }
         else if (prop == atoms.x._NET_WM_ICON) {
+            Atom actual_type;
+            int format;
+            unsigned long nitems;
+            unsigned long bytes_after_return;
+            unsigned char *data;
+            
+            if (XGetWindowProperty (mDisplay, mWindow, prop,
+                                    0, BUFSIZ, false, XA_CARDINAL,
+                                    &actual_type, &format, &nitems, &bytes_after_return, 
+                                    &data) == Success) {
+                nsCAutoString dataStr;
+                dataStr.Assign ((char *) data, (format / 8) * nitems);
+
+                SET_BAG ();
+                SET_PROP(wbag, ACString, "data", dataStr);
+                XFree (data);
+            }
         }
         else if (prop == atoms.x._NET_WM_PID) {
         }

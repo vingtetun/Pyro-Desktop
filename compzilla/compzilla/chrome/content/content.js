@@ -20,7 +20,7 @@ function CompzillaWindowContent (nativewin) {
     _addUtilMethods (content);
     _addContentMethods (content);
 
-    content.XProps = new XProps (nativewin);
+    content._xprops = new XProps (nativewin);
 
     return content;
 }
@@ -30,8 +30,10 @@ var ContentMethods = {
 
     ondestroy: function () {
 	Debug ("content", "content.destroy");
-	this._nativewin.RemoveContentNode (this); 
+	this._nativewin.RemoveContentNode (this);
 	this._nativewin = null;
+
+	this._xprops.destroy ();
     },
 
     onmoveresize: function (overrideRedirect) {
@@ -109,7 +111,11 @@ var ContentMethods = {
 
     onmovetobottom: function () {
 	svc.MoveToBottom (this._nativewin.nativeWindowId);
-    }
+    },
+
+    getNativeProperty: function (atom) {
+	return this._xprops.lookup (atom);
+    },
 }
 
 
@@ -126,22 +132,21 @@ function _addContentMethods (content) {
     content.addProperty ("wmClass",
 			 /* getter */
 			 function () {
-			     var wmClass = this.XProps[Atoms.XA_WM_CLASS];
-
+			     var wmClass = this.getNativeProperty (Atoms.XA_WM_CLASS);
 			     if (wmClass == null)
 				 return "";
-			     else
-				 return wmClass.instanceName + " " + wmClass.className;
+
+			     return wmClass.instanceName + " " + wmClass.className;
 			 });
 
     content.addProperty ("wmName",
 			 /* getter */
 			 function () {
-			     var name = this.XProps[Atoms._NET_WM_NAME];
+			     var name = this.getNativeProperty (Atoms._NET_WM_NAME);
 
 			     // fall back to XA_WM_NAME if _NET_WM_NAME is undefined.
 			     if (name == null)
-				 name = this.XProps[Atoms.XA_WM_NAME];
+				 name = this.getNativeProperty (Atoms.XA_WM_NAME);
 
 			     return name;
 			 });
@@ -149,22 +154,32 @@ function _addContentMethods (content) {
     content.addProperty ("wmIconName",
 			 /* getter */
 			 function () {
-			     var name = this.XProps[Atoms._NET_WM_ICON_NAME];
+			     var name = this.getNativeProperty (Atoms._NET_WM_ICON_NAME);
 
-			     // fall back to XA_WM_ICON_NAME if _NET isn't.
+			     // fall back to XA_WM_ICON_NAME if _NET isn't set.
 			     if (name == null)
-				 name = this.XProps[Atoms.XA_WM_ICON_NAME];
+				 name = this.getNativeProperty (Atoms.XA_WM_ICON_NAME);
 
 			     return name;
+			 });
+
+    content.addProperty ("wmIcon",
+			 /* getter */
+			 function () {
+			     var data = this.getNativeProperty (Atoms._NET_WM_ICON);
+
+			     // FIXME: fall back to WMhints if _NET isn't set.
+
+			     return data;
 			 });
 
     content.addProperty ("wmStruts",
 			 /* getter */
 			 function () {
-			     var struts = this.XProps[Atoms._NET_WM_STRUT_PARTIAL];
+			     var struts = this.getNativeProperty (Atoms._NET_WM_STRUT_PARTIAL);
 			     // fall back to _NET_WM_STRUT if _PARTIAL isn't there.
 			     if (struts == null)
-				 struts = this.XProps[Atoms._NET_WM_STRUT];
+				 struts = this.getNativeProperty (Atoms._NET_WM_STRUT);
 
 			     return struts;
 			 });
@@ -178,9 +193,8 @@ function _addContentMethods (content) {
 			     // type must be DIALOG, for instance,
 			     // etc.
 
-			     var t = this.XProps[Atoms._NET_WM_WINDOW_TYPE];
+			     var t = this.getNativeProperty (Atoms._NET_WM_WINDOW_TYPE);
 			     switch (t) {
-
 			     case Atoms._NET_WM_WINDOW_TYPE_DESKTOP: return "desktop";
 			     case Atoms._NET_WM_WINDOW_TYPE_DIALOG: return "dialog";
 			     case Atoms._NET_WM_WINDOW_TYPE_DOCK: return "dock";

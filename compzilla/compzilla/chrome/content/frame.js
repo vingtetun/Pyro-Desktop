@@ -622,25 +622,25 @@ function _observeNativeWindow (frame)
 	propertyChange: function (atom, isDeleted) {
 	    Debug ("frame", "propertychange.handleEvent: atom=" + atom);
 
-	    // the property has changed (or been deleted).  nuke it from cache
-	    frame._content.XProps.Invalidate (atom);
-
 	    switch (atom) {
 	    case Atoms.XA_WM_NAME:
 	    case Atoms._NET_WM_NAME:
 		frame.title = frame._content.wmName;
 		
 		Debug ("frame", "propertychange: setting title:" + frame.title);
-			     
 		break;
 
 	    case Atoms.XA_WM_ICON_NAME:
 	    case Atoms._NET_WM_ICON_NAME:
-		frame._icon.src = "moz-icon://stock/" + frame._content.wmIconName + "?size=16";
-		
-		Debug ("frame", "propertychange: setting icon name:" + 
-		       frame._content.wmIconName + ", requesting: " + frame._icon.src);
+		frame.title = frame._content.wmIconName;
 
+		Debug ("frame", "propertychange: new iconified title:" + frame.title);
+		break;
+
+	    case Atoms._NET_WM_ICON:
+		frame._icon.src = frame._content.wmIcon;
+
+		Debug ("frame", "propertychange: new icon!");
 		break;
 
 	    case Atoms._NET_WM_STRUT:
@@ -653,7 +653,6 @@ function _observeNativeWindow (frame)
 
 		Debug ("frame", "propertychange: setting window type:" + 
 		       frame._content.wmWindowType);
-
 		break;
 
 	    case Atoms.XA_WM_CLASS:
@@ -661,7 +660,6 @@ function _observeNativeWindow (frame)
 
 		Debug ("frame", "propertychange: setting wmClass: '" +  
 		       frame.wmClass + "'");
-		
 		break;
 	    }
 	},
