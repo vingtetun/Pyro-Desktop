@@ -6,10 +6,16 @@
   <Description about="urn:mozilla:install-manifest">
 
     <em:id>compzilla@pyrodesktop.org</em:id>
-    <em:name>Compzilla</em:name>
     <em:version>0.1</em:version>
-    <em:description>Compositing Window manager built on Firefox</em:description>
 
+    <em:name>Compzilla</em:name>
+    <em:description>Compositing Window manager built on Firefox</em:description>
+    <em:iconURL>chrome://compzilla/content/pyrologo.png</em:iconURL>
+    <em:homepageURL>http://pyrodesktop.org/</em:homepageURL>
+
+    <!-- <em:updateURL>http://pyrodesktop.org/releases/update.rdf</em:updateURL> -->
+
+    <!-- Firefox -->
     <em:targetApplication>
       <Description>
         <em:id>{ec8030f7-c20a-464f-9b0e-13a3a9e97384}</em:id>

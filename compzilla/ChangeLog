@@ -1,3 +1,12 @@
+2007-07-06  Alex Graveley  <alex@beatniksoftware.com>
+
+	* compzilla/install.rdf: Update a bit, point to
+	chrome/content/pyrologo.png for install logo.
+
+	* Makefile.am: Add xpi target.
+
+	* compzilla/chrome/content/pyrologo.png: Lil 32x32 icon.
+
 2007-07-05  Alex Graveley  <alex@beatniksoftware.com>
 
 	* compzilla/Makefile.am: Add $(GFX_CFLAGS) and set it to

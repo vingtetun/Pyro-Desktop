@@ -1,5 +1,13 @@
 
+#
+# Simple wrapper launch script
+# 
+
 bin_SCRIPTS=compzilla
+
+#
+# Extension contents
+#
 
 extensiondir = $(GECKO_LIBDIR)/extensions/compzilla@pyrodesktop.org
 extension_DATA =			\
@@ -9,6 +17,8 @@ extension_DATA =			\
 contentdir=$(extensiondir)/chrome/content
 CONTENT_SRCDIR=$(srcdir)/chrome/content
 content_DATA =					\
+	$(CONTENT_SRCDIR)/pyrologo.png		\
+	\
 	$(CONTENT_SRCDIR)/atoms.js		\
 	$(CONTENT_SRCDIR)/content.js		\
 	$(CONTENT_SRCDIR)/debug.js		\
