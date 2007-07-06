@@ -9,7 +9,7 @@
     <em:version>0.1</em:version>
 
     <em:name>Compzilla</em:name>
-    <em:description>Compositing Window manager built on Firefox</em:description>
+    <em:description>Compositing X Window Manager built on Firefox</em:description>
     <em:iconURL>chrome://compzilla/content/pyrologo.png</em:iconURL>
     <em:homepageURL>http://pyrodesktop.org/</em:homepageURL>
 
