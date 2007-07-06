@@ -1,3 +1,15 @@
+2007-07-05  Alex Graveley  <alex@beatniksoftware.com>
+
+	* compzilla/Makefile.am: Add $(GFX_CFLAGS) and set it to
+	-DMOZILLA_INTERNAL_API for non-thebes builds so we work with FF2
+	again.  Only link libxpistub or libxpcomglue_s, not libgkgfx or
+	libthebes, since they don't exist in static builds.
+
+	* compzilla/src/compzillaRenderingContext.cpp: Grosshack to
+	support static FF2 builds, where nsTransform2D API isn't exported.
+	So we do the #define private public hack so we can access the
+	contents directly from CZ_TransformNoXLate.
+
 2007-07-03  Alex Graveley  <alex@beatniksoftware.com>
 
 	* compzilla/src/compzillaWindow.cpp: Add SPEW_EVENT, to avoid

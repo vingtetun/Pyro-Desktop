@@ -108,19 +108,21 @@ CLEANFILES = 			\
 #
 
 if GECKO_USE_THEBES
-GFX_LIBS=-lthebes
+GFX_CFLAGS=
+GFX_LIBS=-lxpcomglue_s
 else
-GFX_LIBS=-lgkgfx
+GFX_CFLAGS=-DMOZILLA_INTERNAL_API
+GFX_LIBS=-lxpistub
 endif
 
 libcompzilla_la_LDFLAGS = -avoid-version -module -Wl,-Bsymbolic
-libcompzilla_la_LIBADD = $(XEXTENSIONS_LIBS) $(NSPR_LIBS) -L$(GECKO_LIBDIR) -lxpcomglue_s $(GFX_LIBS)
+libcompzilla_la_LIBADD = $(XEXTENSIONS_LIBS) $(NSPR_LIBS) -L$(GECKO_LIBDIR) $(GFX_LIBS)
 
 ### Link static libthebes for static FF builds
 #libcompzilla_la_LIBADD = $(XEXTENSIONS_LIBS) $(NSPR_LIBS) -L$(GECKO_LIBDIR) -lxpcomglue_s libthebes.a
 
 ### Lots of debug output
-# -DDEBUG -DWITH_SPEW
+# -DDEBUG -DWITH_SPEW -DDEBUG_EVENTS
 
 libcompzilla_la_CPPFLAGS =			\
 	-DDEBUG                                 \
@@ -153,7 +155,8 @@ libcompzilla_la_CPPFLAGS =			\
 	-I$(GECKO_INCLUDEDIR)/xpcom		\
 	-I$(GECKO_INCLUDEDIR)/xpconnect		\
 	\
-	-I$(IDL_H_DESTDIR)
+	-I$(IDL_H_DESTDIR)			\
+	$(GFX_CFLAGS)
 
 nodist_libcompzilla_la_SOURCES = $(IDL_H_FILES)
 

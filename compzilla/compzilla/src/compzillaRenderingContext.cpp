@@ -8,6 +8,13 @@
 
 #include <nsIDOMHTMLCanvasElement.h>
 
+#ifndef MOZ_CAIRO_GFX
+#define private public
+#include <nsTransform2D.h>
+#undef private
+#endif
+
+
 #include "compzillaIRenderingContext.h"
 #include "compzillaRenderingContext.h"
 
@@ -158,6 +165,44 @@ compzillaRenderingContext::Redraw (nsRect r)
 }
 
 
+#ifndef MOZ_CAIRO_GFX
+/* 
+ * nsTransform2D::TransformNoXLate isn't exported in Firefox2 static builds.
+ * I don't think there's another way to get the scale factor than assuming
+ * object layout and copying the implementation. 
+ */
+static void 
+CZ_TransformNoXLate(nsTransform2D *tx, float *ptX, float *ptY) 
+{
+    SPEW ("CZ_TransformNoXLate: x=%f, y=%f, tx->m00=%f, tx->m11=%f", 
+         *ptX, *ptY, tx->m00, tx->m11);
+
+    // Lifted from gfx/src/nsTransform2D.cpp
+    float x, y;
+
+    switch (tx->GetType ()) {
+    case MG_2DIDENTITY:
+        break;
+
+    case MG_2DSCALE:
+        *ptX *= tx->m00;
+        *ptY *= tx->m11;
+        break;
+
+    default:
+    case MG_2DGENERAL:
+        x = *ptX;
+        y = *ptY;
+
+        *ptX = x * tx->m00 + y * tx->m10;
+        *ptY = x * tx->m01 + y * tx->m11;
+
+        break;
+    }
+}
+#endif /* MOZ_CAIRO_GFX */
+
+
 /*
  * This is identical to nsCanvasRenderingContext2D::Render, we just don't
  * have a good place to put it; though maybe I want a CanvasContextImpl that
@@ -214,9 +259,12 @@ compzillaRenderingContext::Render (nsIRenderingContext *rc)
 
     float x0 = 0.0, y0 = 0.0;
     float sx = 1.0, sy = 1.0;
+
     if (tx->GetType() & MG_2DTRANSLATION) {
         // FIXME: This isn't exported!
-        tx->Transform (&x0, &y0);
+        //tx->Transform (&x0, &y0);
+        // FIXME: This just works because it's inlined!
+        tx->GetTranslation (&x0, &y0);
     }
 
     if (tx->GetType() & MG_2DSCALE) {
@@ -228,8 +276,11 @@ compzillaRenderingContext::Render (nsIRenderingContext *rc)
 #else
         sx = sy = dctx->AppUnitsPerDevPixel ();
 #endif
+
         // FIXME: This isn't exported!
-        tx->TransformNoXLate (&sx, &sy);
+        //tx->TransformNoXLate (&sx, &sy);
+        // FIXME: This just works because I copied some code from gfx!
+        CZ_TransformNoXLate (tx, &sx, &sy);
     }
 
     cairo_translate (dest_cr, NSToIntRound(x0), NSToIntRound(y0));

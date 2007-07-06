@@ -16,7 +16,6 @@ typedef nsACString nsAFlatCString;
 #include <thebes/gfxPlatform.h>
 #include <thebes/gfxXlibSurface.h>
 #else
-#include <nsTransform2D.h>
 #include <cairo-xlib.h>
 #include <cairo-xlib-xrender.h>
 #endif
