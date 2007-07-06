@@ -214,15 +214,26 @@ compzillaRenderingContext::Render (nsIRenderingContext *rc)
     nsresult rv = NS_OK;
 
 #ifdef MOZ_CAIRO_GFX
-    //    SPEW ("thebes\n");
+    if (!mGfxSurf)
+        return NS_ERROR_FAILURE;
+
     gfxContext* ctx = (gfxContext*) rc->GetNativeGraphicData (
         nsIRenderingContext::NATIVE_THEBES_CONTEXT);
 
-    ctx->DrawSurface(mGfxSurf, gfxSize(mWidth, mHeight));
+    // FIXME: Not sure which of these two is better.
+    //ctx->DrawSurface(mGfxSurf, gfxSize(mWidth, mHeight));
+
+    nsRefPtr<gfxPattern> pat = new gfxPattern (mGfxSurf);
+    ctx->NewPath ();
+    ctx->PixelSnappedRectangleAndSetPattern (gfxRect(0, 0, mWidth, mHeight), pat);
+    ctx->Fill ();
 
     return rv;
 #else
     // non-Thebes; this becomes exciting
+
+    if (!mCairoSurf) 
+        return NS_ERROR_FAILURE;
 
     cairo_t *dest_cr = NULL;
     cairo_surface_t *dest = NULL;

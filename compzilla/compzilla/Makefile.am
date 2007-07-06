@@ -87,13 +87,10 @@ XPIDL_INCLUDES =				\
 	-I$(GECKO_IDLDIR)			\
 	-I$(IDL_SRCDIR)
 
-%.h: %.idl
-	-mkdir "$(dir $@)"
-	$(XPIDL) $(XPIDL_INCLUDES) -m header -e $@ $<
-
-%.xpt: %.idl
-	-mkdir $(dir $@)
-	$(XPIDL) $(XPIDL_INCLUDES) -m typelib -e $@ $<
+%.h %.xpt: %.idl
+	test -d "$(dir $@)" || mkdir "$(dir $@)"
+	$(XPIDL) $(XPIDL_INCLUDES) -m header -e $*.h $<
+	$(XPIDL) $(XPIDL_INCLUDES) -m typelib -e $*.xpt $<
 
 
 EXTRA_DIST = 			\
@@ -128,8 +125,8 @@ endif
 libcompzilla_la_LDFLAGS = -avoid-version -module -Wl,-Bsymbolic
 libcompzilla_la_LIBADD = $(XEXTENSIONS_LIBS) $(NSPR_LIBS) -L$(GECKO_LIBDIR) $(GFX_LIBS)
 
-### Link static libthebes for static FF builds
-#libcompzilla_la_LIBADD = $(XEXTENSIONS_LIBS) $(NSPR_LIBS) -L$(GECKO_LIBDIR) -lxpcomglue_s libthebes.a
+### Link libthebes for dynamic FF builds
+#libcompzilla_la_LIBADD = $(XEXTENSIONS_LIBS) $(NSPR_LIBS) -L$(GECKO_LIBDIR) -lxpcomglue_s libthebes.so
 
 ### Lots of debug output
 # -DDEBUG -DWITH_SPEW -DDEBUG_EVENTS

@@ -1,5 +1,14 @@
 2007-07-06  Alex Graveley  <alex@beatniksoftware.com>
 
+	* compzilla/Makefile.am (%.h %.xpt): Combine idl processing rules.
+
+	* compzilla/src/compzillaRenderingContext.cpp (Render): Go back to
+	using a gfxPattern and PixelSnappedRectangleAndSetPattern.  Not
+	really sure which is better.  Fail if there's no surface created
+	yet.
+
+2007-07-06  Alex Graveley  <alex@beatniksoftware.com>
+
 	* compzilla/install.rdf: Update a bit, point to
 	chrome/content/pyrologo.png for install logo.
 
