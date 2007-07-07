@@ -174,8 +174,10 @@ compzillaRenderingContext::Redraw (nsRect r)
 static void 
 CZ_TransformNoXLate(nsTransform2D *tx, float *ptX, float *ptY) 
 {
+#if 0
     SPEW ("CZ_TransformNoXLate: x=%f, y=%f, tx->m00=%f, tx->m11=%f", 
          *ptX, *ptY, tx->m00, tx->m11);
+#endif
 
     // Lifted from gfx/src/nsTransform2D.cpp
     float x, y;
