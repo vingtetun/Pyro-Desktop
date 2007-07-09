@@ -130,11 +130,11 @@ libcompzilla_la_LIBADD = $(XEXTENSIONS_LIBS) $(NSPR_LIBS) -L$(GECKO_LIBDIR) $(GF
 #libcompzilla_la_LIBADD = $(XEXTENSIONS_LIBS) $(NSPR_LIBS) -L$(GECKO_LIBDIR) -lxpcomglue_s libthebes.so
 
 ### Lots of debug output
-# -DDEBUG -DWITH_SPEW -DDEBUG_EVENTS
+# -DDEBUG -DDEBUG_SPEW -DDEBUG_EVENTS
 
 libcompzilla_la_CPPFLAGS =			\
 	-DDEBUG                                 \
-	-DWITH_SPEW                             \
+	-DDEBUG_SPEW                            \
 	-fshort-wchar				\
 	-fno-rtti 				\
 	-fno-exceptions 			\

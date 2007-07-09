@@ -30,6 +30,11 @@ extern "C" {
 }
 
 
+// Global storage
+PRLogModuleInfo *compzillaLog; // From Debug.h
+XAtoms atoms;                  // From XAtoms.h
+
+
 NS_IMPL_ISUPPORTS1_CI(compzillaControl, compzillaIControl);
 
 
@@ -46,10 +51,12 @@ int compzillaControl::render_event;
 int compzillaControl::render_error;
 
 
-XAtoms atoms;
-
 compzillaControl::compzillaControl()
 {
+    if (!compzillaLog) {
+        compzillaLog = PR_NewLogModule ("compzilla");
+    }
+
     mXDisplay = GDK_DISPLAY_XDISPLAY (gdk_display_get_default ());
     mXRoot = GDK_DRAWABLE_XID (gdk_get_default_root_window ());
 

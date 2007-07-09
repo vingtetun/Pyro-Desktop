@@ -1,22 +1,26 @@
 
+#include <prlog.h>
+
+extern PRLogModuleInfo *compzillaLog;
+
 #ifdef DEBUG
-#ifdef WITH_SPEW
-#define SPEW(format...) printf("   - " format)
+#define INFO(format...)    PR_LOG(compzillaLog, PR_LOG_WARNING, (" *** " format))
+#define WARNING(format...) PR_LOG(compzillaLog, PR_LOG_WARNING, (" !!! " format))
+#define ERROR(format...)   PR_LOG(compzillaLog, PR_LOG_ERROR,   (format))
 #else
-#define SPEW(format...)
-#endif
-#define INFO(format...) printf(" *** " format)
-#define WARNING(format...) printf(" !!! " format)
-#define ERROR(format...) fprintf(stderr, format)
-#else
-#define SPEW(format...) do { } while (0)
 #define INFO(format...) do { } while (0)
 #define WARNING(format...) do { } while (0)
 #define ERROR(format...) do { } while (0)
 #endif
 
+#ifdef DEBUG_SPEW
+#define SPEW(format...) PR_LOG(compzillaLog, PR_LOG_DEBUG, ("   - " format))
+#else
+#define SPEW(format...) do { } while (0)
+#endif
+
 #ifdef DEBUG_EVENTS
-#define SPEW_EVENT(format...) printf("  [EVENT] " format)
+#define SPEW_EVENT(format...) PR_LOG(compzillaLog, PR_LOG_DEBUG, ("  [EVENT] " format))
 #else
 #define SPEW_EVENT(format...) do { } while (0)
 #endif
