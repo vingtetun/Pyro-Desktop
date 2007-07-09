@@ -1,3 +1,33 @@
+2007-07-08  Alex Graveley  <alex@beatniksoftware.com>
+
+	* compzilla/chrome/content/start.js: If a window manager is
+	running, call promptReplaceWindowManager.  Always call
+	promptSetDefaultWindowManager for now.  In the future, this should
+	be inhibitable with a checkbox.
+
+	* compzilla/chrome/content/prompt.js: New file, contains user
+	prompting code.
+	(promptReplaceWindowManager): Ask the user if they want to replace
+	their existing window manager.
+	(promptSetDefaultWindowManager): If the nsIGConfService is
+	available, prompt to set pyro as the default WM.  This is broken
+	currently, as the gnome-wm script, which looks at the gconf value
+	we set, expects it to be a single file name.  We need to bundle
+	a run-compzilla.sh script with the extension to fix this.
+
+	* compzilla/chrome/content/content.js: In wmStruts getter, catch
+	exception on access of _PARTIAL.
+
+	* compzilla/chrome/content/frame.js: Don't set frame title from
+	icon name.
+
+	* compzilla/Makefile.am (content_DATA): Add prompt.js.
+
+	* compzilla/src/compzillaControl.cpp (ReplaceSelectionOwner): Do
+	the proper dance to replace the current WM and compmgr.  Call this
+	from InitManagerWindow.  Remove unused mRoot member.
+	(HasWindowManager): New, returns true if there is a WM running.
+
 2007-07-06  Alex Graveley  <alex@beatniksoftware.com>
 
 	* compzilla/Makefile.am (%.h %.xpt): Combine idl processing rules.

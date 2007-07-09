@@ -632,9 +632,10 @@ function _observeNativeWindow (frame)
 
 	    case Atoms.XA_WM_ICON_NAME:
 	    case Atoms._NET_WM_ICON_NAME:
-		frame.title = frame._content.wmIconName;
-
-		Debug ("frame", "propertychange: new iconified title:" + frame.title);
+		// This is usually not what we want.
+		//frame.title = frame._content.wmIconName;
+		Debug ("frame", "propertychange: new iconified title:" + 
+		       frame._content.wmIconName);
 		break;
 
 	    case Atoms._NET_WM_ICON:

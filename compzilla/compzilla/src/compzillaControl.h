@@ -52,6 +52,8 @@ private:
     bool InitManagerWindow ();
     bool InitWindowState ();
 
+    bool ReplaceSelectionOwner (Window newOwner, Atom atom);
+
     void ShowOverlay (bool show);
     void EnableOverlayInput (bool receiveInput);
 
@@ -65,8 +67,6 @@ private:
     static int sErrorCnt;
 
     Display *mXDisplay;
-
-    GdkWindow *mRoot;
     Window mXRoot;
 
     GdkWindow *mMainwin;

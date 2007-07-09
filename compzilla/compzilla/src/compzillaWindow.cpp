@@ -29,8 +29,9 @@ extern "C" {
 #include <gdk/gdkkeys.h>
 #include <gdk/gdkproperty.h>
 #include <gdk/gdkx.h>
-extern uint32 gtk_get_current_event_time (void);
 #include <gdk/gdkevents.h>
+// FIXME: This just avoids the need to include GTK+ headers
+extern uint32 gtk_get_current_event_time (void);
 extern GdkEvent *gtk_get_current_event (void);
 }
 
@@ -333,7 +334,7 @@ compzillaWindow::AddObserver (compzillaIWindowObserver *aObserver)
 NS_IMETHODIMP
 compzillaWindow::RemoveObserver (compzillaIWindowObserver *aObserver)
 {
-    SPEW ("RemoveObserver this=%p, observer=%p\n", this, aObserver);
+    SPEW ("RemoveObserver window=%p, observer=%p\n", this, aObserver);
 
     // Allow a caller to remove O(N^2) behavior by removing end-to-start.
     for (PRUint32 i = mObservers.Count() - 1; i != PRUint32(-1); --i) {

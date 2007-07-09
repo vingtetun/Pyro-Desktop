@@ -8,6 +8,7 @@
 [scriptable, uuid(8bf6de0a-ed8f-47af-8757-41551542d196)]
 interface compzillaIControl : nsISupports
 {
+    boolean HasWindowManager (in nsIDOMWindow window);
     void RegisterWindowManager (in nsIDOMWindow window);
 
     // @property is just an atom name, which is ascii.

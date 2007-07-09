@@ -4,9 +4,6 @@ var svc = Components.classes['@pyrodesktop.org/compzillaService'].getService(
     Components.interfaces.compzillaIControl);
 
 
-var xNone = 0;
-
-
 function CompzillaWindowContent (nativewin) {
     Debug ("content", "Creating content for nativewin=" + nativewin.nativeWindowId);
 
@@ -88,8 +85,8 @@ var ContentMethods = {
     },
 
     onlostfocus: function () {
-	// update _NET_ACTIVE_WINDOW on the root window
-	var focused_list = [ xNone ];
+	// clear _NET_ACTIVE_WINDOW on the root window
+	var focused_list = [ 0 ];
 	svc.SetRootWindowProperty (Atoms._NET_ACTIVE_WINDOW, 
 				   Atoms.XA_WINDOW, 
 				   focused_list.length, 
@@ -176,11 +173,13 @@ function _addContentMethods (content) {
     content.addProperty ("wmStruts",
 			 /* getter */
 			 function () {
-			     var struts = this.getNativeProperty (Atoms._NET_WM_STRUT_PARTIAL);
-			     // fall back to _NET_WM_STRUT if _PARTIAL isn't there.
-			     if (struts == null)
+			     var struts = null;
+			     try {
+			     	 struts = this.getNativeProperty (Atoms._NET_WM_STRUT_PARTIAL);
+			     } catch (e) {
+			         // fall back to _NET_WM_STRUT if _PARTIAL isn't there.
 				 struts = this.getNativeProperty (Atoms._NET_WM_STRUT);
-
+			     }
 			     return struts;
 			 });
 

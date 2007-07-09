@@ -27,6 +27,7 @@ content_DATA =					\
 	$(CONTENT_SRCDIR)/jquery.easing.1.1.js	\
 	$(CONTENT_SRCDIR)/minmax.js		\
 	$(CONTENT_SRCDIR)/overlay.js		\
+	$(CONTENT_SRCDIR)/prompt.js		\
 	$(CONTENT_SRCDIR)/scale.js		\
 	$(CONTENT_SRCDIR)/start.js		\
 	$(CONTENT_SRCDIR)/start.xul		\

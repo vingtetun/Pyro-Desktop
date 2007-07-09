@@ -66,17 +66,17 @@ XAtoms atoms;
 
 compzillaControl::compzillaControl()
 {
+    mXDisplay = GDK_DISPLAY_XDISPLAY (gdk_display_get_default ());
+    mXRoot = GDK_DRAWABLE_XID (gdk_get_default_root_window ());
+
     mWindowMap.Init(50);
 }
 
 
 compzillaControl::~compzillaControl()
 {
-    if (mRoot) {
-        gdk_window_unref(mRoot);
-    }
     if (mMainwin) {
-        gdk_window_unref(mMainwin);
+        gdk_window_unref (mMainwin);
     }
 }
 
@@ -88,24 +88,44 @@ compzillaControl::~compzillaControl()
  */
 
 NS_IMETHODIMP
+compzillaControl::HasWindowManager(nsIDOMWindow *window,
+                                   PRBool *retval)
+{
+    char *atom_name;
+    Atom atom;
+
+    // FIXME: Handle screens
+    atom_name = g_strdup_printf ("WM_S%d", 0);
+    atom = XInternAtom (mXDisplay, atom_name, FALSE);
+    g_free (atom_name);
+
+    *retval = XGetSelectionOwner (mXDisplay, atom) != None;
+
+    SPEW ("HasWindowManager == %s\n", *retval ? "TRUE" : "FALSE");
+
+    return NS_OK;
+}
+
+
+NS_IMETHODIMP
 compzillaControl::RegisterWindowManager(nsIDOMWindow *window)
 {
-    Display *dpy;
     nsresult rv = NS_OK;
 
-    SPEW ("RegisterWindowManager\n");
-
+    SPEW ("RegisterWindowManager: mDOMWindow=%p\n", window);
     mDOMWindow = window;
-
-    mRoot = gdk_get_default_root_window();
-    mXRoot = GDK_DRAWABLE_XID (mRoot);
-    mXDisplay = GDK_DISPLAY_XDISPLAY (gdk_display_get_default ());
 
     // Get ALL events for ALL windows
     gdk_window_add_filter (NULL, gdk_filter_func, this);
 
     // Just ignore errors for now
     XSetErrorHandler (ErrorHandler);
+
+    // Try to register as window manager
+    if (!InitManagerWindow ()) {
+        ERROR ("InitManagerWindow failed");
+        exit (1); // return NS_ERROR_UNEXPECTED;
+    }
 
     InitXAtoms ();
 
@@ -121,7 +141,7 @@ compzillaControl::RegisterWindowManager(nsIDOMWindow *window)
         exit (1); // return NS_ERROR_UNEXPECTED;
     }
 
-    // Register as window manager
+    // Select events and manage all existing windows
     if (!InitWindowState ()) {
         ERROR ("InitWindowState failed");
         exit (1); // return NS_ERROR_UNEXPECTED;
@@ -287,7 +307,7 @@ compzillaControl::AddObserver (compzillaIControlObserver *aObserver)
 NS_IMETHODIMP 
 compzillaControl::RemoveObserver (compzillaIControlObserver *aObserver)
 {
-    SPEW ("compzillaControl::RemoveObserver %p\n", this);
+    SPEW ("RemoveObserver control=%p, observer=%p\n", this, aObserver);
 
     // Allow a caller to remove O(N^2) behavior by removing end-to-start.
     for (PRUint32 i = mObservers.Count() - 1; i != PRUint32(-1); --i) {
@@ -416,9 +436,6 @@ compzillaControl::InitXExtensions ()
 bool
 compzillaControl::InitWindowState ()
 {
-    if (!InitManagerWindow ())
-        return FALSE;
-
     XGrabServer (mXDisplay);
 
     long ev_mask = (SubstructureRedirectMask |
@@ -426,13 +443,13 @@ compzillaControl::InitWindowState ()
                     StructureNotifyMask |
                     PropertyChangeMask |
                     FocusChangeMask);
-    XSelectInput (mXDisplay, GDK_WINDOW_XID (mRoot), ev_mask);
+    XSelectInput (mXDisplay, mXRoot, ev_mask);
 
     if (ClearErrors (mXDisplay)) {
         WARNING ("Another window manager is already running on screen: %d\n", 1);
 
         ev_mask &= ~(SubstructureRedirectMask);
-        XSelectInput (mXDisplay, GDK_WINDOW_XID (mRoot), ev_mask);
+        XSelectInput (mXDisplay, mXRoot, ev_mask);
     }
 
     if (mIsWindowManager) {
@@ -473,18 +490,52 @@ compzillaControl::InitWindowState ()
 
 
 bool
+compzillaControl::ReplaceSelectionOwner (Window newOwner, Atom atom)
+{
+    Window currentOwner = XGetSelectionOwner (mXDisplay, atom);
+    if (currentOwner != None) {
+        // Listen for destory on existing selection owner window
+        XSelectInput (mXDisplay, currentOwner, StructureNotifyMask);
+    }
+
+    XSetSelectionOwner (mXDisplay, atom, newOwner, CurrentTime);
+
+    if (XGetSelectionOwner (mXDisplay, atom) != newOwner)
+        return FALSE;
+
+    // Send client message indicating that we are now the WM
+    XClientMessageEvent ev;
+    ev.type = ClientMessage;
+    ev.window = mXRoot;
+    ev.message_type = XInternAtom (mXDisplay, "MANAGER", FALSE);
+    ev.format = 32;
+    ev.data.l[0] = CurrentTime;
+    ev.data.l[1] = atom;
+
+    XSendEvent (mXDisplay, mXRoot, False, StructureNotifyMask, (XEvent*)&ev);
+
+    // Wait for the currentOwner window to go away
+    if (currentOwner != None) {
+        XEvent event;
+        do {
+            XWindowEvent (mXDisplay, currentOwner, StructureNotifyMask, &event);
+        } while (event.type != DestroyNotify);
+    }
+
+    return TRUE;
+}
+
+
+bool
 compzillaControl::InitManagerWindow ()
 {
     SPEW ("InitManagerWindow\n");
 
     XSetWindowAttributes attrs;
-
     attrs.override_redirect = True;
     attrs.event_mask = PropertyChangeMask;
   
-    // FIXME: Do this for each screen, and don't kill existing WMs.  See
-    //        compiz's display.c:addDisplay.
-
+    // FIXME: Do this for each screen
     mManagerWindow = XCreateWindow (mXDisplay,
                                     mXRoot,
                                     -100, -100, 1, 1,
@@ -498,29 +549,33 @@ compzillaControl::InitManagerWindow ()
     char *atom_name;
     Atom atom;
 
-    atom_name = g_strdup_printf ("_NET_WM_CM_S%d", 0);
-    atom = XInternAtom (mXDisplay, atom_name, FALSE);
-    g_free (atom_name);
-
-    XSetSelectionOwner (mXDisplay, atom, mManagerWindow, CurrentTime);
-    mIsWindowManager = XGetSelectionOwner (mXDisplay, atom) == mManagerWindow;
-
-    if (!mIsWindowManager) {
-        ERROR ("Couldn't acquire window manager selection");
-    }
-
+    // FIXME: Handle screens
     atom_name = g_strdup_printf ("WM_S%d", 0);
     atom = XInternAtom (mXDisplay, atom_name, FALSE);
     g_free (atom_name);
 
-    XSetSelectionOwner (mXDisplay, atom, mManagerWindow, CurrentTime);
-    mIsCompositor = XGetSelectionOwner (mXDisplay, atom) == mManagerWindow;
-    
+    mIsWindowManager = ReplaceSelectionOwner (mManagerWindow, atom);
+    if (!mIsWindowManager) {
+        ERROR ("Couldn't acquire window manager selection");
+        goto error;
+    }
+
+    // FIXME: Handle screens
+    atom_name = g_strdup_printf ("_NET_WM_CM_S%d", 0);
+    atom = XInternAtom (mXDisplay, atom_name, FALSE);
+    g_free (atom_name);
+
+    mIsCompositor = ReplaceSelectionOwner (mManagerWindow, atom);
     if (!mIsCompositor) {
         ERROR ("Couldn't acquire compositor selection");
+        goto error;
     }
 
     return TRUE;
+
+ error:
+    XDestroyWindow (mXDisplay, mManagerWindow);
+    return FALSE;
 }
 
 

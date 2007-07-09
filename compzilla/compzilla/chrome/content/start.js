@@ -2,11 +2,21 @@
 
 var svc = Components.classes['@pyrodesktop.org/compzillaService'].getService(
     Components.interfaces.compzillaIControl);
+
 var _clientList = new Array ();
 
 
 function compzillaLoad()
 {
+    if (svc.HasWindowManager (window) && !promptReplaceWindowManager ()) {
+	// Give up, and possibly quit if no other windows
+	closeWindow (window);
+	return;
+    }
+
+    promptSetDefaultWindowManager ();
+
+    // Resize toplevel window to screen dimensions
     var xulwin = $("#desktopWindow")[0];
     xulwin.width = screen.width;
     xulwin.height = screen.height;
