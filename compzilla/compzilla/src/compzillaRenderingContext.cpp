@@ -8,29 +8,23 @@
 
 #include <nsIDOMHTMLCanvasElement.h>
 
+/* 
+ * The grossest hack of all time. Needed in order to get at nsTransform2D
+ * private members in CZ_TransformNoXLate below.
+ */
 #ifndef MOZ_CAIRO_GFX
 #define private public
 #include <nsTransform2D.h>
 #undef private
 #endif
 
-
 #include "compzillaIRenderingContext.h"
 #include "compzillaRenderingContext.h"
+#include "Debug.h"
 
 #include <gdk/gdk.h>
 #include <gdk/gdkx.h>
 
-
-#if WITH_SPEW
-#define SPEW(format...) printf("   - " format)
-#else
-#define SPEW(format...)
-#endif
-
-#define INFO(format...) printf(" *** " format)
-#define WARNING(format...) printf(" !!! " format)
-#define ERROR(format...) fprintf(stderr, format)
 
 NS_IMPL_ISUPPORTS3_CI (compzillaRenderingContext,
 		       compzillaIRenderingContext,

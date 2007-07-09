@@ -1,5 +1,9 @@
 2007-07-08  Alex Graveley  <alex@beatniksoftware.com>
 
+	* compzilla/src/Debug.h: Pull out debug printing defines to here.
+
+2007-07-08  Alex Graveley  <alex@beatniksoftware.com>
+
 	* compzilla/chrome/content/start.js: If a window manager is
 	running, call promptReplaceWindowManager.  Always call
 	promptSetDefaultWindowManager for now.  In the future, this should

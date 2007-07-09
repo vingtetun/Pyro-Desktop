@@ -9,7 +9,9 @@
 #include "compzillaWindow.h"
 #include "compzillaIRenderingContext.h"
 #include "compzillaRenderingContext.h"
+#include "Debug.h"
 #include "nsKeycodes.h"
+#include "XAtoms.h"
 
 #include <nsICanvasElement.h>
 #include <nsIDOMEventTarget.h>
@@ -23,8 +25,6 @@ extern "C" {
 #include <X11/extensions/shape.h>
 #include <X11/extensions/Xcomposite.h>
 
-#include "XAtoms.h"
-
 #include <gdk/gdk.h>
 #include <gdk/gdkkeys.h>
 #include <gdk/gdkproperty.h>
@@ -36,29 +36,6 @@ extern GdkEvent *gtk_get_current_event (void);
 }
 
 extern XAtoms atoms;
-
-
-#ifdef DEBUG
-#ifdef WITH_SPEW
-#define SPEW(format...) printf("   - " format)
-#else
-#define SPEW(format...)
-#endif
-#define INFO(format...) printf(" *** " format)
-#define WARNING(format...) printf(" !!! " format)
-#define ERROR(format...) fprintf(stderr, format)
-#else
-#define SPEW(format...) do { } while (0)
-#define INFO(format...) do { } while (0)
-#define WARNING(format...) do { } while (0)
-#define ERROR(format...) do { } while (0)
-#endif
-
-#ifdef DEBUG_EVENTS
-#define SPEW_EVENT(format...) printf("  [EVENT] " format)
-#else
-#define SPEW_EVENT(format...) do { } while (0)
-#endif
 
 
 NS_IMPL_ADDREF(compzillaWindow)

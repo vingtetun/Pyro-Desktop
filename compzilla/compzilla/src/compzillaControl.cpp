@@ -14,6 +14,7 @@
 
 #include "compzillaControl.h"
 #include "XAtoms.h"
+#include "Debug.h"
 
 extern "C" {
 #include <gdk/gdkx.h>
@@ -27,23 +28,6 @@ extern "C" {
 #include <X11/extensions/Xrender.h>
 #include <X11/cursorfont.h>
 }
-
-
-#ifdef DEBUG
-#ifdef WITH_SPEW
-#define SPEW(format...) printf("   - " format)
-#else
-#define SPEW(format...)
-#endif
-#define INFO(format...) printf(" *** " format)
-#define WARNING(format...) printf(" !!! " format)
-#define ERROR(format...) fprintf(stderr, format)
-#else
-#define SPEW(format...) do { } while (0)
-#define INFO(format...) do { } while (0)
-#define WARNING(format...) do { } while (0)
-#define ERROR(format...) do { } while (0)
-#endif
 
 
 NS_IMPL_ISUPPORTS1_CI(compzillaControl, compzillaIControl);
@@ -1099,11 +1083,9 @@ compzillaControl::Filter (GdkXEvent *xevent, GdkEvent *event)
         if (x11_event->type == damage_event + XDamageNotify) {
             XDamageNotifyEvent *damage_ev = (XDamageNotifyEvent *) x11_event;
 
-#if 0
-            SPEW ("DAMAGE: drawable=%p, x=%d, y=%d, width=%d, height=%d\n", 
-                  damage_ev->drawable, damage_ev->area.x, damage_ev->area.y, 
-                  damage_ev->area.width, damage_ev->area.height);
-#endif
+            SPEW_EVENT ("DAMAGE: drawable=%p, x=%d, y=%d, width=%d, height=%d\n", 
+                        damage_ev->drawable, damage_ev->area.x, damage_ev->area.y, 
+                        damage_ev->area.width, damage_ev->area.height);
 
             int cnt = 0;
             do {
@@ -1114,7 +1096,7 @@ compzillaControl::Filter (GdkXEvent *xevent, GdkEvent *event)
                                        x11_event));
 
             if (cnt > 1) {
-                SPEW("DAMAGE: Handled %d pending events!\n", cnt);
+                SPEW_EVENT ("DAMAGE: Handled %d pending events!\n", cnt);
             }
 
             return GDK_FILTER_REMOVE;
