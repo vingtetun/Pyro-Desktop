@@ -1,3 +1,10 @@
+2007-07-10  Alex Graveley  <alex@beatniksoftware.com>
+
+	* compzilla/chrome/content/frame.js: Fix sizing bug where content
+	needed to be forced +30 pixels of Y offset.
+	In moveResizeToContent, don't constrain size to work area for
+	windows that have strut info set.
+
 2007-07-09  Alex Graveley  <alex@beatniksoftware.com>
 
 	* compzilla/src/Debug.h: Switch to using PR_LOG.  The module name

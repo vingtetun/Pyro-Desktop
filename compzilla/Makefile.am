@@ -2,9 +2,11 @@
 SUBDIRS = compzilla
 
 debug:
+	NSPR_LOG_MODULES="compzilla:10" \
 	$(FIREFOX) -g -chrome chrome://compzilla/content/start.xul -P dev
 
 run:
+	NSPR_LOG_MODULES="compzilla:10" \
 	$(FIREFOX) -chrome chrome://compzilla/content/start.xul -P dev
 
 

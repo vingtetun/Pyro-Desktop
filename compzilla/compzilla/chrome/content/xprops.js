@@ -14,11 +14,11 @@ function XProps (nativewin)
 
     this._nativewin = nativewin;
 
-    var foo = this;
+    var xprops = this;
     this._observer = {
 	propertyChange: function (atom, isDeleted) {
 	    Debug ("xprops", "xprops: Invalidating atom " + atom);
-	    foo.invalidate (atom);
+	    xprops.invalidate (atom);
 	},
         destroy: function () {
 	},
@@ -51,8 +51,11 @@ XProps.prototype = {
 	}
 	else {
 	    var prop_bag = this._nativewin.GetProperty (atom);
-	    if (!prop_bag)
+	    if (!prop_bag) {
+		if (use_cache)
+		    this._values[atom] = null;
 		return null;
+	    }
 
 	    var val = new Object ();
 	    var prop;

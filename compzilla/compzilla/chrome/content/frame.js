@@ -39,10 +39,9 @@ var FrameMethods = {
     },
 
     moveResizeToContent: function (x, y, width, height) {
-        // ev coords are relative to content, adjust for frame offsets
+        // Coords are relative to content, and are adjusted for frame offsets
 
-        Debug ("frame",
-	       "moveResizeToContent: [x:" + x + ", y:" + y + 
+        Debug ("frame", "moveResizeToContent: [x:" + x + ", y:" + y + 
 	       ", width:" + width + ", height:" + height + "]");
 
 	var wasVisible = this.visible;
@@ -54,19 +53,18 @@ var FrameMethods = {
         var posframe = this.getPosition ();
         var pos = this._content.getPosition ();
         x -= posframe.left - pos.left;
-
-	// FIXME: Hardcoded height fixes menu position.
-        //y -= posframe.top - pos.top;
-	y -= 30;
+        y -= posframe.top - pos.top;
 
         width += this.offsetWidth - this._content.offsetWidth;
         height += this.offsetHeight - this._content.offsetHeight;
 
 	// Constrain to size of workarea
-	x = Math.max (x, workarea.bounds.left);
-	y = Math.max (y, workarea.bounds.top);
-	width = Math.min (width, workarea.bounds.width);
-	height = Math.min (height, workarea.bounds.height);
+	if (!this._content.wmStruts) {
+	    x = Math.max (x, workarea.bounds.left);
+	    y = Math.max (y, workarea.bounds.top);
+	    width = Math.min (width, workarea.bounds.width);
+	    height = Math.min (height, workarea.bounds.height);
+	}
 
         this.moveResize (x, y, width, height);
 
@@ -592,7 +590,7 @@ function _observeNativeWindow (frame)
 
 	    Debug ("frame", "configure.handleEvent");
 
-	    // track override changes
+	    // Track override changes
 	    frame.overrideRedirect = overrideRedirect;
 
 	    // This may not match the current state if the window was created
@@ -645,6 +643,7 @@ function _observeNativeWindow (frame)
 		break;
 
 	    case Atoms._NET_WM_STRUT:
+	    case Atoms._NET_WM_STRUT_PARTIAL:
 		frame._updateStrutInfo ();
 		break;
 

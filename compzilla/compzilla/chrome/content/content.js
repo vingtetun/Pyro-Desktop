@@ -45,6 +45,10 @@ var ContentMethods = {
 	if (overrideRedirect)
 	    return;
 
+	// 0-sized dimentions will generate X error
+	if (this.width <= 0 || this.height <= 0)
+	    return;
+
         var pos = this.getPosition();
 
         Debug("frame", "Calling ConfigureWindow: xid=" +
@@ -177,8 +181,11 @@ function _addContentMethods (content) {
 			     try {
 			     	 struts = this.getNativeProperty (Atoms._NET_WM_STRUT_PARTIAL);
 			     } catch (e) {
-			         // fall back to _NET_WM_STRUT if _PARTIAL isn't there.
-				 struts = this.getNativeProperty (Atoms._NET_WM_STRUT);
+				 try {
+				     // fall back to _NET_WM_STRUT if _PARTIAL isn't there.
+				     struts = this.getNativeProperty (Atoms._NET_WM_STRUT);
+				 } catch (e) {
+				 }
 			     }
 			     return struts;
 			 });
