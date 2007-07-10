@@ -1,5 +1,17 @@
 2007-07-10  Alex Graveley  <alex@beatniksoftware.com>
 
+	* compzilla/src/compzillaWindow.cpp (GetUTF8StringProperty): Take
+	a nsACString so we can just assign the UTF8 version of the fetched
+	string.
+	(GetProperty): Use nsCAutoString for visible utf8 strings.
+
+	* compzilla/Makefile.am (libcompzilla_la_CPPFLAGS): Add
+	fvisibility=hidden, so we don't add any symbols to further slow
+	down moz linking.
+
+	* compzilla/src/compzillaControl.cpp (InitWindowState): Don't
+	select cursor input, since it's useless with the overlay window.
+
 	* compzilla/chrome/content/frame.js: Fix sizing bug where content
 	needed to be forced +30 pixels of Y offset.
 	In moveResizeToContent, don't constrain size to work area for

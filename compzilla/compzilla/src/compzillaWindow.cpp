@@ -186,7 +186,6 @@ compzillaWindow::ConnectListeners (bool connect, nsCOMPtr<nsISupports> aContent)
 {
     static const nsString events[] = {
 	// nsIDOMKeyListener events
-	// NOTE: These aren't delivered due to WM focus issues currently
 	NS_LITERAL_STRING("keydown"),
 	NS_LITERAL_STRING("keyup"),
 	// "keypress",
@@ -328,9 +327,9 @@ compzillaWindow::RemoveObserver (compzillaIWindowObserver *aObserver)
 
 
 nsresult
-compzillaWindow::GetStringProperty (Atom prop, nsAString& value)
+compzillaWindow::GetUTF8StringProperty (Atom prop, nsACString& utf8Value)
 {
-    SPEW ("GetStringProperty this=%p, prop=%s\n", this, XGetAtomName (mDisplay, prop));
+    SPEW ("GetUTF8StringProperty this=%p, prop=%s\n", this, XGetAtomName (mDisplay, prop));
 
     Atom actual_type;
     int format;
@@ -356,7 +355,7 @@ compzillaWindow::GetStringProperty (Atom prop, nsAString& value)
     }
 
     if (actual_type == atoms.x.UTF8_STRING) {
-        value = NS_ConvertUTF8toUTF16 ((char*)data);
+        utf8Value = (char*)data;
     }
     else if (actual_type == XA_STRING) {
         char **list = NULL;
@@ -371,7 +370,7 @@ compzillaWindow::GetStringProperty (Atom prop, nsAString& value)
             return NS_ERROR_FAILURE;
         }
 
-        value = NS_ConvertUTF8toUTF16 (list[0]);
+        utf8Value = list[0];
 
         g_strfreev (list);
     }
@@ -433,7 +432,7 @@ compzillaWindow::GetAtomProperty (Atom prop, PRUint32* value)
 NS_IMETHODIMP
 compzillaWindow::HandleEvent (nsIDOMEvent* aDOMEvent)
 {
-    nsString type;
+    nsAutoString type;
     aDOMEvent->GetType (type);
 
     if (type.EqualsLiteral ("mousemove")) {
@@ -448,12 +447,8 @@ compzillaWindow::HandleEvent (nsIDOMEvent* aDOMEvent)
         nsCOMPtr<nsIDOMEventTarget> target;
         aDOMEvent->GetTarget (getter_AddRefs (target));
 
-        NS_LossyConvertUTF16toASCII ctype(type);
-        const char *cdata;
-        NS_CStringGetData (ctype, &cdata);
-
         SPEW_EVENT ("HandleEvent: Unhandled type=%s, target=%p!!!\n", 
-                    cdata, target.get ());
+                    PromiseFlatString (type).get(), target.get ());
     }
     return NS_OK;
 }
@@ -1197,10 +1192,10 @@ compzillaWindow::GetProperty (PRUint32 iprop, nsIPropertyBag2 **bag2)
         // property isn't in utf8, but in some locale character set
         // (latin1?  who knows).  Check the gtk+ source on how to
         // handle this.
-        nsString str;
-        if (NS_OK == GetStringProperty (prop, str)) {
+        nsCAutoString str;
+        if (NS_OK == GetUTF8StringProperty (prop, str)) {
             SET_BAG ();
-            SET_PROP(wbag, AString, "text", str);
+            SET_PROP(wbag, AUTF8String, "text", str);
         }
         break;
     }
@@ -1286,8 +1281,8 @@ compzillaWindow::GetProperty (PRUint32 iprop, nsIPropertyBag2 **bag2)
         _class = instance + strlen (instance) + 1;
 
         SET_BAG ();
-        SET_PROP (wbag, AString, "instanceName", NS_ConvertASCIItoUTF16 (instance));
-        SET_PROP (wbag, AString, "className", NS_ConvertASCIItoUTF16 (_class));
+        SET_PROP (wbag, ACString, "instanceName", nsCAutoString (instance));
+        SET_PROP (wbag, ACString, "className", nsCAutoString (_class));
 
         XFree (data);
 
@@ -1298,10 +1293,10 @@ compzillaWindow::GetProperty (PRUint32 iprop, nsIPropertyBag2 **bag2)
         break;
     }
     case XA_WM_CLIENT_MACHINE: {
-        nsString str;
-        if (NS_OK == GetStringProperty (prop, str)) {
+        nsCAutoString str;
+        if (NS_OK == GetUTF8StringProperty (prop, str)) {
             SET_BAG ();
-            SET_PROP(wbag, AString, "text", str);
+            SET_PROP(wbag, AUTF8String, "text", str);
         }
     }
     default:
@@ -1323,10 +1318,10 @@ compzillaWindow::GetProperty (PRUint32 iprop, nsIPropertyBag2 **bag2)
                  || prop == atoms.x._NET_WM_ICON_NAME
                  || prop == atoms.x._NET_WM_VISIBLE_ICON_NAME) {
             // utf8 encoded string
-            nsString str;
-            if (NS_OK == GetStringProperty (prop, str)) {
+            nsCAutoString str;
+            if (NS_OK == GetUTF8StringProperty (prop, str)) {
                 SET_BAG ();
-                SET_PROP(wbag, AString, "text", str);
+                SET_PROP(wbag, AUTF8String, "text", str);
             }
         }
         else if (prop == atoms.x._NET_WM_DESKTOP) {

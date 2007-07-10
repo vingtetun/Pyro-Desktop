@@ -118,7 +118,7 @@ CLEANFILES = 			\
 
 if GECKO_USE_THEBES
 GFX_CFLAGS=
-GFX_LIBS=-L/home/toshok/src/mozilla/mozilla/dist/lib -lxpcomglue_s -lthebes
+GFX_LIBS=-lxpcomglue
 else
 GFX_CFLAGS=-DMOZILLA_INTERNAL_API
 GFX_LIBS=-lxpistub
@@ -139,6 +139,7 @@ libcompzilla_la_CPPFLAGS =			\
 	-fshort-wchar				\
 	-fno-rtti 				\
 	-fno-exceptions 			\
+	-fvisibility=hidden			\
 	-shared					\
 	\
 	$(AM_CPPFLAGS)				\

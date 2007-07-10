@@ -98,7 +98,7 @@ public:
     void EnsureDamage ();
 
     nsresult GetAtomProperty (Atom prop, PRUint32* value);
-    nsresult GetStringProperty (Atom prop, nsAString& value);
+    nsresult GetUTF8StringProperty (Atom prop, nsACString& utf8Value);
     nsresult GetCardinalListProperty (Atom prop, PRUint32 **values, PRUint32 expected_nitems);
 
     nsCOMArray<nsIDOMHTMLCanvasElement> mContentNodes;
