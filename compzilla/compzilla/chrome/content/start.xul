@@ -30,7 +30,19 @@
 
             <div id="fullscreenLayer" class="windowLayer"></div>
             <div id="exposeLayer" class="windowLayer"></div>
-            <div id="pickerLayer" class="windowLayer"></div>
+            <div id="pickerLayer" class="windowLayer">
+                <div id="pickerWindow">
+                    <canvas id="pickerWindowBeauty"></canvas>
+
+                    <div id="pickerSelection"></div>
+                </div>
+
+                <div id="pickerItem" class="pickerItem">
+                    <div id="window"></div>
+                    <span id="label"></span>
+                </div>
+	    </div>
+
             <div id="overlayLayer" class="windowLayer">
                 <div>
                     <iframe id="overlayContent" />
@@ -152,6 +164,8 @@
     <commandset id="compzillaDesktopCommandSet">
         <command id="cmd_toggleDesktop" oncommand="windowStack.toggleDesktop();" />
         <command id="cmd_toggleOverlay" oncommand="toggleOverlay();" />
+	<command id="cmd_showPickerPrev" oncommand="showPicker(false);" />
+	<command id="cmd_showPickerNext" oncommand="showPicker(true);" />
         <command id="cmd_toggleDebug" oncommand="debugToggleWindow();" />
         <command id="cmd_toggleScale" oncommand="toggleScale();" />
     </commandset>
@@ -173,6 +187,14 @@
              phase="capturing"
              keycode="VK_F11" modifiers="control"
              command="cmd_toggleScale" />
+        <key id="key_showPickerPrev" 
+             phase="capturing"
+             keycode="VK_LEFT" modifiers="control"
+             command="cmd_showPickerPrev" />
+        <key id="key_showPickerNext" 
+             phase="capturing"
+             keycode="VK_RIGHT" modifiers="control"
+             command="cmd_showPickerNext" />
     </keyset>
 
     <commandset id="compzillaWindowCommandSet">
@@ -226,6 +248,7 @@
     <script type="application/x-javascript" src="chrome://compzilla/content/debug.js" />
     <script type="application/x-javascript" src="chrome://compzilla/content/content.js" />
     <script type="application/x-javascript" src="chrome://compzilla/content/scale.js" />
+    <script type="application/x-javascript" src="chrome://compzilla/content/picker.js" />
     <script type="application/x-javascript" src="chrome://compzilla/content/overlay.js" />
     <script type="application/x-javascript" src="chrome://compzilla/content/minmax.js" />
     <script type="application/x-javascript" src="chrome://compzilla/content/prompt.js" />

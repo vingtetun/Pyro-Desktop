@@ -14,10 +14,28 @@ function XProps (nativewin)
 
     this._nativewin = nativewin;
 
+    var foo = this;
     this._observer = {
 	propertyChange: function (atom, isDeleted) {
 	    Debug ("xprops", "xprops: Invalidating atom " + atom);
-	    this.invalidate (atom);
+	    foo.invalidate (atom);
+	},
+        destroy: function () {
+	},
+        configure: function (mapped,
+			     overrideRedirect,
+			     x,
+			     y,
+			     width,
+			     height,
+			     borderWidth,
+			     aboveWindow) {
+	},
+        map: function (overrideRedirect) {
+	},
+        unmap: function () {
+	},
+	clientMessageRecv: function (messageType, format, d1, d2, d3, d4) {
 	}
     };
     nativewin.addObserver (this._observer);

@@ -27,6 +27,7 @@ content_DATA =					\
 	$(CONTENT_SRCDIR)/jquery.easing.1.1.js	\
 	$(CONTENT_SRCDIR)/minmax.js		\
 	$(CONTENT_SRCDIR)/overlay.js		\
+	$(CONTENT_SRCDIR)/picker.js		\
 	$(CONTENT_SRCDIR)/prompt.js		\
 	$(CONTENT_SRCDIR)/scale.js		\
 	$(CONTENT_SRCDIR)/start.js		\
@@ -117,7 +118,7 @@ CLEANFILES = 			\
 
 if GECKO_USE_THEBES
 GFX_CFLAGS=
-GFX_LIBS=-lxpcomglue_s
+GFX_LIBS=-L/home/toshok/src/mozilla/mozilla/dist/lib -lxpcomglue_s -lthebes
 else
 GFX_CFLAGS=-DMOZILLA_INTERNAL_API
 GFX_LIBS=-lxpistub
@@ -127,7 +128,7 @@ libcompzilla_la_LDFLAGS = -avoid-version -module -Wl,-Bsymbolic
 libcompzilla_la_LIBADD = $(XEXTENSIONS_LIBS) $(NSPR_LIBS) -L$(GECKO_LIBDIR) $(GFX_LIBS)
 
 ### Link libthebes for dynamic FF builds
-#libcompzilla_la_LIBADD = $(XEXTENSIONS_LIBS) $(NSPR_LIBS) -L$(GECKO_LIBDIR) -lxpcomglue_s libthebes.so
+#libcompzilla_la_LIBADD = $(XEXTENSIONS_LIBS) $(NSPR_LIBS) -L$(GECKO_LIBDIR) -L/home/toshok/src/mozilla/mozilla/dist/lib -lxpcomglue_s libthebes.so
 
 ### Lots of debug output
 # -DDEBUG -DDEBUG_SPEW -DDEBUG_EVENTS
