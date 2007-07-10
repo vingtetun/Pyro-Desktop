@@ -59,13 +59,15 @@ CZ_NewCompzillaWindow(Display *display,
                       Window win, 
                       compzillaWindow** retval)
 {
+    *retval = nsnull;
+
     compzillaWindow *window = new compzillaWindow (display, win);
     if (!window)
         return NS_ERROR_OUT_OF_MEMORY;
 
     NS_ADDREF(window);
-
     *retval = window;
+
     return NS_OK;
 }
 
