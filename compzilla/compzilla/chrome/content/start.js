@@ -14,7 +14,8 @@ function compzillaLoad()
 	return;
     }
 
-    promptSetDefaultWindowManager ();
+    // FIXME: This doesn't work yet.
+    //promptSetDefaultWindowManager ();
 
     // Resize toplevel window to screen dimensions
     var xulwin = $("#desktopWindow")[0];

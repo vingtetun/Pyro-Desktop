@@ -80,8 +80,6 @@ compzillaWindow::compzillaWindow(Display *display, Window win)
       mLastEntered(None),
       mIsDestroyed(false)
 {
-    NS_INIT_ISUPPORTS ();
-
     // Redirect output entirely
     XCompositeRedirectWindow (display, win, CompositeRedirectManual);
 
