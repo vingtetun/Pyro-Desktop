@@ -127,7 +127,7 @@ function showPicker (forward)
 					      pickerLayer.style.display = "none";
 					      shown = false;
 
-					      vs[selected_window].original_window.focus();
+					      vs[selected_window].original_window.doFocus();
 
 					      clearPicker ();
 
@@ -142,14 +142,12 @@ function showPicker (forward)
 
         if (forward) {
 	    selected_window = 0;
-
-	    $(vs[selected_window]).addClass ("selectedPickerItem");
         }
         else {
 	    selected_window = vs.length - 1;
-
-	    $(vs[selected_window]).addClass ("selectedPickerItem");
         }
+
+	$(vs[selected_window]).addClass ("selectedPickerItem");
 
  	var contentPos = contents.getPosition ();
 

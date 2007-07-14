@@ -453,19 +453,10 @@ function _connectFrameFocusListeners (frame)
 {
     // click to raise/focus
     frame.addEventListener (
-        "focus",
-        {
-	    handleEvent: function (event) {
-		frame.doFocus();
-	    }
-        },
-	true);
-
-    frame.addEventListener (
         "mousedown", 
         {
             handleEvent: function (event) {
-		frame.focus ();
+		frame.doFocus();
             }
         },
 	true);

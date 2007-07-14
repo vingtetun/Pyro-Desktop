@@ -55,7 +55,6 @@
         <div id="windowFrame" 
              class="uiDlg" 
              style="display: none;"
-             tabindex="1"
              pyro:wm-class="Unknown Unknown"
              pyro:allow-resize="true"
              pyro:allow-move="true"

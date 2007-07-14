@@ -1,5 +1,18 @@
 2007-07-14  Chris Toshok  <toshok@ximian.com>
 
+	* compzilla/chrome/content/frame.js: just call doFocus in the
+	mousedown handler instead of focus.
+
+	* compzilla/chrome/content/start.xul: remove the tabindex.
+
+	* compzilla/chrome/content/picker.js: call doFocus instead of
+	focus().  also, factor out the initial setting of the style.
+
+	* compzilla/chrome/skin/compzilla.css: set the picker item
+	overflow to hidden and use a sane font.
+
+2007-07-14  Chris Toshok  <toshok@ximian.com>
+
 	* compzilla/chrome/content/frame.js: split out the focus handling
 	from the mousedown handler to frame.doFocus.  add a "focus" event
 	handler which calls doFocus, and do nothing in the mousedown event
