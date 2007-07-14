@@ -1,3 +1,20 @@
+2007-07-14  Chris Toshok  <toshok@ximian.com>
+
+	* compzilla/chrome/content/frame.js: split out the focus handling
+	from the mousedown handler to frame.doFocus.  add a "focus" event
+	handler which calls doFocus, and do nothing in the mousedown event
+	handler except focus the frame.
+
+	* compzilla/chrome/content/start.xul: add tabindex to the uidlgs.
+
+	* compzilla/chrome/content/picker.js: specify durations for the
+	animations, and make sure the selected picker item is centered.
+	Also, focus the selected window when we're done.
+
+	* compzilla/chrome/skin/compzilla.css: add some padding between
+	the border and contents of the picker items.  also remove the
+	focus outline from uiDlg.
+
 2007-07-13  Alex Graveley  <alex@beatniksoftware.com>
 
 	* compzilla/src/compzillaControl.cpp/h: Define some nserrors which can

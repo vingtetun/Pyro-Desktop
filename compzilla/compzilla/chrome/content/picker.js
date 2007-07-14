@@ -33,15 +33,20 @@ function renderBeauty ()
 function newWindow (w)
 {
     var item = $("#pickerItem").clone()[0];
+
+    item.original_window = w;
+
     item._contents = $("#window", item)[0];
     item._label = $("#label", item)[0];
-
+    
     item._native = CompzillaWindowContent (w.content.nativeWindow);
     item._contents.appendChild (item._native);
 
     item._label.innerHTML = w.content.wmName;
 
     item.style.display = "block";
+
+    _addUtilMethods (item);
 
     return item;
 }
@@ -109,7 +114,10 @@ function showPicker (forward)
     if (!shown) {
       	populatePicker (forward);
 
-	$("#pickerContents")[0].style.left = 200 + "px";
+	var contents = $("#pickerContents")[0];
+	var vs = $(".pickerItem", $("#pickerContents"));
+
+	_addUtilMethods (contents);
 
   	pickerLayer.style.display = "block";
 
@@ -118,6 +126,8 @@ function showPicker (forward)
 					  if (event.keyCode == event.DOM_VK_CONTROL) {
 					      pickerLayer.style.display = "none";
 					      shown = false;
+
+					      vs[selected_window].original_window.focus();
 
 					      clearPicker ();
 
@@ -131,19 +141,22 @@ function showPicker (forward)
 
 
         if (forward) {
-	    var vs = $(".pickerItem", $("#pickerContents"));
-
 	    selected_window = 0;
 
-	    //	    $(vs[selected_window]).addClass ("selectedPickerItem");
+	    $(vs[selected_window]).addClass ("selectedPickerItem");
         }
         else {
-	    var vs = $(".pickerItem", $("#pickerContents"));
-
 	    selected_window = vs.length - 1;
 
-	    //	    $(vs[selected_window]).addClass ("selectedPickerItem");
+	    $(vs[selected_window]).addClass ("selectedPickerItem");
         }
+
+ 	var contentPos = contents.getPosition ();
+
+ 	var delta_to_center = (screen.width / 2) - contentPos.left - (vs[selected_window].offsetLeft + vs[selected_window].offsetWidth / 2);
+
+	Debug ("contents.left = " + contentPos.left + ", and a delta of " + delta_to_center  + " is needed to get item " + selected_window + " centered");
+ 	contents.style.left = (contents.offsetLeft + delta_to_center) + "px";
     }
 
     var vs = $(".pickerItem", $("#pickerContents"));
@@ -163,30 +176,38 @@ var selected_window;
 
 function nextWindow ()
 {
+    var vs = $(".pickerItem", $("#pickerContents"));
     var v = $("#pickerContents")[0];
 
-    Debug ("moving div to " + (v.offsetLeft - 220));
+    if (selected_window == vs.length - 1)
+	return;
 
-    //    $(vs[selected_window]).toggleClass ("selectedPickerItem");
+    var delta = vs[selected_window].offsetLeft - vs[selected_window + 1].offsetLeft;
+
+    $(vs[selected_window]).toggleClass ("selectedPickerItem");
 
     selected_window ++;
 
-    //    $(vs[selected_window]).toggleClass ("selectedPickerItem");
+    $(vs[selected_window]).toggleClass ("selectedPickerItem");
 
-    $(v).animate ({left: v.offsetLeft - 220 }, "linear");
+    $(v).animate ({left: v.offsetLeft + delta }, 250, "linear");
 }
 
 function prevWindow ()
 {
+    var vs = $(".pickerItem", $("#pickerContents"));
     var v = $("#pickerContents")[0];
 
-    Debug ("moving div to " + (v.offsetLeft + 220));
+    if (selected_window == 0)
+	return;
 
-    //    $(vs[selected_window]).toggleClass ("selectedPickerItem");
+    var delta = vs[selected_window].offsetLeft - vs[selected_window - 1].offsetLeft;
+
+    $(vs[selected_window]).toggleClass ("selectedPickerItem");
 
     selected_window --;
 
-    //    $(vs[selected_window]).toggleClass ("selectedPickerItem");
+    $(vs[selected_window]).toggleClass ("selectedPickerItem");
 
-    $(v).animate ({left: v.offsetLeft + 220 }, "linear");
+    $(v).animate ({left: v.offsetLeft + delta }, 250, "linear");
 }

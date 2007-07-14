@@ -129,17 +129,29 @@ body {
 	height: 160px;
 	z-index: -5000;
 
-	border-color: #000000;
-	border-width: 0px;
+	border: 0px solid #000;
 }
 
 .selectedPickerItem {
-	border-width: 4px;
+	border-width: 2px;
+	-moz-border-radius: 3.5px;
+}
+
+.pickerItem #window canvas {
+	position: absolute;
+	top: 0px;
+	bottom: 0px;
+	left: 0px;
+	right: 0px;
+	margin: auto;
 }
 
 .pickerItem #window {
-	left: 0;
-	right: 0;
+	position:absolute;
+	left: 2px;
+	right: 2px;
+	top: 2px;
+	bottom: 1.5em;
 	margin-left: auto;
 	margin-right: auto;
 
@@ -148,7 +160,12 @@ body {
 }
 
 .pickerItem #label {
-	margin-top: 2px;
+	position:absolute;
+	bottom: 0px;
+	left: 0px;
+	right: 0px;
+	margin-left: auto;
+	margin-right: auto;
 }
 
 #overlayLayer {
@@ -234,6 +251,10 @@ body {
         z-index: 1;
         min-width: 200px;
         min-height: 120px;
+}
+
+.uiDlg:focus {
+        outline-width: 0;
 }
 
 .uiDlgTop, .uiDlgTop > div, .uiDlgBottom, .uiDlgBottom > div {

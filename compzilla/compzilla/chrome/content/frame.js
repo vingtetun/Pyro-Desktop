@@ -270,6 +270,30 @@ var FrameMethods = {
 	    this._content.onfullscreen ();
     },
 
+    doFocus: function () {
+	windowStack.moveToTop (this);
+
+        // XXX this should live in some sort of focus handler, not here.
+	if (this != _focusedFrame) {
+	    if (_focusedFrame) {
+		// Send FocusOut
+		_focusedFrame._content.blur ();
+		_focusedFrame.inactive = true;
+		if (_focusedFrame._content.onlostfocus)
+		    _focusedFrame._content.onlostfocus ();
+	    }
+
+	    // Send FocusIn
+	    this._content.focus ();
+	    this.inactive = false;
+
+	    _focusedFrame = this;
+	    if (_focusedFrame._content.ongotfocus)
+		_focusedFrame._content.ongotfocus ();
+	}
+    },
+
+
     getPyroAttribute: function (name) {
         return this.getAttributeNS (_PYRO_NAMESPACE, name);
     },
@@ -429,29 +453,19 @@ function _connectFrameFocusListeners (frame)
 {
     // click to raise/focus
     frame.addEventListener (
+        "focus",
+        {
+	    handleEvent: function (event) {
+		frame.doFocus();
+	    }
+        },
+	true);
+
+    frame.addEventListener (
         "mousedown", 
         {
             handleEvent: function (event) {
-		windowStack.moveToTop (frame);
-
-                // XXX this should live in some sort of focus handler, not here.
-                if (frame != _focusedFrame) {
-                    if (_focusedFrame) {
-                        // Send FocusOut
-                        _focusedFrame._content.blur ();
-                        _focusedFrame.inactive = true;
-			if (_focusedFrame._content.onlostfocus)
-			    _focusedFrame._content.onlostfocus ();
-                    }
-
-                    // Send FocusIn
-                    frame._content.focus ();
-                    frame.inactive = false;
-
-                    _focusedFrame = frame;
-		    if (_focusedFrame._content.ongotfocus)
-			_focusedFrame._content.ongotfocus ();
-                }
+		frame.focus ();
             }
         },
 	true);
