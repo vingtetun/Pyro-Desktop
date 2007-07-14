@@ -364,11 +364,10 @@ compzillaControl::GetNativeWindow(nsIDOMWindow *window)
 nsresult
 compzillaControl::InitXAtoms ()
 {
-    if (Success != XInternAtoms (mXDisplay, 
-                                 atom_names, 
-                                 sizeof (atom_names) / sizeof (atom_names[0]), 
-                                 False, 
-                                 atoms.a)) {
+    if (!XInternAtoms (mXDisplay, 
+                       atom_names, sizeof (atom_names) / sizeof (atom_names[0]), 
+                       False, 
+                       atoms.a)) {
         return NS_ERROR_FAILURE;
     }
     return NS_OK;
