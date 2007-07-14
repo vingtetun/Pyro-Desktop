@@ -68,7 +68,7 @@ body {
 #pickerWindow {
 	position: absolute;
 	overflow: hidden;
-	width: 80%;
+	width: 600px;
 	height: 200px;
 
 	top: 0px;
@@ -114,18 +114,30 @@ body {
 	display: block;
 }
 
+#pickerContents {
+	position: absolute;
+	top: 0px;
+	left: 0px;
+}
+
 .pickerItem {
 	display: none;
 	position: absolute;
 	text-align: center;
 	top: 20px;
+	width: 160px;
+	height: 160px;
 	z-index: -5000;
+
+	border-color: #000000;
+	border-width: 0px;
+}
+
+.selectedPickerItem {
+	border-width: 4px;
 }
 
 .pickerItem #window {
-	width: 150px;
-	height: 150px;
-
 	left: 0;
 	right: 0;
 	margin-left: auto;

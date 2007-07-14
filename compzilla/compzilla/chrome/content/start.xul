@@ -33,13 +33,12 @@
             <div id="pickerLayer" class="windowLayer">
                 <div id="pickerWindow">
                     <canvas id="pickerWindowBeauty"></canvas>
-
-                    <div id="pickerSelection"></div>
+		    <div style="background: #ff0000;" id="pickerContents"></div>
                 </div>
 
                 <div id="pickerItem" class="pickerItem">
-                    <div id="window"></div>
-                    <span id="label"></span>
+			<div id="window"></div>
+			<span id="label"></span>
                 </div>
 	    </div>
 
