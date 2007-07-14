@@ -1,5 +1,6 @@
 /* -*- mode: C++; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
 
+#include <nsError.h>
 #include <nsCOMPtr.h>
 #include <nsCOMArray.h>
 #include <nsRefPtrHashtable.h>
@@ -12,6 +13,13 @@ extern "C" {
 #include <gdk/gdkwindow.h>
 #include <X11/Xlib.h>
 }
+
+
+#define NEW_ERROR(_id) NS_ERROR_GENERATE_FAILURE(NS_ERROR_MODULE_GENERAL,  _id)
+#define NS_ERROR_NO_COMPOSITE_EXTENSTION  NEW_ERROR(1001)
+#define NS_ERROR_NO_DAMAGE_EXTENSTION     NEW_ERROR(1002)
+#define NS_ERROR_NO_XFIXES_EXTENSTION     NEW_ERROR(1003)
+#define NS_ERROR_NO_SHAPE_EXTENSTION      NEW_ERROR(1004)
 
 
 class compzillaControl
@@ -46,11 +54,11 @@ private:
     GdkWindow *GetNativeWindow(nsIDOMWindow *window);
     nsresult GetNativeWidget(nsIDOMWindow *window, nsIWidget **widget);
 
-    bool InitXAtoms ();
-    bool InitXExtensions ();
-    bool InitOverlay ();
-    bool InitManagerWindow ();
-    bool InitWindowState ();
+    nsresult InitXAtoms ();
+    nsresult InitXExtensions ();
+    nsresult InitOverlay ();
+    nsresult InitManagerWindow ();
+    nsresult InitWindowState ();
 
     bool ReplaceSelectionOwner (Window newOwner, Atom atom);
 
@@ -85,5 +93,4 @@ private:
     static int damage_event, damage_error;
     static int xfixes_event, xfixes_error;
     static int shape_event, shape_error;
-    static int render_event, render_error;
 };

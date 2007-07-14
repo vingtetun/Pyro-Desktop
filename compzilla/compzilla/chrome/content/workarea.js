@@ -43,7 +43,7 @@ WorkArea.prototype = {
 	    /* let's ignore the partial strut stuff for now */
 	}
 
-	Debug ("workarea bounds set to " +
+	Debug ("workarea", "workarea bounds set to " +
 	       "{ " +
 	       this.bounds.left + ", " +
 	       this.bounds.top  + " - " +

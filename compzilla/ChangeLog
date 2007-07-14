@@ -1,3 +1,12 @@
+2007-07-13  Alex Graveley  <alex@beatniksoftware.com>
+
+	* compzilla/src/compzillaControl.cpp/h: Define some nserrors which can
+	be returned from RegisterWindowManager.  Don't require RENDER,
+	since we don't use it directly.
+
+	* compzilla/chrome/content/start.js: Alert with friendly messages
+	when RegisterWindowManager raises an exception.
+
 2007-07-10  Alex Graveley  <alex@beatniksoftware.com>
 
 	* compzilla/src/compzillaWindow.cpp (GetUTF8StringProperty): Take

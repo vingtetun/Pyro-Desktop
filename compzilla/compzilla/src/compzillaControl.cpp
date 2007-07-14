@@ -25,7 +25,6 @@ extern "C" {
 #include <X11/Xatom.h>
 #include <X11/extensions/shape.h>
 #include <X11/extensions/Xcomposite.h>
-#include <X11/extensions/Xrender.h>
 #include <X11/cursorfont.h>
 }
 
@@ -47,8 +46,6 @@ int compzillaControl::xfixes_event;
 int compzillaControl::xfixes_error;
 int compzillaControl::shape_event;
 int compzillaControl::shape_error;
-int compzillaControl::render_event;
-int compzillaControl::render_error;
 
 
 compzillaControl::compzillaControl()
@@ -113,32 +110,30 @@ compzillaControl::RegisterWindowManager(nsIDOMWindow *window)
     XSetErrorHandler (ErrorHandler);
 
     // Try to register as window manager
-    if (!InitManagerWindow ()) {
-        ERROR ("InitManagerWindow failed");
-        exit (1); // return NS_ERROR_UNEXPECTED;
-    }
+    rv = InitManagerWindow ();
+    if (NS_FAILED(rv))
+        return rv;
 
-    InitXAtoms ();
+    rv = InitXAtoms ();
+    if (NS_FAILED(rv))
+        return rv;
 
     // Check extension versions
-    if (!InitXExtensions ()) {
-        ERROR ("InitXExtensions failed");
-        exit (1); // return NS_ERROR_UNEXPECTED;
-    }
+    rv = InitXExtensions ();
+    if (NS_FAILED(rv))
+        return rv;
 
     // Take over drawing
-    if (!InitOverlay ()) {
-        ERROR ("InitOverlay failed");
-        exit (1); // return NS_ERROR_UNEXPECTED;
-    }
+    rv = InitOverlay ();
+    if (NS_FAILED(rv))
+        return rv;
 
     // Select events and manage all existing windows
-    if (!InitWindowState ()) {
-        ERROR ("InitWindowState failed");
-        exit (1); // return NS_ERROR_UNEXPECTED;
-    }
+    rv = InitWindowState ();
+    if (NS_FAILED(rv))
+        return rv;
 
-    return rv;
+    return NS_OK;
 }
 
 
@@ -366,65 +361,65 @@ compzillaControl::GetNativeWindow(nsIDOMWindow *window)
 }
 
 
-bool
+nsresult
 compzillaControl::InitXAtoms ()
 {
-    XInternAtoms (mXDisplay, 
-                  atom_names, sizeof (atom_names) / sizeof (atom_names[0]), 
-                  False, 
-                  atoms.a);
-    return true;
+    if (Success != XInternAtoms (mXDisplay, 
+                                 atom_names, 
+                                 sizeof (atom_names) / sizeof (atom_names[0]), 
+                                 False, 
+                                 atoms.a)) {
+        return NS_ERROR_FAILURE;
+    }
+    return NS_OK;
 }
 
 
-bool
+nsresult
 compzillaControl::InitXExtensions ()
 {
-#define ERR_RET(_str) do { ERROR (_str); return false; } while (0)
-
-    if (!XRenderQueryExtension (mXDisplay, &render_event, &render_error)) {
-	ERR_RET ("No render extension\n");
-    }
-
     int opcode;
     if (!XQueryExtension (mXDisplay, COMPOSITE_NAME, &opcode, 
                           &composite_event, &composite_error)) {
-	ERR_RET ("No composite extension\n");
+	ERROR ("No composite extension\n");
+        return NS_ERROR_NO_COMPOSITE_EXTENSTION;
     }
 
     int	composite_major, composite_minor;
     XCompositeQueryVersion (mXDisplay, &composite_major, &composite_minor);
     if (composite_major == 0 && composite_minor < 2) {
-        ERR_RET ("Old composite extension does not support XCompositeGetOverlayWindow\n");
+        ERROR ("Old composite extension does not support XCompositeGetOverlayWindow\n");
+        return NS_ERROR_NO_COMPOSITE_EXTENSTION;
     }
     SPEW ("composite extension: major = %d, minor = %d, opcode = %d, event = %d, error = %d\n",
            composite_major, composite_minor, opcode, composite_event, composite_error);
 
     if (!XDamageQueryExtension (mXDisplay, &damage_event, &damage_error)) {
-	ERR_RET ("No damage extension\n");
+	ERROR ("No damage extension\n");
+        return NS_ERROR_NO_DAMAGE_EXTENSTION;
     }
     SPEW ("damage extension: event = %d, error = %d\n",
            damage_event, damage_error);
 
     if (!XFixesQueryExtension (mXDisplay, &xfixes_event, &xfixes_error)) {
-	ERR_RET ("No XFixes extension\n");
+	ERROR ("No XFixes extension\n");
+        return NS_ERROR_NO_XFIXES_EXTENSTION;
     }
     SPEW ("xfixes extension: event = %d, error = %d\n",
            xfixes_event, xfixes_error);
 
     if (!XShapeQueryExtension (mXDisplay, &shape_event, &shape_error)) {
-	ERR_RET ("No Shaped window extension\n");
+	ERROR ("No Shaped window extension\n");
+        return NS_ERROR_NO_SHAPE_EXTENSTION;
     }
     SPEW ("shape extension: event = %d, error = %d\n",
            shape_event, shape_error);
 
-#undef ERR_RET
-
-    return true;
+    return NS_OK;
 }
 
 
-bool
+nsresult
 compzillaControl::InitWindowState ()
 {
     XGrabServer (mXDisplay);
@@ -476,7 +471,7 @@ compzillaControl::InitWindowState ()
 
     XUngrabServer (mXDisplay);
 
-    return true;
+    return NS_OK;
 }
 
 
@@ -517,7 +512,7 @@ compzillaControl::ReplaceSelectionOwner (Window newOwner, Atom atom)
 }
 
 
-bool
+nsresult
 compzillaControl::InitManagerWindow ()
 {
     SPEW ("InitManagerWindow\n");
@@ -562,29 +557,32 @@ compzillaControl::InitManagerWindow ()
         goto error;
     }
 
-    return TRUE;
+    return NS_OK;
 
  error:
     XDestroyWindow (mXDisplay, mManagerWindow);
-    return FALSE;
+    mManagerWindow = None;
+
+    return NS_ERROR_FAILURE;
 }
 
 
-bool
+nsresult
 compzillaControl::InitOverlay ()
 {
     // Create the overlay window, and make the X server stop drawing windows
     mOverlay = XCompositeGetOverlayWindow (mXDisplay, mXRoot);
     if (!mOverlay) {
         ERROR ("failed call to XCompositeGetOverlayWindow\n");
-        return false;
+        return NS_ERROR_FAILURE;
     }
 
     mMainwin = GetNativeWindow (mDOMWindow);
     if (!mMainwin) {
         ERROR ("failed to get native window\n");
-        return false;
+        return NS_ERROR_FAILURE;
     }
+
     gdk_window_ref (mMainwin);
     gdk_window_set_override_redirect(mMainwin, true);
 
@@ -594,7 +592,7 @@ compzillaControl::InitOverlay ()
     ShowOverlay (true);
     EnableOverlayInput (true);
 
-    return true;
+    return NS_OK;
 }
 
 

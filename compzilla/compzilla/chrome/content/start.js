@@ -85,7 +85,42 @@ function compzillaLoad()
 
     // Register as the window manager and generate windowcreate events for
     // existing windows.
-    svc.RegisterWindowManager (window);
+    try {
+	svc.RegisterWindowManager (window);
+    } catch (e) {
+	const NS_ERROR_NO_COMPOSITE_EXTENSTION = 0x807803e9;
+	const NS_ERROR_NO_DAMAGE_EXTENSTION = 0x807803ea;
+	const NS_ERROR_NO_XFIXES_EXTENSTION = 0x807803eb;
+	const NS_ERROR_NO_SHAPE_EXTENSTION = 0x807803ec;
+
+	// FIXME: Use string bundles
+	var errXConfig = "\nPlease enable it for your X server, and try again.";
+	var errDetail;
+
+	switch (e.result) {
+	case NS_ERROR_NO_COMPOSITE_EXTENSTION:
+	    errDetail = 
+		"The Composite extension version 0.3 or later is not available. " + errXConfig;
+	    break;
+	case NS_ERROR_NO_DAMAGE_EXTENSTION:
+	    errDetail = "The Damage extension is not available. " + errXConfig;
+	    break;
+	case NS_ERROR_NO_XFIXES_EXTENSTION:
+	    errDetail = "The XFixes extension is not available. " + errXConfig;
+	    break;
+	case NS_ERROR_NO_SHAPE_EXTENSTION:
+	    errDetail = "The XShape extension is not available. " + errXConfig;
+	    break;
+	default:
+	    errDetail = e.message;
+	    break;
+	}
+
+	alert ("Cannot start Pyro: " + errDetail);
+
+	closeWindow (window);
+	return;
+    }
 
     var supported = [ Atoms._NET_ACTIVE_WINDOW,
  		      Atoms._NET_CLIENT_LIST,
