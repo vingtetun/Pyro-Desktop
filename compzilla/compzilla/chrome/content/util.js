@@ -11,6 +11,22 @@ function _addUtilMethods (o)
 		this.__defineSetter__ (name, setter);
 	},
 
+	getElementById: function (id) {
+	    var find = function (el,id) {
+		if (el.id == id) {
+		    return el;
+		}
+		else {
+		    for (var c = el.firstChild; c != null; c = c.nextSibling) {
+			var cf = find (c, id);
+			if (cf != null) return cf;
+		    }
+		    return null;
+		}
+	    }
+	    return find (this, id);
+	},
+
 	getPosition: function () {
 	    var curleft = curtop = 0;
 	    var obj = this;

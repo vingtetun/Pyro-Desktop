@@ -1,5 +1,30 @@
 2007-07-14  Chris Toshok  <toshok@ximian.com>
 
+	* compzilla/chrome/content/util.js: add getElementById, where
+	element.getElementById("id") does what the following jquery
+	accomplishes: $("#id", element)[0].
+
+	* compzilla/chrome/content/picker.js: fuck jQuery.  remove all
+	references to it.  use a specialized animator for moving the
+	picker machinery, which fixes loads of things and runs a lot
+	faster.  also, set the width/height attributes on the canvases so
+	they don't look squished.  they're chopped off instead, which is
+	definitely more pleasing to the eye than the tiny snapshots you
+	see with e.g. compiz.  also, set a flag when we're animating so we
+	don't start another one and screw ourselves up.  use the completed
+	function to set it back to false.  lastly, use an attribute
+	instead of a css class to switch between selected states.  I think
+	that's everything.  welcome to the new hotness.
+
+	* start.xul, compzilla.css: tune some of the picker stuff.  the
+	biggest change here is the addition of another pickerlayer child
+	which is what sets a background color/opacity.  the picker itself
+	is opaque.  the pickerLayer is completely transparent.  This
+	allows us the illusion of a child whose opacity overrides that of
+	its parent.
+	
+2007-07-14  Chris Toshok  <toshok@ximian.com>
+
 	* compzilla/chrome/content/frame.js: just call doFocus in the
 	mousedown handler instead of focus.
 

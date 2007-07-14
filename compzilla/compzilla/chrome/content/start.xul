@@ -31,9 +31,10 @@
             <div id="fullscreenLayer" class="windowLayer"></div>
             <div id="exposeLayer" class="windowLayer"></div>
             <div id="pickerLayer" class="windowLayer">
+		<div id="pickerBackground"> </div>
                 <div id="pickerWindow">
                     <canvas id="pickerWindowBeauty"></canvas>
-		    <div style="background: #ff0000;" id="pickerContents"></div>
+		    <div id="pickerContents"></div>
                 </div>
 
                 <div id="pickerItem" class="pickerItem">
