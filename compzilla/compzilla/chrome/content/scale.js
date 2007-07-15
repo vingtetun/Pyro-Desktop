@@ -10,7 +10,7 @@ var exposeAnimating = false;
 var ss = new Object ();
 
 
-function ScaleAnimation (sw, duration, out) {
+function ScaleAnimation (sw, out, duration) {
     this.sw = sw;
     this.duration = duration;
     this.in = out;
@@ -20,36 +20,51 @@ function ScaleAnimation (sw, duration, out) {
 	this.to_top = this.sw.slot.y1;
 	this.to_width = this.sw.slot.x2 - this.sw.slot.x1;
 	this.to_height = this.sw.slot.y2 - this.sw.slot.y1;
+	this.to_opacity = 0.4;
 
 	this.from_left = this.sw.orig_left;
 	this.from_top = this.sw.orig_top;
 	this.from_width = this.sw.orig_width;
 	this.from_height = this.sw.orig_height;
+	this.from_opacity = this.sw.orig_opacity;
     }
     else {
 	this.from_left = this.sw.slot.x1;
 	this.from_top = this.sw.slot.y1;
 	this.from_width = this.sw.slot.x2 - this.sw.slot.x1;
 	this.from_height = this.sw.slot.y2 - this.sw.slot.y1;
+	this.from_opacity = this.sw.style.opacity;
 
 	this.to_left = this.sw.orig_left;
 	this.to_top = this.sw.orig_top;
 	this.to_width = this.sw.orig_width;
 	this.to_height = this.sw.orig_height;
+	this.to_opacity = this.sw.orig_opacity;
     }
+
+    this.delta_left = this.to_left - this.from_left;
+    this.delta_top = this.to_top - this.from_top;
+    this.delta_width = this.to_width - this.from_width;
+    this.delta_height = this.to_height - this.from_height;
+    this.delta_opacity = this.to_opacity - this.from_opacity;
 }
 
 ScaleAnimation.prototype = {
     updateProgress: function (progress) {
-	var left = this.from_left + (this.to_left - this.from_left) * progress;
-	var top = this.from_top + (this.to_top - this.from_top) * progress;
-	var width = this.from_width + (this.to_width - this.from_width) * progress;
-	var height = this.from_height + (this.to_height - this.from_height) * progress;
+	var left = this.from_left + this.delta_left * progress;
+	var top = this.from_top + this.delta_top * progress;
+	var width = this.from_width + this.delta_width * progress;
+	var height = this.from_height + this.delta_height * progress;
 
 	this.sw.style.left = left + "px";
 	this.sw.style.top = top + "px";
 	this.sw.style.width = width + "px";
 	this.sw.style.height = height + "px";
+
+	// XXX this next line causes the following error on the console:
+	// CSS Error (chrome://compzilla/content/start.xul :0.6): Expected end of value for property but found '0.6'.  Error in parsing value for property 'opacity'.  Declaration dropped.
+
+	//this.sw.style.opacity = opacity;
     }
 }
 
@@ -228,21 +243,13 @@ function scaleTerminate () {
 
     if (ss.state != "none") {
 
-	var callback_count = 0;
-
-	for (var swi = 0; swi < ss.windows.length; swi++) {
-	    var sw = ss.windows[swi];
-	    if (sw.slot != null)
-		callback_count ++;
-	}
-
 	sb = new NIHStoryboard ();
 
 	for (var swi = 0; swi < ss.windows.length; swi++) {
 	    var sw = ss.windows[swi];
 	    if (sw.slot != null) {
 		// animate the scaled windows back to their original spots
-		sb.addAnimation (new ScaleAnimation (sw, 250, false));
+		sb.addAnimation (new ScaleAnimation (sw, false, 400));
 	    }
 	}
 
@@ -278,14 +285,6 @@ function scaleInitiateCommon ()
 	return false;
     }
 
-    var callback_count = 0;
-
-    for (var swi = 0; swi < ss.windows.length; swi++) {
-	var sw = ss.windows[swi];
-	if (sw.slot != null)
-	    callback_count ++;
-    }
-
     exposeLayer.style.display = "block";
 
     sb = new NIHStoryboard ();
@@ -295,7 +294,7 @@ function scaleInitiateCommon ()
 	var sw = ss.windows[swi];
 	if (sw.slot != null) {
 	    sw.orig_window.style.opacity = 0.0;
-	    sb.addAnimation (new ScaleAnimation (sw, 250, true));
+	    sb.addAnimation (new ScaleAnimation (sw, true, 400));
 	}
     }
     sb.completed = function () {
@@ -308,22 +307,23 @@ function scaleInitiateCommon ()
 				     event.currentTarget.setAttributeNS (_PYRO_NAMESPACE, "selected-item", "true");
 				     event.stopPropagation ();
 				 },
-				 false);
+				 true);
 
 	    sw.addEventListener ("mouseout",
 				 function (event) {
 				     event.currentTarget.setAttributeNS (_PYRO_NAMESPACE, "selected-item", "false");
 				     event.stopPropagation ();
 				 },
-				 false);
+				 true);
 
 	    sw.addEventListener ("mousedown",
 				 function (event) {
 				     event.currentTarget.orig_window.doFocus ();
+				     scaleSelectedWindow = event.currentTarget;
 				     scaleTerminate ();
 				     event.stopPropagation ();
 				 },
-				 false);
+				 true);
 	}
 	ss.state = "wait";
     };

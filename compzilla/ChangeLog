@@ -1,5 +1,22 @@
 2007-07-15  Chris Toshok  <toshok@ximian.com>
 
+	* compzilla/chrome/content/scale.js: remove the old callback_count
+	stuff.  also do more precomputation outside of the animation tick
+	callback, and make the animations a little longer (from 250ms to
+	400ms).  try to keep mouse events from propagating to the scaled
+	windows (which is admitted pretty cool, since the're properly
+	transformed and everything), but it doesn't work.
+
+	* compzilla/chrome/skin/compzilla.css: make the backgrounds in
+	expose and picker less opaque.  darkening the screen so much
+	instantly is very jarring.  use a more subtle darkening.
+
+	also, put a thicker border around the picker, the same color as
+	the background of the window.  with the canvas gradient, it
+	provides a nice look.
+
+2007-07-15  Chris Toshok  <toshok@ximian.com>
+
 	* compzilla/Makefile.am (content_DATA): add nihanim.js
 
 	* compzilla/chrome/skin/compzilla.css: new style foo.
