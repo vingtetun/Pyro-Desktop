@@ -26,6 +26,7 @@ content_DATA =					\
 	$(CONTENT_SRCDIR)/jquery.1.1.2.js	\
 	$(CONTENT_SRCDIR)/jquery.easing.1.1.js	\
 	$(CONTENT_SRCDIR)/minmax.js		\
+	$(CONTENT_SRCDIR)/nihanim.js		\
 	$(CONTENT_SRCDIR)/overlay.js		\
 	$(CONTENT_SRCDIR)/picker.js		\
 	$(CONTENT_SRCDIR)/prompt.js		\
@@ -128,7 +129,7 @@ libcompzilla_la_LDFLAGS = -avoid-version -module -Wl,-Bsymbolic
 libcompzilla_la_LIBADD = $(XEXTENSIONS_LIBS) $(NSPR_LIBS) -L$(GECKO_LIBDIR) $(GFX_LIBS)
 
 ### Link libthebes for dynamic FF builds
-#libcompzilla_la_LIBADD = $(XEXTENSIONS_LIBS) $(NSPR_LIBS) -L$(GECKO_LIBDIR) -L/home/toshok/src/mozilla/mozilla/dist/lib -lxpcomglue_s libthebes.so
+#libcompzilla_la_LIBADD = $(XEXTENSIONS_LIBS) $(NSPR_LIBS) -L$(GECKO_LIBDIR) -L/home/toshok/src/mozilla/mozilla/dist/lib -lxpcomglue_s -lthebes
 
 ### Lots of debug output
 # -DDEBUG -DDEBUG_SPEW -DDEBUG_EVENTS

@@ -1,3 +1,33 @@
+2007-07-15  Chris Toshok  <toshok@ximian.com>
+
+	* compzilla/Makefile.am (content_DATA): add nihanim.js
+
+	* compzilla/chrome/skin/compzilla.css: new style foo.
+
+	* compzilla/chrome/content/start.xul: use the layer background
+	hack for expose, since we'll need to change the opacity of the
+	selected window to 1.0 when it's highlighted. also load
+	nihanim.js.
+
+	* compzilla/chrome/content/scale.js: rework this, getting rid of
+	all the jquery animation calls and switching to nih.  also remove
+	the multitude of animations we were using.  now everything except
+	the window moving happens instantaneously.  no more fading windows
+	in/out, it just slows things down.  Also, make sure we don't start
+	a new animation before the current one is finished, and provide a
+	way to select windows in scaled out mode, and have that focus them
+	and trigger a scale in (i.e. make it actually useful).
+
+	* compzilla/chrome/content/picker.js: use the nihanim stuff.
+
+	* compzilla/chrome/content/nihanim.js: abstract out the animation
+	crap i wrote in picker.js and put it here.  make it a little more
+	generally useful.  now you can hook up several animations (which
+	are basically just objects with an updateProgress call) -
+	something the scale plugin uses.  All animations are assumed to
+	start when you call NIHStoryboard.start(), but they can end at
+	different times.
+
 2007-07-14  Chris Toshok  <toshok@ximian.com>
 
 	* compzilla/chrome/content/util.js: add getElementById, where

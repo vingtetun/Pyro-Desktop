@@ -2,9 +2,56 @@
 
 /* adapted from compiz's scale plugin */
 
-var exposeLayer = $("#exposeLayer")[0];
+var exposeLayer = document.getElementById ("exposeLayer");
+var exposeBackground = document.getElementById ("exposeBackground");
+
+var exposeAnimating = false;
 
 var ss = new Object ();
+
+
+function ScaleAnimation (sw, duration, out) {
+    this.sw = sw;
+    this.duration = duration;
+    this.in = out;
+
+    if (out) {
+	this.to_left = this.sw.slot.x1;
+	this.to_top = this.sw.slot.y1;
+	this.to_width = this.sw.slot.x2 - this.sw.slot.x1;
+	this.to_height = this.sw.slot.y2 - this.sw.slot.y1;
+
+	this.from_left = this.sw.orig_left;
+	this.from_top = this.sw.orig_top;
+	this.from_width = this.sw.orig_width;
+	this.from_height = this.sw.orig_height;
+    }
+    else {
+	this.from_left = this.sw.slot.x1;
+	this.from_top = this.sw.slot.y1;
+	this.from_width = this.sw.slot.x2 - this.sw.slot.x1;
+	this.from_height = this.sw.slot.y2 - this.sw.slot.y1;
+
+	this.to_left = this.sw.orig_left;
+	this.to_top = this.sw.orig_top;
+	this.to_width = this.sw.orig_width;
+	this.to_height = this.sw.orig_height;
+    }
+}
+
+ScaleAnimation.prototype = {
+    updateProgress: function (progress) {
+	var left = this.from_left + (this.to_left - this.from_left) * progress;
+	var top = this.from_top + (this.to_top - this.from_top) * progress;
+	var width = this.from_width + (this.to_width - this.from_width) * progress;
+	var height = this.from_height + (this.to_height - this.from_height) * progress;
+
+	this.sw.style.left = left + "px";
+	this.sw.style.top = top + "px";
+	this.sw.style.width = width + "px";
+	this.sw.style.height = height + "px";
+    }
+}
 
 /* for now, just always say windows should be scaled */
 function isScaleWin (w) {
@@ -176,6 +223,9 @@ function layoutThumbs () {
 }
 
 function scaleTerminate () {
+    if (exposeAnimating)
+	return false;
+
     if (ss.state != "none") {
 
 	var callback_count = 0;
@@ -186,41 +236,31 @@ function scaleTerminate () {
 		callback_count ++;
 	}
 
+	sb = new NIHStoryboard ();
+
 	for (var swi = 0; swi < ss.windows.length; swi++) {
 	    var sw = ss.windows[swi];
 	    if (sw.slot != null) {
-		sw.slot = null;
-
 		// animate the scaled windows back to their original spots
-		$(sw).animate ( {left: sw.orig_left,
-				 top: sw.orig_top,
-				 width: sw.orig_width,
-				 height: sw.orig_height } ,
-				250, "linear",
-				function () {
-				    if (--callback_count == 0) {
-					for (var i = 0; i < ss.windows.length; i ++) {
-					    ss.windows[i].ondestroy ();
-					    exposeLayer.removeChild (ss.windows[i]);
-					}
-					ss.reverseWindows = new Array ();
-					ss.state = "none";
-					Debug ("made it to none state");
-
-					// animate the expose layer fading out
-					$(exposeLayer).animate ( { opacity: 0.0 }, 100,
-								 "linear",
-								 function () {
-								     exposeLayer.style.display = "none";
-								 });
-				    }
-				});
-
-		// also animate the original window fading in, so that it
-		// ends a little bit after the movement animations.
-		$(sw.orig_window).animate ({ opacity: sw.orig_opacity }, 350);
+		sb.addAnimation (new ScaleAnimation (sw, 250, false));
 	    }
 	}
+
+	sb.completed = function () {
+	    exposeAnimating = false;
+	    for (var i = 0; i < ss.windows.length; i ++) {
+		ss.windows[i].orig_window.style.opacity = ss.windows[i].orig_opacity;
+		ss.windows[i].ondestroy ();
+		ss.windows[i].slot = null;
+		exposeLayer.removeChild (ss.windows[i]);
+	    }
+	    ss.reverseWindows = new Array ();
+	    ss.state = "none";
+
+	    exposeLayer.style.display = "none";
+	}
+
+	sb.start ();
     }
 
     return false;
@@ -228,6 +268,9 @@ function scaleTerminate () {
 
 function scaleInitiateCommon ()
 {
+    if (exposeAnimating)
+	return false;
+
     ss.state = "out";
 
     if (!layoutThumbs ()) {
@@ -243,32 +286,48 @@ function scaleInitiateCommon ()
 	    callback_count ++;
     }
 
-    exposeLayer.style.opacity = 0.0;
     exposeLayer.style.display = "block";
-    $(exposeLayer).animate ( { opacity: 0.5 }, 250 );
 
+    sb = new NIHStoryboard ();
+
+    // animate the contents moving to the right place
     for (var swi = 0; swi < ss.windows.length; swi++) {
 	var sw = ss.windows[swi];
 	if (sw.slot != null) {
-
-	    // animate the contents moving to the right place
-	    $(sw).animate ({ left: sw.slot.x1,
-			     top: sw.slot.y1,
-			     width: sw.slot.x2-sw.slot.x1,
-			     height: sw.slot.y2-sw.slot.y1 },
-			   250, "linear",
-			   function () {
-			       if (--callback_count == 0) {
-				   ss.state = "wait";
-				   Debug ("made it to wait state");
-			       }
-			   });
-
-	    // and also animate the original window fading out, very quickly
-	    $(sw.orig_window).animate ({ opacity: 0.0 }, 100);
+	    sw.orig_window.style.opacity = 0.0;
+	    sb.addAnimation (new ScaleAnimation (sw, 250, true));
 	}
     }
+    sb.completed = function () {
+	exposeAnimating = false;
+	for (var swi = 0; swi < ss.windows.length; swi++) {
+	    var sw = ss.windows[swi];
 
+	    sw.addEventListener ("mouseover",
+				 function (event) {
+				     event.currentTarget.setAttributeNS (_PYRO_NAMESPACE, "selected-item", "true");
+				     event.stopPropagation ();
+				 },
+				 false);
+
+	    sw.addEventListener ("mouseout",
+				 function (event) {
+				     event.currentTarget.setAttributeNS (_PYRO_NAMESPACE, "selected-item", "false");
+				     event.stopPropagation ();
+				 },
+				 false);
+
+	    sw.addEventListener ("mousedown",
+				 function (event) {
+				     event.currentTarget.orig_window.doFocus ();
+				     scaleTerminate ();
+				     event.stopPropagation ();
+				 },
+				 false);
+	}
+	ss.state = "wait";
+    };
+    sb.start ();
     return false;
 }
 
@@ -282,8 +341,11 @@ function scaleInitiateAll ()
     return false;
 }
 
-function addWindow (w) {
+function scaleAddWindow (w) {
     var sw = CompzillaWindowContent (w.content.nativeWindow);
+
+    sw.className = "exposeItem";
+
     sw.orig_window = w;
 
     sw.orig_left = w.offsetLeft + w.content.offsetLeft;
@@ -304,8 +366,6 @@ function addWindow (w) {
     sw.xVelocity = sw.yVelocity = 0;
     sw.scaleVelocity = 1;
 
-    sw.style.position = "absolute";
-
     exposeLayer.appendChild (sw);
 
     ss.reverseWindows.push (sw);
@@ -318,7 +378,7 @@ function scaleStart () {
 	if (el.className == "uiDlg" /* it's a compzillaWindowFrame */
 	    && el.content.nativeWindow /* it has native content */
 	    && el.style.display == "block" /* it's displayed */) {
-	    addWindow (el);
+	    scaleAddWindow (el);
 	}
     }
 
@@ -339,20 +399,3 @@ function toggleScale () {
 	scaleTerminate ();
     }
 }
-
-/*
-if (exposeLayer != null)
-    document.addEventListener("keypress", {
-                              handleEvent: function (event) {
-				  if (event.keyCode == event.DOM_VK_F11 && event.ctrlKey) {
-				      if (ss.state == "none") {
-					  scaleStart ();
-				      } else {
-					  scaleTerminate ();
-                                      }
-				  }
-
-				  event.stopPropagation ();
-			      } },
-			      true);
-*/

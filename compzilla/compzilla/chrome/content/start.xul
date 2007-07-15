@@ -29,7 +29,9 @@
 		 overlayLayer is for desktop widgets. -->
 
             <div id="fullscreenLayer" class="windowLayer"></div>
-            <div id="exposeLayer" class="windowLayer"></div>
+            <div id="exposeLayer" class="windowLayer">
+		<div id="exposeBackground"></div>
+	    </div>
             <div id="pickerLayer" class="windowLayer">
 		<div id="pickerBackground"> </div>
                 <div id="pickerWindow">
@@ -239,6 +241,7 @@
     <!-- 3rd party jQuery plugin for animation easing effects -->
     <script type="application/x-javascript" src="chrome://compzilla/content/jquery.easing.1.1.js" />
 
+    <script type="application/x-javascript" src="chrome://compzilla/content/nihanim.js" />
     <script type="application/x-javascript" src="chrome://compzilla/content/util.js" />
     <script type="application/x-javascript" src="chrome://compzilla/content/atoms.js" />
     <script type="application/x-javascript" src="chrome://compzilla/content/xprops.js" />

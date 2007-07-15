@@ -46,15 +46,39 @@ body {
 	background-color: transparent;
 }
 
+/*
+ *===============================================================
+ * expose layer
+ */
 #exposeLayer {
 	z-index: 25000;
 	display: none;
+	width: 100%;
+	height: 100%;
+	background: transparent;
+}
+
+#exposeBackground {
+	z-index: -10;
 	width: 100%;
 	height: 100%;
 	opacity: 0.85;
 	background-color: #000000;
 }
 
+.exposeItem {
+	opacity: 0.4;
+	position:absolute;
+}
+
+.exposeItem[pyro|selected-item="true"] {
+	opacity: 1.0;
+}
+
+/*
+ *===============================================================
+ * picker layer
+ */
 #pickerLayer {
 	z-index: 26000;
 	width: 100%;
@@ -123,7 +147,7 @@ body {
 	border: 0px solid #000;
 }
 
-.pickerItem[pyro|selected-picker-item="true"] {
+.pickerItem[pyro|selected-item="true"] {
 	border-width: 2px;
 	-moz-border-radius: 3.5px;
 }
@@ -161,6 +185,12 @@ body {
         font-size: 10px;
         font-weight: bold;
 }
+
+
+/*
+ *===============================================================
+ * overlay layer
+ */
 
 #overlayLayer {
 	z-index: 30000;

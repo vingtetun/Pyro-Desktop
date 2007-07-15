@@ -153,7 +153,7 @@ function showPicker (forward)
 	    selected_window = pickerItems.length - 1;
         }
 
-	pickerItems[selected_window].setAttributeNS (_PYRO_NAMESPACE, "selected-picker-item", "true");
+	pickerItems[selected_window].setAttributeNS (_PYRO_NAMESPACE, "selected-item", "true");
 
  	var contentPos = pickerContents.getPosition ();
 
@@ -174,46 +174,28 @@ function showPicker (forward)
     }
 }
 
+function MoveLeftAnimation (el, duration, by) {
+    this.from_left = el.offsetLeft;
+    this.to_left = this.from_left + by;
+    this.duration = duration;
+    this.el = el;
+}
+
+MoveLeftAnimation.prototype = {
+    updateProgress: function (progress) {
+	var v = this.from_left + (this.to_left - this.from_left) * progress;
+	this.el.style.left = v + "px";
+    }
+}
+
 var selected_window;
-
-var timer;
-var start_time;
-var end_time;
-var progress;  /* 0-1, 0 = start_time, 1 = end_time */
-var tick;      /* callback */
-var completed; /* callback */
-
-function update ()
-{
-    var t = (new Date()).getTime();
-
-    if (t > end_time) {
-	clearInterval (timer);
-	progress = 1.0;
-	completed ();
-    }
-    else {
-	progress = (t - start_time) / (end_time - start_time);
-    }
-
-    tick (progress);
-}
-
-var from_x;
-var to_x;
-
-function movePickerContentsTick (progress)
-{
-    var v = from_x + (to_x - from_x) * progress;
-    pickerContents.style.left = v + "px";
-}
 
 var animating;
 
 function movePickerContentsCompleted ()
 {
     animating = false;
-    pickerItems[selected_window].setAttributeNS (_PYRO_NAMESPACE, "selected-picker-item", "true");
+    pickerItems[selected_window].setAttributeNS (_PYRO_NAMESPACE, "selected-item", "true");
 }
 
 function nextWindow ()
@@ -226,17 +208,14 @@ function nextWindow ()
 
     var delta = pickerItems[selected_window].offsetLeft - pickerItems[selected_window + 1].offsetLeft;
 
-    pickerItems[selected_window].setAttributeNS (_PYRO_NAMESPACE, "selected-picker-item", "false");
+    pickerItems[selected_window].setAttributeNS (_PYRO_NAMESPACE, "selected-item", "false");
 
     selected_window ++;
 
-    start_time = (new Date()).getTime();
-    end_time = start_time + 200 /* duration */;
-    from_x = pickerContents.offsetLeft;
-    to_x = pickerContents.offsetLeft + delta;
-    tick = movePickerContentsTick;
-    completed = movePickerContentsCompleted;
-    timer = setInterval (update, 13);
+    var sb = new NIHStoryboard ();
+    sb.completed = movePickerContentsCompleted;
+    sb.addAnimation (new MoveLeftAnimation (pickerContents, 200, delta));
+    sb.start ();
     animating = true;
 }
 
@@ -250,16 +229,13 @@ function prevWindow ()
 
     var delta = pickerItems[selected_window].offsetLeft - pickerItems[selected_window - 1].offsetLeft;
 
-    pickerItems[selected_window].setAttributeNS (_PYRO_NAMESPACE, "selected-picker-item", "false");
+    pickerItems[selected_window].setAttributeNS (_PYRO_NAMESPACE, "selected-item", "false");
 
     selected_window --;
 
-    start_time = (new Date()).getTime();
-    end_time = start_time + 200 /* duration */;
-    from_x = pickerContents.offsetLeft;
-    to_x = pickerContents.offsetLeft + delta;
-    tick = movePickerContentsTick;
-    completed = movePickerContentsCompleted;
-    timer = setInterval (update, 13);
+    var sb = new NIHStoryboard ();
+    sb.completed = movePickerContentsCompleted;
+    sb.addAnimation (new MoveLeftAnimation (pickerContents, 200, delta));
+    sb.start ();
     animating = true;
 }
