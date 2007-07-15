@@ -203,7 +203,7 @@
         <command id="cmd_minimizeWindow" oncommand="_focusedFrame.minimize();" />
         <command id="cmd_restoreWindow" oncommand="alert('restore');" />
         <command id="cmd_maximizeWindow" oncommand="_focusedFrame.toggleMaximized();" />
-        <command id="cmd_closeWindow" oncommand="_focusedFrame.close();" />
+        <command id="cmd_closeWindow" oncommand="_focusedFrame.destroy();" />
     </commandset>
 
     <keyset id="compzillaWindowKeyset">
