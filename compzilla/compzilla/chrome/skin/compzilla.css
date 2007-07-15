@@ -115,7 +115,7 @@ body {
 	opacity: 1.0;
 
 	border: 3px solid #f6f6f6;
-	background-color: #f6f6f6;
+	background-color: #e6e6e6;
 	-moz-border-radius: 2.5px;
 }
 
@@ -145,12 +145,13 @@ body {
 	height: 150px;
 	overflow: hidden;
 
-	border: 0px solid #000;
+	border: 2px solid;
+	-moz-border-radius: 3.5px;
+	border-color: transparent;
 }
 
 .pickerItem[pyro|selected-item="true"] {
-	border-width: 2px;
-	-moz-border-radius: 3.5px;
+	border-color: #222222;
 }
 
 .pickerItem #window canvas {

@@ -1,5 +1,15 @@
 2007-07-15  Chris Toshok  <toshok@ximian.com>
 
+	* compzilla/chrome/skin/compzilla.css: change the picker
+	background a tiny bit (darker), and make the selection rectangle a
+	little lighter.  Also, always set the 2 pixel border on
+	pickerItems, just have it be transparent in the non-selected case.
+	We lose the small popping difference in size (which is sort of a
+	pleasing animation) when an item is selected, but it makes things
+	faster than changing the border widths of items as we animate.
+
+2007-07-15  Chris Toshok  <toshok@ximian.com>
+
 	* compzilla/chrome/content/scale.js: remove the old callback_count
 	stuff.  also do more precomputation outside of the animation tick
 	callback, and make the animations a little longer (from 250ms to

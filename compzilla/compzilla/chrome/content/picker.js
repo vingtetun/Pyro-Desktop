@@ -12,8 +12,12 @@ var pickerWidth = 600;
 var pickerItemWidth = 150;
 var pickerItemPadding = 20;
 
+var pickerCanvasRendered = false;
+
 function renderBeauty ()
 {
+    pickerCanvasRendered = true;
+
     pickerCanvas.width = pickerWidth;
     pickerCanvas.height = 200;
     var ctx = pickerCanvas.getContext('2d');
@@ -81,7 +85,8 @@ function sizeCanvas (pickerItem)
 
 function populatePicker (forward)
 {
-    renderBeauty ();
+    if (!pickerCanvasRendered)
+	renderBeauty ();
 
     pickerItems = new Array ();
 
@@ -177,13 +182,16 @@ function showPicker (forward)
 function MoveLeftAnimation (el, duration, by) {
     this.from_left = el.offsetLeft;
     this.to_left = this.from_left + by;
+
+    this.delta_left = this.to_left - this.from_left;
+
     this.duration = duration;
     this.el = el;
 }
 
 MoveLeftAnimation.prototype = {
     updateProgress: function (progress) {
-	var v = this.from_left + (this.to_left - this.from_left) * progress;
+	var v = this.from_left + this.delta_left * progress;
 	this.el.style.left = v + "px";
     }
 }
