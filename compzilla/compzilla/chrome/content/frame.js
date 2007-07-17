@@ -9,9 +9,15 @@ var FrameMethods = {
     destroy: function () {
 	Debug ("frame", "frame.destroy");
 
+	this.visible = false;
+	windowStack.removeWindow (this);
+
+	if (_focusedFrame == this)
+	    _focusedFrame = null;
+
 	if (this._observer) {
 	    try {
-		this.content.nativeWindow.removeObserver (this._observer);
+		this._content.nativeWindow.removeObserver (this._observer);
 	    } catch (e) {
 		// Observer may have been automatically removed
 	    }
@@ -19,15 +25,12 @@ var FrameMethods = {
 	}
 
 	if (this._content) {
-	    if (this._content.ondestroy)
+	    try {
 		this._content.ondestroy ();
+	    } catch (e) {
+	    }
             this._content = null;
 	}
-
-	if (_focusedFrame == this)
-	    _focusedFrame = null;
-
-	windowStack.removeWindow (this);
     },
 
     moveResize: function (x, y, width, height) {
@@ -343,7 +346,7 @@ function _addFrameMethods (frame)
                        },
 		       /* setter */
 		       function (val) {
-			   if (val != this.visible) {
+			   if ((val && !this.visible) || (!val && this.visible)) {
 			       val ? this.show() : this.hide ();
 			   }
 		       });
@@ -429,7 +432,11 @@ function CompzillaFrame (content)
     if (content.nativeWindow) {
         frame.id = "XID:" + content.nativeWindow.nativeWindowId;
 
-	frame._observer = _observeNativeWindow (frame);
+	try {
+	    frame._observer = _observeNativeWindow (frame);
+	} catch (e) {
+	    return null;
+	}
 
 	frame._updateStrutInfo ();
 
@@ -595,14 +602,18 @@ function _observeNativeWindow (frame)
 
 	    Debug ("frame", "configure.handleEvent");
 
-	    // Track override changes
-	    frame.overrideRedirect = overrideRedirect;
+	    try {
+		// Track override changes
+		frame.overrideRedirect = overrideRedirect;
 
-	    // This may not match the current state if the window was created
-	    // before compzilla.
-	    frame.visible = mapped;
+		// This may not match the current state if the window was
+		// created before compzilla.
+		frame.visible = mapped;
 
-	    frame.moveResizeToContent (x, y, width, height);
+		frame.moveResizeToContent (x, y, width, height);
+	    } catch (e) {
+		Debug ("Error handling configure event: " + e);
+	    }
 
 	    // XXX handle stacking requests here too
 	},
@@ -730,12 +741,7 @@ function _observeNativeWindow (frame)
      * observer.configure will be called immediately to inform
      * of the current state.
      */
-    try {
-	frame.content.nativeWindow.addObserver (observer);
-	return observer;
-    } catch (e) {
-	Debug ("ERROR adding observer: " + e);
-	return null;
-    }
+    frame.content.nativeWindow.addObserver (observer);
+    return observer;
 };
 

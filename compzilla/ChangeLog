@@ -1,3 +1,12 @@
+2007-07-17  Alex Graveley  <alex@beatniksoftware.com>
+
+	* compzilla/chrome/content/minmax.js: Don't resize the canvas for
+	now, and set the left/top after the animation finishes.
+
+	* compzilla/chrome/content/frame.js: Hide the window and remove it
+	from the stack first, before removing the observer, and calling
+	ondestroy.
+
 2007-07-15  Chris Toshok  <toshok@ximian.com>
 
 	* compzilla/chrome/skin/compzilla.css: change the picker

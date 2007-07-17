@@ -70,7 +70,7 @@ var animate = true;
  */
 jQuery.easing["easeout-canvasresize"] = function(x, t, b, c, d) {
     if (_focusedFrame) {
-	_focusedFrame._updateContentSize ();
+	//_focusedFrame._updateContentSize ();
     }
 
     return jQuery.easing["easeout"](x, t, b, c, d);
@@ -112,11 +112,13 @@ function MaximizeCompzillaFrame (w) {
 			width: workarea.bounds.width, 
 			height: workarea.bounds.height
 		      },
-		      500, 
+		      500, // millis
 		      "easeout-canvasresize",
 		      function () {
 			  w.windowState = "maximized";
 			  w._updateContentSize ();
+			  w.style.left = workarea.bounds.left;
+			  w.style.top = workarea.bounds.top;
 		      });
     }
     else {
