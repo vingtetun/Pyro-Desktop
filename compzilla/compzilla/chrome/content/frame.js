@@ -6,10 +6,18 @@ var _focusedFrame;
 
 
 var FrameMethods = {
+    doKill: function () {
+	try {
+	    this._content.onkill ();
+	} catch (e) {
+	    Debug ("Error killing window: " + e);
+	}
+    },
+
     destroy: function () {
 	Debug ("frame", "frame.destroy");
 
-	this.visible = false;
+	this.style.display = "none";
 	windowStack.removeWindow (this);
 
 	if (_focusedFrame == this)
@@ -20,6 +28,7 @@ var FrameMethods = {
 		this._content.nativeWindow.removeObserver (this._observer);
 	    } catch (e) {
 		// Observer may have been automatically removed
+		Debug ("Error removing frame observer");
 	    }
 	    this._observer = null;
 	}
@@ -28,6 +37,7 @@ var FrameMethods = {
 	    try {
 		this._content.ondestroy ();
 	    } catch (e) {
+		Debug ("Error detroying content node");
 	    }
             this._content = null;
 	}
@@ -50,7 +60,6 @@ var FrameMethods = {
 	var wasVisible = this.visible;
 	if (!wasVisible) {
 	    this.style.display = "block";
-	    this.style.visibility = "hidden";
 	}
 
         var posframe = this.getPosition ();
@@ -58,22 +67,29 @@ var FrameMethods = {
         x -= posframe.left - pos.left;
         y -= posframe.top - pos.top;
 
-        width += this.offsetWidth - this._content.offsetWidth;
-        height += this.offsetHeight - this._content.offsetHeight;
+	width += this.clientWidth - this._contentBox.clientWidth;
+	height += this.clientHeight - this._contentBox.clientHeight;
 
-	// Constrain to size of workarea
-	if (!this._content.wmStruts) {
+	var needConstrain = (x < workarea.bounds.left ||
+			     y < workarea.bounds.top || 
+			     width > workarea.bounds.width ||
+			     height > workarea.bounds.height);
+
+	if (needConstrain && !this._content.wmStruts && !this.chromeless) {
 	    x = Math.max (x, workarea.bounds.left);
 	    y = Math.max (y, workarea.bounds.top);
 	    width = Math.min (width, workarea.bounds.width);
 	    height = Math.min (height, workarea.bounds.height);
-	}
 
-        this.moveResize (x, y, width, height);
+	    // Inform the client of it's constrained position
+	    this.moveResize (x, y, width, height);
+	} else {
+	    // Just move the frame
+	    this._moveResize (x, y, width, height);
+	}
 
 	if (!wasVisible) {
 	    this.style.display = "none";
-	    this.style.visibility = "visible";
 	}
     },
 
@@ -123,8 +139,12 @@ var FrameMethods = {
         if (this.overrideRedirect ||
             this._content.wmWindowType == "dock" ||
             this._content.wmWindowType == "desktop" ||
+            this._content.wmWindowType == "dropdownmenu" ||
+            this._content.wmWindowType == "menu" ||
             this._content.wmWindowType == "splash" ||
-            this._content.wmWindowType == "toolbar") {
+            this._content.wmWindowType == "toolbar" ||
+	    this._content.wmWindowType == "tooltip" ||
+	    this._content.wmWindowType == "notification") {
             this.chromeless = true;
         } else {
             this.chromeless = false;
@@ -189,7 +209,8 @@ var FrameMethods = {
 
 	this.style.display = "block";
 
-	this._updateContentSize ();
+	// We don't want this, I think
+	//this._updateContentSize ();
     },
 
     hide: function () {
@@ -205,7 +226,7 @@ var FrameMethods = {
 	this.style.display = "none";
     },
 
-    minimize: function () {
+    doMinimize: function () {
 	if (this.windowState == "minimized")
 	    return;
 
@@ -237,7 +258,7 @@ var FrameMethods = {
 	    this._content.onmaximize ();
     },
 
-    toggleMaximized: function () {
+    doToggleMaximized: function () {
 	if (this.windowState == "maximized")
 	    this.restore ();
 	else if (this.windowState == "normal")
@@ -401,7 +422,7 @@ function _addFrameMethods (frame)
 			   if (t == this._title.getAttributeNS (_PYRO_NAMESPACE, "caption"))
 			       return;
 
-			   Debug ("setting caption of " + this._title + " to " + t);
+			   Debug ("Setting caption to: " + t);
 
 			   this._title.setAttributeNS (_PYRO_NAMESPACE, "caption", t);
 			   for (var el = this._title.firstChild; el; el = el.nextSibling) {
@@ -435,6 +456,7 @@ function CompzillaFrame (content)
 	try {
 	    frame._observer = _observeNativeWindow (frame);
 	} catch (e) {
+	    Debug ("Error adding frame observer: " + e);
 	    return null;
 	}
 
@@ -686,7 +708,11 @@ function _observeNativeWindow (frame)
 
 	    switch (messageType) {
 	    case Atoms._NET_CLOSE_WINDOW:
-		frame.close ();
+		try {
+		    this._content.onkill ();
+		} catch (e) {
+		    Debug ("Error killing window in response to _NET_CLOSE_WINDOW: " + e);
+		}
 		break;
 
 	    case Atoms._NET_MOVERESIZE_WINDOW:
@@ -712,17 +738,21 @@ function _observeNativeWindow (frame)
 		break;
 
 	    case Atoms._NET_REQUEST_FRAME_EXTENTS:
-		/* The Window Manager MUST respond by estimating
-		   the prospective frame extents and setting the
-		   window's _NET_FRAME_EXTENTS property
-		   accordingly. */
+		/* 
+		 * The Window Manager MUST respond by estimating
+		 * the prospective frame extents and setting the
+		 * window's _NET_FRAME_EXTENTS property
+		 * accordingly. 
+		 */
 		break;
 
 	    case Atoms._NET_WM_DESKTOP:
-		/* A Client can request a change of desktop for a
-		   non-withdrawn window by sending a
-		   _NET_WM_DESKTOP client message to the root
-		   window: */
+		/* 
+		 * A Client can request a change of desktop for a
+		 * non-withdrawn window by sending a
+		 * _NET_WM_DESKTOP client message to the root
+		 * window: 
+		 */
 
 		/* d1 == new_desktop */
 		/* d2 == source indication */

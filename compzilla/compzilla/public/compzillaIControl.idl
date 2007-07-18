@@ -19,16 +19,18 @@ interface compzillaIControl : nsISupports
                               in PRUint32 width, in PRUint32 height, 
                               in PRUint32 border,
                               in boolean overrideRedirect);
-    void ConfigureWindow (in PRUint32 xid, 
-                          in PRUint32 x, in PRUint32 y, 
-                          in PRUint32 width, in PRUint32 height, 
-                          in PRUint32 border);
+    void Configure (in PRUint32 xid, 
+                    in PRUint32 x, in PRUint32 y, 
+                    in PRUint32 width, in PRUint32 height, 
+                    in PRUint32 border);
+
+    void Kill (in PRUint32 xid);
 
     void MoveToTop (in PRUint32 xid);
     void MoveToBottom (in PRUint32 xid);
 
-    void MapWindow (in PRUint32 xid);
-    void UnmapWindow (in PRUint32 xid);
+    void Map (in PRUint32 xid);
+    void Unmap (in PRUint32 xid);
 
     void SetRootWindowProperty (in PRInt32 prop, 
                                 in PRInt32 type, 

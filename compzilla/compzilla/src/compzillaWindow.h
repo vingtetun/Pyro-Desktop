@@ -40,7 +40,9 @@ public:
     NS_DECL_COMPZILLAIWINDOW
     NS_DECL_NSIDOMEVENTLISTENER
 
-    compzillaWindow (Display *display, Window window);
+    compzillaWindow (Display *display, 
+                     Window window,
+                     XWindowAttributes *attrs);
     virtual ~compzillaWindow ();
 
     // nsIDOMKeyListener
@@ -64,21 +66,22 @@ public:
     NS_IMETHOD FocusIn (nsIDOMEvent* aDOMEvent);
     NS_IMETHOD FocusOut (nsIDOMEvent* aDOMEvent);
 
-    void DestroyWindow ();
-    void MapWindow (bool override_redirect);
-    void UnmapWindow ();
+    void Destroyed ();
+    void Mapped (bool override_redirect);
+    void Unmapped ();
     void PropertyChanged (Atom prop, bool deleted);
-    void WindowDamaged (XRectangle *rect);
-    void WindowConfigured (bool isNotify,
-                           PRInt32 x, PRInt32 y,
-                           PRInt32 width, PRInt32 height,
-                           PRInt32 border,
-                           compzillaWindow *aboveWin,
-                           bool override_redirect);
+    void Damaged (XRectangle *rect);
+    void Configured (bool isNotify,
+                     PRInt32 x, PRInt32 y,
+                     PRInt32 width, PRInt32 height,
+                     PRInt32 border,
+                     compzillaWindow *aboveWin,
+                     bool override_redirect);
     void ClientMessaged (Atom type, int format, long *data/*[5]*/);
 
     XWindowAttributes mAttr;
     bool mIsDestroyed;
+    bool mIsRedirected;
 
  private:
     void OnMouseMove (nsIDOMEvent* aDOMEvent);
@@ -93,9 +96,12 @@ public:
     void RedrawContentNode (nsIDOMHTMLCanvasElement *aContent, XRectangle *rect);
 
     void UpdateAttributes ();
-    void ResetPixmap ();
-    void EnsurePixmap ();
-    void EnsureDamage ();
+
+    void RedirectWindow ();
+    void UnredirectWindow ();
+    void BindWindow ();
+    void ReleaseWindow ();
+    bool Resized (PRInt32 x, PRInt32 y, PRInt32 width, PRInt32 height, PRInt32 border);
 
     nsresult GetAtomProperty (Atom prop, PRUint32* value);
     nsresult GetUTF8StringProperty (Atom prop, nsACString& utf8Value);
@@ -113,5 +119,6 @@ public:
 
 nsresult CZ_NewCompzillaWindow(Display *display, 
                                Window win, 
+                               XWindowAttributes *attrs,
                                compzillaWindow **retval);
 

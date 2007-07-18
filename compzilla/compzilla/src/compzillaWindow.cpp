@@ -57,11 +57,12 @@ NS_IMPL_CI_INTERFACE_GETTER2(compzillaWindow,
 nsresult
 CZ_NewCompzillaWindow(Display *display, 
                       Window win, 
+                      XWindowAttributes *attrs,
                       compzillaWindow** retval)
 {
     *retval = nsnull;
 
-    compzillaWindow *window = new compzillaWindow (display, win);
+    compzillaWindow *window = new compzillaWindow (display, win, attrs);
     if (!window)
         return NS_ERROR_OUT_OF_MEMORY;
 
@@ -72,26 +73,39 @@ CZ_NewCompzillaWindow(Display *display,
 }
 
 
-compzillaWindow::compzillaWindow(Display *display, Window win)
+compzillaWindow::compzillaWindow(Display *display, Window win, XWindowAttributes *attrs)
     : mDisplay(display),
       mWindow(win),
+      mAttr(*attrs),
       mPixmap(None),
       mDamage(None),
       mLastEntered(None),
-      mIsDestroyed(false)
+      mIsDestroyed(false),
+      mIsRedirected(false)
 {
-    // Redirect output entirely
-    XCompositeRedirectWindow (display, win, CompositeRedirectManual);
+    XSelectInput (display, win, (PropertyChangeMask | EnterWindowMask | FocusChangeMask));
 
-    // Compiz selects only these.  Need more?
-    XSelectInput (display, win, (PropertyChangeMask | FocusChangeMask));
     XShapeSelectInput (display, win, ShapeNotifyMask);
 
-    memset (&mAttr, 0, sizeof (XWindowAttributes));
-    UpdateAttributes ();
+    // Get notified of global cursor changes.  
+    // FIXME: This is not very useful, as X has no way of fetching the Cursor
+    // for a given window.
+    //XFixesSelectCursorInput (display, win, XFixesDisplayCursorNotifyMask);
+
+    XGrabButton (display, AnyButton, AnyModifier, win, true, 
+                 (ButtonPressMask | ButtonReleaseMask | ButtonMotionMask),
+                 GrabModeSync, GrabModeSync, None, None);
+
+    /* 
+     * Set up damage notification.  RawRectangles gives us smaller grain
+     * changes, versus NonEmpty which seems to always include the entire
+     * contents.
+     */
+    mDamage = XDamageCreate (mDisplay, mWindow, XDamageReportRawRectangles);
 
     if (mAttr.map_state == IsViewable) {
-        EnsureDamage ();
+        mAttr.map_state = IsUnmapped;
+        Mapped (mAttr.override_redirect);
     }
 }
 
@@ -102,28 +116,8 @@ compzillaWindow::~compzillaWindow()
 
     SPEW ("~compzillaWindow %p, xid=%p\n", this, mWindow);
 
-    // This is the only resource that stays around after window destruction.
-    ResetPixmap ();
-
-    if (!mIsDestroyed) {
-        DestroyWindow ();
-
-        // Let the window render itself
-        XCompositeUnredirectWindow (mDisplay, mWindow, CompositeRedirectManual);
-
-        if (mDamage) {
-            XDamageDestroy(mDisplay, mDamage);
-        }
-
-        /* 
-         * This is the only case where a window is removed but not
-         * destroyed. We must remove our event mask and all passive
-         * grabs.  -- compiz
-         */
-        XSelectInput (mDisplay, mWindow, NoEventMask);
-        XShapeSelectInput (mDisplay, mWindow, NoEventMask);
-        XUngrabButton (mDisplay, AnyButton, AnyModifier, mWindow);
-    }
+    Destroyed ();
+    UnredirectWindow ();
 
     SPEW ("~compzillaWindow DONE\n");
 }
@@ -137,45 +131,60 @@ compzillaWindow::UpdateAttributes ()
 
 
 void
-compzillaWindow::EnsureDamage ()
+compzillaWindow::BindWindow ()
 {
-    if (mDamage) {
-        return;
-    }
+    RedirectWindow ();
 
-    /* 
-     * Set up damage notification.  RawRectangles gives us smaller grain
-     * changes, versus NonEmpty which seems to always include the entire
-     * contents.
-     */
-    mDamage = XDamageCreate (mDisplay, mWindow, XDamageReportRawRectangles);
+    if (!mPixmap) {
+        XGrabServer (mDisplay);
+
+        UpdateAttributes ();
+
+        if (mAttr.map_state == IsViewable) {
+            // Set up persistent offscreen window contents pixmap.
+            mPixmap = XCompositeNameWindowPixmap (mDisplay, mWindow);
+
+            if (mPixmap == None) {
+                ERROR ("XCompositeNameWindowPixmap failed for window %p\n", mWindow);
+            }
+        }
+
+        XUngrabServer (mDisplay);
+    }
 }
 
 
-void
-compzillaWindow::ResetPixmap()
+void 
+compzillaWindow::ReleaseWindow ()
 {
     if (mPixmap) {
         XFreePixmap (mDisplay, mPixmap);
+        mPixmap = None;
     }
-    mPixmap = None;
 }
 
 
-void
-compzillaWindow::EnsurePixmap()
+void 
+compzillaWindow::RedirectWindow ()
 {
-    if (mPixmap) {
+    if (mIsRedirected)
         return;
-    }
 
-    if (mAttr.map_state == IsViewable) {
-        // Set up persistent offscreen window contents pixmap.
-        mPixmap = XCompositeNameWindowPixmap (mDisplay, mWindow);
-        if (mPixmap == None) {
-            ERROR ("Cannot get backing pixmap for window %p\n", mWindow);
-        }
-    }
+    XCompositeRedirectWindow (mDisplay, mWindow, CompositeRedirectManual);
+    mIsRedirected = true;
+}
+
+   
+void 
+compzillaWindow::UnredirectWindow ()
+{
+    if (!mIsRedirected)
+        return;
+
+    ReleaseWindow ();
+
+    XCompositeUnredirectWindow (mDisplay, mWindow, CompositeRedirectManual);
+    mIsRedirected = false;
 }
 
 
@@ -226,9 +235,9 @@ compzillaWindow::ConnectListeners (bool connect, nsCOMPtr<nsISupports> aContent)
 
     for (int i = 0; !events [i].IsEmpty (); i++) {
 	if (connect) {
-	    target->AddEventListener (events [i], listener, PR_TRUE);
+	    target->AddEventListener (events [i], listener, PR_FALSE);
 	} else {
-	    target->RemoveEventListener (events [i], listener, PR_TRUE);
+	    target->RemoveEventListener (events [i], listener, PR_FALSE);
 	}
     }
 }
@@ -247,9 +256,23 @@ compzillaWindow::AddContentNode (nsIDOMHTMLCanvasElement* aContent)
 {
     SPEW ("AddContentNode this=%p, canvas=%p\n", this, aContent);
 
+    if (mIsDestroyed)
+        return NS_ERROR_FAILURE;
+
+    nsCOMPtr<compzillaIRenderingContextInternal> internal;
+    nsresult rv = aContent->GetContext (NS_LITERAL_STRING ("compzilla"), 
+                                        getter_AddRefs (internal));
+    if (NS_FAILED (rv))
+        return rv;
+    if (!internal)
+        return NS_ERROR_FAILURE;
+
     RemoveContentNode (aContent);
     mContentNodes.AppendObject (aContent);
     ConnectListeners (true, aContent);
+
+    aContent->SetWidth (mAttr.width);
+    aContent->SetHeight (mAttr.height);
 
     /* when initially adding a content node, we need to force a redraw
        to that node if we have an existing pixmap. */
@@ -271,16 +294,19 @@ compzillaWindow::RemoveContentNode (nsIDOMHTMLCanvasElement* aContent)
 {
     SPEW ("RemoveContentNode this=%p, canvas=%p\n", this, aContent);
 
+    if (mIsDestroyed)
+        return NS_ERROR_FAILURE;
+
     // Allow a caller to remove O(N^2) behavior by removing end-to-start.
     for (PRUint32 i = mContentNodes.Count() - 1; i != PRUint32(-1); --i) {
         if (mContentNodes.ObjectAt(i) == aContent) {
             mContentNodes.RemoveObjectAt (i);
             ConnectListeners (false, aContent);
-            return NS_OK;
+            break;
         }
     }
 
-    return NS_ERROR_FAILURE;
+    return NS_OK;
 }
 
 
@@ -288,6 +314,9 @@ NS_IMETHODIMP
 compzillaWindow::AddObserver (compzillaIWindowObserver *aObserver)
 {
     SPEW ("AddObserver this=%p, observer=%p\n", this, aObserver);
+
+    if (mIsDestroyed)
+        return NS_ERROR_FAILURE;
 
     RemoveObserver (aObserver);
     mObservers.AppendObject (aObserver);
@@ -312,15 +341,18 @@ compzillaWindow::RemoveObserver (compzillaIWindowObserver *aObserver)
 {
     SPEW ("RemoveObserver window=%p, observer=%p\n", this, aObserver);
 
+    if (mIsDestroyed)
+        return NS_ERROR_FAILURE;
+
     // Allow a caller to remove O(N^2) behavior by removing end-to-start.
     for (PRUint32 i = mObservers.Count() - 1; i != PRUint32(-1); --i) {
         if (mObservers.ObjectAt(i) == aObserver) {
             mObservers.RemoveObjectAt (i);
-            return NS_OK;
+            break;
         }
     }
 
-    return NS_ERROR_FAILURE;
+    return NS_OK;
 }
 
 
@@ -1068,12 +1100,21 @@ compzillaWindow::OnDOMMouseScroll (nsIDOMEvent *aDOMEvent)
 
 
 void
-compzillaWindow::DestroyWindow ()
+compzillaWindow::Destroyed ()
 {
-    SPEW ("DestroyWindow this=%p, observers=%d, canvases=%d\n", 
-          this, mObservers.Count(), mContentNodes.Count());
+    SPEW ("DestroyWindow this=%p, window=%p, observers=%d, canvases=%d\n", 
+          this, mWindow, mObservers.Count(), mContentNodes.Count());
+
+    if (mIsDestroyed)
+        return;
 
     mIsDestroyed = true;
+
+    // Allow a caller to remove O(N^2) behavior by removing end-to-start.
+    for (PRUint32 i = mContentNodes.Count() - 1; i != PRUint32(-1); --i) {
+        ConnectListeners (false, mContentNodes.ObjectAt(i));
+    }
+    mContentNodes.Clear ();
 
     // Copy the observers so list iteration is reentrant.
     nsCOMArray<compzillaIWindowObserver> observers(mObservers);
@@ -1082,24 +1123,20 @@ compzillaWindow::DestroyWindow ()
     for (PRUint32 i = observers.Count() - 1; i != PRUint32(-1); --i) {
         observers.ObjectAt(i)->Destroy ();
     }
-
-    // Allow a caller to remove O(N^2) behavior by removing end-to-start.
-    for (PRUint32 i = mContentNodes.Count() - 1; i != PRUint32(-1); --i) {
-        ConnectListeners (false, mContentNodes.ObjectAt(i));
-    }
-    mContentNodes.Clear ();
-
-    // Damage is not valid if the window is already destroyed
-    mDamage = 0;
 }
 
 
 void
-compzillaWindow::MapWindow (bool override_redirect)
+compzillaWindow::Mapped (bool override_redirect)
 {
-    mAttr.override_redirect = override_redirect;
+    if (mAttr.map_state == IsViewable ||
+        mAttr.c_class == InputOnly)
+        return;
+
     mAttr.map_state = IsViewable;
-    EnsureDamage ();
+    mAttr.override_redirect = override_redirect;
+
+    BindWindow ();
 
     for (PRUint32 i = mObservers.Count() - 1; i != PRUint32(-1); --i) {
         nsCOMPtr<compzillaIWindowObserver> observer = mObservers.ObjectAt(i);
@@ -1109,9 +1146,14 @@ compzillaWindow::MapWindow (bool override_redirect)
 
 
 void
-compzillaWindow::UnmapWindow ()
+compzillaWindow::Unmapped ()
 {
+    if (mAttr.map_state != IsViewable)
+        return;
+
     mAttr.map_state = IsUnmapped;
+    
+    ReleaseWindow ();
 
     for (PRUint32 i = mObservers.Count() - 1; i != PRUint32(-1); --i) {
         nsCOMPtr<compzillaIWindowObserver> observer = mObservers.ObjectAt(i);
@@ -1125,32 +1167,43 @@ compzillaWindow::GetCardinalListProperty (Atom prop,
                                           PRUint32 **values, 
                                           PRUint32 expected_nitems)
 {
+    SPEW ("GetCardinalListProperty this=%p, prop=%s\n", this, XGetAtomName (mDisplay, prop));
+
     Atom actual_type;
     int format;
     unsigned long bytes_after_return;
     unsigned char *data;
     unsigned long nitems;
 
-    if (Success == XGetWindowProperty (mDisplay, mWindow, prop,
-                                       0, expected_nitems, false, XA_CARDINAL,
-                                       &actual_type, &format, &nitems, &bytes_after_return, 
-                                       &data)) {
-
-        if (nitems != expected_nitems) {
-            WARNING ("XGetWindowProperty (%s) returned %d items when we were expecting %d\n",
-                     XGetAtomName (mDisplay, prop),
-                     nitems,
-                     expected_nitems);
-
-            XFree (data);
-            return NS_ERROR_FAILURE;
-        }
-            
-        *values = (PRUint32*)data;
-        return NS_OK;
+    if (XGetWindowProperty (mDisplay, 
+                            mWindow, 
+                            prop,
+                            0, 
+                            expected_nitems, 
+                            false, 
+                            XA_CARDINAL,
+                            &actual_type, 
+                            &format, 
+                            &nitems, 
+                            &bytes_after_return, 
+                            &data) != Success || 
+        format == None) {
+        SPEW (" + (Not Found)\n");
+        return NS_ERROR_FAILURE;
     }
 
-    return NS_ERROR_FAILURE;
+    if (nitems != expected_nitems) {
+        ERROR ("XGetWindowProperty (%s) expected %d items, received %d\n",
+               XGetAtomName (mDisplay, prop),
+               expected_nitems,
+               nitems);
+
+        XFree (data);
+        return NS_ERROR_FAILURE;
+    }
+            
+    *values = (PRUint32*)data;
+    return NS_OK;
 }
 
 
@@ -1469,9 +1522,15 @@ compzillaWindow::RedrawContentNode (nsIDOMHTMLCanvasElement *aContent, XRectangl
 
 
 void
-compzillaWindow::WindowDamaged (XRectangle *rect)
+compzillaWindow::Damaged (XRectangle *rect)
 {
-    EnsurePixmap ();
+    BindWindow ();
+
+    if (!rect) {
+        XRectangle allrect = { mAttr.x, mAttr.y, mAttr.width, mAttr.height };
+        Damaged (&allrect);
+        return;
+    }
 
     for (PRUint32 i = mContentNodes.Count() - 1; i != PRUint32(-1); --i) {
         RedrawContentNode (mContentNodes.ObjectAt(i), rect);
@@ -1479,14 +1538,59 @@ compzillaWindow::WindowDamaged (XRectangle *rect)
 }
 
 
-void
-compzillaWindow::WindowConfigured (bool isNotify,
-                                   PRInt32 x, PRInt32 y,
-                                   PRInt32 width, PRInt32 height,
-                                   PRInt32 border,
-                                   compzillaWindow *aboveWin,
-                                   bool override_redirect)
+bool
+compzillaWindow::Resized (PRInt32 x, 
+                          PRInt32 y,
+                          PRInt32 width, 
+                          PRInt32 height,
+                          PRInt32 border)
 {
+    if (width != mAttr.width || 
+        height != mAttr.height || 
+        border != mAttr.border_width || 
+        mAttr.override_redirect) {
+
+        if (mIsRedirected) {
+            ReleaseWindow ();
+
+            mPixmap = XCompositeNameWindowPixmap (mDisplay, mWindow);
+            if (mPixmap == None)
+                return false;
+
+            for (PRUint32 i = mContentNodes.Count() - 1; i != PRUint32(-1); --i) {
+                nsIDOMHTMLCanvasElement *aContent = mContentNodes.ObjectAt (i);
+                aContent->SetWidth (width);
+                aContent->SetHeight (height);
+            }
+
+            Damaged (NULL);
+        }
+    }
+
+    mAttr.x = x;
+    mAttr.y = y;
+    mAttr.width = width;
+    mAttr.height = height;
+    mAttr.border_width = border;
+
+    return true;
+}
+
+
+void
+compzillaWindow::Configured (bool isNotify,
+                             PRInt32 x, PRInt32 y,
+                             PRInt32 width, PRInt32 height,
+                             PRInt32 border,
+                             compzillaWindow *aboveWin,
+                             bool override_redirect)
+{
+    mAttr.override_redirect = override_redirect;
+
+    if (isNotify) {
+        Resized (x, y, width, height, border);
+    }
+
     if (!isNotify || override_redirect) {
         // abovewin doesn't work given that abovewin has a list of content
         // nodes...  but really, we shouldn't have to worry about this, as you
@@ -1506,27 +1610,5 @@ compzillaWindow::WindowConfigured (bool isNotify,
                                  border,
                                  above);
         }
-    }
-
-    // Notify means we may need new content if the size has changed.
-    if (isNotify) {
-        if (width != mAttr.width  || height != mAttr.height || override_redirect) {
-            ResetPixmap ();
-
-            // Force a refresh with new content, in a new pixmap.
-            XRectangle rect;
-            rect.x = x;
-            rect.y = y;
-            rect.width = width;
-            rect.height = height;
-            WindowDamaged (&rect);
-        }
-            
-        mAttr.x = x;
-        mAttr.y = y;
-        mAttr.width = width;
-        mAttr.height = height;
-        mAttr.border_width = border;
-        mAttr.override_redirect = override_redirect;
     }
 }

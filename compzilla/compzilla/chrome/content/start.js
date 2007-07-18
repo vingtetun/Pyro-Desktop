@@ -27,8 +27,23 @@ function compzillaLoad()
 	    // NOTE: Be careful to not do anything which will create a new
 	    //       toplevel window, to avoid an infinite loop.
 
-	    var content = CompzillaWindowContent (win);
-	    var frame = CompzillaFrame (content);
+	    try {
+		var content = CompzillaWindowContent (win);
+		if (!content)
+		    return;
+	    } catch (e) {
+		Debug ("Error creating content canvas: " + e);
+		return;
+	    }
+
+	    try {
+		var frame = CompzillaFrame (content);
+		if (!frame)
+		    return;
+	    } catch (e) {
+		Debug ("Error creating content frame: " + e);
+		return;
+	    }
 
 	    windowStack.stackWindow (frame);
 

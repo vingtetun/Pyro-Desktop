@@ -37,18 +37,17 @@ private:
 
     void AddWindow (Window win);
     void DestroyWindow (Window win);
-    void ForgetWindow (Window win);
     void MapWindow (Window win, bool override_redirect);
     void UnmapWindow (Window win);
-    void WindowConfigured (bool isNotify,
-                           Window win,
-                           PRInt32 x, PRInt32 y,
-                           PRInt32 width, PRInt32 height,
-                           PRInt32 border,
-                           Window aboveWin,
-                           bool override_redirect);
+    void ConfigureWindow (bool isNotify,
+                          Window win,
+                          PRInt32 x, PRInt32 y,
+                          PRInt32 width, PRInt32 height,
+                          PRInt32 border,
+                          Window aboveWin,
+                          bool override_redirect);
     void PropertyChanged (Window win, Atom prop, bool deleted);
-    void WindowDamaged (Window win, XRectangle *rect);
+    void DamageWindow (Window win, XRectangle *rect);
     void ClientMessaged (Window win, Atom type, int format, long *data/*[5]*/);
 
     GdkWindow *GetNativeWindow(nsIDOMWindow *window);
@@ -65,6 +64,7 @@ private:
     void ShowOverlay (bool show);
     void EnableOverlayInput (bool receiveInput);
 
+    void PrintEvent (XEvent *x11_event);
     GdkFilterReturn Filter (GdkXEvent *xevent, GdkEvent *event);
 
     static GdkFilterReturn gdk_filter_func (GdkXEvent *xevent, 

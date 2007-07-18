@@ -9,10 +9,14 @@ function CompzillaWindowContent (nativewin) {
 
     var content = $("#windowContent").clone()[0];
     content.style.display = "block";
-
     content._nativewin = nativewin;
 
-    nativewin.AddContentNode (content);
+    try {
+	nativewin.AddContentNode (content);
+    } catch (e) {
+	Debug ("Error calling AddContentNode: " + e);
+	return null;
+    }
 
     _addUtilMethods (content);
     _addContentMethods (content);
@@ -27,14 +31,27 @@ var ContentMethods = {
 
     ondestroy: function () {
 	Debug ("content", "content.destroy");
-	this._nativewin.RemoveContentNode (this);
+
+	try {
+	    this._nativewin.RemoveContentNode (this);
+	} catch (e) {
+	    Debug ("Error calling RemoveContentNode");
+	}
 	this._nativewin = null;
 
-	this._xprops.destroy ();
+	try {
+	    this._xprops.destroy ();
+	} catch (e) {
+	    Debug ("Error destroying XProps");
+	}
+	this._xprops = null;
+    },
+
+    onkill: function () {
+	svc.Kill (this._nativewin.nativeWindowId);
     },
 
     onmoveresize: function (overrideRedirect) {
-
 	// at the very least we need to make sure we update our
 	// width/height to the right size, or the resize will scale
 	// us.
@@ -51,33 +68,33 @@ var ContentMethods = {
 
         var pos = this.getPosition();
 
-        Debug("frame", "Calling ConfigureWindow: xid=" +
+        Debug("frame", "Calling Configure: xid=" +
               this._nativewin.nativeWindowId + ", x=" +
               pos.left + ", y=" +
               pos.top + ", width=" +
               this.width + ", height=" +
               this.height);
 
-        svc.ConfigureWindow (this._nativewin.nativeWindowId,
-                             pos.left,
-                             pos.top,
-                             this.width,
-                             this.height,
-                             0);
+        svc.Configure (this._nativewin.nativeWindowId,
+		       pos.left,
+		       pos.top,
+		       this.width,
+		       this.height,
+		       0);
     },
 
     onhide: function () {
 	this.style.visibility = "hidden";
 
 	// XXX remove the _NET_WM_WINDOW_STATE property from the window
-	svc.UnmapWindow (this._nativewin.nativeWindowId);
+	svc.Unmap (this._nativewin.nativeWindowId);
     },
 
     onshow: function () {
 	this.style.visibility = "visible";
 
 	// XXX calculate and add the _NET_WM_WINDOW_STATE property to the window
-	svc.MapWindow (this._nativewin.nativeWindowId);
+	svc.Map (this._nativewin.nativeWindowId);
     },
 
     onmaximize: function () {
@@ -201,20 +218,32 @@ function _addContentMethods (content) {
 
 			     var t = this.getNativeProperty (Atoms._NET_WM_WINDOW_TYPE);
 			     switch (t) {
-			     case Atoms._NET_WM_WINDOW_TYPE_DESKTOP: return "desktop";
-			     case Atoms._NET_WM_WINDOW_TYPE_DIALOG: return "dialog";
-			     case Atoms._NET_WM_WINDOW_TYPE_DOCK: return "dock";
-			     case Atoms._NET_WM_WINDOW_TYPE_MENU: return "menu";
-			     case Atoms._NET_WM_WINDOW_TYPE_SPLASH: return "splash";
-			     case Atoms._NET_WM_WINDOW_TYPE_TOOLBAR: return "toolbar";
-			     case Atoms._NET_WM_WINDOW_TYPE_UTILITY: return "utility";
-			     case Atoms._NET_WM_WINDOW_TYPE_DROPDOWN_MENU: return "dropdownmenu";
-			     case Atoms._NET_WM_WINDOW_TYPE_POPUP_MENU: return "popupmenu";
-			     case Atoms._NET_WM_WINDOW_TYPE_TOOLTIP: return "tooltip";
-			     case Atoms._NET_WM_WINDOW_TYPE_NOTIFICATION: return "notification";
-			     case Atoms._NET_WM_WINDOW_TYPE_COMBO: return "combo";
-			     case Atoms._NET_WM_WINDOW_TYPE_DND: return "dnd";
-
+			     case Atoms._NET_WM_WINDOW_TYPE_DESKTOP: 
+				 return "desktop";
+			     case Atoms._NET_WM_WINDOW_TYPE_DIALOG: 
+				 return "dialog";
+			     case Atoms._NET_WM_WINDOW_TYPE_DOCK: 
+				 return "dock";
+			     case Atoms._NET_WM_WINDOW_TYPE_MENU: 
+				 return "menu";
+			     case Atoms._NET_WM_WINDOW_TYPE_SPLASH: 
+				 return "splash";
+			     case Atoms._NET_WM_WINDOW_TYPE_TOOLBAR: 
+				 return "toolbar";
+			     case Atoms._NET_WM_WINDOW_TYPE_UTILITY: 
+				 return "utility";
+			     case Atoms._NET_WM_WINDOW_TYPE_DROPDOWN_MENU: 
+				 return "dropdownmenu";
+			     case Atoms._NET_WM_WINDOW_TYPE_POPUP_MENU: 
+				 return "popupmenu";
+			     case Atoms._NET_WM_WINDOW_TYPE_TOOLTIP: 
+				 return "tooltip";
+			     case Atoms._NET_WM_WINDOW_TYPE_NOTIFICATION: 
+				 return "notification";
+			     case Atoms._NET_WM_WINDOW_TYPE_COMBO: 
+				 return "combo";
+			     case Atoms._NET_WM_WINDOW_TYPE_DND: 
+				 return "dnd";
 			     case Atoms._NET_WM_WINDOW_TYPE_NORMAL:
 			     default:
 				 return "normal";

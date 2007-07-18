@@ -1,5 +1,33 @@
 2007-07-17  Alex Graveley  <alex@beatniksoftware.com>
 
+	* compzilla/src/compzillaWindow.cpp (CZ_NewCompzillaWindow): Take
+	xwin attrs at construction, so caller can avoid creating objects
+	for e.g. InputOnly windows.
+	(AddContentNode): Set initial size to window's dimensions.
+	(Resized): Pull out pixmap replacement to here, called on
+	ConfigureNotify.  Call Damage to refresh all the content too.
+
+	* compzilla/src/compzillaControl.cpp (PrintEvent): Separate out
+	Xevent debug printing to here. 
+	Drop forget window.  Just use DestroyWindow until the thing
+	actually get destroyed. 
+	(Filter): Try to call XCheckTypedWindowEvent for destroy/reparent
+	on window create, so we can avoid showing a create/delete/jitter.
+	Do the same for map/unmap.  Shot in the dark to avoid showing
+	panel applet windows breifly before they are reparented.
+
+	* compzilla/chrome/content/frame.js: In moveResizeToContent, just
+	toggle the display instead of visibility too.  No need to call
+	_updateContentSize in show().
+
+	* compzilla/chrome/content/start.js: Be more cautious when
+	creating content/frame by catching exceptions.
+
+	* compzilla/public/compzillaIControl.idl: Drop the *Window from
+	function names.  Add Kill call.
+
+2007-07-17  Alex Graveley  <alex@beatniksoftware.com>
+
 	* compzilla/chrome/content/minmax.js: Don't resize the canvas for
 	now, and set the left/top after the animation finishes.
 

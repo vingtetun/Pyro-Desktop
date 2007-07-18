@@ -304,15 +304,21 @@ function scaleInitiateCommon ()
 
 	    sw.addEventListener ("mouseover",
 				 function (event) {
-				     event.currentTarget.setAttributeNS (_PYRO_NAMESPACE, "selected-item", "true");
+				     event.currentTarget.setAttributeNS (_PYRO_NAMESPACE, 
+									 "selected-item", 
+									 "true");
 				     event.stopPropagation ();
+				     event.preventDefault ();
 				 },
 				 true);
 
 	    sw.addEventListener ("mouseout",
 				 function (event) {
-				     event.currentTarget.setAttributeNS (_PYRO_NAMESPACE, "selected-item", "false");
+				     event.currentTarget.setAttributeNS (_PYRO_NAMESPACE, 
+									 "selected-item", 
+									 "false");
 				     event.stopPropagation ();
+				     event.preventDefault ();
 				 },
 				 true);
 
@@ -321,7 +327,9 @@ function scaleInitiateCommon ()
 				     event.currentTarget.orig_window.doFocus ();
 				     scaleSelectedWindow = event.currentTarget;
 				     scaleTerminate ();
+
 				     event.stopPropagation ();
+				     event.preventDefault ();
 				 },
 				 true);
 	}
@@ -352,7 +360,7 @@ function scaleAddWindow (w) {
     sw.orig_top = w.offsetTop + w.content.offsetTop;
     sw.orig_width = w._contentBox.offsetWidth; /* XXX need a getter */
     sw.orig_height = w._contentBox.offsetHeight;
-    sw.orig_opacity = 1.0; /*document.defaultView.getComputedStyle (w, null).getPropertyValue ("opacity");*/
+    sw.orig_opacity = 1.0; /* document.defaultView.getComputedStyle (w, null).getPropertyValue ("opacity");*/
 
     sw.style.left = sw.orig_left + "px";
     sw.style.top = sw.orig_top + "px";
