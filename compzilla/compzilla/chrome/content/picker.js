@@ -14,6 +14,9 @@ var pickerItemPadding = 20;
 
 var pickerCanvasRendered = false;
 
+var pickerSelectedWindow;
+
+
 function renderBeauty ()
 {
     pickerCanvasRendered = true;
@@ -130,6 +133,9 @@ function showPicker (forward)
     if (!shown) {
       	populatePicker (forward);
 
+	if (pickerItems.length == 0)
+	    return;
+
   	pickerLayer.style.display = "block";
 
 	document.addEventListener("keyup", {
@@ -138,7 +144,7 @@ function showPicker (forward)
 					      pickerLayer.style.display = "none";
 					      shown = false;
 
-					      pickerItems[selected_window].original_window.doFocus();
+					      pickerItems[pickerSelectedWindow].original_window.doFocus();
 
 					      clearPicker ();
 
@@ -152,17 +158,17 @@ function showPicker (forward)
 
 
         if (forward) {
-	    selected_window = 0;
+	    pickerSelectedWindow = 0;
         }
         else {
-	    selected_window = pickerItems.length - 1;
+	    pickerSelectedWindow = pickerItems.length - 1;
         }
 
-	pickerItems[selected_window].setAttributeNS (_PYRO_NAMESPACE, "selected-item", "true");
+	pickerItems[pickerSelectedWindow].setAttributeNS (_PYRO_NAMESPACE, "selected-item", "true");
 
  	var contentPos = pickerContents.getPosition ();
 
- 	var delta_to_center = (screen.width / 2) - contentPos.left - (pickerItems[selected_window].offsetLeft + pickerItems[selected_window].offsetWidth / 2);
+ 	var delta_to_center = (screen.width / 2) - contentPos.left - (pickerItems[pickerSelectedWindow].offsetLeft + pickerItems[pickerSelectedWindow].offsetWidth / 2);
 
  	pickerContents.style.left = (pickerContents.offsetLeft + delta_to_center) + "px";
     }
@@ -196,14 +202,12 @@ MoveLeftAnimation.prototype = {
     }
 }
 
-var selected_window;
-
 var animating;
 
 function movePickerContentsCompleted ()
 {
     animating = false;
-    pickerItems[selected_window].setAttributeNS (_PYRO_NAMESPACE, "selected-item", "true");
+    pickerItems[pickerSelectedWindow].setAttributeNS (_PYRO_NAMESPACE, "selected-item", "true");
 }
 
 function nextWindow ()
@@ -211,14 +215,14 @@ function nextWindow ()
     if (animating)
 	return;
 
-    if (selected_window == pickerItems.length - 1)
+    if (pickerSelectedWindow == pickerItems.length - 1)
 	return;
 
-    var delta = pickerItems[selected_window].offsetLeft - pickerItems[selected_window + 1].offsetLeft;
+    var delta = pickerItems[pickerSelectedWindow].offsetLeft - pickerItems[pickerSelectedWindow + 1].offsetLeft;
 
-    pickerItems[selected_window].setAttributeNS (_PYRO_NAMESPACE, "selected-item", "false");
+    pickerItems[pickerSelectedWindow].setAttributeNS (_PYRO_NAMESPACE, "selected-item", "false");
 
-    selected_window ++;
+    pickerSelectedWindow ++;
 
     var sb = new NIHStoryboard ();
     sb.completed = movePickerContentsCompleted;
@@ -232,14 +236,14 @@ function prevWindow ()
     if (animating)
 	return;
 
-    if (selected_window == 0)
+    if (pickerSelectedWindow == 0)
 	return;
 
-    var delta = pickerItems[selected_window].offsetLeft - pickerItems[selected_window - 1].offsetLeft;
+    var delta = pickerItems[pickerSelectedWindow].offsetLeft - pickerItems[pickerSelectedWindow - 1].offsetLeft;
 
-    pickerItems[selected_window].setAttributeNS (_PYRO_NAMESPACE, "selected-item", "false");
+    pickerItems[pickerSelectedWindow].setAttributeNS (_PYRO_NAMESPACE, "selected-item", "false");
 
-    selected_window --;
+    pickerSelectedWindow --;
 
     var sb = new NIHStoryboard ();
     sb.completed = movePickerContentsCompleted;

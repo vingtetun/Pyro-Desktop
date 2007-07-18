@@ -49,6 +49,13 @@ NIHStoryboard.prototype = {
 
 	if (!more) {
 	    clearInterval (this.timer);
+
+	    for (var i = 0; i < this.animations.length; i ++) {
+	      var a = this.animations[i];
+	      if (typeof (a.completed) == 'function')
+		a.completed();
+	    }
+
 	    this.completed ();
 	}
     }

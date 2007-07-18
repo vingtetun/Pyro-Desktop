@@ -1,3 +1,11 @@
+2007-07-18  Chris Toshok  <toshok@ximian.com>
+
+	* compzilla/chrome/content/picker.js: prefix variables so they
+	don't conflict.
+
+	* compzilla/chrome/content/nihanim.js: allow animations to have
+	"completed" methods as well.
+
 2007-07-17  Alex Graveley  <alex@beatniksoftware.com>
 
 	* compzilla/src/compzillaWindow.cpp (CZ_NewCompzillaWindow): Take
