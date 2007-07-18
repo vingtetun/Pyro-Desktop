@@ -161,7 +161,18 @@
             </div>
         </div>
 
+        <!-- Firebug floating window -->
+        <!--
+        <div id="firebugContent">
+            <iframe id="firebugFrame" src="chrome://firebug/content/firebug.xul" height="250" />
+        </div>
+        -->
+
     </html:body>
+
+    <!--
+    <iframe id="firebugFrame" src="chrome://firebug/content/firebug.xul" height="250" />
+    -->
 
     <commandset id="compzillaDesktopCommandSet">
         <command id="cmd_toggleDesktop" oncommand="windowStack.toggleDesktop();" />
@@ -200,10 +211,10 @@
     </keyset>
 
     <commandset id="compzillaWindowCommandSet">
-        <command id="cmd_minimizeWindow" oncommand="_focusedFrame.minimize();" />
+        <command id="cmd_minimizeWindow" oncommand="_focusedFrame.doMinimize();" />
         <command id="cmd_restoreWindow" oncommand="alert('restore');" />
-        <command id="cmd_maximizeWindow" oncommand="_focusedFrame.toggleMaximized();" />
-        <command id="cmd_closeWindow" oncommand="_focusedFrame.destroy();" />
+        <command id="cmd_maximizeWindow" oncommand="_focusedFrame.doToggleMaximized();" />
+        <command id="cmd_closeWindow" oncommand="_focusedFrame.doKill();" />
     </commandset>
 
     <keyset id="compzillaWindowKeyset">
@@ -247,13 +258,16 @@
     <script type="application/x-javascript" src="chrome://compzilla/content/xprops.js" />
     <script type="application/x-javascript" src="chrome://compzilla/content/windowStack.js" />
     <script type="application/x-javascript" src="chrome://compzilla/content/workarea.js" />
-    <script type="application/x-javascript" src="chrome://compzilla/content/frame.js" />
-    <script type="application/x-javascript" src="chrome://compzilla/content/debug.js" />
     <script type="application/x-javascript" src="chrome://compzilla/content/content.js" />
+    <script type="application/x-javascript" src="chrome://compzilla/content/frame.js" />
+
+    <script type="application/x-javascript" src="chrome://compzilla/content/debug.js" />
+
     <script type="application/x-javascript" src="chrome://compzilla/content/scale.js" />
     <script type="application/x-javascript" src="chrome://compzilla/content/picker.js" />
     <script type="application/x-javascript" src="chrome://compzilla/content/overlay.js" />
     <script type="application/x-javascript" src="chrome://compzilla/content/minmax.js" />
+
     <script type="application/x-javascript" src="chrome://compzilla/content/prompt.js" />
     <script type="application/x-javascript" src="chrome://compzilla/content/start.js" />
 

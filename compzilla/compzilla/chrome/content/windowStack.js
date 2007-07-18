@@ -290,7 +290,8 @@ function _determineLayer (w) {
     // to go in the overlay?  are we going to require a special CSS
     // class for overlay widgets?
 
-    if (w.content != null && w.content.id == "debugContent") 
+    if (w.content != null && (w.content.id == "debugContent" ||
+			      w.content.id == "firebugContent")) 
 	// special case for the debug window, which sits above everything
 	return debugLayer;
     if (w.content.wmWindowType == "desktop")
