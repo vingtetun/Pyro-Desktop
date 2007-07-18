@@ -12,7 +12,7 @@ function toggleOverlay ()
 	"block" : "none";
 
     if (overlayContent.src == "") {
-        overlayContent.src = "http://www.google.com/ig";
+        overlayContent.src = "http://pyrodesktop.org";
     }
 }
 

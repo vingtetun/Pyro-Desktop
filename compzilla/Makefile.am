@@ -7,7 +7,7 @@ debug:
 
 run:
 	NSPR_LOG_MODULES="compzilla:10" \
-	$(FIREFOX) -chrome chrome://compzilla/content/start.xul -P dev
+	$(FIREFOX) -chrome chrome://compzilla/content/start.xul -P dev -no-remote
 
 
 #

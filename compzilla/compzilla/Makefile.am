@@ -119,7 +119,7 @@ CLEANFILES = 			\
 
 if GECKO_USE_THEBES
 GFX_CFLAGS=
-GFX_LIBS=-lxpcomglue
+GFX_LIBS=-lxpcomglue_s
 else
 GFX_CFLAGS=-DMOZILLA_INTERNAL_API
 GFX_LIBS=-lxpistub
