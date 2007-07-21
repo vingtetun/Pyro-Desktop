@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+
+<!DOCTYPE overlay SYSTEM "chrome://compzilla/locale/browserOverlay.dtd">
+
+<overlay id="compzillaBrowserOverlay"
+         xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
+
+    <script type="application/x-javascript" src="chrome://compzilla/content/prompt.js" />
+    <script type="application/x-javascript" src="chrome://compzilla/content/browserOverlay.js"/>
+
+    <menupopup id="menu_ToolsPopup">
+        <menuitem id="startCompzillaToolsItem" 
+                  oncommand="startCompzilla()" 
+                  insertafter="javascriptConsole,devToolsSeparator"
+                  label="&startCompzilla.label;" 
+                  accesskey="&startCompzilla.accesskey;"/>
+    </menupopup>
+
+</overlay>

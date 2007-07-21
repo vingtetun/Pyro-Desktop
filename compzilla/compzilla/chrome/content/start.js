@@ -8,12 +8,6 @@ var _clientList = new Array ();
 
 function compzillaLoad()
 {
-    if (svc.HasWindowManager (window) && !promptReplaceWindowManager ()) {
-	// Give up, and possibly quit if no other windows
-	closeWindow (window);
-	return;
-    }
-
     // FIXME: This doesn't work yet.
     //promptSetDefaultWindowManager ();
 

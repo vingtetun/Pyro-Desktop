@@ -7,3 +7,5 @@ locale compzilla en-US chrome/locale/en-US/
 # Register a theme for chrome://compzilla/skin/ ... there could be multiple of these
 skin compzilla classic/1.0 chrome/skin/
 
+# Web browser overlay
+overlay chrome://browser/content/browser.xul chrome://compzilla/content/browserOverlay.xul

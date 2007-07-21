@@ -1,44 +1,56 @@
 
 
-var winWatcherSvc = Components.classes["@mozilla.org/embedcomp/window-watcher;1"]
-    .getService(Components.interfaces.nsIWindowWatcher);
-
-try {
-    var gconfSvc = Components.classes['@mozilla.org/gnome-gconf-service;1'].getService(
-        Components.interfaces.nsIGConfService);
-} catch(e) {
-}
-
-
 function _getPrompt ()
 {
+    var winWatcherSvc = Components.classes["@mozilla.org/embedcomp/window-watcher;1"]
+                                  .getService(Components.interfaces.nsIWindowWatcher);
     return winWatcherSvc.getNewPrompter (window);
 }
 
 
 function promptReplaceWindowManager ()
 {
-    const buttonFlags = Components.interfaces.nsIPrompt.STD_YES_NO_BUTTONS;
+    if (getBoolPref ("compzilla.replace_existing_wm", false))
+	return true;
+
+    const nsIPrompt = Components.interfaces.nsIPrompt;
+    const buttonFlags = 
+        nsIPrompt.BUTTON_TITLE_IS_STRING * nsIPrompt.BUTTON_POS_0 + 
+        nsIPrompt.BUTTON_TITLE_CANCEL * nsIPrompt.BUTTON_POS_1 + 
+        nsIPrompt.BUTTON_POS_1_DEFAULT;
 
     //var dialogText = GetStringFromName ("replaceWindowManagerText");
     //var dialogTitle = GetStringFromName ("replaceWindowManagerTitle");
 
     var dialogTitle = "Replace Window Manager";
-    var dialogText = "A window manager is already running on this desktop.\n" +
-                     "Would you like to replace it with Pyro?";
+    var dialogText = "A desktop window manager is already running.\n" +
+                     "Would you like to replace it with Pyro Desktop?";
+    var neverAgainText = "Always perform this check when starting";
+    var neverAgainVal = { value: true };
 
     // returns 0 for yes, 1 for no.
     var result = _getPrompt().confirmEx (dialogTitle,
                                          dialogText,
                                          buttonFlags,
-                                         null, null, null,
-                                         null, {});
+                                         "Replace", null, null,
+                                         neverAgainText, neverAgainVal);
+
+    if (!neverAgainVal.value) {
+        var prefs = GetPrefs ();
+        prefs.setBoolPref ("compzilla.replace_existing_wm", true);
+    }
+
     return !result;
 }
 
 
 function promptSetDefaultWindowManager ()
 {
+    try {
+        var gconfSvc = Components.classes['@mozilla.org/gnome-gconf-service;1']
+                                 .getService(Components.interfaces.nsIGConfService);
+    } catch (e) {
+    }
     if (!gconfSvc)
         return;
 
@@ -56,8 +68,8 @@ function promptSetDefaultWindowManager ()
         //var dialogTitle = GetStringFromName ("setDefaultWindowManagerTitle");
 
         var dialogTitle  = "Set Default Window Manager";
-        var dialogText = "Pyro is not set as your default window manager.\n" +
-                         "Would you like to make Pyro the default for future sessions?";
+        var dialogText = "Pyro Desktop is not set as your default window manager.\n" +
+                         "Use it by default for future sessions?";
 
         // returns 0 for yes, 1 for no.
         var result = _getPrompt().confirmEx (dialogTitle,

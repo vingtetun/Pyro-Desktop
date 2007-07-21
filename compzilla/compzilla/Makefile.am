@@ -20,6 +20,8 @@ content_DATA =					\
 	$(CONTENT_SRCDIR)/pyrologo.png		\
 	\
 	$(CONTENT_SRCDIR)/atoms.js		\
+	$(CONTENT_SRCDIR)/browserOverlay.js	\
+	$(CONTENT_SRCDIR)/browserOverlay.xul	\
 	$(CONTENT_SRCDIR)/content.js		\
 	$(CONTENT_SRCDIR)/debug.js		\
 	$(CONTENT_SRCDIR)/frame.js		\
@@ -51,7 +53,9 @@ skin_DATA =					\
 
 endir=$(extensiondir)/chrome/locale/en-US
 EN_SRCDIR=$(srcdir)/chrome/locale/en-US
-en_DATA = $(EN_SRCDIR)/start.dtd
+en_DATA = 				\
+	$(EN_SRCDIR)/browserOverlay.dtd	\
+	$(EN_SRCDIR)/start.dtd
 
 prefsdir = $(extensiondir)/defaults/preferences
 PREFS_SRCDIR = $(srcdir)/defaults/preferences
@@ -135,8 +139,7 @@ libcompzilla_la_LIBADD = $(XEXTENSIONS_LIBS) $(NSPR_LIBS) -L$(GECKO_LIBDIR) $(GF
 # -DDEBUG -DDEBUG_SPEW -DDEBUG_EVENTS
 
 libcompzilla_la_CPPFLAGS =			\
-	-DDEBUG                                 \
-	-DDEBUG_SPEW                            \
+	-DDEBUG -DDEBUG_SPEW			\
 	-fshort-wchar				\
 	-fno-rtti 				\
 	-fno-exceptions 			\

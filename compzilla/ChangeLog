@@ -1,3 +1,36 @@
+2007-07-21  Alex Graveley  <alex@beatniksoftware.com>
+
+	* compzilla/chrome/content/start.js: Remove calls to
+	promptReplaceWindowManager, as the browser overlay will do this,
+	and if you run firefox with the chrome url directly, you want to
+	replace the WM anyway.
+
+	* compzilla/chrome/content/prompt.js: In
+	promptReplaceWindowManager, use "Replace" as the button label, and
+	add a "Always perform this check when starting" checkbox which
+	starts checked, and if unchecked will set
+	"compzilla.replace_existing_wm", to true.
+
+	* compzilla/defaults/preferences/prefs.js: Add
+	compzilla.autostart, and compzilla.replace_existing_wm, which both
+	default to false.
+
+	* compzilla/chrome/locale/en-US/browserOverlay.dtd: New, entities
+	for the browser overlay.
+
+	* compzilla/chrome/content/browserOverlay.js: New file, loaded at
+	browser launch, and call autoStartCompzilla to automatically
+	launch compzilla if the "compzilla.autostart" pref is true
+	(defaults to false), and it's the first window.  startCompzilla
+	calls promptReplaceWindowManager if there's a WM, and
+	window.openDialog to launch compzilla if accepted.
+
+	* compzilla/chrome/content/browserOverlay.xul: New file, overlay
+	browser.xul.  Add startup code in browserOverlay.js.  Add a Tools
+	menu item, "Start Pyro Desktop", which calls startCompzilla.
+
+	* compzilla/chrome.manifest: Add browserOverlay.xul.
+
 2007-07-18  Chris Toshok  <toshok@ximian.com>
 
 	* compzilla/chrome/content/picker.js: prefix variables so they
