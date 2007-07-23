@@ -711,14 +711,35 @@ body {
 	right: 5px;
 }
 
-#flickrTimestamp {
+#flickrStatus {
         font-family: Tahoma, Arial, sans-serif;
         font-weight: bold;
 	font-size: 8px;
-	color: #000000;
+
 	position: absolute;
-	bottom: 2px;
 	left: 5px;
+	right: 5px;
+	bottom: 2px;
+	height: 1em;
+}
+
+#flickrStatusText {
+	position: absolute;
+	left: 0px;
+	top: 0px;
+	right: 0px;
+}
+
+.flickrStatusUpdateSucceeded {
+	color: #000000;
+}
+
+.flickrStatusUpdateFailed {
+	color: #ff0000;
+}
+
+.flickrStatusUpdating{
+	color: #46aa2d;
 }
 
 #flickrParent {

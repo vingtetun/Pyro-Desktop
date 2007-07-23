@@ -1,5 +1,13 @@
 2007-07-22  Chris Toshok  <toshok@ximian.com>
 
+	* compzilla/chrome/content/flickrdemo.js,
+	compzilla/chrome/content/start.xul,
+	compzilla/chrome/skin/compzilla.css: add 2 more status bar states
+	- updating and updatefailed.  provide different css classes for
+	each, and switch between them at the right times.
+	
+2007-07-22  Chris Toshok  <toshok@ximian.com>
+
 	* compzilla/Makefile.am (content_DATA): add the flickrdemo stuffs.
 
 	* compzilla/chrome/content/start.xul: same.

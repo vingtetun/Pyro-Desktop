@@ -183,7 +183,9 @@
 	  <div id="flickrParent">
 		<div id="flickrDemo" class="flickrDemo"></div>
 	  </div>
-	  <span id="flickrTimestamp"></span>
+	  <div id="flickrStatus"><span id="flickrStatusText">
+		<!-- the contents and css className of this span is computed in flickrdemo.js -->
+	    </span></div>
 	</div>
 
 	<div id="flickrItemTemplate" class="flickrItem">

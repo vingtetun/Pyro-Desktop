@@ -11,7 +11,7 @@ var flickrFrame;
 var flickrWindow = document.getElementById ("flickrWindow");
 var flickrParent = document.getElementById ("flickrParent");
 var flickrItemTemplate = document.getElementById ("flickrItemTemplate");
-var flickrTimestamp = document.getElementById ("flickrTimestamp");
+var flickrStatusText = document.getElementById ("flickrStatusText");
 var flickrDiv = document.getElementById ("flickrDemo");
 var flickrUrl = document.getElementById ("flickrUrl");
 
@@ -31,7 +31,6 @@ function flickrDemo (url)
 		    },
 		    /* setter */
 		    function (val) {
-		      Debug ("setting flickr url to " + val);
 		      this.generation ++;
 		      this._url = val;
 		      this.updateFlickrRss ();
@@ -40,6 +39,23 @@ function flickrDemo (url)
   this.url = url;
 }
 flickrDemo.prototype = {
+  updating: function () {
+    flickrStatusText.innerHTML = "Updating...";
+    flickrStatusText.className = "flickrStatusUpdating";
+  },
+
+  updateSucceeded: function () {
+    var t = new Date();
+    flickrStatusText.innerHTML = "Updated: " + t.toLocaleDateString() + " " + t.toLocaleTimeString();
+    flickrStatusText.className = "flickrStatusUpdateSucceeded";
+  },
+
+  updateFailed: function () {
+    var t = new Date();
+    flickrStatusText.innerHTML = "Update Failed: " + t.toLocaleDateString() + " " + t.toLocaleTimeString();
+    flickrStatusText.className = "flickrStatusUpdateFailed";
+  },
+
   updateFlickrRss: function () {
     if (this.timer) {
     	clearInterval (this.timer); /* we'll add it again once we've gotten the page */
@@ -57,10 +73,11 @@ flickrDemo.prototype = {
 //       Debug("Permission UniversalBrowserRead denied.");
 //     }
 
+    this.updating ();
+
     var generation = this.generation;
     var client = new XMLHttpRequest();
     client.onreadystatechange = function () {
-      Debug (" " + generation + " ?= " + demo.generation);
       if (generation != demo.generation)
 	return;
 
@@ -75,24 +92,21 @@ flickrDemo.prototype = {
 // 	  }
 	  demo.parseRSS (this.responseXML);
 
+	  demo.updateSucceeded ();
+
 	  demo.timer = setInterval (function( that ) { that.updateFlickrRss(); }, rss_sync_timeout, demo);
 	}
       }
       else if (this.readyState == 4 && this.status != 200) {
-	  Debug ("failed to get flickr rss");
+	  demo.updateFailed ();
 	  demo.timer = setInterval (function( that ) { that.updateFlickrRss(); }, rss_sync_timeout, demo);
       }
     };
-    Debug ("getting " + this.url);
     client.open("GET", this.url);
     client.send(null);
   },
 
   parseRSS: function (rssxml) {
-    var t = new Date();
-
-    
-    flickrTimestamp.innerHTML = "Updated: " + t.toLocaleDateString() + " " + t.toLocaleTimeString();
 
     var rss = new RSS2Channel (rssxml);
 
@@ -446,8 +460,6 @@ FadeInAnimation.prototype = {
 
 function updateFlickrUrl ()
 {
-  Debug ("updateFlickrUrl called");
-
     url = flickrUrl.value;
     if (url) {
         flickrUrl.flickr.url = url;
