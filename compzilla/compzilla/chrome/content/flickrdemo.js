@@ -295,8 +295,6 @@ function RSS2Channel(rssxml)
     }
 }
 
-var done = false;
-
 function RSS2Item(itemxml)
 {
     for (var p = itemxml.firstChild; p != null; p = p.nextSibling) {
