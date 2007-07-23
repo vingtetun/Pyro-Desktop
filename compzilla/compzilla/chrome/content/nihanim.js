@@ -1,3 +1,5 @@
+/* -*- mode: javascript; c-basic-offset: 4; indent-tabs-mode: t; -*- */
+
 function NIHStoryboard () {
     this.animations = new Array();
 }
@@ -51,9 +53,9 @@ NIHStoryboard.prototype = {
 	    clearInterval (this.timer);
 
 	    for (var i = 0; i < this.animations.length; i ++) {
-	      var a = this.animations[i];
-	      if (typeof (a.completed) == 'function')
-		a.completed();
+		var a = this.animations[i];
+		if (typeof (a.completed) == 'function')
+		    a.completed();
 	    }
 
 	    this.completed ();
