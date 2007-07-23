@@ -38,7 +38,8 @@ content_DATA =					\
 	$(CONTENT_SRCDIR)/util.js		\
 	$(CONTENT_SRCDIR)/windowStack.js	\
 	$(CONTENT_SRCDIR)/workarea.js		\
-	$(CONTENT_SRCDIR)/xprops.js
+	$(CONTENT_SRCDIR)/xprops.js		\
+	$(CONTENT_SRCDIR)/flickrdemo.js
 
 skindir=$(extensiondir)/chrome/skin
 SKIN_SRCDIR=$(srcdir)/chrome/skin

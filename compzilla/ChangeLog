@@ -1,3 +1,13 @@
+2007-07-22  Chris Toshok  <toshok@ximian.com>
+
+	* compzilla/Makefile.am (content_DATA): add the flickrdemo stuffs.
+
+	* compzilla/chrome/content/start.xul: same.
+
+	* compzilla/chrome/content/flickrdemo.js: same.
+
+	* compzilla/chrome/skin/compzilla.css: same.
+
 2007-07-21  Alex Graveley  <alex@beatniksoftware.com>
 
 	* compzilla/chrome/content/start.js: Remove calls to
