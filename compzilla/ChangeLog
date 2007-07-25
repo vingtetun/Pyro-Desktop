@@ -1,3 +1,18 @@
+2007-07-25  Alex Graveley  <alex@beatniksoftware.com>
+
+	* compzilla/src/compzillaWindow.cpp (RemoveContentNode): Don't
+	generate errors here, always return NS_OK.  This is what other moz
+	observers seem to do.
+	(AddObserver): Ditto.
+
+	* compzilla/src/compzillaControl.cpp (AddObserver): Enumerate all
+	existing windows and call CreateWindow for each on the observer.
+	(RemoveObserver): Always return NS_OK.
+
+	* compzilla/install.rdf: Uncomment updateURL and make it https, so
+	the next release will actually suggest an update for itself.  Doh.
+	Bump firefox minVersion to 2.0.0.*.
+
 2007-07-22  Chris Toshok  <toshok@ximian.com>
 
 	* compzilla/chrome/content/flickrdemo.js,

@@ -267,7 +267,6 @@ compzillaWindow::AddContentNode (nsIDOMHTMLCanvasElement* aContent)
     if (!internal)
         return NS_ERROR_FAILURE;
 
-    RemoveContentNode (aContent);
     mContentNodes.AppendObject (aContent);
     ConnectListeners (true, aContent);
 
@@ -295,7 +294,7 @@ compzillaWindow::RemoveContentNode (nsIDOMHTMLCanvasElement* aContent)
     SPEW ("RemoveContentNode this=%p, canvas=%p\n", this, aContent);
 
     if (mIsDestroyed)
-        return NS_ERROR_FAILURE;
+        return NS_OK;
 
     // Allow a caller to remove O(N^2) behavior by removing end-to-start.
     for (PRUint32 i = mContentNodes.Count() - 1; i != PRUint32(-1); --i) {
@@ -318,7 +317,6 @@ compzillaWindow::AddObserver (compzillaIWindowObserver *aObserver)
     if (mIsDestroyed)
         return NS_ERROR_FAILURE;
 
-    RemoveObserver (aObserver);
     mObservers.AppendObject (aObserver);
 
     /* 
@@ -342,7 +340,7 @@ compzillaWindow::RemoveObserver (compzillaIWindowObserver *aObserver)
     SPEW ("RemoveObserver window=%p, observer=%p\n", this, aObserver);
 
     if (mIsDestroyed)
-        return NS_ERROR_FAILURE;
+        return NS_OK;
 
     // Allow a caller to remove O(N^2) behavior by removing end-to-start.
     for (PRUint32 i = mObservers.Count() - 1; i != PRUint32(-1); --i) {

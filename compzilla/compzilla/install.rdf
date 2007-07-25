@@ -13,13 +13,13 @@
     <em:iconURL>chrome://compzilla/content/pyrologo.png</em:iconURL>
     <em:homepageURL>http://pyrodesktop.org/</em:homepageURL>
 
-    <!-- <em:updateURL>http://pyrodesktop.org/releases/update.rdf</em:updateURL> -->
+    <em:updateURL>https://pyrodesktop.org/releases/update.rdf</em:updateURL>
 
     <!-- Firefox -->
     <em:targetApplication>
       <Description>
         <em:id>{ec8030f7-c20a-464f-9b0e-13a3a9e97384}</em:id>
-        <em:minVersion>1.5</em:minVersion>
+        <em:minVersion>2.0.0.*</em:minVersion>
         <em:maxVersion>3.0</em:maxVersion>
       </Description>
     </em:targetApplication>

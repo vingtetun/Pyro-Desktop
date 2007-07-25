@@ -32,19 +32,15 @@ var ContentMethods = {
     ondestroy: function () {
 	Debug ("content", "content.destroy");
 
-	try {
+	if (this._nativewin) {
 	    this._nativewin.RemoveContentNode (this);
-	} catch (e) {
-	    Debug ("Error calling RemoveContentNode");
+	    this._nativewin = null;
 	}
-	this._nativewin = null;
 
-	try {
+	if (this._xprops) {
 	    this._xprops.destroy ();
-	} catch (e) {
-	    Debug ("Error destroying XProps");
+	    this._xprops = null;
 	}
-	this._xprops = null;
     },
 
     onkill: function () {

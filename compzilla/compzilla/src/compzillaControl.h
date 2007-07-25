@@ -74,6 +74,10 @@ private:
     static int ClearErrors (Display *dpy);
     static int sErrorCnt;
 
+    static PLDHashOperator CallWindowCreateCb (const PRUint32& key, 
+                                               nsRefPtr<compzillaWindow>& win, 
+                                               void *userdata);
+
     Display *mXDisplay;
     Window mXRoot;
 

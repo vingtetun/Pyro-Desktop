@@ -287,13 +287,13 @@ compzillaControl::AddObserver (compzillaIControlObserver *aObserver)
 {
     SPEW ("compzillaWindow::AddObserver %p - %p\n", this, aObserver);
 
-    RemoveObserver (aObserver);
     mObservers.AppendObject (aObserver);
 
     /* 
      * When initially adding an observer, call windowCreate for all existing
-     * windows?
+     * windows.
      */
+    mWindowMap.Enumerate (&compzillaControl::CallWindowCreateCb, aObserver);
 
     return NS_OK;
 }
@@ -308,11 +308,11 @@ compzillaControl::RemoveObserver (compzillaIControlObserver *aObserver)
     for (PRUint32 i = mObservers.Count() - 1; i != PRUint32(-1); --i) {
         if (mObservers.ObjectAt(i) == aObserver) {
             mObservers.RemoveObjectAt (i);
-            return NS_OK;
+            break;
         }
     }
 
-    return NS_ERROR_FAILURE;
+    return NS_OK;
 }
 
 
@@ -711,6 +711,19 @@ compzillaControl::ClearErrors (Display *dpy)
     int lastcnt = sErrorCnt;
     sErrorCnt = 0;
     return lastcnt;
+}
+
+
+PLDHashOperator 
+compzillaControl::CallWindowCreateCb (const PRUint32& key, 
+                                      nsRefPtr<compzillaWindow>& win, 
+                                      void *userdata)
+{
+    compzillaIControlObserver *observer = 
+        static_cast<compzillaIControlObserver *>(userdata);
+    compzillaIWindow *iwin = win;
+    
+    observer->WindowCreate (iwin);
 }
 
 

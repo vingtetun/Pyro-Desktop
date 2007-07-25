@@ -24,12 +24,7 @@ var FrameMethods = {
 	    _focusedFrame = null;
 
 	if (this._observer) {
-	    try {
-		this._content.nativeWindow.removeObserver (this._observer);
-	    } catch (e) {
-		// Observer may have been automatically removed
-		Debug ("Error removing frame observer");
-	    }
+	    this._content.nativeWindow.removeObserver (this._observer);
 	    this._observer = null;
 	}
 
