@@ -1,5 +1,19 @@
 2007-07-25  Alex Graveley  <alex@beatniksoftware.com>
 
+	* compzilla/install.rdf: Undo the last changes, but now
+	understanding more:
+
+	We actually need to match an exact number for minVersion,
+	so use 2.0.0.1.  Edgy's "2.0" doesn't seem to work, so require at
+	least a point release after that.
+
+	Also, there's not going to be an SSL cert for pyrodesktop.org any
+	time soon, so just comment out the updateURL again.  We'll use
+	addons.mozilla.org hosting, which let's auto-updating work without
+	an updateURL anyway.
+
+2007-07-25  Alex Graveley  <alex@beatniksoftware.com>
+
 	* compzilla/src/compzillaWindow.cpp (RemoveContentNode): Don't
 	generate errors here, always return NS_OK.  This is what other moz
 	observers seem to do.
