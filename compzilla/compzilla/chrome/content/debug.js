@@ -1,5 +1,7 @@
 /* -*- mode: javascript; c-basic-offset: 4; indent-tabs-mode: t; -*- */
 
+var debugContent = $("#debugContent")[0];
+var debugLog = $("#debugLog", debugContent)[0];
 
 var Debug = function (log, str)
 {
@@ -46,22 +48,20 @@ function debugDeselectLog (log) {
 }
 
 
-// Build the debug window
-var debugContent = $("#debugContent")[0];
-var debugLog = $("#debugLog", debugContent)[0];
+function initDebugWindow () {
+    // Make a frame for the debug window
+    var debugFrame = CompzillaFrame (debugContent);
 
-// Make a frame for the debug window
-var debugFrame = CompzillaFrame (debugContent);
+    debugFrame.id = "debugFrame";
+    debugFrame.title = "Debug Window";
+    debugFrame.moveResize (200, 50, 300, 300);
+    debugFrame.show ();
+    debugFrame.allowClose =
+	debugFrame.allowMinimize =
+	debugFrame.allowMaximize = false;
 
-debugFrame.id = "debugFrame";
-debugFrame.title = "Debug Window";
-debugFrame.moveResize (200, 50, 300, 300);
-debugFrame.show ();
-debugFrame.allowClose =
-  debugFrame.allowMinimize =
-  debugFrame.allowMaximize = false;
-
-windowStack.stackWindow (debugFrame);
+    windowStack.stackWindow (debugFrame);
+}
 
 
 // should we hide the window, or the entire layer?
@@ -114,6 +114,10 @@ function debugListWindows ()
     return "";
 }
 
+window.onerror = function (err, url, code) {
+    Debug (err + " " + url + " " + code);
+    return true;
+}
 
 // XXX until we get commands working in the .xul file
 /*

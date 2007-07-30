@@ -1,3 +1,18 @@
+2007-07-27  Chris Toshok  <toshok@ximian.com>
+
+	* compzilla/chrome/content/start.xul: move the loading of debug.js
+	to the front of the list (just below jquery) so it should catch
+	all syntax/etc errors from .js files loaded further down.
+
+	* compzilla/chrome/content/start.js (compzillaLoad): call
+	initDebugWindow here.
+
+	* compzilla/chrome/content/debug.js: put the frame creation stuff
+	in initDebugWindow, so we can move debug.js near the front of the
+	loaded .js files in start.xul.  This is so we can install the
+	window.onerror handler in this file which redirects js errors to
+	our debug window.
+
 2007-07-25  Alex Graveley  <alex@beatniksoftware.com>
 
 	* compzilla/install.rdf: Undo the last changes, but now

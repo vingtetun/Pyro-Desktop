@@ -16,6 +16,8 @@ function compzillaLoad()
     xulwin.width = screen.width;
     xulwin.height = screen.height;
 
+    initDebugWindow ();
+
     svc.addObserver ({
 	windowCreate: function (win) {
 	    // NOTE: Be careful to not do anything which will create a new
