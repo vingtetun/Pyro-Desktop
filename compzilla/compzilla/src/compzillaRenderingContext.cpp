@@ -6,6 +6,7 @@
 #include <nsIRenderingContext.h>
 #include <nsIViewManager.h>
 
+#include <nsIDOMClassInfo.h>
 #include <nsIDOMHTMLCanvasElement.h>
 
 /* 

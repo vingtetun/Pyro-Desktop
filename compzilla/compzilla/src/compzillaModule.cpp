@@ -5,6 +5,7 @@
 #include <nsXPCOMCID.h>
 
 #include <nsICategoryManager.h>
+#include <nsIDOMClassInfo.h>
 #include <nsIGenericFactory.h>
 #include <nsIScriptNameSpaceManager.h>
 #include <nsIServiceManager.h>

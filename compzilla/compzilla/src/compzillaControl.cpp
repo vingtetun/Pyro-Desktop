@@ -6,6 +6,7 @@
 #include <nsHashPropertyBag.h>
 #include <nsIBaseWindow.h>
 #include <nsIDocShell.h>
+#include <nsIDOMClassInfo.h>
 #include <nsIScriptGlobalObject.h>
 #ifndef MOZILLA_1_8_BRANCH
 #include <nsPIDOMWindow.h>

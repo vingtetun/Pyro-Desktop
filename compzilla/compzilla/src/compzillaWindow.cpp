@@ -14,6 +14,7 @@
 #include "XAtoms.h"
 
 #include <nsICanvasElement.h>
+#include <nsIDOMClassInfo.h>
 #include <nsIDOMEventTarget.h>
 #include <nsIDOMHTMLCanvasElement.h>
 #include <nsComponentManagerUtils.h>
