@@ -1,3 +1,18 @@
+2007-07-30  Alex Graveley  <alex@beatniksoftware.com>
+
+	* compzilla/chrome.manifest: Add flickrdemo.xul as an overlay to
+	start.xul.
+
+	* compzilla/chrome/content/flickrdemo.js: Add load handler to
+	create flickrDemo window: can't access XUL overlay-added DOM
+	elements without this.
+
+	* compzilla/chrome/skin/compzilla.css: Remove flickdemo stuff,
+	moved to new flickrdemo.css.
+
+	* compzilla/chrome/content/start.xul: Remove flickdemo stuff,
+	moved to new flickrdemo.xul.
+
 2007-07-27  Chris Toshok  <toshok@ximian.com>
 
 	* compzilla/chrome/content/start.xul: move the loading of debug.js

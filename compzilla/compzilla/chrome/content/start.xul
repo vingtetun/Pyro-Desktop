@@ -168,39 +168,6 @@
         </div>
         -->
 
-	<!-- BEGIN FLICKR DEMO -->
-	<div id="flickrBackground"></div>
-	<div id="flickrWindow">
-	  <div id="flickrControls">
-	     <form>
-                <input id="flickrUrl"
-                       type="text" 
-                       value="flickr-url"
-                       onsubmit="updateFlickrUrl();" />
-	        <button onclick="updateFlickrUrl();">Go</button>
-             </form>
-	  </div>
-	  <div id="flickrParent">
-		<div id="flickrDemo" class="flickrDemo"></div>
-	  </div>
-	  <div id="flickrStatus"><span id="flickrStatusText">
-		<!-- the contents and css className of this span is computed in flickrdemo.js -->
-	    </span></div>
-	</div>
-
-	<div id="flickrItemTemplate" class="flickrItem">
-	        <div id="flickrItemBackground"></div>
-		<div id="infoContainer">
-		  <span id="title"></span> <br/>
-		  <span id="photographer"></span>
-		</div>
-		<div id="imageContainer">
-			<img id="thumbnail" />
-		</div>
-	</div>
-	<!-- END FLICKR DEMO -->
-
-
     </html:body>
 
     <!--
@@ -304,10 +271,5 @@
 
     <script type="application/x-javascript" src="chrome://compzilla/content/prompt.js" />
     <script type="application/x-javascript" src="chrome://compzilla/content/start.js" />
-
-
-    <!-- BEGIN FLICKR DEMO -->
-    <script type="application/x-javascript" src="chrome://compzilla/content/flickrdemo.js" />
-    <!-- END FLICKR DEMO -->
 
 </window>

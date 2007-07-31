@@ -1,0 +1,52 @@
+<?xml version="1.0"?>
+<?xml-stylesheet href="chrome://compzilla/skin/flickrdemo.css" type="text/css"?>
+
+<overlay id="flickrOverlay"
+         xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
+	     xmlns:html="http://www.w3.org/1999/xhtml">
+
+    <html:body id="desktop" xmlns="http://www.w3.org/1999/xhtml">
+
+        <div id="flickrBackground"></div>
+
+        <div id="flickrWindow">
+            <div id="flickrControls">
+                <form>
+                    <input id="flickrUrl"
+                           type="text" 
+                           value="flickr-url"
+                           onsubmit="updateFlickrUrl(this);" />
+                    <button id="flickrGo" onclick="updateFlickrUrl(this);">Go</button>
+                </form>
+            </div>
+
+            <div id="flickrParent">
+                <div id="flickrDemo" class="flickrDemo"></div>
+            </div>
+
+            <div id="flickrStatus">
+                <!-- the contents and css className of this span is computed
+                     in flickrdemo.js -->
+                <span id="flickrStatusText"></span>
+            </div>
+        </div>
+
+        <div id="flickrItemTemplate" class="flickrItem">
+            <div id="flickrItemBackground"></div>
+
+            <div id="infoContainer">
+                <span id="title"></span>
+                <br/>
+                <span id="photographer"></span>
+            </div>
+
+            <div id="imageContainer">
+                <img id="thumbnail"/>
+            </div>
+        </div>
+
+    </html:body>
+
+    <script type="application/x-javascript" src="chrome://compzilla/content/flickrdemo.js" />
+
+</overlay>

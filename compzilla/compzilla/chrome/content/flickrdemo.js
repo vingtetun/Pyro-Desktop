@@ -3,28 +3,40 @@
 // lot of rss code ripped from here
 // http://www.xml.com/pub/a/2006/09/13/rss-and-ajax-a-simple-news-reader.html
 
-var flickrAnimationDuration = 750;
+const flickrAnimationDuration = 750;
+const flickrDefaultUrl = 
+    "http://api.flickr.com/services/feeds/photos_public.gne?tags=hdr&lang=en-us&format=rss_200";
 
-// 30 second timeout
-var rss_sync_timeout = 30000;
-
-var flickrFrame;
-
-var flickrWindow = document.getElementById ("flickrWindow");
-var flickrParent = document.getElementById ("flickrParent");
-var flickrItemTemplate = document.getElementById ("flickrItemTemplate");
-var flickrStatusText = document.getElementById ("flickrStatusText");
-var flickrDiv = document.getElementById ("flickrDemo");
-var flickrUrl = document.getElementById ("flickrUrl");
+// 10 second timeout
+const rss_sync_timeout = 10000;
 
 // 79 is the css height, the 5 is some extra margin
-var flickrItemHeight = 79 + 5;
+const flickrItemHeight = 79 + 5;
+
 
 function flickrDemo (url)
 {
     _addUtilMethods (this);
 
-    this.generation = 0;
+    this._frame = CompzillaFrame (document.getElementById ("flickrWindow"));
+    this._frame.flickr = this;
+    this._frame.title = "Flickr Feed";
+    this._frame.moveResize (10, 10, 210, 550);
+    this._frame.allowClose =
+	this._frame.allowMinimize =
+	this._frame.allowMaximize = false;
+    this._frame.show ();
+
+    windowStack.stackWindow (this._frame);
+
+    this._statusText = document.getElementById ("flickrStatusText");
+    this._demoDiv = document.getElementById ("flickrDemo");
+
+    this._urlInput = document.getElementById ("flickrUrl");
+    this._urlInput.flickr = this;
+
+    var goBtn = document.getElementById ("flickrGo");
+    goBtn.flickr = this;
 
     this.addProperty ("url",
 		      /* getter */
@@ -33,29 +45,43 @@ function flickrDemo (url)
 		      },
 		      /* setter */
 		      function (val) {
-			  this.generation ++;
+			  this._generation++;
 			  this._url = val;
+			  this._urlInput.value = val;
+
 			  this.updateFlickrRss ();
 		      });
-
     this.url = url;
 }
 flickrDemo.prototype = {
+    _url: null,
+    _generation: 0,
+    _statusText: null,
+    _demoDiv: null,
+    _urlInput: null,
+    _frame: null,
+
+    updateFromUrlInput: function () {
+	this.url = this._urlInput.value;
+    },
+    
     updating: function () {
-	flickrStatusText.innerHTML = "Updating...";
-	flickrStatusText.className = "flickrStatusUpdating";
+	this._statusText.innerHTML = "Updating...";
+	this._statusText.className = "flickrStatusUpdating";
     },
 
     updateSucceeded: function () {
 	var t = new Date();
-	flickrStatusText.innerHTML = "Updated: " + t.toLocaleDateString() + " " + t.toLocaleTimeString();
-	flickrStatusText.className = "flickrStatusUpdateSucceeded";
+	this._statusText.innerHTML = 
+	    "Updated: " + t.toLocaleDateString() + " " + t.toLocaleTimeString();
+	this._statusText.className = "flickrStatusUpdateSucceeded";
     },
 
     updateFailed: function () {
 	var t = new Date();
-	flickrStatusText.innerHTML = "Update Failed: " + t.toLocaleDateString() + " " + t.toLocaleTimeString();
-	flickrStatusText.className = "flickrStatusUpdateFailed";
+	this._statusText.innerHTML = 
+	    "Update Failed: " + t.toLocaleDateString() + " " + t.toLocaleTimeString();
+	this._statusText.className = "flickrStatusUpdateFailed";
     },
 
     updateFlickrRss: function () {
@@ -77,14 +103,14 @@ flickrDemo.prototype = {
 
 	this.updating ();
 
-	var generation = this.generation;
+	var generation = this._generation;
 	var client = new XMLHttpRequest();
 	client.onreadystatechange = function () {
-	    if (generation != demo.generation)
+	    if (generation != demo._generation)
 		return;
 
-	    if (this.readyState == 4 && this.status == 200) {
-		if (this.responseXML) {
+	    if (client.readyState == 4 && client.status == 200) {
+		if (client.responseXML) {
 		    // we need permission to iterate over the xml document
 		    // - not when we're running in an extension, yay!
 		    // 	  try {
@@ -92,16 +118,25 @@ flickrDemo.prototype = {
 		    // 	  } catch (e) {
 		    // 	    Debug("Permission UniversalBrowserRead denied.");
 		    // 	  }
-		    demo.parseRSS (this.responseXML);
+
+		    demo.parseRSS (client.responseXML);
 
 		    demo.updateSucceeded ();
 
-		    demo.timer = setInterval (function( that ) { that.updateFlickrRss(); }, rss_sync_timeout, demo);
+		    demo.timer = setInterval (
+			function (that) { 
+			    that.updateFlickrRss(); 
+			}, 
+			rss_sync_timeout, demo);
 		}
 	    }
-	    else if (this.readyState == 4 && this.status != 200) {
+	    else if (client.readyState == 4 && client.status != 200) {
 		demo.updateFailed ();
-		demo.timer = setInterval (function( that ) { that.updateFlickrRss(); }, rss_sync_timeout, demo);
+		demo.timer = setInterval (
+		    function (that) { 
+			that.updateFlickrRss(); 
+		    }, 
+		    rss_sync_timeout, demo);
 	    }
 	};
 	client.open("GET", this.url);
@@ -109,13 +144,12 @@ flickrDemo.prototype = {
     },
 
     parseRSS: function (rssxml) {
-
 	var rss = new RSS2Channel (rssxml);
 
-	flickrFrame.title = rss.title;
+	this._frame.title = rss.title;
 	if (rss.image) {
 	    // XXX hack - don't do this at home, folks
-	    flickrFrame._icon.src = rss.image.url;
+	    this._frame._icon.src = rss.image.url;
 	}
 
 	this.showRSS (rss);
@@ -135,7 +169,7 @@ flickrDemo.prototype = {
 
 	// build up the lists of deleted children and new items at the
 	// same time.
-	for (var el = flickrDiv.firstChild; el != null; el = el.nextSibling) {
+	for (var el = this._demoDiv.firstChild; el != null; el = el.nextSibling) {
 	    children[el.rssItem.link] = el;
 	}
 
@@ -158,14 +192,14 @@ flickrDemo.prototype = {
 	    // XXX this completed handler *should* be used, but for some
 	    // reason it's causing dom exceptions.  so, we do it in the
 	    // sb.completed function below.
-	    //a.completed = function () { flickrDiv.removeChild (child); };
+	    //a.completed = function () { this._demoDiv.removeChild (child); };
 
 	    sb.addAnimation (a);
 	}
 
 	// for all the remaining items, figure out their new positions
 	var offset = new_items.length * flickrItemHeight;
-	for (var c = flickrDiv.firstChild; c != null; c = c.nextSibling) {
+	for (var c = this._demoDiv.firstChild; c != null; c = c.nextSibling) {
 
 	    // if the child is bound for deletion, skip it.
 	    if (c.removed)
@@ -192,9 +226,9 @@ flickrDemo.prototype = {
 	    // XXX this next loop really should be in the completed handler
 	    // for the fade out animations above, but for some reason I get
 	    // dom errors when i have it there */
-	    for (el = flickrDiv.lastChild; el; el = el.prevSibling)
+	    for (el = demo._demoDiv.lastChild; el; el = el.prevSibling)
 		if (el.removed)
-		    flickrDiv.removeChild (el);
+		    demo._demoDiv.removeChild (el);
 	    demo.addItems (new_items);
 	};
 
@@ -213,7 +247,7 @@ flickrDemo.prototype = {
 	for (var i = 0; i < items.length; i ++) {
 	    var rssitem = items[i];
 
-	    var div = flickrItemTemplate.cloneNode (true);
+	    var div = document.getElementById ("flickrItemTemplate").cloneNode (true);
 	    _addUtilMethods (div);
 
 	    div.background = div.getElementById ("flickrItemBackground");
@@ -234,9 +268,9 @@ flickrDemo.prototype = {
 	    div.style.display = "block";
 
 	    if (i == 0)
-		flickrDiv.insertBefore (div, flickrDiv.firstChild);
+		this._demoDiv.insertBefore (div, this._demoDiv.firstChild);
 	    else
-		flickrDiv.insertBefore (div, last.nextSibling);
+		this._demoDiv.insertBefore (div, last.nextSibling);
 
 	    last = div;
 
@@ -295,6 +329,7 @@ function RSS2Channel(rssxml)
     }
 }
 
+
 function RSS2Item(itemxml)
 {
     for (var p = itemxml.firstChild; p != null; p = p.nextSibling) {
@@ -342,6 +377,7 @@ function RSS2Item(itemxml)
     }
 }
 
+
 function RSS2Image(imgElement)
 {
     if (imgElement == null) {
@@ -357,6 +393,7 @@ function RSS2Image(imgElement)
 		this[imgAttribs[i]] = imgElement.getAttribute (imgAttribs[i]);
     }
 }
+
 
 function RSS2ChannelImage(imgElement)
 {
@@ -392,7 +429,6 @@ function MoveTopAnimation (el, duration, to) {
     this.duration = duration;
     this.el = el;
 }
-
 MoveTopAnimation.prototype = {
     updateProgress: function (progress) {
 	var v = this.from_top + this.delta_top * progress;
@@ -406,6 +442,7 @@ function RGB2HTML(red, green, blue)
     var decColor = red + 256 * green + 65536 * blue;
     return decColor.toString(16);
 }
+
 
 function NotNewColorAnimation (el, duration) {
 
@@ -424,7 +461,6 @@ function NotNewColorAnimation (el, duration) {
     this.duration = duration;
     this.el = el;
 }
-
 NotNewColorAnimation.prototype = {
     updateProgress: function (progress) {
 	var r = Math.floor (this.from_red + this.delta_red * progress);
@@ -435,22 +471,22 @@ NotNewColorAnimation.prototype = {
     }
 }
 
+
 function FadeOutAnimation (el, duration) {
     this.duration = duration;
     this.el = el;
 }
-
 FadeOutAnimation.prototype = {
     updateProgress: function (progress) {
 	this.el.style.opacity = 1.0 - progress;
     }
 }
 
+
 function FadeInAnimation (el, duration) {
     this.duration = duration;
     this.el = el;
 }
-
 FadeInAnimation.prototype = {
     updateProgress: function (progress) {
 	this.el.style.opacity = progress;
@@ -458,30 +494,16 @@ FadeInAnimation.prototype = {
 }
 
 
-function updateFlickrUrl ()
-{
-    url = flickrUrl.value;
-    if (url) {
-        flickrUrl.flickr.url = url;
-    }
+/* Called from url input and Go button, on submit/click */
+function updateFlickrUrl (item) {
+    var flickr = item.flickr;
+    flickr.updateFromUrlInput ();
 }
 
-var default_url = "http://api.flickr.com/services/feeds/photos_public.gne?tags=hdr&lang=en-us&format=rss_200";
 
-var flickr = new flickrDemo (default_url);
-
-flickrFrame = CompzillaFrame (flickrWindow);
-flickrFrame.flickr = flickr;
-
-flickrUrl.value = default_url;
-flickrUrl.flickr = flickr;
-
-flickrFrame.title = "Flickr Feed";
-flickrFrame.moveResize (10, 10, 210, 550);
-flickrFrame.show ();
-flickrFrame.allowClose =
-flickrFrame.allowMinimize =
-flickrFrame.allowMaximize = false;
-
-windowStack.stackWindow (flickrFrame);
-
+window.addEventListener ("load", { 
+        handleEvent: function () {
+	    new flickrDemo (flickrDefaultUrl);
+	},
+    },
+    false);
