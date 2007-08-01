@@ -34,6 +34,8 @@
         <div id="flickrItemTemplate" class="flickrItem">
             <div id="flickrItemBackground"></div>
 
+            <a href="http://www.tux.org">
+
             <div id="infoContainer">
                 <span id="title"></span>
                 <br/>
@@ -43,6 +45,8 @@
             <div id="imageContainer">
                 <img id="thumbnail"/>
             </div>
+
+            </a>
         </div>
 
     </html:body>

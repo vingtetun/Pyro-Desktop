@@ -5,12 +5,13 @@
 
 <window id="desktopWindow"
         xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
-	xmlns:html="http://www.w3.org/1999/xhtml"
+        xmlns:html="http://www.w3.org/1999/xhtml"
         xmlns:pyro="http://www.pyrodesktop.org/compzilla"
         xmlns:xul="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
-	title="compzilla"
-	onload="compzillaLoad()" 
-	width="640" height="480">
+        title="compzilla"
+        hidechrome="true"
+        windowtype="navigator:desktop"
+        onload="compzillaLoad()">
 
     <html:body id="desktop" xmlns="http://www.w3.org/1999/xhtml" flex="1">
 

@@ -1,3 +1,17 @@
+2007-08-01  Alex Graveley  <alex@beatniksoftware.com>
+
+	* compzilla/chrome/content/flickrdemo.xul: Add a simple <a> so we
+	can test nested browser opening.
+
+	* compzilla/chrome/content/start.xul: set hidechrome=true,
+	windowtype="navigator:desktop", and drop width/height.  This is
+	just cleanup, and maybe seems to help speed on Minefield for me.
+
+	* compzilla/chrome/content/start.js: Add compzillaInitContent
+	which sets the default content listener to the new
+	_compzillaContentListener which denies all requests to navigate
+	away from the desktop.
+
 2007-07-31  Alex Graveley  <alex@beatniksoftware.com>
 
 	Include <nsIDOMClassInfo.h> everywhere so we build with latest

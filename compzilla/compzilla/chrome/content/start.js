@@ -6,6 +6,60 @@ var svc = Components.classes['@pyrodesktop.org/compzillaService'].getService(
 var _clientList = new Array ();
 
 
+// NOTE: This needs to be global because setting parentContentListener does not
+//       take a reference.
+var _compzillaContentListener = {
+    onStartURIOpen: function(aURI) {
+	return false;
+    },
+
+    doContent: function(aContentType, aIsContentPreferred, aRequest, aContentHandler) {
+	throw Components.results.NS_ERROR_UNEXPECTED;
+    },
+
+    isPreferred: function(aContentType, aDesiredContentType) {
+	return false;
+    },
+
+    canHandleContent: function(aContentType, aIsContentPreferred, aDesiredContentType) {
+	return false;
+    },
+
+    loadCookie: null,
+    parentContentListener: null,
+
+    QueryInterface: function (aIID) {
+	if (aIID.equals(Components.interfaces.nsIURIContentListener) ||
+	    aIID.equals(Components.interfaces.nsISupportsWeakReference) ||
+	    aIID.equals(Components.interfaces.nsISupports))
+	    return this;
+	Components.returnCode = Components.results.NS_ERROR_NO_INTERFACE;
+	return null;
+    }
+};
+
+
+function compzillaInitContent ()
+{
+    var webNav = window.QueryInterface(Components.interfaces.nsIInterfaceRequestor)
+	.getInterface(Components.interfaces.nsIWebNavigation);
+
+    var docShell = webNav.QueryInterface(Components.interfaces.nsIDocShell);
+    docShell.useErrorPages = false;
+    docShell.allowPlugins = true;
+    docShell.allowJavascript = true;
+    docShell.allowMetaRedirects = false;
+    docShell.allowSubframes = false;
+    docShell.allowAuth = false;
+
+    // Deny all requests for new content by default, so the user's desktop won't
+    // be replaced when clicking a link!
+    var contentListener = webNav.QueryInterface(Components.interfaces.nsIInterfaceRequestor)
+	.getInterface(Components.interfaces.nsIURIContentListener);
+    contentListener.parentContentListener = _compzillaContentListener;
+}
+
+
 function compzillaLoad()
 {
     // FIXME: This doesn't work yet.
@@ -15,6 +69,9 @@ function compzillaLoad()
     var xulwin = $("#desktopWindow")[0];
     xulwin.width = screen.width;
     xulwin.height = screen.height;
+
+    // Set defaults for the main docShell and contentListener
+    compzillaInitContent ();
 
     initDebugWindow ();
 
