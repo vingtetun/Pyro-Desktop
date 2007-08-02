@@ -891,7 +891,7 @@ compzillaControl::PrintEvent (XEvent *x11_event)
               x11_event->xclient.format);
         break;
     case CreateNotify:
-        SPEW ("CreateNotify: window=0x%0x, parent=%p, x=%d, y=%d, width=%d, height=%d, "
+        SPEW ("CreateNotify: window=0x%0x, parent=0x%0x, x=%d, y=%d, width=%d, height=%d, "
               "override=%d\n",
                x11_event->xcreatewindow.window,
                x11_event->xcreatewindow.parent,
@@ -902,13 +902,13 @@ compzillaControl::PrintEvent (XEvent *x11_event)
                x11_event->xcreatewindow.override_redirect);
         break;
     case DestroyNotify:
-        SPEW ("DestroyNotify: event_win=%p, window=%p\n", 
+        SPEW ("DestroyNotify: event_win=0x%0x, window=0x%0x\n", 
               x11_event->xdestroywindow.event,
               x11_event->xdestroywindow.window);
         break;
     case ConfigureNotify:
-        SPEW ("ConfigureNotify: window=%p, x=%d, y=%d, width=%d, height=%d, "
-              "border=%d, above=%p, override=%d\n",
+        SPEW ("ConfigureNotify: window=0x%0x, x=%d, y=%d, width=%d, height=%d, "
+              "border=%d, above=0x%0x, override=%d\n",
               x11_event->xconfigure.window,
               x11_event->xconfigure.x,
               x11_event->xconfigure.y,
@@ -919,8 +919,8 @@ compzillaControl::PrintEvent (XEvent *x11_event)
               x11_event->xconfigure.override_redirect);
         break;
     case ConfigureRequest:
-        SPEW ("ConfigureRequest: window=%p, parent=%p, x=%d, y=%d, width=%d, height=%d, "
-              "border=%d, above=%p\n",
+        SPEW ("ConfigureRequest: window=0x%0x, parent=0x%0x, x=%d, y=%d, width=%d, height=%d, "
+              "border=%d, above=0x%0x\n",
               x11_event->xconfigurerequest.window,
               x11_event->xconfigurerequest.parent,
               x11_event->xconfigurerequest.x,
@@ -931,7 +931,7 @@ compzillaControl::PrintEvent (XEvent *x11_event)
               x11_event->xconfigurerequest.above);
         break;
     case ReparentNotify:
-        SPEW ("ReparentNotify: window=%p, parent=%p, x=%d, y=%d, override_redirect=%d\n",
+        SPEW ("ReparentNotify: window=0x%0x, parent=0x%0x, x=%d, y=%d, override_redirect=%d\n",
               x11_event->xreparent.window,
               x11_event->xreparent.parent,
               x11_event->xreparent.x,
@@ -939,18 +939,18 @@ compzillaControl::PrintEvent (XEvent *x11_event)
               x11_event->xreparent.override_redirect);
         break;
     case MapRequest:
-        SPEW ("MapRequest: window=%p, parent=%p\n",
+        SPEW ("MapRequest: window=0x%0x, parent=0x%0x\n",
               x11_event->xmaprequest.window,
               x11_event->xmaprequest.parent);
         break;
     case MapNotify:
-        SPEW ("MapNotify: eventwin=%p, window=%p, override=%d\n", 
+        SPEW ("MapNotify: eventwin=0x%0x, window=0x%0x, override=%d\n", 
               x11_event->xmap.event, 
               x11_event->xmap.window, 
               x11_event->xmap.override_redirect);
         break;
     case UnmapNotify:
-        SPEW ("UnmapNotify: eventwin=%p, window=%p, from_configure=%d\n", 
+        SPEW ("UnmapNotify: eventwin=0x%0x, window=0x%0x, from_configure=%d\n", 
               x11_event->xunmap.event,
               x11_event->xunmap.window,
               x11_event->xunmap.from_configure);
@@ -972,7 +972,7 @@ compzillaControl::PrintEvent (XEvent *x11_event)
         break;
     case ButtonPress:
     case ButtonRelease:
-        SPEW ("%s: window=%p, subwindow=%s, x=%d, y=%d, x_root=%d, y_root=%d, "
+        SPEW ("%s: window=0x%0x, subwindow=0x%0x, x=%d, y=%d, x_root=%d, y_root=%d, "
               "state=%d, button=%d\n", 
               x11_event->xbutton.type == ButtonPress ? "ButtonPress" : "ButtonRelease", 
               x11_event->xbutton.window, 
@@ -1014,19 +1014,19 @@ compzillaControl::PrintEvent (XEvent *x11_event)
               x11_event->xcrossing.state);
         break;    
     case Expose:
-        SPEW ("Expose: window=%p, count=%d\n", 
+        SPEW ("Expose: window=0x%0x, count=%d\n", 
               x11_event->xexpose.window,
               x11_event->xexpose.count);
         break;
     case VisibilityNotify:
-        SPEW ("VisibilityNotify: window=%p, state=%d\n", 
+        SPEW ("VisibilityNotify: window=0x%0x, state=%d\n", 
               x11_event->xvisibility.window,
               x11_event->xvisibility.state);
         break;
     default:
         if (x11_event->type == damage_event + XDamageNotify) {
             XDamageNotifyEvent *damage_ev = (XDamageNotifyEvent *) x11_event;
-            SPEW_EVENT ("DAMAGE: drawable=%p, x=%d, y=%d, width=%d, height=%d\n", 
+            SPEW_EVENT ("DAMAGE: drawable=0x%0x, x=%d, y=%d, width=%d, height=%d\n", 
                         damage_ev->drawable, damage_ev->area.x, damage_ev->area.y, 
                         damage_ev->area.width, damage_ev->area.height);
         }
@@ -1034,19 +1034,24 @@ compzillaControl::PrintEvent (XEvent *x11_event)
             XFixesCursorNotifyEvent *cursor_ev = (XFixesCursorNotifyEvent *) x11_event;
             const char *cursor_val = gdk_x11_get_xatom_name (cursor_ev->cursor_name);
 
-            SPEW ("CursorNotify: window=%p, cursor='%s'\n", cursor_ev->window, cursor_val);
+            SPEW ("CursorNotify: window=0x%0x, cursor='%s'\n", 
+                  cursor_ev->window, 
+                  cursor_val);
         }
         else if (x11_event->type == shape_event + ShapeNotify) {
             XShapeEvent *shape_ev = (XShapeEvent *) x11_event;
 
-            SPEW ("ShapeNotify: window=%p, kind=%s, shaped=%s, x=%d, y=%d, width=%d, height=%d\n",
+            SPEW ("ShapeNotify: window=0x%0x, kind=%s, shaped=%s, x=%d, y=%d, "
+                  "width=%d, height=%d\n",
                   shape_ev->window,
                   shape_ev->kind == ShapeBounding ? "bounding" : "clip",
                   shape_ev->shaped ? "TRUE" : "FALSE",
                   shape_ev->x, shape_ev->y, shape_ev->width, shape_ev->height);
         }
         else {
-            ERROR ("Unhandled window event %d\n", x11_event->type);
+            ERROR ("Unhandled window event %d on 0x%0x\n", 
+                   x11_event->type, 
+                   x11_event->xany.window);
         }
         break;
     }
@@ -1063,7 +1068,7 @@ compzillaControl::Filter (GdkXEvent *xevent, GdkEvent *event)
     if (x11_event->xany.window == GDK_DRAWABLE_XID (this->mMainwin) &&
         x11_event->xany.type != _FocusIn && 
         x11_event->xany.type != _FocusOut) {
-        ERROR ("IGNORING MAINWIN EVENT TYPE: %d", x11_event->xany.type);
+        ERROR ("IGNORING MAIN WINDOW EVENT TYPE: %d", x11_event->xany.type);
         return GDK_FILTER_CONTINUE;
     }
 
