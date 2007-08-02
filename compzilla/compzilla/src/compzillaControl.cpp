@@ -7,10 +7,8 @@
 #include <nsIBaseWindow.h>
 #include <nsIDocShell.h>
 #include <nsIDOMClassInfo.h>
-#include <nsIScriptGlobalObject.h>
-#ifndef MOZILLA_1_8_BRANCH
-#include <nsPIDOMWindow.h>
-#endif
+#include <nsIInterfaceRequestorUtils.h>
+#include <nsIWebNavigation.h>
 #include <nsIWidget.h>
 
 #include "compzillaControl.h"
@@ -334,16 +332,12 @@ compzillaControl::gdk_filter_func (GdkXEvent *xevent, GdkEvent *event, gpointer 
 nsresult
 compzillaControl::GetNativeWidget(nsIDOMWindow *window, nsIWidget **widget)
 {
-#ifdef MOZILLA_1_8_BRANCH
-    nsCOMPtr<nsIScriptGlobalObject> global = do_QueryInterface(window);
-#else
-    nsCOMPtr<nsPIDOMWindow> global = do_QueryInterface(window);
-#endif
+    nsCOMPtr<nsIWebNavigation> webNav = do_GetInterface (window);
+    if (webNav) {
+        nsCOMPtr<nsIBaseWindow> baseWin = do_QueryInterface (webNav);
 
-    if (global) {
-        nsCOMPtr<nsIBaseWindow> baseWin = do_QueryInterface(global->GetDocShell());
         if (baseWin) {
-            baseWin->GetMainWidget(widget);
+            baseWin->GetMainWidget (widget);
             return NS_OK;
         }
     }

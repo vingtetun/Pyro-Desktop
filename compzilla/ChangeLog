@@ -1,5 +1,11 @@
 2007-08-01  Alex Graveley  <alex@beatniksoftware.com>
 
+	* compzilla/src/compzillaControl.cpp (GetNativeWidget): Don't use
+	nsIScriptGlobalObject/nsPIDOMWindow to get the docshell, use the
+	nsIWebNavigation instead.
+
+2007-08-01  Alex Graveley  <alex@beatniksoftware.com>
+
 	* compzilla/chrome/content/flickrdemo.xul: Add a simple <a> so we
 	can test nested browser opening.
 
