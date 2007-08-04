@@ -36,19 +36,8 @@ private:
     already_AddRefed<compzillaWindow> FindWindow (Window win);
 
     void AddWindow (Window win);
-    void DestroyWindow (Window win);
-    void MapWindow (Window win, bool override_redirect);
-    void UnmapWindow (Window win);
-    void ConfigureWindow (bool isNotify,
-                          Window win,
-                          PRInt32 x, PRInt32 y,
-                          PRInt32 width, PRInt32 height,
-                          PRInt32 border,
-                          Window aboveWin,
-                          bool override_redirect);
-    void PropertyChanged (Window win, Atom prop, bool deleted);
-    void DamageWindow (Window win, XRectangle *rect);
-    void ClientMessaged (Window win, Atom type, int format, long *data/*[5]*/);
+    void DestroyWindow (nsRefPtr<compzillaWindow> win, Window xwin);
+    void RootClientMessaged (Atom type, int format, long *data/*[5]*/);
 
     GdkWindow *GetNativeWindow(nsIDOMWindow *window);
     nsresult GetNativeWidget(nsIDOMWindow *window, nsIWidget **widget);
@@ -65,6 +54,8 @@ private:
     void EnableOverlayInput (bool receiveInput);
 
     void PrintEvent (XEvent *x11_event);
+    Window GetEventXWindow (XEvent *x11_event);
+
     GdkFilterReturn Filter (GdkXEvent *xevent, GdkEvent *event);
 
     static GdkFilterReturn gdk_filter_func (GdkXEvent *xevent, 
@@ -81,7 +72,7 @@ private:
     Display *mXDisplay;
     Window mXRoot;
 
-    GdkWindow *mMainwin;
+    Window mMainwin;
     Window mMainwinParent;
     Window mOverlay;
 

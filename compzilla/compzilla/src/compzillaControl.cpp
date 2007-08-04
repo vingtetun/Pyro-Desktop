@@ -63,9 +63,6 @@ compzillaControl::compzillaControl()
 
 compzillaControl::~compzillaControl()
 {
-    if (mMainwin) {
-        gdk_window_unref (mMainwin);
-    }
 }
 
 
@@ -352,12 +349,7 @@ compzillaControl::GetNativeWindow(nsIDOMWindow *window)
     nsCOMPtr<nsIWidget> widget;
 
     if (NS_OK == GetNativeWidget (window, getter_AddRefs (widget))) {
-        GdkWindow *iframe = (GdkWindow *)widget->GetNativeData (NS_NATIVE_WINDOW);
-        GdkWindow *toplevel = gdk_window_get_toplevel (iframe);
-
-        SPEW ("GetNativeWindow: toplevel=0x%0x, iframe=0x%0x\n", 
-              GDK_DRAWABLE_XID (toplevel), GDK_DRAWABLE_XID (iframe));
-        return toplevel;
+        return (GdkWindow *)widget->GetNativeData (NS_NATIVE_WINDOW);
     }
 
     WARNING ("Could not get GdkWindow for nsIDOMWindow %p\n", window);
@@ -456,8 +448,7 @@ compzillaControl::InitWindowState ()
                     &nchildren);
 
         for (int i = 0; i < nchildren; i++) {
-            if (children[i] != mOverlay
-                && children[i] != GDK_WINDOW_XID (mMainwin))
+            if (children[i] != mOverlay && children[i] != mMainwinParent)
             AddWindow (children[i]);
         }
 
@@ -581,17 +572,24 @@ compzillaControl::InitOverlay ()
         return NS_ERROR_FAILURE;
     }
 
-    mMainwin = GetNativeWindow (mDOMWindow);
-    if (!mMainwin) {
+    GdkWindow *mainwin = GetNativeWindow (mDOMWindow);
+    if (!mainwin) {
         ERROR ("failed to get native window\n");
         return NS_ERROR_FAILURE;
     }
 
-    gdk_window_ref (mMainwin);
-    gdk_window_set_override_redirect(mMainwin, true);
+    mMainwin = GDK_DRAWABLE_XID (mainwin);
+
+    gdk_window_set_override_redirect(mainwin, true);
+
+    GdkWindow *mainwinParent = gdk_window_get_toplevel (mainwin);
+    mMainwinParent = GDK_DRAWABLE_XID (mainwinParent);
+
+    SPEW ("InitOverlay: toplevel=0x%0x, iframe=0x%0x\n", 
+          mMainwinParent, mMainwin);
 
     // Put the our window into the overlay
-    XReparentWindow (mXDisplay, GDK_DRAWABLE_XID (mMainwin), mOverlay, 0, 0);
+    XReparentWindow (mXDisplay, mMainwinParent, mOverlay, 0, 0);
 
     ShowOverlay (true);
     EnableOverlayInput (true);
@@ -765,108 +763,36 @@ compzillaControl::AddWindow (Window win)
 
 
 void
-compzillaControl::DestroyWindow (Window win)
+compzillaControl::DestroyWindow (nsRefPtr<compzillaWindow> win, 
+                                 Window xwin)
 {
-    nsRefPtr<compzillaWindow> compwin = FindWindow (win);
-    if (compwin) {
-        compzillaIWindow *iwin = compwin;
+    if (win) {
+        compzillaIWindow *iwin = win;
 
         for (PRUint32 i = mObservers.Count() - 1; i != PRUint32(-1); --i) {
             nsCOMPtr<compzillaIControlObserver> observer = mObservers.ObjectAt(i);
             observer->WindowDestroy (iwin);
         }
 
-        compwin->Destroyed ();
-        mWindowMap.Remove (win);
+        win->Destroyed ();
     }
+
+    mWindowMap.Remove (xwin);
 }
 
 
 void
-compzillaControl::MapWindow (Window win, bool override_redirect)
+compzillaControl::RootClientMessaged (Atom type, int format, long *data/*[5]*/)
 {
-    nsRefPtr<compzillaWindow> compwin = FindWindow (win);
-    if (compwin) {
-        compwin->Mapped (override_redirect);
-    }
-}
-
-
-void
-compzillaControl::UnmapWindow (Window win)
-{
-    nsRefPtr<compzillaWindow> compwin = FindWindow (win);
-    if (compwin) {
-        compwin->Unmapped ();
-    }
-}
-
-
-void 
-compzillaControl::ConfigureWindow (bool isNotify,
-                                   Window win,
-                                   PRInt32 x, PRInt32 y,
-                                   PRInt32 width, PRInt32 height,
-                                   PRInt32 border,
-                                   Window aboveWin,
-                                   bool override_redirect)
-{
-    nsRefPtr<compzillaWindow> compwin = FindWindow (win);
-    if (compwin) {
-        nsRefPtr<compzillaWindow> aboveCompWin = FindWindow (aboveWin);
-
-        compwin->Configured (isNotify,
-                             x, y,
-                             width, height,
-                             border,
-                             aboveCompWin,
-                             override_redirect);
-    } else if (!isNotify) {
-        // Window we are not monitoring, so send the configure.
-        Configure (win, x, y, width, height, border);
-    }
-}
-
-
-void
-compzillaControl::PropertyChanged (Window win, Atom prop, bool deleted)
-{
-    nsRefPtr<compzillaWindow> compwin = FindWindow (win);
-    if (compwin) {
-        compwin->PropertyChanged (prop, deleted);
-    }
-}
-
-
-void
-compzillaControl::DamageWindow (Window win, XRectangle *rect)
-{
-    nsRefPtr<compzillaWindow> compwin = FindWindow (win);
-    if (compwin) {
-        compwin->Damaged (rect);
-    }
-}
-
-
-void
-compzillaControl::ClientMessaged (Window win,
-                                  Atom type, int format, long *data/*[5]*/)
-{
-    nsRefPtr<compzillaWindow> compwin = FindWindow (win);
-    if (compwin) {
-        compwin->ClientMessaged (type, format, data);
-    }
-    else {
-        for (PRUint32 i = mObservers.Count() - 1; i != PRUint32(-1); --i) {
-            nsCOMPtr<compzillaIControlObserver> observer = mObservers.ObjectAt(i);
-            observer->RootClientMessageRecv ((long)type,
-                                             format,
-                                             data[0],
-                                             data[1],
-                                             data[2],
-                                             data[3],
-                                             data[4]);
-        }
+    for (PRUint32 i = mObservers.Count() - 1; i != PRUint32(-1); --i) {
+        nsCOMPtr<compzillaIControlObserver> observer = mObservers.ObjectAt(i);
+        observer->RootClientMessageRecv ((long)type,
+                                         format,
+                                         data[0],
+                                         data[1],
+                                         data[2],
+                                         data[3],
+                                         data[4]);
     }
 }
 
@@ -881,165 +807,165 @@ compzillaControl::FindWindow (Window win)
 
 
 void
-compzillaControl::PrintEvent (XEvent *x11_event)
+compzillaControl::PrintEvent (XEvent *xev)
 {
-    switch (x11_event->type) {
+    switch (xev->type) {
     case ClientMessage:
         SPEW ("ClientMessage: window=0x%0x, type=%s, format=%d\n",
-              x11_event->xclient.window,
-              XGetAtomName (mXDisplay, x11_event->xclient.message_type),
-              x11_event->xclient.format);
+              xev->xclient.window,
+              XGetAtomName (mXDisplay, xev->xclient.message_type),
+              xev->xclient.format);
         break;
     case CreateNotify:
         SPEW ("CreateNotify: window=0x%0x, parent=0x%0x, x=%d, y=%d, width=%d, height=%d, "
               "override=%d\n",
-               x11_event->xcreatewindow.window,
-               x11_event->xcreatewindow.parent,
-               x11_event->xcreatewindow.x,
-               x11_event->xcreatewindow.y,
-               x11_event->xcreatewindow.width,
-               x11_event->xcreatewindow.height,
-               x11_event->xcreatewindow.override_redirect);
+               xev->xcreatewindow.window,
+               xev->xcreatewindow.parent,
+               xev->xcreatewindow.x,
+               xev->xcreatewindow.y,
+               xev->xcreatewindow.width,
+               xev->xcreatewindow.height,
+               xev->xcreatewindow.override_redirect);
         break;
     case DestroyNotify:
         SPEW ("DestroyNotify: event_win=0x%0x, window=0x%0x\n", 
-              x11_event->xdestroywindow.event,
-              x11_event->xdestroywindow.window);
+              xev->xdestroywindow.event,
+              xev->xdestroywindow.window);
         break;
     case ConfigureNotify:
         SPEW ("ConfigureNotify: window=0x%0x, x=%d, y=%d, width=%d, height=%d, "
               "border=%d, above=0x%0x, override=%d\n",
-              x11_event->xconfigure.window,
-              x11_event->xconfigure.x,
-              x11_event->xconfigure.y,
-              x11_event->xconfigure.width,
-              x11_event->xconfigure.height,
-              x11_event->xconfigure.border_width,
-              x11_event->xconfigure.above,
-              x11_event->xconfigure.override_redirect);
+              xev->xconfigure.window,
+              xev->xconfigure.x,
+              xev->xconfigure.y,
+              xev->xconfigure.width,
+              xev->xconfigure.height,
+              xev->xconfigure.border_width,
+              xev->xconfigure.above,
+              xev->xconfigure.override_redirect);
         break;
     case ConfigureRequest:
         SPEW ("ConfigureRequest: window=0x%0x, parent=0x%0x, x=%d, y=%d, width=%d, height=%d, "
               "border=%d, above=0x%0x\n",
-              x11_event->xconfigurerequest.window,
-              x11_event->xconfigurerequest.parent,
-              x11_event->xconfigurerequest.x,
-              x11_event->xconfigurerequest.y,
-              x11_event->xconfigurerequest.width,
-              x11_event->xconfigurerequest.height,
-              x11_event->xconfigurerequest.border_width,
-              x11_event->xconfigurerequest.above);
+              xev->xconfigurerequest.window,
+              xev->xconfigurerequest.parent,
+              xev->xconfigurerequest.x,
+              xev->xconfigurerequest.y,
+              xev->xconfigurerequest.width,
+              xev->xconfigurerequest.height,
+              xev->xconfigurerequest.border_width,
+              xev->xconfigurerequest.above);
         break;
     case ReparentNotify:
         SPEW ("ReparentNotify: window=0x%0x, parent=0x%0x, x=%d, y=%d, override_redirect=%d\n",
-              x11_event->xreparent.window,
-              x11_event->xreparent.parent,
-              x11_event->xreparent.x,
-              x11_event->xreparent.y,
-              x11_event->xreparent.override_redirect);
+              xev->xreparent.window,
+              xev->xreparent.parent,
+              xev->xreparent.x,
+              xev->xreparent.y,
+              xev->xreparent.override_redirect);
         break;
     case MapRequest:
         SPEW ("MapRequest: window=0x%0x, parent=0x%0x\n",
-              x11_event->xmaprequest.window,
-              x11_event->xmaprequest.parent);
+              xev->xmaprequest.window,
+              xev->xmaprequest.parent);
         break;
     case MapNotify:
         SPEW ("MapNotify: eventwin=0x%0x, window=0x%0x, override=%d\n", 
-              x11_event->xmap.event, 
-              x11_event->xmap.window, 
-              x11_event->xmap.override_redirect);
+              xev->xmap.event, 
+              xev->xmap.window, 
+              xev->xmap.override_redirect);
         break;
     case UnmapNotify:
         SPEW ("UnmapNotify: eventwin=0x%0x, window=0x%0x, from_configure=%d\n", 
-              x11_event->xunmap.event,
-              x11_event->xunmap.window,
-              x11_event->xunmap.from_configure);
+              xev->xunmap.event,
+              xev->xunmap.window,
+              xev->xunmap.from_configure);
         break;
     case PropertyNotify:
 #if DEBUG_EVENTS // Too much noise
         SPEW ("PropertyChange: window=0x%0x, atom=%s\n", 
-              x11_event->xproperty.window, 
-              XGetAtomName(x11_event->xany.display, x11_event->xproperty.atom));
+              xev->xproperty.window, 
+              XGetAtomName(xev->xany.display, xev->xproperty.atom));
 #endif
         break;
     case _KeyPress:
     case KeyRelease:
         SPEW ("%s: window=0x%0x, subwindow=0x%0x, x=%d, y=%d, state=%d, keycode=%d\n", 
-              x11_event->xkey.type == _KeyPress ? "KeyPress" : "KeyRelease",
-              x11_event->xkey.window, 
-              x11_event->xkey.subwindow, 
-              x11_event->xkey.state, x11_event->xkey.keycode);
+              xev->xkey.type == _KeyPress ? "KeyPress" : "KeyRelease",
+              xev->xkey.window, 
+              xev->xkey.subwindow, 
+              xev->xkey.state, xev->xkey.keycode);
         break;
     case ButtonPress:
     case ButtonRelease:
         SPEW ("%s: window=0x%0x, subwindow=0x%0x, x=%d, y=%d, x_root=%d, y_root=%d, "
               "state=%d, button=%d\n", 
-              x11_event->xbutton.type == ButtonPress ? "ButtonPress" : "ButtonRelease", 
-              x11_event->xbutton.window, 
-              x11_event->xbutton.subwindow, 
-              x11_event->xbutton.x, 
-              x11_event->xbutton.y,
-              x11_event->xbutton.x_root, 
-              x11_event->xbutton.y_root,
-              x11_event->xbutton.state,
-              x11_event->xbutton.button);
+              xev->xbutton.type == ButtonPress ? "ButtonPress" : "ButtonRelease", 
+              xev->xbutton.window, 
+              xev->xbutton.subwindow, 
+              xev->xbutton.x, 
+              xev->xbutton.y,
+              xev->xbutton.x_root, 
+              xev->xbutton.y_root,
+              xev->xbutton.state,
+              xev->xbutton.button);
         break;
     case MotionNotify:
 #if DEBUG_EVENTS // Too much noise
         SPEW ("MotionNotify: window=0x%0x, x=%d, y=%d, state=%d\n", 
-              x11_event->xmotion.window, x11_event->xmotion.x, x11_event->xmotion.y, 
-              x11_event->xmotion.state);
+              xev->xmotion.window, xev->xmotion.x, xev->xmotion.y, 
+              xev->xmotion.state);
 #endif
         break;
     case _FocusIn:
     case _FocusOut:
         SPEW ("%s: %s window=0x%0x, mode=%d, detail=%d\n", 
-              x11_event->xfocus.type == _FocusIn ? "FocusIn" : "FocusOut",
-              x11_event->xfocus.send_event ? "(SYNTHETIC)" : "REAL",
-              x11_event->xfocus.window, 
-              x11_event->xfocus.mode, 
-              x11_event->xfocus.detail);
+              xev->xfocus.type == _FocusIn ? "FocusIn" : "FocusOut",
+              xev->xfocus.send_event ? "(SYNTHETIC)" : "REAL",
+              xev->xfocus.window, 
+              xev->xfocus.mode, 
+              xev->xfocus.detail);
         break;
     case EnterNotify:
     case LeaveNotify:
         SPEW ("%s: %s window=0x%0x, subwindow=0x%0x, mode=%d, detail=%d, focus=%s, "
               "state=%d\n", 
-              x11_event->xcrossing.type == EnterNotify ? "EnterNotify" : "LeaveNotify",
-              x11_event->xcrossing.send_event ? "(SYNTHETIC)" : "REAL",
-              x11_event->xcrossing.window, 
-              x11_event->xcrossing.subwindow, 
-              x11_event->xcrossing.mode, 
-              x11_event->xcrossing.detail,
-              x11_event->xcrossing.focus ? "TRUE" : "FALSE",
-              x11_event->xcrossing.state);
+              xev->xcrossing.type == EnterNotify ? "EnterNotify" : "LeaveNotify",
+              xev->xcrossing.send_event ? "(SYNTHETIC)" : "REAL",
+              xev->xcrossing.window, 
+              xev->xcrossing.subwindow, 
+              xev->xcrossing.mode, 
+              xev->xcrossing.detail,
+              xev->xcrossing.focus ? "TRUE" : "FALSE",
+              xev->xcrossing.state);
         break;    
     case Expose:
         SPEW ("Expose: window=0x%0x, count=%d\n", 
-              x11_event->xexpose.window,
-              x11_event->xexpose.count);
+              xev->xexpose.window,
+              xev->xexpose.count);
         break;
     case VisibilityNotify:
         SPEW ("VisibilityNotify: window=0x%0x, state=%d\n", 
-              x11_event->xvisibility.window,
-              x11_event->xvisibility.state);
+              xev->xvisibility.window,
+              xev->xvisibility.state);
         break;
     default:
-        if (x11_event->type == damage_event + XDamageNotify) {
-            XDamageNotifyEvent *damage_ev = (XDamageNotifyEvent *) x11_event;
+        if (xev->type == damage_event + XDamageNotify) {
+            XDamageNotifyEvent *damage_ev = (XDamageNotifyEvent *) xev;
             SPEW_EVENT ("DAMAGE: drawable=0x%0x, x=%d, y=%d, width=%d, height=%d\n", 
                         damage_ev->drawable, damage_ev->area.x, damage_ev->area.y, 
                         damage_ev->area.width, damage_ev->area.height);
         }
-        else if (x11_event->type == xfixes_event + XFixesCursorNotify) {
-            XFixesCursorNotifyEvent *cursor_ev = (XFixesCursorNotifyEvent *) x11_event;
+        else if (xev->type == xfixes_event + XFixesCursorNotify) {
+            XFixesCursorNotifyEvent *cursor_ev = (XFixesCursorNotifyEvent *) xev;
             const char *cursor_val = gdk_x11_get_xatom_name (cursor_ev->cursor_name);
 
             SPEW ("CursorNotify: window=0x%0x, cursor='%s'\n", 
                   cursor_ev->window, 
                   cursor_val);
         }
-        else if (x11_event->type == shape_event + ShapeNotify) {
-            XShapeEvent *shape_ev = (XShapeEvent *) x11_event;
+        else if (xev->type == shape_event + ShapeNotify) {
+            XShapeEvent *shape_ev = (XShapeEvent *) xev;
 
             SPEW ("ShapeNotify: window=0x%0x, kind=%s, shaped=%s, x=%d, y=%d, "
                   "width=%d, height=%d\n",
@@ -1050,229 +976,271 @@ compzillaControl::PrintEvent (XEvent *x11_event)
         }
         else {
             ERROR ("Unhandled window event %d on 0x%0x\n", 
-                   x11_event->type, 
-                   x11_event->xany.window);
+                   xev->type, 
+                   xev->xany.window);
         }
         break;
     }
 }
 
 
+Window 
+compzillaControl::GetEventXWindow (XEvent *xev)
+{
+    switch (xev->type) {
+    case ClientMessage:
+        return xev->xclient.window;
+    case CreateNotify:
+        return xev->xcreatewindow.window;
+    case DestroyNotify:
+        return xev->xdestroywindow.window;
+    case ConfigureNotify:
+        return xev->xconfigure.window;
+    case ConfigureRequest:
+        return xev->xconfigurerequest.window;
+    case ReparentNotify:
+        return xev->xreparent.window;
+    case MapRequest:
+        return xev->xmaprequest.window;
+    case MapNotify:
+        return xev->xmap.window;
+    case UnmapNotify:
+        return xev->xunmap.window;
+    case PropertyNotify:
+        return xev->xproperty.window;
+    case _FocusIn:
+    case _FocusOut:
+        return xev->xfocus.window;
+    default:
+        if (xev->type == damage_event + XDamageNotify) {
+            XDamageNotifyEvent *damage_ev = (XDamageNotifyEvent *) xev;
+            return damage_ev->drawable;
+        }
+        else if (xev->type == xfixes_event + XFixesCursorNotify) {
+            XFixesCursorNotifyEvent *cursor_ev = (XFixesCursorNotifyEvent *) xev;
+            return cursor_ev->window;
+        }
+        else if (xev->type == shape_event + ShapeNotify) {
+            XShapeEvent *shape_ev = (XShapeEvent *) xev;
+            return shape_ev->window;
+        }
+    }
+
+    return None;
+}
+
+
 GdkFilterReturn
 compzillaControl::Filter (GdkXEvent *xevent, GdkEvent *event)
 {
-    XEvent *x11_event = (XEvent*) xevent;
+    XEvent *xev = (XEvent*) xevent;
 
-    PrintEvent (x11_event);
-
-    if (x11_event->xany.window == GDK_DRAWABLE_XID (this->mMainwin) &&
-        x11_event->xany.type != _FocusIn && 
-        x11_event->xany.type != _FocusOut) {
-        ERROR ("IGNORING MAIN WINDOW EVENT TYPE: %d", x11_event->xany.type);
+    if (xev->type == Expose || xev->type == VisibilityNotify) {
         return GDK_FILTER_CONTINUE;
     }
 
-    if (x11_event->xany.window == mManagerWindow) {
-        ERROR ("Ignoring event on window manager internal: %p\n", mManagerWindow);
-        return GDK_FILTER_REMOVE;
-    }
-    else if (x11_event->xany.window == mOverlay) {
-        ERROR ("Ignoring event on overlay window: %p\n", mOverlay);
-        return GDK_FILTER_REMOVE;
-    }                                                                    
-    else if (x11_event->xany.window == mMainwinParent) {
-        ERROR ("Ignoring event on main window parent: %p\n", mMainwinParent);
-        return GDK_FILTER_REMOVE;
-    }                                                                    
+    PrintEvent (xev);
 
-    switch (x11_event->type) {
+    Window xwin = GetEventXWindow (xev);
+    nsRefPtr<compzillaWindow> win = FindWindow (xwin);
+
+    switch (xev->type) {
     case ClientMessage:
-        ClientMessaged (x11_event->xclient.window,
-                        x11_event->xclient.message_type,
-                        x11_event->xclient.format,
-                        x11_event->xclient.data.l);
-        return GDK_FILTER_REMOVE;
+        if (xwin == mXRoot) {
+            RootClientMessaged (xev->xclient.message_type,
+                                xev->xclient.format,
+                                xev->xclient.data.l);
+            return GDK_FILTER_REMOVE;
+        } else if (win) {
+            win->ClientMessaged (xev->xclient.message_type,
+                                 xev->xclient.format,
+                                 xev->xclient.data.l);
+            return GDK_FILTER_REMOVE;
+        }
+        break;
 
     case CreateNotify:
-        if (x11_event->xcreatewindow.window == GDK_DRAWABLE_XID (this->mMainwin)) {
+        if (xwin == mMainwin) {
             WARNING ("CreateNotify: discarding event on mainwin\n");
             return GDK_FILTER_REMOVE;
         }
 
-        if (x11_event->xcreatewindow.parent != mXRoot)
-            break;
-
-        if (!XCheckTypedWindowEvent (mXDisplay, 
-                                     x11_event->xcreatewindow.window,
-                                     DestroyNotify, 
-                                     x11_event) &&
-            !XCheckTypedWindowEvent (mXDisplay, 
-                                     x11_event->xcreatewindow.window,
-                                     ReparentNotify, 
-                                     x11_event)) {
-            AddWindow (x11_event->xcreatewindow.window);
+        if (xev->xcreatewindow.parent == mXRoot) {
+            if (win) {
+                ERROR ("CreateNotify: multiple create events for window id: 0x%0x\n", xwin);
+            } 
+            else if (!XCheckTypedWindowEvent (mXDisplay, xwin, DestroyNotify, xev) &&
+                !XCheckTypedWindowEvent (mXDisplay, xwin, ReparentNotify, xev)) {
+                AddWindow (xwin);
+            }
+            return GDK_FILTER_REMOVE;
         }
-
-        return GDK_FILTER_REMOVE;
+        break;
 
     case DestroyNotify:
-        DestroyWindow (x11_event->xdestroywindow.window);
-        return GDK_FILTER_REMOVE;
+        if (win) {
+            DestroyWindow (win, xwin);
+            return GDK_FILTER_REMOVE;
+        }
+        break;
 
     case ConfigureNotify:
+        if (win) {
 #if CLEAR_PENDING_X_EVENTS
-        while (XCheckTypedWindowEvent (mXDisplay, 
-                                       x11_event->xconfigure.window,
-                                       ConfigureNotify, 
-                                       x11_event)) {
-            // Do nothing
-        }
+            while (XCheckTypedWindowEvent (mXDisplay, xwin, ConfigureNotify, xev)) {
+                // Do nothing
+            }
 #endif
 
-        // This is driven by compzilla or from an override_redirect itself.
-        ConfigureWindow (true,
-                         x11_event->xconfigure.window,
-                         x11_event->xconfigure.x,
-                         x11_event->xconfigure.y,
-                         x11_event->xconfigure.width,
-                         x11_event->xconfigure.height,
-                         x11_event->xconfigure.border_width,
-                         x11_event->xconfigure.above,
-                         x11_event->xconfigure.override_redirect);
+            // This is driven by compzilla or from an override_redirect itself.
+            win->Configured (true,
+                             xev->xconfigure.x,
+                             xev->xconfigure.y,
+                             xev->xconfigure.width,
+                             xev->xconfigure.height,
+                             xev->xconfigure.border_width,
+                             NULL,
+                             xev->xconfigure.override_redirect);
+            return GDK_FILTER_REMOVE;
+        }
         break;
 
     case ConfigureRequest:
-        if (x11_event->xconfigurerequest.parent != mXRoot)
-            break;
+        if (xev->xconfigurerequest.parent == mXRoot) {
+            if (win) {
+                while (XCheckTypedWindowEvent (mXDisplay, xwin, ConfigureRequest, xev)) {
+                    // Do nothing
+                }
 
-        while (XCheckTypedWindowEvent (mXDisplay, 
-                                       x11_event->xconfigurerequest.window,
-                                       ConfigureRequest, 
-                                       x11_event)) {
-            // Do nothing
+                nsRefPtr<compzillaWindow> aboveWin;
+                if (xev->xconfigure.above != None)
+                    aboveWin = FindWindow (xev->xconfigure.above);
+
+                // This is driven by the X app, not compzilla.
+                win->Configured (false,
+                                 xev->xconfigurerequest.x,
+                                 xev->xconfigurerequest.y,
+                                 xev->xconfigurerequest.width,
+                                 xev->xconfigurerequest.height,
+                                 xev->xconfigurerequest.border_width,
+                                 aboveWin,
+                                 false);
+            } else {
+                // Window we are not monitoring, so allow the configure.
+                Configure (xwin, 
+                           xev->xconfigurerequest.x,
+                           xev->xconfigurerequest.y,
+                           xev->xconfigurerequest.width,
+                           xev->xconfigurerequest.height,
+                           xev->xconfigurerequest.border_width);
+            }
+            return GDK_FILTER_REMOVE;
         }
-
-        // This is driven by the X app, not compzilla.
-        ConfigureWindow (false,
-                         x11_event->xconfigurerequest.window,
-                         x11_event->xconfigurerequest.x,
-                         x11_event->xconfigurerequest.y,
-                         x11_event->xconfigurerequest.width,
-                         x11_event->xconfigurerequest.height,
-                         x11_event->xconfigurerequest.border_width,
-                         x11_event->xconfigurerequest.above,
-                         false);
-
-        return GDK_FILTER_REMOVE;
+        break;
 
     case ReparentNotify:
-        if (x11_event->xreparent.window == GDK_DRAWABLE_XID (this->mMainwin)) {
+        if (xwin == mMainwin) {
             // Keep the new parent so we can ignore events on it.
-            mMainwinParent = x11_event->xreparent.parent;
+            mMainwinParent = xev->xreparent.parent;
 
-            // Let the mainwin draw normally by unredirecting our new parent.
-            DestroyWindow (x11_event->xreparent.parent);
+            nsRefPtr<compzillaWindow> parent = FindWindow (xev->xreparent.parent);
+            if (parent) {
+                // Let the mainwin draw normally by unredirecting our new parent.
+                DestroyWindow (parent, xev->xreparent.parent);
+            }
 
             WARNING ("ReparentNotify: discarding event on mainwin\n");
             return GDK_FILTER_REMOVE;
         }
 
-        if (x11_event->xreparent.window == mMainwinParent) {
+        if (xwin == mMainwinParent) {
             WARNING ("ReparentNotify: discarding event on mainwin's parent\n");
             return GDK_FILTER_REMOVE;
         }
 
-        if (x11_event->xreparent.parent == mXRoot) {
-            nsRefPtr<compzillaWindow> toplevel = FindWindow (x11_event->xreparent.window);
-            if (toplevel) {
+        if (xev->xreparent.parent == mXRoot) {
+            if (win) {
                 ERROR ("Reparent of existing toplevel window\n");
             } else {
-                AddWindow (x11_event->xreparent.window);
+                AddWindow (xwin);
             }
-        } else {
-            Window goneWin = x11_event->xreparent.window;
-
+        } else if (win) {
             /* 
              * This is the only case where a window is removed but not
              * destroyed. We must remove our event mask and all passive
              * grabs.  -- compiz
              */
-            XSelectInput (mXDisplay, goneWin, NoEventMask);
-            XShapeSelectInput (mXDisplay, goneWin, NoEventMask);
-            XUngrabButton (mXDisplay, AnyButton, AnyModifier, goneWin);
+            XSelectInput (mXDisplay, xwin, NoEventMask);
+            XShapeSelectInput (mXDisplay, xwin, NoEventMask);
+            XUngrabButton (mXDisplay, AnyButton, AnyModifier, xwin);
 
-            DestroyWindow (goneWin);
+            DestroyWindow (win, xwin);
         }
-        
+
         return GDK_FILTER_REMOVE;
 
     case MapRequest:
-        if (x11_event->xmaprequest.parent != mXRoot)
-            break;
-
-        if (!XCheckTypedWindowEvent (mXDisplay, 
-                                     x11_event->xmaprequest.window,
-                                     UnmapNotify, 
-                                     x11_event)) {
-            XMapWindow (mXDisplay, x11_event->xmaprequest.window);
+        if (xev->xmaprequest.parent == mXRoot) {
+            if (!XCheckTypedWindowEvent (mXDisplay, xwin, UnmapNotify, xev)) {
+                XMapWindow (mXDisplay, xwin);
+            }
+            return GDK_FILTER_REMOVE;
         }
-        return GDK_FILTER_REMOVE;
+        break;
 
     case MapNotify:
-        if (!XCheckTypedWindowEvent (mXDisplay, 
-                                     x11_event->xmap.window,
-                                     UnmapNotify, 
-                                     x11_event)) {
-            MapWindow (x11_event->xmap.window, x11_event->xmap.override_redirect);
+        if (win) {
+            if (!XCheckTypedWindowEvent (mXDisplay, xwin, UnmapNotify, xev)) {
+                win->Mapped (xev->xmap.override_redirect);
+            }
+            return GDK_FILTER_REMOVE;
         }
-        return GDK_FILTER_REMOVE;
+        break;
 
     case UnmapNotify:
-        if (!XCheckTypedWindowEvent (mXDisplay, 
-                                     x11_event->xunmap.window,
-                                     MapNotify, 
-                                     x11_event)) {
-            UnmapWindow (x11_event->xunmap.window);
+        if (win) {
+            if (!XCheckTypedWindowEvent (mXDisplay, xwin, MapNotify, xev)) {
+                win->Unmapped ();
+            }
+            return GDK_FILTER_REMOVE;
         }
-        return GDK_FILTER_REMOVE;
+        break;
 
     case PropertyNotify:
-        PropertyChanged (x11_event->xproperty.window, 
-                         x11_event->xproperty.atom, 
-                         x11_event->xproperty.state == PropertyDelete);
+        if (win) {
+            win->PropertyChanged (xev->xproperty.atom, xev->xproperty.state == PropertyDelete);
+            return GDK_FILTER_REMOVE;
+        }
         break;
 
     case _FocusIn:
-        // On FocusIn of root window due to ungrab, start receiving input again
-        if (x11_event->xfocus.window == mXRoot &&
-            x11_event->xfocus.mode == NotifyUngrab) {
+        if (xwin == mXRoot && xev->xfocus.mode == NotifyUngrab) {
             SPEW ("FocusIn: focusing main window!\n");
             EnableOverlayInput (true);
+            return GDK_FILTER_REMOVE;
         }
         break;
 
     case _FocusOut:
-        // On FocusOut of Moz window due to grab, kill all input
-        if (x11_event->xfocus.window == GDK_DRAWABLE_XID (this->mMainwin) &&
-            x11_event->xfocus.mode == NotifyGrab) {
+        if ((xwin == mMainwin || xwin == mMainwinParent) &&
+            xev->xfocus.mode == NotifyGrab) {
             SPEW ("FocusOut: UNfocusing main window!\n");
             EnableOverlayInput (false);
+            return GDK_FILTER_REMOVE;
         }
         break;
 
     default:
-        if (x11_event->type == damage_event + XDamageNotify) {
-            XDamageNotifyEvent *damage_ev = (XDamageNotifyEvent *) x11_event;
+        if (win && xev->type == damage_event + XDamageNotify) {
+            XDamageNotifyEvent *damage_ev = (XDamageNotifyEvent *) xev;
 
             int cnt = 0;
             do {
-                DamageWindow (damage_ev->drawable, &damage_ev->area);
+                win->Damaged (&damage_ev->area);
                 cnt++;
             }
 #if CLEAR_PENDING_X_EVENTS
-            while (XCheckTypedEvent (mXDisplay, 
-                                     damage_event + XDamageNotify,
-                                     x11_event));
+            while (XCheckTypedEvent (mXDisplay, damage_event + XDamageNotify, xev));
 #else
             while (0);
 #endif
@@ -1283,13 +1251,18 @@ compzillaControl::Filter (GdkXEvent *xevent, GdkEvent *event)
 
             return GDK_FILTER_REMOVE;
         }
-        else if (x11_event->type == xfixes_event + XFixesCursorNotify) {
-            XFixesCursorNotifyEvent *cursor_ev = (XFixesCursorNotifyEvent *) x11_event;
+        else if (xev->type == xfixes_event + XFixesCursorNotify) {
+            XFixesCursorNotifyEvent *cursor_ev = (XFixesCursorNotifyEvent *) xev;
+
             NS_NOTYETIMPLEMENTED ("CursorNotify event");
+
             return GDK_FILTER_REMOVE;
         }
-        else if (x11_event->type == shape_event + ShapeNotify) {
+        else if (xev->type == shape_event + ShapeNotify) {
+            XShapeEvent *shape_ev = (XShapeEvent *) xev;
+
             NS_NOTYETIMPLEMENTED ("ShapeNotify event");
+
             return GDK_FILTER_REMOVE;
         }
         break;

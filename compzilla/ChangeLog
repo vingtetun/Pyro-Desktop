@@ -1,3 +1,11 @@
+2007-08-03  Alex Graveley  <alex@beatniksoftware.com>
+
+	* compzilla/src/compzillaControl.cpp: Clean this up, and remove
+	all the helper functions, calling compzillaWindow methods
+	directly.  Store the DOM window as an X window instead of
+	GdkWindow.
+	(GetEventXWindow): New, returns the window an X event operates on.
+
 2007-08-01  Alex Graveley  <alex@beatniksoftware.com>
 
 	* compzilla/src/compzillaControl.cpp (PrintEvent): Fix crash
