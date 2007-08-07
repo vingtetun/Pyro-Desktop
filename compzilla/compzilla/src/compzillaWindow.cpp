@@ -7,18 +7,17 @@
 #endif
 
 #include "compzillaWindow.h"
-#include "compzillaIRenderingContext.h"
 #include "compzillaRenderingContext.h"
 #include "Debug.h"
 #include "nsKeycodes.h"
 #include "XAtoms.h"
 
-#include <nsICanvasElement.h>
-#include <nsIDOMClassInfo.h>
+#include <nsICanvasElement.h>        // unstable
+#include <nsIDOMClassInfo.h>         // unstable
 #include <nsIDOMEventTarget.h>
-#include <nsIDOMHTMLCanvasElement.h>
+#include <nsIDOMHTMLCanvasElement.h> // unstable
 #include <nsComponentManagerUtils.h>
-#include <nsHashPropertyBag.h>
+#include <nsHashPropertyBag.h>       // unstable
 
 extern "C" {
 #include <stdio.h>
@@ -118,7 +117,9 @@ compzillaWindow::~compzillaWindow()
     SPEW ("~compzillaWindow %p, xid=%p\n", this, mWindow);
 
     Destroyed ();
-    UnredirectWindow ();
+
+    // FIXME: Do we need this?
+    //UnredirectWindow ();
 
     SPEW ("~compzillaWindow DONE\n");
 }

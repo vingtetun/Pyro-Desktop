@@ -1,19 +1,25 @@
 /* -*- mode: C++; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
 
+
+#ifndef compzillaWindow_h___
+#define compzillaWindow_h___
+
+
 #include <nsCOMPtr.h>
 #include <nsCOMArray.h>
 #include <nsIDOMDocument.h>
-#include <nsIDOMKeyEvent.h>
-#include <nsIDOMKeyListener.h>
+#include <nsIDOMKeyEvent.h>      // unstable
+#include <nsIDOMKeyListener.h>   // unstable
 #include <nsIDOMMouseEvent.h>
-#include <nsIDOMMouseListener.h>
-#include <nsIDOMUIListener.h>
+#include <nsIDOMMouseListener.h> // unstable
+#include <nsIDOMUIListener.h>    // unstable
 
 extern "C" {
 #include <X11/Xlib.h>
 #include <X11/extensions/Xdamage.h>
 }
 
+#include "compzillaRenderingContext.h"
 #include "compzillaIWindow.h"
 #include "compzillaIWindowObserver.h"
 
@@ -117,8 +123,11 @@ public:
     Window mLastEntered;
 };
 
-nsresult CZ_NewCompzillaWindow(Display *display, 
-                               Window win, 
+
+nsresult CZ_NewCompzillaWindow(Display *display,
+                               Window win,
                                XWindowAttributes *attrs,
                                compzillaWindow **retval);
 
+
+#endif

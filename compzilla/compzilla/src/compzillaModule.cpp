@@ -5,9 +5,9 @@
 #include <nsXPCOMCID.h>
 
 #include <nsICategoryManager.h>
-#include <nsIDOMClassInfo.h>
+#include <nsIDOMClassInfo.h>           // unstable
 #include <nsIGenericFactory.h>
-#include <nsIScriptNameSpaceManager.h>
+#include <nsIScriptNameSpaceManager.h> // unstable
 #include <nsIServiceManager.h>
 #include <nsISupportsUtils.h>
 #include <nsServiceManagerUtils.h>

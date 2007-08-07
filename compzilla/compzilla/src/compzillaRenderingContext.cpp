@@ -3,11 +3,11 @@
 #include <prmem.h>
 #include <prlog.h>
 
-#include <nsIRenderingContext.h>
-#include <nsIViewManager.h>
+#include <nsIRenderingContext.h>     // unstable
+#include <nsIViewManager.h>          // unstable
 
-#include <nsIDOMClassInfo.h>
-#include <nsIDOMHTMLCanvasElement.h>
+#include <nsIDOMClassInfo.h>         // unstable
+#include <nsIDOMHTMLCanvasElement.h> // unstable
 
 /* 
  * The grossest hack of all time. Needed in order to get at nsTransform2D
@@ -15,7 +15,7 @@
  */
 #ifndef MOZ_CAIRO_GFX
 #define private public
-#include <nsTransform2D.h>
+#include <nsTransform2D.h> // unstable
 #undef private
 #endif
 
@@ -153,7 +153,7 @@ compzillaRenderingContext::Redraw (nsRect r)
 
             r += offset;
             view->GetViewManager ()->UpdateView (view, r, flags);
-        }
+        } 
     }
 
     return NS_OK;

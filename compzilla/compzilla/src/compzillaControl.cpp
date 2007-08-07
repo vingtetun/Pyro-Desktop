@@ -1,15 +1,14 @@
 /* -*- mode: C++; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
 
 #include <nspr.h>
-#include <jsapi.h>
+#include <jsapi.h>             // unstable
 #include <nsMemory.h>
-#include <nsHashPropertyBag.h>
-#include <nsIBaseWindow.h>
-#include <nsIDocShell.h>
-#include <nsIDOMClassInfo.h>
+#include <nsHashPropertyBag.h> // unstable
+#include <nsIBaseWindow.h>     // unstable
+#include <nsIDocShell.h>       // unstable
+#include <nsIDOMClassInfo.h>   // unstable
 #include <nsIInterfaceRequestorUtils.h>
-#include <nsIWebNavigation.h>
-#include <nsIWidget.h>
+#include <nsIWebNavigation.h>  // unstable
 
 #include "compzillaControl.h"
 #include "XAtoms.h"
@@ -1160,7 +1159,7 @@ compzillaControl::Filter (GdkXEvent *xevent, GdkEvent *event)
 
         if (xev->xreparent.parent == mXRoot) {
             if (win) {
-                ERROR ("Reparent of existing toplevel window\n");
+                ERROR ("Reparent of existing toplevel window!\n");
             } else {
                 AddWindow (xwin);
             }

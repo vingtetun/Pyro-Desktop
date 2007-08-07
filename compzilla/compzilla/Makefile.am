@@ -153,6 +153,7 @@ libcompzilla_la_CPPFLAGS =			\
 	$(AM_CPPFLAGS)				\
 	$(XEXTENSIONS_CFLAGS)			\
 	$(GDK_CFLAGS)				\
+	$(NSPR_CFLAGS)				\
 	\
 	-I$(GECKO_INCLUDEDIR)			\
 	-include mozilla-config.h		\

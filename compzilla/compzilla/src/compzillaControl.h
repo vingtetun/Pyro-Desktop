@@ -1,10 +1,15 @@
 /* -*- mode: C++; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
 
+
+#ifndef compzillaControl_h___
+#define compzillaControl_h___
+
+
 #include <nsError.h>
 #include <nsCOMPtr.h>
 #include <nsCOMArray.h>
 #include <nsRefPtrHashtable.h>
-#include <nsIWidget.h>
+#include <nsIWidget.h> // unstable
 
 #include "compzillaIControl.h"
 #include "compzillaWindow.h"
@@ -89,3 +94,6 @@ private:
     static int xfixes_event, xfixes_error;
     static int shape_event, shape_error;
 };
+
+
+#endif

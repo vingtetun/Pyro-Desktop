@@ -1,6 +1,10 @@
 /* -*- mode: C++; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
 
-#include "nsCOMPtr.h"
+#ifndef compzillaRenderingContext_h___
+#define compzillaRenderingContext_h___
+
+
+#include <nsCOMPtr.h>
 
 #ifndef MOZILLA_INTERNAL_API
 typedef nsACString nsAFlatCString; 
@@ -8,24 +12,24 @@ typedef nsACString nsAFlatCString;
 #define nsAString_h___ 1
 #define nsStringFwd_h___ 1
 #endif
-#include "nsICanvasRenderingContextInternal.h"
+#include <nsICanvasRenderingContextInternal.h> // unstable
 
 #ifdef MOZ_CAIRO_GFX
-#include <thebes/gfxContext.h>
-#include <thebes/gfxASurface.h>
-#include <thebes/gfxPlatform.h>
-#include <thebes/gfxXlibSurface.h>
+#include <gfxContext.h>     // unstable
+#include <gfxASurface.h>    // unstable
+#include <gfxPlatform.h>    // unstable
+#include <gfxXlibSurface.h> // unstable
 #else
+#include <cairo.h>
 #include <cairo-xlib.h>
 #include <cairo-xlib-xrender.h>
 #endif
 
-#include "compzillaIRenderingContext.h"
-
 extern "C" {
-#include <cairo.h>
 #include <X11/Xlib.h>
 }
+
+#include "compzillaIRenderingContext.h"
 
 
 // {fa62d345-f608-47eb-9401-533984cfd471}
@@ -117,3 +121,6 @@ private:
 
     PRInt32 mWidth, mHeight;
 };
+
+
+#endif
