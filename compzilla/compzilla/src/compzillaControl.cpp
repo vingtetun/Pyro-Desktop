@@ -245,21 +245,27 @@ compzillaControl::Configure (PRUint32 xid,
                              PRUint32 width, PRUint32 height,
                              PRUint32 border)
 {
-    XWindowChanges changes;
+    nsRefPtr<compzillaWindow> win = FindWindow (xid);
+    if (win) {
+        win->QueueResize (x, y, width, height, border);
+    } else {
+        XWindowChanges changes;
+        
+        changes.x = x;
+        changes.y = y;
+        changes.width = width;
+        changes.height = height;
+        changes.border_width = border;
 
-    changes.x = x;
-    changes.y = y;
-    changes.width = width;
-    changes.height = height;
-    changes.border_width = border;
+        SPEW ("Configure: Calling XConfigureWindow (window=%p, x=%d, y=%d, "
+              "width=%d, height=%d, border=%d)\n",
+              xid, x, y, width, height, border);
 
-    SPEW ("Calling XConfigureWindow (window=%p, x=%d, y=%d, "
-          "width=%d, height=%d, border=%d)\n",
-          xid, x, y, width, height, border);
-
-    XConfigureWindow (mXDisplay, xid,
-                      (CWX | CWY | CWWidth | CWHeight | CWBorderWidth),
-                      &changes);
+        XConfigureWindow (mXDisplay, 
+                          xid, 
+                          (CWX | CWY | CWWidth | CWHeight | CWBorderWidth), 
+                          &changes);
+    }
 }
 
 

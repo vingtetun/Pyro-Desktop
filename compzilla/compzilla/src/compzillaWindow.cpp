@@ -74,14 +74,15 @@ CZ_NewCompzillaWindow(Display *display,
 
 
 compzillaWindow::compzillaWindow(Display *display, Window win, XWindowAttributes *attrs)
-    : mDisplay(display),
+    : mAttr(*attrs),
+      mDisplay(display),
       mWindow(win),
-      mAttr(*attrs),
       mPixmap(None),
       mDamage(None),
       mLastEntered(None),
       mIsDestroyed(false),
-      mIsRedirected(false)
+      mIsRedirected(false),
+      mIsResizePending(false)
 {
     XSelectInput (display, win, (PropertyChangeMask | EnterWindowMask | FocusChangeMask));
 
@@ -1516,7 +1517,7 @@ compzillaWindow::RedrawContentNode (nsIDOMHTMLCanvasElement *aContent, XRectangl
 
     if (NS_SUCCEEDED (rv)) {
         internal->SetDrawable (mDisplay, mPixmap, mAttr.visual);
-        internal->Redraw (nsRect (rect->x, rect->y, rect->width, rect->height));
+        internal->Redraw (nsIntRect (rect->x, rect->y, rect->width, rect->height));
     }
 }
 
@@ -1538,7 +1539,27 @@ compzillaWindow::Damaged (XRectangle *rect)
 }
 
 
-bool
+void
+compzillaWindow::QueueResize (PRInt32 x, 
+                              PRInt32 y,
+                              PRInt32 width, 
+                              PRInt32 height,
+                              PRInt32 border)
+{
+    mPendingChanges.x = x;
+    mPendingChanges.y = y;
+    mPendingChanges.width = width;
+    mPendingChanges.height = height;
+    mPendingChanges.border_width = border;
+
+    if (!mIsResizePending) {
+        mIsResizePending = true;
+        SendPendingResize ();
+    }
+}
+
+
+void
 compzillaWindow::Resized (PRInt32 x, 
                           PRInt32 y,
                           PRInt32 width, 
@@ -1555,7 +1576,7 @@ compzillaWindow::Resized (PRInt32 x,
 
             mPixmap = XCompositeNameWindowPixmap (mDisplay, mWindow);
             if (mPixmap == None)
-                return false;
+                return;
 
             for (PRUint32 i = mContentNodes.Count() - 1; i != PRUint32(-1); --i) {
                 nsIDOMHTMLCanvasElement *aContent = mContentNodes.ObjectAt (i);
@@ -1572,8 +1593,33 @@ compzillaWindow::Resized (PRInt32 x,
     mAttr.width = width;
     mAttr.height = height;
     mAttr.border_width = border;
+}
 
-    return true;
+
+void
+compzillaWindow::SendPendingResize ()
+{
+    if (mIsResizePending) {
+        unsigned changeMask = 
+            (mAttr.x != mPendingChanges.x ? CWX : 0) |
+            (mAttr.y != mPendingChanges.y ? CWY : 0) |
+            (mAttr.width != mPendingChanges.width ? CWWidth : 0) |
+            (mAttr.height != mPendingChanges.height ? CWHeight : 0) | 
+            (mAttr.border_width != mPendingChanges.border_width ? CWBorderWidth : 0);
+
+        if (!changeMask) {
+            mIsResizePending = false;
+            return;
+        }
+
+        SPEW ("SendPendingResize: Calling XConfigureWindow (window=%p, x=%d, y=%d, "
+              "width=%d, height=%d, border=%d)\n",
+              mWindow, mPendingChanges.x, mPendingChanges.y, 
+              mPendingChanges.width, mPendingChanges.height, 
+              mPendingChanges.border_width);
+
+        XConfigureWindow (mDisplay, mWindow, changeMask, &mPendingChanges);
+    }
 }
 
 
@@ -1589,6 +1635,7 @@ compzillaWindow::Configured (bool isNotify,
 
     if (isNotify) {
         Resized (x, y, width, height, border);
+        SendPendingResize ();
     }
 
     if (!isNotify || override_redirect) {

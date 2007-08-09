@@ -85,9 +85,9 @@ public:
                      bool override_redirect);
     void ClientMessaged (Atom type, int format, long *data/*[5]*/);
 
+    void QueueResize (PRInt32 x, PRInt32 y, PRInt32 width, PRInt32 height, PRInt32 border);
+
     XWindowAttributes mAttr;
-    bool mIsDestroyed;
-    bool mIsRedirected;
 
  private:
     void OnMouseMove (nsIDOMEvent* aDOMEvent);
@@ -107,7 +107,8 @@ public:
     void UnredirectWindow ();
     void BindWindow ();
     void ReleaseWindow ();
-    bool Resized (PRInt32 x, PRInt32 y, PRInt32 width, PRInt32 height, PRInt32 border);
+    void Resized (PRInt32 x, PRInt32 y, PRInt32 width, PRInt32 height, PRInt32 border);
+    void SendPendingResize ();
 
     nsresult GetAtomProperty (Atom prop, PRUint32* value);
     nsresult GetUTF8StringProperty (Atom prop, nsACString& utf8Value);
@@ -121,6 +122,11 @@ public:
     Pixmap mPixmap;
     Damage mDamage;
     Window mLastEntered;
+
+    bool mIsDestroyed;
+    bool mIsRedirected;
+    bool mIsResizePending;
+    XWindowChanges mPendingChanges;
 };
 
 
