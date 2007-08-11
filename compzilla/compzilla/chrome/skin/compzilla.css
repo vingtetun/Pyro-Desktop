@@ -377,9 +377,6 @@ body {
 .uiDlgContentRight {
         background: transparent url(chrome://compzilla/skin/e.gif) repeat-y scroll 0%;
 }
-.uiDlgContentCenter {
-        background: #ECECEC none repeat scroll 0%;
-}
 
 .uiDlgBottomLeft {
         background: transparent url(chrome://compzilla/skin/sw.gif) no-repeat scroll 0%;
@@ -389,6 +386,28 @@ body {
 }
 .uiDlgBottomCenter {
         background: transparent url(chrome://compzilla/skin/s.gif) repeat-x scroll 0%;
+}
+
+
+/*
+ * Content backgrounds.  Set a default background color, but override it as
+ * transparent for native window content, so alpha channels appear correctly.
+ */
+
+.uiDlgContentCenter > * {
+        /* Default background */
+        background: #ECECEC none repeat scroll 0%;
+}
+
+.uiDlg[pyro|inactive="true"] .uiDlgContentCenter > * {
+        /* Default background when unfocused */
+        background: #EAEAEB none repeat scroll 0%;
+}
+
+.windowContent,
+.uiDlg[pyro|inactive="true"] .windowContent {
+        /* Need this to avoid having the above rule match unfocused .windowContent */
+        background-color: transparent;
 }
 
 
@@ -451,14 +470,10 @@ body {
 .uiDlg.chromeless .uiDlgContentCenter {
         display: block;
         margin: 0px;
-        background:#ECECEC none repeat scroll 0%;
 }
 .uiDlg.chromeless .uiDlgContent {
         top: 0px;
         bottom: 0px;
-}
-.uiDlg.chromeless[pyro|inactive="true"] .uiDlgContentCenter {
-        background:#EAEAEB none repeat scroll 0%;
 }
 
 
@@ -509,9 +524,6 @@ body {
 }
 .uiDlg[pyro|inactive="true"] .uiDlgContentRight {
         background: transparent url(chrome://compzilla/skin/dis_e.gif) repeat-y scroll 0%;
-}
-.uiDlg[pyro|inactive="true"] .uiDlgContentCenter {
-        background: #ECECEC none repeat scroll 0%;
 }
 
 .uiDlg[pyro|inactive="true"] .uiDlgBottomLeft {
@@ -611,18 +623,9 @@ body {
         background:transparent url(chrome://compzilla/skin/restore.gif) no-repeat scroll 0%;
 }
 
-.uiDlg[pyro|allow-minimize="true"] .uiDlgButtonMin {
-        cursor: pointer;
-        visibility: visible;
-}
-.uiDlg[pyro|allow-maximize="true"] .uiDlgButtonMax {
-        cursor: pointer;
-        visibility: visible;
-}
-.uiDlg[pyro|allow-close="true"] .uiDlgButtonClose {
-        cursor: pointer;
-        visibility: visible;
-}
+.uiDlg[pyro|allow-minimize="true"] .uiDlgButtonMin,
+.uiDlg[pyro|allow-maximize="true"] .uiDlgButtonMax,
+.uiDlg[pyro|allow-close="true"] .uiDlgButtonClose,
 .uiDlg[pyro|allow-restore="true"] .uiDlgButtonRestore {
         cursor: pointer;
         visibility: visible;

@@ -1219,7 +1219,7 @@ compzillaControl::Filter (GdkXEvent *xevent, GdkEvent *event)
         break;
 
     case _FocusIn:
-        if (xwin == mXRoot && xev->xfocus.mode == NotifyUngrab) {
+        if (xev->xfocus.mode == NotifyUngrab) {
             SPEW ("FocusIn: focusing main window!\n");
             EnableOverlayInput (true);
             return GDK_FILTER_REMOVE;
