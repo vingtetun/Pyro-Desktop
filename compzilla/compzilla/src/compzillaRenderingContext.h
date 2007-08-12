@@ -13,6 +13,7 @@ typedef nsACString nsAFlatCString;
 #define nsStringFwd_h___ 1
 #endif
 #include <nsICanvasRenderingContextInternal.h> // unstable
+#include <nsIFrame.h> // unstable
 
 #ifdef MOZ_CAIRO_GFX
 #include <gfxContext.h>     // unstable

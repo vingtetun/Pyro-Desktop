@@ -3,6 +3,7 @@
 #include <prmem.h>
 #include <prlog.h>
 
+#include <nsMemory.h>
 #include <nsIRenderingContext.h>     // unstable
 #include <nsIViewManager.h>          // unstable
 
@@ -149,7 +150,9 @@ compzillaRenderingContext::Redraw (nsRect r)
             nsIView *view;
 
             frame->GetOffsetFromView (offset, &view);
-            NS_ASSERTION (view, "no view");
+            if (!view) {
+		return NS_ERROR_FAILURE;
+            }
 
             r += offset;
             view->GetViewManager ()->UpdateView (view, r, flags);
