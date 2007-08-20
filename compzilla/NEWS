@@ -1,2 +1,19 @@
 
-No releases yet.
+Pyro NEWS
+http://pyrodesktop.org
+
+Copyright (C) 2007
+
+Please send questions and suggestions to
+<pyrodesktop@googlegroups.com>.
+
+---
+
+Version 0.2
+* New demo Flickr RSS reader.
+* Fixes for Minefield 3.0a8pre.
+* Support ARGB X windows.
+* Start Pyro Desktop in Firefox Tools menu.
+
+Version 0.1
+* Initial release.

@@ -1,5 +1,13 @@
 2007-08-19  Alex Graveley  <alex@beatniksoftware.com>
 
+	* configure.in: Bump version to 0.2.
+
+	* README: Tell people to generate an xpi and install it.
+
+	* NEWS: Update for 0.2.
+
+2007-08-19  Alex Graveley  <alex@beatniksoftware.com>
+
 	* compzilla/install.rdf.in: Add this, copied from install.rdf with
 	a bunch of keys set from configure variables.
 

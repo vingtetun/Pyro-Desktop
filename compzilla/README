@@ -1,3 +1,14 @@
+
+Pyro README
+http://pyrodesktop.org
+
+Copyright (C) 2007
+
+Please send questions and suggestions to
+<pyrodesktop@googlegroups.com>.
+
+---
+
 About Pyro
 ==========
 
@@ -14,16 +25,21 @@ applications as a regular part of the Web Desktop.
 
 The Pyro Desktop homepage can be found at http://pyrodesktop.org.
 
+See COPYING file for Pyro licensing details.
+
 Building
 ========
 
-To compile the Compzilla Firefox extension, you must have the Firefox 
-devel package installed for your distribution, as well as the XComposite 
-and XDamage X11 extension headers. 
+To compile the Pyro Firefox extension, you must have the Firefox devel
+package installed for your distribution, as well as the XComposite and
+XDamage X11 extension headers.
 
-$ ./autogen.sh
+$ ./configure
 $ make
-$ sudo make install
+$ make xpi
+
+Then open a browser to the location of the generated .xpi file to
+install the extension you just built.
 
 Development
 ===========

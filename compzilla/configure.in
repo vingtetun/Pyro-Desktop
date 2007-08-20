@@ -1,5 +1,5 @@
 
-AC_INIT(compzilla, 0.1, compzilla-bugs@pyrodesktop.org)
+AC_INIT(compzilla, 0.2, pyrodesktop@googlegroups.com)
 
 AC_CONFIG_SRCDIR(compzilla/chrome.manifest)
 AC_CONFIG_HEADERS(config.h)
