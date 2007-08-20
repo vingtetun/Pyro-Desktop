@@ -74,11 +74,11 @@ AM_CONDITIONAL(GECKO_USE_THEBES, test "x$ac_cv_gecko_thebes" = "xyes")
 ##
 
 if test "x$ac_cv_gecko_thebes" = "xyes"; then
-   FIREFOX_MINVERSION="3.0"
-   FIREFOX_MAXVERSION="3.0.*"
+   FIREFOX_MINVERSION="3.0a8pre"
+   FIREFOX_MAXVERSION="3.0a8"
    FIREFOX_SHORTNAME="minefield"
 else
-   FIREFOX_MINVERSION="2.0.0.1"
+   FIREFOX_MINVERSION="2.0.0.*"
    FIREFOX_MAXVERSION="2.0.0.*"
    FIREFOX_SHORTNAME="ff2"
 fi
