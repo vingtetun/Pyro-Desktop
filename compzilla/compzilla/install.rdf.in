@@ -6,10 +6,12 @@
   <Description about="urn:mozilla:install-manifest">
 
     <em:id>compzilla@pyrodesktop.org</em:id>
-    <em:version>0.1</em:version>
+    <em:version>@VERSION@</em:version>
+    <em:type>2</em:type>
+    <em:targetPlatform>@FIREFOX_TARGETPLATFORM@</em:targetPlatform>
 
-    <em:name>Compzilla</em:name>
-    <em:description>Compositing X Window Manager built on Firefox</em:description>
+    <em:name>Pyro Desktop</em:name>
+    <em:description>Desktop Window Manager built on Firefox</em:description>
     <em:iconURL>chrome://compzilla/content/pyrologo.png</em:iconURL>
     <em:homepageURL>http://pyrodesktop.org/</em:homepageURL>
 
@@ -23,8 +25,8 @@
     <em:targetApplication>
       <Description>
         <em:id>{ec8030f7-c20a-464f-9b0e-13a3a9e97384}</em:id>
-        <em:minVersion>2.0.0.1</em:minVersion>
-        <em:maxVersion>3.0</em:maxVersion>
+        <em:minVersion>@FIREFOX_MINVERSION@</em:minVersion>
+        <em:maxVersion>@FIREFOX_MAXVERSION@</em:maxVersion>
       </Description>
     </em:targetApplication>
 

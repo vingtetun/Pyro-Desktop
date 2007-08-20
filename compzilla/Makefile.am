@@ -16,9 +16,11 @@ run:
 # Build the installable XPI package
 #
 
-xpi: all $(distdir).xpi
+XPINAME="pyro-$(VERSION)-$(FIREFOX_SHORTNAME).xpi"
 
-$(distdir).xpi:
+xpi: all $(XPINAME)
+
+$(XPINAME):
 	-mkdir /tmp/xpi-stage
 	$(MAKE) DESTDIR=/tmp/xpi-stage install
 
@@ -30,4 +32,4 @@ $(distdir).xpi:
 	-rm -r /tmp/xpi-stage
 
 dist-hook: xpi
-CLEANFILES = $(distdir).xpi
+CLEANFILES = $(XPINAME)

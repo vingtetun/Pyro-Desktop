@@ -1,7 +1,7 @@
 
 AC_INIT(compzilla, 0.1, compzilla-bugs@pyrodesktop.org)
 
-AC_CONFIG_SRCDIR(compzilla/install.rdf)
+AC_CONFIG_SRCDIR(compzilla/chrome.manifest)
 AC_CONFIG_HEADERS(config.h)
 
 AM_INIT_AUTOMAKE
@@ -68,8 +68,30 @@ AC_CACHE_CHECK(if Gecko was compiled to use Thebes, ac_cv_gecko_thebes, [
 
 AM_CONDITIONAL(GECKO_USE_THEBES, test "x$ac_cv_gecko_thebes" = "xyes")
 
+
 ##
-## Checks for our Xextensions
+## These are used in generated install.rdf
+##
+
+if test "x$ac_cv_gecko_thebes" = "xyes"; then
+   FIREFOX_MINVERSION="3.0"
+   FIREFOX_MAXVERSION="3.0.*"
+   FIREFOX_SHORTNAME="minefield"
+else
+   FIREFOX_MINVERSION="2.0.0.1"
+   FIREFOX_MAXVERSION="2.0.0.*"
+   FIREFOX_SHORTNAME="ff2"
+fi
+FIREFOX_TARGETPLATFORM="Linux_x86-gcc3" # FIXME!
+
+AC_SUBST(FIREFOX_MINVERSION)
+AC_SUBST(FIREFOX_MAXVERSION)
+AC_SUBST(FIREFOX_SHORTNAME)
+AC_SUBST(FIREFOX_TARGETPLATFORM)
+
+
+##
+## Checks for needed Xextensions
 ##
 PKG_CHECK_MODULES(XEXTENSIONS, xcomposite xdamage)
 
@@ -78,6 +100,7 @@ AC_OUTPUT([
 Makefile
 compzilla/Makefile
 compzilla/compzilla
+compzilla/install.rdf
 ])
 
 

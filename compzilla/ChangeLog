@@ -1,3 +1,11 @@
+2007-08-19  Alex Graveley  <alex@beatniksoftware.com>
+
+	* compzilla/install.rdf.in: Add this, copied from install.rdf with
+	a bunch of keys set from configure variables.
+
+	* configure.in: Define min/maxversion to be used in generated
+	install.rdf.
+
 2007-08-11  Alex Graveley  <alex@beatniksoftware.com>
 
 	Fix minefield build:
