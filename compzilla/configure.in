@@ -78,7 +78,7 @@ if test "x$ac_cv_gecko_thebes" = "xyes"; then
    FIREFOX_MAXVERSION="3.0a8"
    FIREFOX_SHORTNAME="minefield"
 else
-   FIREFOX_MINVERSION="2.0.0.*"
+   FIREFOX_MINVERSION="2.0"
    FIREFOX_MAXVERSION="2.0.0.*"
    FIREFOX_SHORTNAME="ff2"
 fi
