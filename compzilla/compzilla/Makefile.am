@@ -128,16 +128,19 @@ CLEANFILES = 			\
 if GECKO_USE_THEBES
 GFX_CFLAGS=
 GFX_LIBS=-lxpcomglue_s
+GFX_SOURCES=						\
+	$(srcdir)/src/compzillaRenderingContext.h 	\
+	$(srcdir)/src/compzillaRenderingContext.cpp
 else
 GFX_CFLAGS=-DMOZILLA_INTERNAL_API
 GFX_LIBS=-lxpistub
+GFX_SOURCES=						\
+	$(srcdir)/src/compzillaRenderingContextFx2.h 	\
+	$(srcdir)/src/compzillaRenderingContextFx2.cpp
 endif
 
 libcompzilla_la_LDFLAGS = -avoid-version -module -Wl,-Bsymbolic
 libcompzilla_la_LIBADD = $(XEXTENSIONS_LIBS) $(NSPR_LIBS) -L$(GECKO_LIBDIR) $(GFX_LIBS)
-
-### Link libthebes for dynamic FF builds
-#libcompzilla_la_LIBADD = $(XEXTENSIONS_LIBS) $(NSPR_LIBS) -L$(GECKO_LIBDIR) -L/home/toshok/src/mozilla/mozilla/dist/lib -lxpcomglue_s -lthebes
 
 ### Lots of debug output
 # -DDEBUG -DDEBUG_SPEW -DDEBUG_EVENTS
@@ -179,15 +182,15 @@ libcompzilla_la_CPPFLAGS =			\
 
 nodist_libcompzilla_la_SOURCES = $(IDL_H_FILES)
 
-libcompzilla_la_SOURCES =				\
-	$(srcdir)/src/compzillaControl.cpp		\
-	$(srcdir)/src/compzillaControl.h		\
-	$(srcdir)/src/compzillaModule.cpp		\
-	$(srcdir)/src/compzillaRenderingContext.h 	\
-	$(srcdir)/src/compzillaRenderingContext.cpp	\
-	$(srcdir)/src/compzillaWindow.h			\
-	$(srcdir)/src/compzillaWindow.cpp		\
-	$(srcdir)/src/Debug.h				\
-	$(srcdir)/src/nsKeycodes.h			\
+libcompzilla_la_SOURCES =					\
+	$(GFX_SOURCES)						\
+	$(srcdir)/src/compzillaControl.cpp			\
+	$(srcdir)/src/compzillaControl.h			\
+	$(srcdir)/src/compzillaIRenderingContextInternal.h 	\
+	$(srcdir)/src/compzillaModule.cpp			\
+	$(srcdir)/src/compzillaWindow.h				\
+	$(srcdir)/src/compzillaWindow.cpp			\
+	$(srcdir)/src/Debug.h					\
+	$(srcdir)/src/nsKeycodes.h				\
 	$(srcdir)/src/XAtoms.h
 

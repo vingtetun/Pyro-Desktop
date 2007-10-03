@@ -19,7 +19,7 @@ extern "C" {
 #include <X11/extensions/Xdamage.h>
 }
 
-#include "compzillaRenderingContext.h"
+#include "compzillaIRenderingContextInternal.h"
 #include "compzillaIWindow.h"
 #include "compzillaIWindowObserver.h"
 

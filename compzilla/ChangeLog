@@ -1,3 +1,23 @@
+2007-10-03  Alex Graveley  <alex@beatniksoftware.com>
+
+	* configure.in: Bump version to 0.2.1.  Bump Minefield support to
+	3.0a9pre/3.0a9.
+
+	* compzilla/src/compzillaIRenderingContextInternal.h: Split out
+	compzillaIRenderingContextInternal decl to here.
+
+	* compzilla/src/compzillaRenderingContext.h/cpp: Conform to new
+	Minefield canvas backend API.
+
+	* compzilla/src/compzillaRenderingContextFx2.h/cpp: Split out ff2
+	canvas rendering context to here, since the interface for
+	Minefield has diverged.
+
+	* compzilla/public/compzillaIControl.idl: Fix bug in
+	compzillaIControl uuid which causes conflcts when users have
+	mugshot installed.
+	* compzilla/public/compzillaIRenderingContext.idl: Ditto.
+
 2007-08-19  Alex Graveley  <alex@beatniksoftware.com>
 
 	* configure.in: Bump version to 0.2.

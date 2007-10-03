@@ -13,7 +13,12 @@
 #include <nsServiceManagerUtils.h>
 
 #include "compzillaControl.h"
+
+#ifdef MOZ_CAIRO_GFX
 #include "compzillaRenderingContext.h"
+#else
+#include "compzillaRenderingContextFx2.h"
+#endif
 
 
 NS_GENERIC_FACTORY_CONSTRUCTOR(compzillaControl);

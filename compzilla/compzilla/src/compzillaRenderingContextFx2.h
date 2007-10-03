@@ -5,11 +5,11 @@
 
 
 #include <nsCOMPtr.h>
+#include <nsIFrame.h> // unstable
 
-#include <gfxContext.h>     // unstable
-#include <gfxASurface.h>    // unstable
-#include <gfxPlatform.h>    // unstable
-#include <gfxXlibSurface.h> // unstable
+#include <cairo.h>
+#include <cairo-xlib.h>
+#include <cairo-xlib-xrender.h>
 
 extern "C" {
 #include <X11/Xlib.h>
@@ -43,7 +43,10 @@ public:
     NS_IMETHOD SetDimensions(PRInt32 width, PRInt32 height);
     
     // Render the canvas at the origin of the given nsIRenderingContext
-    NS_IMETHOD Render(gfxContext *ctx);
+    NS_IMETHOD Render(nsIRenderingContext *rc);
+
+    // Render the canvas at the origin of the given cairo surface
+    NS_IMETHOD RenderToSurface(struct _cairo_surface *surf);
 
     // Gives you a stream containing the image represented by this context.
     // The format is given in aMimeTime, for example "image/png".
@@ -51,8 +54,8 @@ public:
     // If the image format does not support transparency or aIncludeTransparency
     // is false, alpha will be discarded and the result will be the image
     // composited on black.
-    NS_IMETHOD GetInputStream(const char *aMimeType,
-                              const PRUnichar *aEncoderOptions,
+    NS_IMETHOD GetInputStream(const nsACString& aMimeType,
+                              const nsAString& aEncoderOptions,
                               nsIInputStream **aStream);
 
 
@@ -69,7 +72,7 @@ private:
     Visual *mXVisual;
     Pixmap mXDrawable;
 
-    nsRefPtr<gfxXlibSurface> mGfxSurf;
+    cairo_surface_t *mCairoSurf;
     PRInt32 mWidth, mHeight;
 };
 

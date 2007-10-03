@@ -2,7 +2,7 @@
 #include "nsISupports.idl"
 
 
-[scriptable, uuid(4fa17c67-d131-4c96-a197-15f2ae1dd561)]
+[scriptable, uuid(1b3391c9-5ff0-42ca-8356-b4334f3a0424)]
 interface compzillaIRenderingContext : nsISupports
 {
 };

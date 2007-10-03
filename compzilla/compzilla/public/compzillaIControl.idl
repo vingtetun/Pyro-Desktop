@@ -5,7 +5,7 @@
 #include "compzillaIControlObserver.idl"
 
 
-[scriptable, uuid(8bf6de0a-ed8f-47af-8757-41551542d196)]
+[scriptable, uuid(fb192a55-b1de-4b23-a5b2-a5adf8a4e446)]
 interface compzillaIControl : nsISupports
 {
     boolean HasWindowManager (in nsIDOMWindow window);

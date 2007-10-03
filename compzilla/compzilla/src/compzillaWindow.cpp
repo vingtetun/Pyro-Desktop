@@ -7,7 +7,6 @@
 #endif
 
 #include "compzillaWindow.h"
-#include "compzillaRenderingContext.h"
 #include "Debug.h"
 #include "nsKeycodes.h"
 #include "XAtoms.h"
