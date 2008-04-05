@@ -1,5 +1,15 @@
 2008-04-05  Alex Graveley  <alex@beatniksoftware.com>
 
+	* compzilla/src/compzillaWindow.cpp (SendMouseEvent): Fix
+	libcompzilla loading issues with recent Firefox3, probably due to
+	changes in String API exportation in libxul.  CompzillaWindow used
+	the nsIFrame to get window<->screen coordinates, but nsIFrame.h
+	and its dependencies used internal string classes which led to
+	link errrors. So instead we just use the cached Xwindow property
+	data to offset event coordinates, which works okay.
+
+2008-04-05  Alex Graveley  <alex@beatniksoftware.com>
+
 	* compzilla/src/compzillaWindow.cpp: Make it work with FF2 also.
 	Why, I bother trying to support this anymore, who knows?
 

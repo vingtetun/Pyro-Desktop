@@ -1,21 +1,30 @@
 /* -*- mode: C++; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
 
+
+/*
+ * NOTE: Use of nsIFrame goes into bad mojo territory, causing implicit calls
+ * to non-exported mozilla-internal string symbols.  This causes libcompzilla
+ * to fail to load.
+ */
+#if USE_IFRAME
 // FIXME: Work around these unstable headers including string headers
-// incompatible withstable ones, by including them first.
+// incompatible with stable ones, by including them first.
 #define MOZILLA_INTERNAL_API 1
 #include <nsIFrame.h>                // unstable
-#include <nsHashPropertyBag.h>       // unstable
 #undef MOZILLA_INTERNAL_API
+#endif
 
 #include "compzillaWindow.h"
 #include "Debug.h"
 #include "nsKeycodes.h"
 #include "XAtoms.h"
 
+#include <nsMemory.h>
 #include <nsICanvasElement.h>        // unstable
 #include <nsIDOMClassInfo.h>         // unstable
 #include <nsIDOMEventTarget.h>
 #include <nsIDOMHTMLCanvasElement.h> // unstable
+#include <nsIWritablePropertyBag2.h> // unstable
 #include <nsComponentManagerUtils.h>
 
 extern "C" {
@@ -85,7 +94,9 @@ compzillaWindow::compzillaWindow(Display *display, Window win, XWindowAttributes
 {
     XSelectInput (display, win, (PropertyChangeMask | EnterWindowMask | FocusChangeMask));
 
+#if HAVE_XSHAPE
     XShapeSelectInput (display, win, ShapeNotifyMask);
+#endif
 
     // Get notified of global cursor changes.  
     // FIXME: This is not very useful, as X has no way of fetching the Cursor
@@ -718,6 +729,7 @@ compzillaWindow::KeyPress(nsIDOMEvent* aDOMEvent)
 }
 
 
+#if USE_IFRAME
 void
 compzillaWindow::TranslateClientXYToWindow (int *x, int *y, nsIDOMEventTarget *target)
 {
@@ -728,7 +740,6 @@ compzillaWindow::TranslateClientXYToWindow (int *x, int *y, nsIDOMEventTarget *t
 
     // FIXME: This is probably broken and not robust.  Need to adjust x,y for
     //        current cairo transform.
-
     nsIFrame *frame;
     canvasElement->GetPrimaryCanvasFrame (&frame);
     if (!frame) {
@@ -742,6 +753,7 @@ compzillaWindow::TranslateClientXYToWindow (int *x, int *y, nsIDOMEventTarget *t
     *x = *x - screenRect.x;
     *y = *y - screenRect.y;
 }
+#endif
 
 
 Window
@@ -786,9 +798,18 @@ compzillaWindow::SendMouseEvent (int eventType, nsIDOMMouseEvent *mouseEv, bool 
     mouseEv->GetClientX (&x);
     mouseEv->GetClientY (&y);
 
+#if USE_IFRAME
     nsIDOMEventTarget *target;
     mouseEv->GetTarget (&target);
     TranslateClientXYToWindow (&x, &y, target);
+#else
+    /*
+     * Use the cached Xwindow properties.  These may be incorrect due to a bug
+     * we have where the window isn't moved after initially being shown.
+     */
+    x -= mAttr.x;
+    y -= mAttr.y;
+#endif
 
     mouseEv->GetButton (&button);
 

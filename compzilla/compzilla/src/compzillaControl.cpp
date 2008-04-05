@@ -99,8 +99,13 @@ compzillaControl::RegisterWindowManager(nsIDOMWindow *window)
     SPEW ("RegisterWindowManager: mDOMWindow=%p\n", window);
     mDOMWindow = window;
 
+#ifdef CAUTIOUS_FILTER
+    // Get ALL events for root window
+    gdk_window_add_filter (gdk_get_default_root_window(), gdk_filter_func, this);
+#else
     // Get ALL events for ALL windows
     gdk_window_add_filter (NULL, gdk_filter_func, this);
+#endif
 
     // Just ignore errors for now
     XSetErrorHandler (ErrorHandler);
@@ -408,12 +413,14 @@ compzillaControl::InitXExtensions ()
     SPEW ("xfixes extension: event = %d, error = %d\n",
            xfixes_event, xfixes_error);
 
+#if HAVE_XSHAPE
     if (!XShapeQueryExtension (mXDisplay, &shape_event, &shape_error)) {
 	ERROR ("No Shaped window extension\n");
         return NS_ERROR_NO_SHAPE_EXTENSTION;
     }
     SPEW ("shape extension: event = %d, error = %d\n",
            shape_event, shape_error);
+#endif
 
     return NS_OK;
 }
@@ -747,6 +754,11 @@ compzillaControl::AddWindow (Window win)
         gdk_error_trap_pop ();
         return;
     }
+
+#ifdef CAUTIOUS_FILTER
+    // Handle events for this window
+    gdk_window_add_filter (gdk_window_foreign_new(win), gdk_filter_func, this);
+#endif
 
     if (gdk_error_trap_pop ()) {
         ERROR ("Errors encountered registering window %p\n", win);
@@ -1176,7 +1188,9 @@ compzillaControl::Filter (GdkXEvent *xevent, GdkEvent *event)
              * grabs.  -- compiz
              */
             XSelectInput (mXDisplay, xwin, NoEventMask);
+#if HAVE_XSHAPE
             XShapeSelectInput (mXDisplay, xwin, NoEventMask);
+#endif
             XUngrabButton (mXDisplay, AnyButton, AnyModifier, xwin);
 
             DestroyWindow (win, xwin);
