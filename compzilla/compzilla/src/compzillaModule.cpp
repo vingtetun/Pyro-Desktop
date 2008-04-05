@@ -14,7 +14,7 @@
 
 #include "compzillaControl.h"
 
-#ifdef MOZ_CAIRO_GFX
+#ifdef MOZ_TREE_CAIRO
 #include "compzillaRenderingContext.h"
 #else
 #include "compzillaRenderingContextFx2.h"

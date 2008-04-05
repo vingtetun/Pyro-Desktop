@@ -12,8 +12,9 @@
 
     <em:name>Pyro Desktop</em:name>
     <em:description>Desktop Window Manager built on Firefox</em:description>
-    <em:iconURL>chrome://compzilla/content/pyrologo.png</em:iconURL>
+    <em:creator>Alex Graveley</em:creator>
     <em:homepageURL>http://pyrodesktop.org/</em:homepageURL>
+    <em:iconURL>chrome://compzilla/content/pyrologo.png</em:iconURL>
 
     <!-- This requires HTTPS, but extensions listed at addons.mozilla.org are
          updated automatically, so use that instead. -->

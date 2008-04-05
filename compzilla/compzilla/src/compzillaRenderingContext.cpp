@@ -4,8 +4,7 @@
 #include <prlog.h>
 
 #include <nsMemory.h>
-#include <nsIRenderingContext.h>     // unstable
-#include <nsIViewManager.h>          // unstable
+#include <nsIDeviceContext.h>        // unstable
 
 #include <nsIDOMClassInfo.h>         // unstable
 #include <nsIDOMHTMLCanvasElement.h> // unstable
@@ -69,28 +68,13 @@ compzillaRenderingContext::SetDimensions (PRInt32 width, PRInt32 height)
 }
 
 
-nsIFrame*
-compzillaRenderingContext::GetCanvasLayoutFrame ()
-{
-    nsIFrame *fr = nsnull;
-    if (mCanvasElement) {
-        mCanvasElement->GetPrimaryCanvasFrame(&fr);
-    }
-    return fr;
-}
-
-
 NS_IMETHODIMP
 compzillaRenderingContext::Redraw (nsRect r)
 {
     //WARNING("Calling InvalidateFrameSubrect {x:%d, y:%d, w:%d, h:%d}\n",
     //        r.x, r.y, r.width, r.height);
 
-    nsIFrame *frame = GetCanvasLayoutFrame ();
-    if (frame) {
-        nsPresContext *presctx = frame->PresContext ();
-        r *= presctx->AppUnitsPerCSSPixel ();
-    }
+    r *= nsIDeviceContext::AppUnitsPerCSSPixel();
     mCanvasElement->InvalidateFrameSubrect (r);
     return NS_OK;
 }

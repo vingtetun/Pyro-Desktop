@@ -1,10 +1,14 @@
 /* -*- mode: C++; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
 
-#if MOZILLA_1_8_BRANCH
-#include <nsStringAPI.h>
-#else
+#ifndef MOZILLA_1_8_BRANCH
 #include <nsXPCOMStrings.h>
 #endif
+
+// FIXME: Work around nsIFrame including internal string headers, 
+//        by including it first here.
+#define MOZILLA_INTERNAL_API 1
+#include <nsIFrame.h>                // unstable
+#undef MOZILLA_INTERNAL_API
 
 #include "compzillaWindow.h"
 #include "Debug.h"
@@ -234,6 +238,13 @@ compzillaWindow::ConnectListeners (bool connect, nsCOMPtr<nsISupports> aContent)
               connect ? "connect" : "disconnect");
 	return;
     }
+
+    // Consider using ByIID in the future
+    /*
+    target->AddEventListenerByIID (listener, NS_GET_IID(nsIDOMKeyListener));
+    target->AddEventListenerByIID (listener, NS_GET_IID(nsIDOMMouseListener));
+    target->AddEventListenerByIID (listener, NS_GET_IID(nsIDOMUIListener));
+    */
 
     for (int i = 0; !events [i].IsEmpty (); i++) {
 	if (connect) {

@@ -1,3 +1,12 @@
+2008-04-05  Alex Graveley  <alex@beatniksoftware.com>
+
+	* compzilla/src/compzillaRenderingContext.cpp (Redraw): Use
+	nsIDeviceContext::AppUnitsPerCSSPixel instead of the disappeared
+	GetPrimaryCanvasFrame()->PresContext()->AppUnitsPerCSSPixel().
+
+	* configure.in: Support up to 3.0b5pre.  #ifdef MOZ_CAIRO_GFX ->
+	MOZ_TREE_CAIRO to check for cairo-based rendering.
+
 2007-10-03  Alex Graveley  <alex@beatniksoftware.com>
 
 	* configure.in: Bump version to 0.2.1.  Bump Minefield support to

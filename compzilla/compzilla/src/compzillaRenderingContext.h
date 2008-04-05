@@ -61,8 +61,6 @@ public:
     NS_IMETHOD SetDrawable (Display *dpy, Drawable drawable, Visual *visual);
 
 private:
-    nsIFrame* GetCanvasLayoutFrame ();
-    
     nsICanvasElement* mCanvasElement;
 
     Display *mXDisplay;
