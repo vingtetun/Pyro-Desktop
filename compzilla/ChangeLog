@@ -1,5 +1,8 @@
 2008-04-05  Alex Graveley  <alex@beatniksoftware.com>
 
+	* compzilla/src/compzillaWindow.cpp: Make it work with FF2 also.
+	Why, I bother trying to support this anymore, who knows?
+
 	* compzilla/src/compzillaRenderingContext.cpp (Redraw): Use
 	nsIDeviceContext::AppUnitsPerCSSPixel instead of the disappeared
 	GetPrimaryCanvasFrame()->PresContext()->AppUnitsPerCSSPixel().

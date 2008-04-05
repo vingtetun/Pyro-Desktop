@@ -1,13 +1,10 @@
 /* -*- mode: C++; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
 
-#ifndef MOZILLA_1_8_BRANCH
-#include <nsXPCOMStrings.h>
-#endif
-
-// FIXME: Work around nsIFrame including internal string headers, 
-//        by including it first here.
+// FIXME: Work around these unstable headers including string headers
+// incompatible withstable ones, by including them first.
 #define MOZILLA_INTERNAL_API 1
 #include <nsIFrame.h>                // unstable
+#include <nsHashPropertyBag.h>       // unstable
 #undef MOZILLA_INTERNAL_API
 
 #include "compzillaWindow.h"
@@ -20,7 +17,6 @@
 #include <nsIDOMEventTarget.h>
 #include <nsIDOMHTMLCanvasElement.h> // unstable
 #include <nsComponentManagerUtils.h>
-#include <nsHashPropertyBag.h>       // unstable
 
 extern "C" {
 #include <stdio.h>
