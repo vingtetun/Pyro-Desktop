@@ -1,5 +1,7 @@
 2008-04-05  Alex Graveley  <alex@beatniksoftware.com>
 
+	* configure.in: Bump maxVersion to 3.0pre.  Yay!
+
 	* compzilla/src/compzillaWindow.cpp (SendMouseEvent): Fix
 	libcompzilla loading issues with recent Firefox3, probably due to
 	changes in String API exportation in libxul.  CompzillaWindow used
