@@ -1,3 +1,13 @@
+2008-06-06  Alex Graveley  <alex@beatniksoftware.com>
+
+	* configure.in: Bump version to 0.2.2.  Bump maxversion to 3.0
+	from 3.0pre, and use 'ff3' in the .xpi name instead of
+	'minefield'.
+
+	* compzilla/src/compzillaRenderingContext.cpp (GetThebesSurface):
+	Add this new abstract method, which sets mGfxSurf as the out
+	param.
+
 2008-04-05  Alex Graveley  <alex@beatniksoftware.com>
 
 	* configure.in: Bump maxVersion to 3.0pre.  Yay!

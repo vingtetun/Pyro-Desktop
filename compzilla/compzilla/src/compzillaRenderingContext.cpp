@@ -108,7 +108,15 @@ compzillaRenderingContext::GetInputStream (const char *aMimeType,
                                            const PRUnichar *aEncoderOptions,
                                            nsIInputStream **aStream)
 {
-   return NS_ERROR_NOT_IMPLEMENTED;
+    return NS_ERROR_NOT_IMPLEMENTED;
+}
+
+
+NS_IMETHODIMP
+compzillaRenderingContext::GetThebesSurface (gfxASurface **surface)
+{
+    *surface = mGfxSurf;
+    return NS_OK;
 }
 
 

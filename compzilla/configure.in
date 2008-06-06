@@ -1,5 +1,5 @@
 
-AC_INIT(compzilla, 0.2.1, pyrodesktop@googlegroups.com)
+AC_INIT(compzilla, 0.2.2, pyrodesktop@googlegroups.com)
 
 AC_CONFIG_SRCDIR(compzilla/chrome.manifest)
 AC_CONFIG_HEADERS(config.h)
@@ -75,8 +75,8 @@ AM_CONDITIONAL(GECKO_USE_THEBES, test "x$ac_cv_gecko_thebes" = "xyes")
 
 if test "x$ac_cv_gecko_thebes" = "xyes"; then
    FIREFOX_MINVERSION="3.0b1"
-   FIREFOX_MAXVERSION="3.0pre"
-   FIREFOX_SHORTNAME="minefield"
+   FIREFOX_MAXVERSION="3.0"
+   FIREFOX_SHORTNAME="ff3"
 else
    FIREFOX_MINVERSION="2.0"
    FIREFOX_MAXVERSION="2.0.0.*"

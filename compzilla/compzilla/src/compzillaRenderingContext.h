@@ -31,7 +31,7 @@ public:
     virtual ~compzillaRenderingContext();
 
     /*
-     * Implement nsICanvasRenderingContextInternal and compzillaRenderingContextInternal
+     * Implement nsICanvasRenderingContextInternal
      */
     
     // This method should NOT hold a ref to aParentCanvas; it will be called
@@ -55,6 +55,13 @@ public:
                               const PRUnichar *aEncoderOptions,
                               nsIInputStream **aStream);
 
+    // If this canvas context can be represented with a simple Thebes surface,
+    // return the surface.  Otherwise returns an error.
+    NS_IMETHOD GetThebesSurface(gfxASurface **surface);
+
+    /*
+     * Implement compzillaIRenderingContextInternal
+     */
 
     NS_IMETHOD Redraw (nsRect rect);
 
