@@ -15,13 +15,6 @@
     <!-- need globalOverlay.js for goDoCommand -->
     <script type="application/x-javascript" src="chrome://global/content/globalOverlay.js" />
 
-    <!-- Use jQuery for effects -->
-    <script type="application/x-javascript" src="chrome://compzilla/content/jquery.1.1.2.js" />
-    <!-- 3rd party jQuery plugin for animation easing effects -->
-    <script type="application/x-javascript" src="chrome://compzilla/content/jquery.easing.1.1.js" />
-
-    <script type="application/x-javascript" src="chrome://compzilla/content/debug.js" />
-
     <script type="application/x-javascript" src="chrome://compzilla/content/Compzilla.js" />
 
     <commandset id="compzillaDesktopCommandSet">
@@ -222,6 +215,13 @@
     <!--
     <iframe id="firebugFrame" src="chrome://firebug/content/firebug.xul" height="250" />
     -->
+
+    <!-- Use jQuery for effects -->
+    <script type="application/x-javascript" src="chrome://compzilla/content/jquery.1.1.2.js" />
+    <!-- 3rd party jQuery plugin for animation easing effects -->
+    <script type="application/x-javascript" src="chrome://compzilla/content/jquery.easing.1.1.js" />
+
+    <script type="application/x-javascript" src="chrome://compzilla/content/debug.js" />
 
 
 
