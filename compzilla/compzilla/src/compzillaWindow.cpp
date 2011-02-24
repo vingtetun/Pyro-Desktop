@@ -1,26 +1,12 @@
 /* -*- mode: C++; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
 
 
-/*
- * NOTE: Use of nsIFrame goes into bad mojo territory, causing implicit calls
- * to non-exported mozilla-internal string symbols.  This causes libcompzilla
- * to fail to load.
- */
-#if USE_IFRAME
-// FIXME: Work around these unstable headers including string headers
-// incompatible with stable ones, by including them first.
-#define MOZILLA_INTERNAL_API 1
-#include <nsIFrame.h>                // unstable
-#undef MOZILLA_INTERNAL_API
-#endif
-
 #include "compzillaWindow.h"
 #include "Debug.h"
 #include "nsKeycodes.h"
 #include "XAtoms.h"
 
 #include <nsMemory.h>
-#include <nsICanvasElement.h>        // unstable
 #include <nsIDOMClassInfo.h>         // unstable
 #include <nsIDOMEventTarget.h>
 #include <nsIDOMHTMLCanvasElement.h> // unstable
@@ -45,7 +31,12 @@ extern GdkEvent *gtk_get_current_event (void);
 
 extern XAtoms atoms;
 
+class nsIFrame;
+#include <nsRect.h>
+#include <jsapi.h>
 
+
+NS_IMPL_CLASSINFO(compzillaWindow, NULL, 0, COMPZILLA_WINDOW_CID)
 NS_IMPL_ADDREF(compzillaWindow)
 NS_IMPL_RELEASE(compzillaWindow)
 NS_INTERFACE_MAP_BEGIN(compzillaWindow)
@@ -280,7 +271,8 @@ compzillaWindow::AddContentNode (nsIDOMHTMLCanvasElement* aContent)
         return NS_ERROR_FAILURE;
 
     nsCOMPtr<compzillaIRenderingContextInternal> internal;
-    nsresult rv = aContent->GetContext (NS_LITERAL_STRING ("compzilla"), 
+    nsresult rv = aContent->GetContext (NS_LITERAL_STRING ("compzilla"),
+                                        JSVAL_VOID,
                                         getter_AddRefs (internal));
     if (NS_FAILED (rv))
         return rv;
@@ -733,7 +725,7 @@ compzillaWindow::KeyPress(nsIDOMEvent* aDOMEvent)
 void
 compzillaWindow::TranslateClientXYToWindow (int *x, int *y, nsIDOMEventTarget *target)
 {
-    nsCOMPtr<nsICanvasElement> canvasElement = do_QueryInterface (target);
+    nsCOMPtr<nsIHTMLCanvasElement> canvasElement = do_QueryInterface (target);
     if (!canvasElement) {
 	return;
     }
@@ -743,7 +735,7 @@ compzillaWindow::TranslateClientXYToWindow (int *x, int *y, nsIDOMEventTarget *t
     nsIFrame *frame;
     canvasElement->GetPrimaryCanvasFrame (&frame);
     if (!frame) {
-	return;
+	    return;
     }
 
     // roc says GetScreenRect is an X server roundtrip, though I can't see why.
@@ -1539,12 +1531,13 @@ void
 compzillaWindow::RedrawContentNode (nsIDOMHTMLCanvasElement *aContent, XRectangle *rect)
 {
     nsCOMPtr<compzillaIRenderingContextInternal> internal;
-    nsresult rv = aContent->GetContext (NS_LITERAL_STRING ("compzilla"), 
+    nsresult rv = aContent->GetContext (NS_LITERAL_STRING ("compzilla"),
+                                        JSVAL_VOID,
                                         getter_AddRefs (internal));
 
     if (NS_SUCCEEDED (rv)) {
         internal->SetDrawable (mDisplay, mPixmap, mAttr.visual);
-        internal->Redraw (nsIntRect (rect->x, rect->y, rect->width, rect->height));
+        internal->Redraw (gfxRect (rect->x, rect->y, rect->width, rect->height));
     }
 }
 

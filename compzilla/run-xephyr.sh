@@ -1,3 +1,3 @@
 #!/bin/bash
 
-Xephyr -screen 800x600 -ac -noreset :9
+Xephyr -screen 1024x768 -ac -noreset :9

@@ -10,9 +10,10 @@ bin_SCRIPTS=compzilla
 #
 
 extensiondir = $(GECKO_LIBDIR)/extensions/compzilla@pyrodesktop.org
+EXTENSIONS_SRCDIR=$(srcdir)
 extension_DATA =			\
-	$(srcdir)/chrome.manifest	\
-	$(srcdir)/install.rdf
+	$(EXTENSIONS_SRCDIR)/chrome.manifest	\
+	$(EXTENSIONS_SRCDIR)/install.rdf
 
 contentdir=$(extensiondir)/chrome/content
 CONTENT_SRCDIR=$(srcdir)/chrome/content
@@ -125,22 +126,14 @@ CLEANFILES = 			\
 # libcompzilla.so contains all C++ XPCOM components
 #
 
-if GECKO_USE_THEBES
 GFX_CFLAGS=
 GFX_LIBS=-lxpcomglue_s
 GFX_SOURCES=						\
 	$(srcdir)/src/compzillaRenderingContext.h 	\
 	$(srcdir)/src/compzillaRenderingContext.cpp
-else
-GFX_CFLAGS=-DMOZILLA_INTERNAL_API
-GFX_LIBS=-lxpistub
-GFX_SOURCES=						\
-	$(srcdir)/src/compzillaRenderingContextFx2.h 	\
-	$(srcdir)/src/compzillaRenderingContextFx2.cpp
-endif
 
 libcompzilla_la_LDFLAGS = -avoid-version -module -Wl,-Bsymbolic
-libcompzilla_la_LIBADD = $(XEXTENSIONS_LIBS) $(NSPR_LIBS) -L$(GECKO_LIBDIR) $(GFX_LIBS)
+libcompzilla_la_LIBADD = $(XEXTENSIONS_LIBS) $(NSPR_LIBS) -L$(GECKO_LIBDIR) $(GFX_LIBS) -lxul -lxpcom
 
 ### Lots of debug output
 # -DDEBUG -DDEBUG_SPEW -DDEBUG_EVENTS

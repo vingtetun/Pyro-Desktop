@@ -2,7 +2,7 @@
 
 
 var Atoms = {
-    svc: Components.classes['@pyrodesktop.org/compzillaService'].getService(
+    svc: Components.classes['@pyrodesktop.org/compzillaService;1'].getService(
 	     Components.interfaces.compzillaIControl),
 
     Intern: function (atom_name) {

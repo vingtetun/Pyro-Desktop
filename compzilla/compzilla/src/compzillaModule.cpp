@@ -6,89 +6,65 @@
 
 #include <nsICategoryManager.h>
 #include <nsIDOMClassInfo.h>           // unstable
-#include <nsIGenericFactory.h>
+#include "mozilla/ModuleUtils.h"
 #include <nsIScriptNameSpaceManager.h> // unstable
 #include <nsIServiceManager.h>
 #include <nsISupportsUtils.h>
 #include <nsServiceManagerUtils.h>
 
 #include "compzillaControl.h"
-
-#ifdef MOZ_TREE_CAIRO
 #include "compzillaRenderingContext.h"
-#else
-#include "compzillaRenderingContextFx2.h"
-#endif
 
 
-NS_GENERIC_FACTORY_CONSTRUCTOR(compzillaControl);
-NS_DECL_CLASSINFO(compzillaControl);
+NS_GENERIC_FACTORY_CONSTRUCTOR(compzillaControl)
+NS_DEFINE_NAMED_CID(COMPZILLA_CONTROL_CID);
 
-NS_GENERIC_FACTORY_CONSTRUCTOR(compzillaRenderingContext);
-NS_DECL_CLASSINFO(compzillaRenderingContext)
-
-NS_DECL_CLASSINFO(compzillaWindow)
-
-
-static NS_METHOD 
-registerGlobalConstructors(nsIComponentManager *aCompMgr,
-                           nsIFile *aPath,
-                           const char *registryLocation,
-                           const char *componentType,
-                           const nsModuleComponentInfo *info)
-{
-    nsresult rv = NS_OK;
-
-    nsCOMPtr<nsICategoryManager> catman = do_GetService(NS_CATEGORYMANAGER_CONTRACTID, &rv);
-    if (NS_FAILED(rv))
-        return rv;
-
-    rv = catman->AddCategoryEntry(JAVASCRIPT_GLOBAL_CONSTRUCTOR_CATEGORY,
-                                  "CompzillaControl",
-                                  COMPZILLA_CONTROL_CONTRACTID,
-                                  PR_TRUE, PR_TRUE, NULL);
-    NS_ENSURE_SUCCESS(rv, rv);
-
-    return rv;
+nsresult NS_NewCompzillaRenderingContext(compzillaIRenderingContext** aResult);
+#define MAKE_CTOR(ctor_, iface_, func_)                   \
+static nsresult                                           \
+ctor_(nsISupports* aOuter, REFNSIID aIID, void** aResult) \
+{                                                         \
+  *aResult = nsnull;                                      \
+  if (aOuter)                                             \
+    return NS_ERROR_NO_AGGREGATION;                       \
+  iface_* inst;                                           \
+  nsresult rv = func_(&inst);                             \
+  if (NS_SUCCEEDED(rv)) {                                 \
+    rv = inst->QueryInterface(aIID, aResult);             \
+    NS_RELEASE(inst);                                     \
+  }                                                       \
+  return rv;                                              \
 }
+MAKE_CTOR(CreateCompzillaRenderingContext, compzillaIRenderingContext, NS_NewCompzillaRenderingContext)
+NS_DEFINE_NAMED_CID(COMPZILLA_RENDERING_CONTEXT_CID);
 
+NS_DEFINE_NAMED_CID(COMPZILLA_WINDOW_CID);
 
-static const nsModuleComponentInfo components[] = {
-    { 
-        "Compzilla Window Manager Service",
-        COMPZILLA_CONTROL_CID,
-        COMPZILLA_CONTROL_CONTRACTID,
-        compzillaControlConstructor,
-        registerGlobalConstructors,
-        NULL, // mFactoryDestrucrtor
-        NULL, // mGetInterfacesProcPtr
-        NS_CI_INTERFACE_GETTER_NAME(compzillaControl),
-        NULL, // mGetLanguageHelperProc
-        &NS_CLASSINFO_NAME(compzillaControl),
-        nsIClassInfo::SINGLETON
-    },
-    {
-        "Compzilla Canvas Rendering Context",
-        COMPZILLA_RENDERING_CONTEXT_CID,
-        COMPZILLA_RENDERING_CONTEXT_CONTRACTID,
-        compzillaRenderingContextConstructor,
-        nsnull, nsnull, nsnull,
-        NS_CI_INTERFACE_GETTER_NAME(compzillaRenderingContext),
-        nsnull,
-        &NS_CLASSINFO_NAME(compzillaRenderingContext),
-        nsIClassInfo::DOM_OBJECT
-    },
-    {
-        "Compzilla Native Window",
-        COMPZILLA_WINDOW_CID,
-        COMPZILLA_WINDOW_CONTRACTID,
-        nsnull, nsnull, nsnull, nsnull,
-        NS_CI_INTERFACE_GETTER_NAME(compzillaWindow),
-        nsnull,
-        &NS_CLASSINFO_NAME(compzillaWindow),
-        nsIClassInfo::PLUGIN_OBJECT
-    },
+static const mozilla::Module::CIDEntry kCompzillaCIDs[] = {
+    { &kCOMPZILLA_CONTROL_CID, false, NULL, compzillaControlConstructor },
+    { &kCOMPZILLA_RENDERING_CONTEXT_CID, false, NULL, CreateCompzillaRenderingContext},
+    { &kCOMPZILLA_WINDOW_CID, false, NULL, NULL },
+    { NULL }
 };
 
+static const mozilla::Module::ContractIDEntry kCompzillaContracts[] = {
+    { COMPZILLA_CONTROL_CONTRACTID, &kCOMPZILLA_CONTROL_CID },
+    { COMPZILLA_RENDERING_CONTEXT_CONTRACTID, &kCOMPZILLA_RENDERING_CONTEXT_CID },
+    { COMPZILLA_WINDOW_CONTRACTID, &kCOMPZILLA_WINDOW_CID },
+    { NULL }
+};
 
-NS_IMPL_NSGETMODULE(compzillaModule, components)
+static const mozilla::Module::CategoryEntry kCompzillaCategories[] = {
+    { NULL }
+};
+
+static const mozilla::Module kCompzillaModule = {
+    mozilla::Module::kVersion,
+    kCompzillaCIDs,
+    kCompzillaContracts,
+    kCompzillaCategories
+};
+
+NSMODULE_DEFN(nsCompzillaModule) = &kCompzillaModule;
+
+NS_IMPL_MOZILLA192_NSGETMODULE(&kCompzillaModule)

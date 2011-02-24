@@ -1,5 +1,5 @@
 
-AC_INIT(compzilla, 0.2.2, pyrodesktop@googlegroups.com)
+AC_INIT(compzilla, 0.2.3, pyrodesktop@vingtetun.org)
 
 AC_CONFIG_SRCDIR(compzilla/chrome.manifest)
 AC_CONFIG_HEADERS(config.h)
@@ -10,21 +10,23 @@ AM_MAINTAINER_MODE
 AM_DISABLE_STATIC
 AM_PROG_LIBTOOL
 AC_PROG_CC
+AC_PROG_CXX
 AC_PROG_INSTALL
-
 
 PKG_CHECK_MODULES(GDK, gdk-2.0 >= 2.8.0)
 
-PKG_CHECK_MODULES(NSPR, firefox-nspr >= 1.5.0)
+PKG_CHECK_MODULES(NSPR, nspr >= 1.5.0)
 AC_SUBST(NSPR_LIBS)
 AC_SUBST(NSPR_CFLAGS)
 
-FIREFOX_XPCOM="firefox-xpcom >= 1.5.0"
+FIREFOX_DEV="firefox-dev >= 4.0"
+PKG_CHECK_MODULES(XPCOM, $FIREFOX_DEV)
+AC_SUBST(XPCOM_LIBS)
 
-GECKO_IDLDIR=`$PKG_CONFIG --variable=idldir "$FIREFOX_XPCOM"`
-GECKO_LIBDIR=`$PKG_CONFIG --variable=libdir "$FIREFOX_XPCOM"`
-GECKO_INCLUDEDIR=`$PKG_CONFIG --variable=includedir "$FIREFOX_XPCOM"`
-GECKO_EXEC_PREFIX=`$PKG_CONFIG --variable=exec_prefix "$FIREFOX_XPCOM"`
+GECKO_IDLDIR=`$PKG_CONFIG --variable=idldir "$FIREFOX_DEV"`
+GECKO_LIBDIR=`$PKG_CONFIG --variable=libdir "$FIREFOX_DEV"`
+GECKO_INCLUDEDIR=`$PKG_CONFIG --variable=includedir "$FIREFOX_DEV"`
+GECKO_EXEC_PREFIX=`$PKG_CONFIG --variable=exec_prefix "$FIREFOX_DEV"`
 
 ## Installed firefox has xpidl in lib/firefox directory
 XPIDL="$GECKO_LIBDIR"/xpidl
@@ -74,13 +76,9 @@ AM_CONDITIONAL(GECKO_USE_THEBES, test "x$ac_cv_gecko_thebes" = "xyes")
 ##
 
 if test "x$ac_cv_gecko_thebes" = "xyes"; then
-   FIREFOX_MINVERSION="3.0b1"
-   FIREFOX_MAXVERSION="3.0"
-   FIREFOX_SHORTNAME="ff3"
-else
-   FIREFOX_MINVERSION="2.0"
-   FIREFOX_MAXVERSION="2.0.0.*"
-   FIREFOX_SHORTNAME="ff2"
+   FIREFOX_MINVERSION="4.0b12pre"
+   FIREFOX_MAXVERSION="4.*"
+   FIREFOX_SHORTNAME="minefield"
 fi
 FIREFOX_TARGETPLATFORM="Linux_x86-gcc3" # FIXME!
 

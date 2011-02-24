@@ -3,7 +3,7 @@
 
 function startCompzilla ()
 {
-    var svc = Components.classes['@pyrodesktop.org/compzillaService']
+    var svc = Components.classes['@pyrodesktop.org/compzillaService;1']
 	                .getService(Components.interfaces.compzillaIControl);
 
     if (!svc.HasWindowManager (window) || promptReplaceWindowManager ()) {

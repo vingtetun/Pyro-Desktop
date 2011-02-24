@@ -1,6 +1,6 @@
 /* -*- mode: javascript; c-basic-offset: 4; indent-tabs-mode: t; -*- */
 
-var svc = Components.classes['@pyrodesktop.org/compzillaService'].getService(
+var svc = Components.classes['@pyrodesktop.org/compzillaService;1'].getService(
     Components.interfaces.compzillaIControl);
 
 var _clientList = new Array ();

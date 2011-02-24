@@ -1,0 +1,65 @@
+diff --git a/content/canvas/public/nsICanvasElementExternal.h b/content/canvas/public/nsICanvasElementExternal.h
+--- a/content/canvas/public/nsICanvasElementExternal.h
++++ b/content/canvas/public/nsICanvasElementExternal.h
+@@ -73,13 +73,18 @@ public:
+   NS_IMETHOD_(nsIntSize) GetSizeExternal() = 0;
+ 
+   /*
+    * Ask the canvas element to tell the contexts to render themselves
+    * to the given gfxContext at the origin of its coordinate space.
+    */
+   NS_IMETHOD RenderContextsExternal(gfxContext *ctx,
+                                     gfxPattern::GraphicsFilter aFilter) = 0;
++
++  /*
++   * Ast the canvas element to redraw
++   */
++  NS_IMETHOD RedrawExternal(const gfxRect* r) = 0;
+ };
+ 
+ NS_DEFINE_STATIC_IID_ACCESSOR(nsICanvasElementExternal, NS_ICANVASELEMENTEXTERNAL_IID)
+ 
+ #endif /* nsICanvasElementExternal_h___ */
+diff --git a/content/html/content/public/nsHTMLCanvasElement.h b/content/html/content/public/nsHTMLCanvasElement.h
+--- a/content/html/content/public/nsHTMLCanvasElement.h
++++ b/content/html/content/public/nsHTMLCanvasElement.h
+@@ -128,16 +128,17 @@ public:
+    */
+   PRBool GetIsOpaque();
+ 
+   /*
+    * nsICanvasElementExternal -- for use outside of content/layout
+    */
+   NS_IMETHOD_(nsIntSize) GetSizeExternal();
+   NS_IMETHOD RenderContextsExternal(gfxContext *aContext, gfxPattern::GraphicsFilter aFilter);
++  NS_IMETHOD RedrawExternal(const gfxRect* r);
+ 
+   virtual PRBool ParseAttribute(PRInt32 aNamespaceID,
+                                 nsIAtom* aAttribute,
+                                 const nsAString& aValue,
+                                 nsAttrValue& aResult);
+   nsChangeHint GetAttributeChangeHint(const nsIAtom* aAttribute, PRInt32 aModType) const;
+ 
+   // SetAttr override.  C++ is stupid, so have to override both
+diff --git a/content/html/content/src/nsHTMLCanvasElement.cpp b/content/html/content/src/nsHTMLCanvasElement.cpp
+--- a/content/html/content/src/nsHTMLCanvasElement.cpp
++++ b/content/html/content/src/nsHTMLCanvasElement.cpp
+@@ -726,8 +734,18 @@ NS_IMETHODIMP
+ NS_IMETHODIMP
+ nsHTMLCanvasElement::RenderContextsExternal(gfxContext *aContext, gfxPattern::GraphicsFilter aFilter)
+ {
+   if (!mCurrentContext)
+     return NS_OK;
+ 
+   return mCurrentContext->Render(aContext, aFilter);
+ }
++
++NS_IMETHODIMP
++nsHTMLCanvasElement::RedrawExternal(const gfxRect* r)
++{
++  if (!mCurrentContext)
++    return NS_OK;
++
++  InvalidateFrame(r);
++  return NS_OK;
++}

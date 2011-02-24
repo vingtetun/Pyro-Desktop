@@ -4,12 +4,16 @@ SUBDIRS = compzilla
 debug:
 	./run-xephyr.sh &
 	DISPLAY=:9 NSPR_LOG_MODULES="compzilla:10" \
-	$(FIREFOX) -g -chrome chrome://compzilla/content/start.xul -P dev
+	$(FIREFOX) -g -chrome chrome://compzilla/content/start.xul -P pyrodesktop
+
+check:
+	$(GECKO_EXEC_PREFIX)/run-mozilla.sh `which ldd` -r compzilla/.libs/libcompzilla.so
 
 run:
 	./run-xephyr.sh &
 	DISPLAY=:9 NSPR_LOG_MODULES="compzilla:10" \
-	$(FIREFOX) -chrome chrome://compzilla/content/start.xul -P dev -no-remote
+	$(FIREFOX) -chrome chrome://compzilla/content/start.xul -P pyrodesktop -no-remote
+
 
 
 #
@@ -33,3 +37,4 @@ $(XPINAME):
 
 dist-hook: xpi
 CLEANFILES = $(XPINAME)
+

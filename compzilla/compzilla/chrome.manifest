@@ -12,3 +12,10 @@ overlay chrome://browser/content/browser.xul chrome://compzilla/content/browserO
 
 # Flickrdemo desktop overlay
 overlay chrome://compzilla/content/start.xul chrome://compzilla/content/flickrdemo.xul
+
+interfaces components/compzillaIControl.xpt
+interfaces components/compzillaIControlObserver.xpt
+interfaces components/compzillaIWindow.xpt
+interfaces components/compzillaIWindowObserver.xpt
+interfaces components/compzillaIRenderingContext.xpt
+binary-component components/libcompzilla.so

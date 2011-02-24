@@ -8,6 +8,7 @@
     <em:id>compzilla@pyrodesktop.org</em:id>
     <em:version>@VERSION@</em:version>
     <em:type>2</em:type>
+    <em:unpack>true</em:unpack>
     <em:targetPlatform>@FIREFOX_TARGETPLATFORM@</em:targetPlatform>
 
     <em:name>Pyro Desktop</em:name>

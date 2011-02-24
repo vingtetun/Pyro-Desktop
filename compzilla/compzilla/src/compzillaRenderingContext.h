@@ -5,6 +5,7 @@
 
 
 #include <nsCOMPtr.h>
+#include <nsCycleCollectionParticipant.h>
 
 #include <gfxContext.h>     // unstable
 #include <gfxASurface.h>    // unstable
@@ -18,13 +19,17 @@ extern "C" {
 #include "compzillaIRenderingContext.h"
 #include "compzillaIRenderingContextInternal.h"
 
+#include <Layers.h>
+typedef mozilla::layers::CanvasLayer CanvasLayer; 
+static PRUint8 gCompzillaLayerUserData;
+
+class nsHTMLCanvasElement;
 
 class compzillaRenderingContext :
     public compzillaIRenderingContext,
     public compzillaIRenderingContextInternal
 {
 public:
-    NS_DECL_ISUPPORTS
     NS_DECL_COMPZILLAIRENDERINGCONTEXT
 
     compzillaRenderingContext ();
@@ -36,15 +41,12 @@ public:
     
     // This method should NOT hold a ref to aParentCanvas; it will be called
     // with nsnull when the element is going away.
-    NS_IMETHOD SetCanvasElement(nsICanvasElement* aParentCanvas);
+    NS_IMETHOD SetCanvasElement(nsHTMLCanvasElement* aParentCanvas);
     
     // Sets the dimensions of the canvas, in pixels.  Called
     // whenever the size of the element changes.
     NS_IMETHOD SetDimensions(PRInt32 width, PRInt32 height);
     
-    // Render the canvas at the origin of the given nsIRenderingContext
-    NS_IMETHOD Render(gfxContext *ctx);
-
     // Gives you a stream containing the image represented by this context.
     // The format is given in aMimeTime, for example "image/png".
     //
@@ -63,12 +65,39 @@ public:
      * Implement compzillaIRenderingContextInternal
      */
 
-    NS_IMETHOD Redraw (nsRect rect);
+    // Render the canvas at the origin of the given nsIRenderingContext
+    NS_IMETHOD Render(gfxContext*, gfxPattern::GraphicsFilter);
+
+    NS_IMETHOD Redraw (const gfxRect& rect);
 
     NS_IMETHOD SetDrawable (Display *dpy, Drawable drawable, Visual *visual);
 
+    already_AddRefed<CanvasLayer> GetCanvasLayer(CanvasLayer *aOldLayer,
+                                                 LayerManager *aManager) {
+      nsRefPtr<CanvasLayer> canvasLayer = aManager->CreateCanvasLayer();
+      if (!canvasLayer) {
+         NS_WARNING("CreateCanvasLayer returned null!");
+        return nsnull;
+      }
+      canvasLayer->SetUserData(&gCompzillaLayerUserData, nsnull);
+
+      CanvasLayer::Data data;
+      data.mSurface = mGfxSurf.get();
+      data.mSize = nsIntSize(mWidth, mHeight);
+      canvasLayer->Initialize(data);
+
+      PRUint32 flags = 0x01;
+      canvasLayer->SetContentFlags(flags);
+      canvasLayer->Updated(nsIntRect(0, 0, mWidth, mHeight));
+ 
+      MarkContextClean();
+      return canvasLayer.forget().get();
+    };
+
+    NS_DECL_CYCLE_COLLECTING_ISUPPORTS
+    NS_DECL_CYCLE_COLLECTION_CLASS_AMBIGUOUS(compzillaRenderingContext, compzillaIRenderingContext)
 private:
-    nsICanvasElement* mCanvasElement;
+    nsHTMLCanvasElement* mCanvasElement;
 
     Display *mXDisplay;
     Visual *mXVisual;

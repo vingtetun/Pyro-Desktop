@@ -33,6 +33,7 @@ PRLogModuleInfo *compzillaLog; // From Debug.h
 XAtoms atoms;                  // From XAtoms.h
 
 
+NS_IMPL_CLASSINFO(compzillaControl, NULL, 0, COMPZILLA_CONTROL_CID)
 NS_IMPL_ISUPPORTS1_CI(compzillaControl, compzillaIControl);
 
 
@@ -386,7 +387,7 @@ compzillaControl::InitXExtensions ()
     int opcode;
     if (!XQueryExtension (mXDisplay, COMPOSITE_NAME, &opcode, 
                           &composite_event, &composite_error)) {
-	ERROR ("No composite extension\n");
+  	  ERROR ("No composite extension\n");
         return NS_ERROR_NO_COMPOSITE_EXTENSTION;
     }
 
@@ -611,8 +612,7 @@ compzillaControl::InitOverlay ()
 
 
 void 
-compzillaControl::ShowOverlay (bool show)
-{
+compzillaControl::ShowOverlay (bool show) {
     XserverRegion xregion;
 
     if (show) {
