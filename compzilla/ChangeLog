@@ -1,3 +1,90 @@
+2011-24-02  Vivien Nicolas  <21@vingtetun.org>
+
+ * compzilla/Makefile.am: Include Compzilla.js instead of start.js
+
+ * compzilla/chrome/content/Compzilla.js: This is the new name of start.js and
+ the code has been quickly turns to an object to look more 2011.
+
+ * compzilla/chrome/content/debug.js: Mostly fix whitespace/indentations
+
+ * compzilla/chrome/content/start.xul: Used the new Compzilla.js and starts to
+ moves some declarations to the the top of the file where they belongs
+
+2011-24-02  Vivien Nicolas  <21@vingtetun.org>
+
+	* configure.in: Bump version to 0.2.3.  Bump [min|max]version to 4.0
+	and use 'minefield' in the .xpi name instead of 'ff3'. Also change the
+  mail used in AC_INIT.
+  Remove the code for FF2 and modify a bit the PKG_CHECK_MODULES calls.
+  firefox-dev.pc exists only on my computer for simplicity at the moment.
+
+  * Makefile.am: Change the name of the developing profile to 'pyrodesktop'
+  instead of 'dev' since this is too generic.
+
+  * run-xephyr.sh: Bump the resolution to 1024x768 from 800x600.
+
+  * compzilla/Makefile.am: Remove 'if GECKO_USE_THEBES' checks for FF2 since
+    I don't plan to support it at all. Also add libxul and libxpcom.
+
+  * compzilla/chrome.manifest: Declare interfaces and the binary component
+  inside the chrome.manifest file since this is the new way to do it for FF4.
+
+ * compzilla/chrome/content/atoms.js: Change the contract id of pyrodesktop
+ service.
+
+ * compzilla/chrome/content/browserOverlay.js: Change the contract id of
+ pyrodesktop service.
+
+ * compzilla/chrome/content/content.js: Change the contract id of pyrodesktop
+ service.
+
+ * compzilla/chrome/content/start.js: Change the contract id of pyrodesktop
+ service
+
+ * compzilla/skin/compzilla.css: Force the height of the windowStack container
+ to 1024x768, this is a hack but for the moment I just want to have
+ something that work.
+
+ * compzilla/defaults/preferences/prefs.js: Add some useful preferences for
+ extensions development.
+
+ * compzilla/install.rdf.in: Extension with binary component needs to be unpack
+
+ * compzilla/public/compzillaIControl.idl: Change the contract id of the
+ pyrodesktop component, this is not require yet but I plan to rename all
+ the components later (one good reason is that compzilla is too long to type,
+ having something like 'cz' will make more sense).
+
+ * compzilla/src/compzillaControl.cpp: Use the NS_IMPL_CLASSINFO macro
+
+ * compzilla/src/compzillaIRenderingContextInternal.h: Remove support for Gecko
+ 1.8 and the <nsIFrame.h> inclusion and the surrounding hack and add <nsRect.h>
+ since it seems required now. Declare more methods probably added to
+ nsICanvasRenderingContextInternal since the last time the code has been updated
+
+ * compzilla/src/compzillaModule.cpp: Revamped the file to match the new way to
+ declare components.
+
+ * compzilla/src/compzillaRenderingContext.cpp: Add the class participating to
+ the cycling collection because this is required by the code of
+ HTMLCanvasElement. Replace the content of the Redraw method by adding a new
+ method to the mozilla beast (RedrawExternal) that allow to call the invalidation
+ of a part of the canvas, basically this is what was done before but now the old
+ interface nsCanvasElement has died and the new won't link because it used many
+ MOZILLA_INTERNAL_API code.
+
+ * compzilla/src/compzillaRenderingContext.h: Add the needed headers and add a
+ dumb method to create a Layer, this method probably needs improvment since I
+ can see many crash related to Layers while playing with pyrodesktop
+
+ * compzilla/src/compzillaWindow.cpp: Remove the need to include nsIFrame by
+ using a forward declaration and update the code to work with mozilla's trunk
+ in a ver basic way.
+
+ * ../patches/expose-InvalidateFrame.diff: The patch expose the InvalidateFrame
+ method of HTMLCanvasElement to the world by adding a wrapper for it. This is
+ the only way I've found right now to be able to redraw correctly.
+
 2008-06-06  Alex Graveley  <alex@beatniksoftware.com>
 
 	* configure.in: Bump version to 0.2.2.  Bump maxversion to 3.0

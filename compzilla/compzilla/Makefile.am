@@ -34,7 +34,7 @@ content_DATA =					\
 	$(CONTENT_SRCDIR)/picker.js		\
 	$(CONTENT_SRCDIR)/prompt.js		\
 	$(CONTENT_SRCDIR)/scale.js		\
-	$(CONTENT_SRCDIR)/start.js		\
+	$(CONTENT_SRCDIR)/Compzilla.js		\
 	$(CONTENT_SRCDIR)/start.xul		\
 	$(CONTENT_SRCDIR)/util.js		\
 	$(CONTENT_SRCDIR)/windowStack.js	\

@@ -3,15 +3,63 @@
 
 <!DOCTYPE window SYSTEM "chrome://compzilla/locale/start.dtd">
 
-<window id="desktopWindow"
+<window id="desktopWindow" windowtype="navigator:desktop"
+        title="compzilla"
+        hidechrome="true"
         xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
         xmlns:html="http://www.w3.org/1999/xhtml"
         xmlns:pyro="http://www.pyrodesktop.org/compzilla"
         xmlns:xul="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
-        title="compzilla"
-        hidechrome="true"
-        windowtype="navigator:desktop"
-        onload="compzillaLoad()">
+        onload="Compzilla.startup();" onunload="Compzilla.shutdown();">
+
+    <!-- need globalOverlay.js for goDoCommand -->
+    <script type="application/x-javascript" src="chrome://global/content/globalOverlay.js" />
+
+    <!-- Use jQuery for effects -->
+    <script type="application/x-javascript" src="chrome://compzilla/content/jquery.1.1.2.js" />
+    <!-- 3rd party jQuery plugin for animation easing effects -->
+    <script type="application/x-javascript" src="chrome://compzilla/content/jquery.easing.1.1.js" />
+
+    <script type="application/x-javascript" src="chrome://compzilla/content/debug.js" />
+
+    <script type="application/x-javascript" src="chrome://compzilla/content/Compzilla.js" />
+
+    <commandset id="compzillaDesktopCommandSet">
+      <command id="cmd_toggleDesktop" oncommand="windowStack.toggleDesktop();" />
+      <command id="cmd_toggleOverlay" oncommand="toggleOverlay();" />
+	    <command id="cmd_showPickerPrev" oncommand="showPicker(false);" />
+      <command id="cmd_showPickerNext" oncommand="showPicker(true);" />
+      <command id="cmd_toggleDebug" oncommand="debugToggleWindow();" />
+      <command id="cmd_toggleScale" oncommand="toggleScale();" />
+    </commandset>
+
+    <keyset id="compzillaDesktopKeyset">
+      <key id="key_showDesktop" phase="capturing" keycode="VK_F5" modifiers="control" command="cmd_toggleDesktop" />
+      <key id="key_toggleOverlay" phase="capturing" keycode="VK_F9" modifiers="control" command="cmd_toggleOverlay" />
+      <key id="key_toggleDebug" phase="capturing" keycode="VK_F10" modifiers="control" command="cmd_toggleDebug" />
+      <key id="key_toggleScale" phase="capturing" keycode="VK_F11" modifiers="control" command="cmd_toggleScale" />
+      <key id="key_showPickerPrev" phase="capturing" keycode="VK_LEFT" modifiers="control" command="cmd_showPickerPrev" />
+      <key id="key_showPickerNext" phase="capturing" keycode="VK_RIGHT" modifiers="control" command="cmd_showPickerNext" />
+    </keyset>
+
+    <commandset id="compzillaWindowCommandSet">
+      <command id="cmd_minimizeWindow" oncommand="_focusedFrame.doMinimize();" />
+      <command id="cmd_restoreWindow" oncommand="alert('restore');" />
+      <command id="cmd_maximizeWindow" oncommand="_focusedFrame.doToggleMaximized();" />
+      <command id="cmd_closeWindow" oncommand="_focusedFrame.doKill();" />
+    </commandset>
+
+    <keyset id="compzillaWindowKeyset">
+      <key id="key_closeWindow" phase="capturing" keycode="VK_F4" modifiers="shift alt" command="cmd_closeWindow" />
+      <key id="key_minimizeWindow" phase="capturing" keycode="VK_F9" modifiers="shift alt" command="cmd_minimizeWindow" />
+      <key id="key_maximizeWindow" phase="capturing" keycode="VK_F10" modifiers="shift alt" command="cmd_maximizeWindow" />
+    </keyset>
+
+    <menupopup id="compzillaWindowMenu">
+      <menuitem id="menu_minimizeWindow" label="&minimizeWindow.label;" command="cmd_minimizeWindow" />
+      <menuitem id="menu_maximizeWindow" label="&maximizeWindow.label;" command="cmd_maximizeWindow" />
+      <menuitem id="menu_closeWindow" label="&closeWindow.label;" command="cmd_closeWindow" />
+    </menupopup>
 
     <html:body id="desktop" xmlns="http://www.w3.org/1999/xhtml" flex="1">
 
@@ -175,85 +223,7 @@
     <iframe id="firebugFrame" src="chrome://firebug/content/firebug.xul" height="250" />
     -->
 
-    <commandset id="compzillaDesktopCommandSet">
-        <command id="cmd_toggleDesktop" oncommand="windowStack.toggleDesktop();" />
-        <command id="cmd_toggleOverlay" oncommand="toggleOverlay();" />
-	<command id="cmd_showPickerPrev" oncommand="showPicker(false);" />
-	<command id="cmd_showPickerNext" oncommand="showPicker(true);" />
-        <command id="cmd_toggleDebug" oncommand="debugToggleWindow();" />
-        <command id="cmd_toggleScale" oncommand="toggleScale();" />
-    </commandset>
 
-    <keyset id="compzillaDesktopKeyset">
-        <key id="key_showDesktop" 
-             phase="capturing"
-             keycode="VK_F5" modifiers="control"
-             command="cmd_toggleDesktop" />
-        <key id="key_toggleOverlay" 
-             phase="capturing"
-             keycode="VK_F9" modifiers="control"
-             command="cmd_toggleOverlay" />
-        <key id="key_toggleDebug" 
-             phase="capturing"
-             keycode="VK_F10" modifiers="control"
-             command="cmd_toggleDebug" />
-        <key id="key_toggleScale" 
-             phase="capturing"
-             keycode="VK_F11" modifiers="control"
-             command="cmd_toggleScale" />
-        <key id="key_showPickerPrev" 
-             phase="capturing"
-             keycode="VK_LEFT" modifiers="control"
-             command="cmd_showPickerPrev" />
-        <key id="key_showPickerNext" 
-             phase="capturing"
-             keycode="VK_RIGHT" modifiers="control"
-             command="cmd_showPickerNext" />
-    </keyset>
-
-    <commandset id="compzillaWindowCommandSet">
-        <command id="cmd_minimizeWindow" oncommand="_focusedFrame.doMinimize();" />
-        <command id="cmd_restoreWindow" oncommand="alert('restore');" />
-        <command id="cmd_maximizeWindow" oncommand="_focusedFrame.doToggleMaximized();" />
-        <command id="cmd_closeWindow" oncommand="_focusedFrame.doKill();" />
-    </commandset>
-
-    <keyset id="compzillaWindowKeyset">
-        <key id="key_minimizeWindow" 
-             phase="capturing"
-             keycode="VK_F9" modifiers="shift alt"
-             command="cmd_minimizeWindow" />
-        <key id="key_maximizeWindow" 
-             phase="capturing"
-             keycode="VK_F10" modifiers="shift alt"
-             command="cmd_maximizeWindow" />
-        <key id="key_closeWindow" 
-             phase="capturing"
-             keycode="VK_F4" modifiers="shift alt"
-             command="cmd_closeWindow" />
-    </keyset>
-
-    <menupopup id="compzillaWindowMenu">
-        <menuitem id="menu_minimizeWindow" 
-                  label="&minimizeWindow.label;" 
-                  command="cmd_minimizeWindow" />
-        <menuitem id="menu_maximizeWindow" 
-                  label="&maximizeWindow.label;" 
-                  command="cmd_maximizeWindow" />
-        <menuitem id="menu_closeWindow" 
-                  label="&closeWindow.label;" 
-                  command="cmd_closeWindow" />
-    </menupopup>
-
-    <!-- need globalOverlay.js for goDoCommand -->
-    <script type="application/x-javascript" src="chrome://global/content/globalOverlay.js" />
-
-    <!-- Use jQuery for effects -->
-    <script type="application/x-javascript" src="chrome://compzilla/content/jquery.1.1.2.js" />
-    <!-- 3rd party jQuery plugin for animation easing effects -->
-    <script type="application/x-javascript" src="chrome://compzilla/content/jquery.easing.1.1.js" />
-
-    <script type="application/x-javascript" src="chrome://compzilla/content/debug.js" />
 
     <script type="application/x-javascript" src="chrome://compzilla/content/nihanim.js" />
     <script type="application/x-javascript" src="chrome://compzilla/content/util.js" />
@@ -271,6 +241,4 @@
     <script type="application/x-javascript" src="chrome://compzilla/content/minmax.js" />
 
     <script type="application/x-javascript" src="chrome://compzilla/content/prompt.js" />
-    <script type="application/x-javascript" src="chrome://compzilla/content/start.js" />
-
 </window>
