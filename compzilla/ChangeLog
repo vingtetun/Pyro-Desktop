@@ -1,3 +1,10 @@
+2011-26-02  Vivien Nicolas  <21@vingtetun.org>
+ * compzilla/src/compzillaWindow.cpp: Spaces/Indent clean up
+
+ * compzilla/src/compzillaRenderingContext.cpp: Spaces/Indent clean up
+ Also I've tweaked ::Redraw with a comment and by not scaling with
+ app units, which makes Redraw works!
+
 2011-24-02  Vivien Nicolas  <21@vingtetun.org>
 
  * compzilla/Makefile.am: Include Compzilla.js instead of start.js
