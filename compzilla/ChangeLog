@@ -1,3 +1,19 @@
+2011-03-03  Vivien Nicolas  <21@vingtetun.org>
+ * Makefile.am: Add a install-dev rule for simplify the dev-install-reboot
+ process actually in use. I could possibly play with compzilla/Makefile.am
+ in order to achieve that but I've not found the right way to do it yet.
+
+ * compzilla/Makefile.am: Let 'meebo' lives into a distinct directory, if later
+ people want to override inside the chrome.manifest and find 'meebo' is too
+ specific nothing prevent to rename the directory.
+
+ * compzilla/chrome.manifest: Add a simple comment about interfaces and the
+ binary component
+
+ * compzilla/chrome/skin/compzilla.css: Reformat the file and udpate the path
+ to match the new 'meebo' subdir for images
+
+
 2011-02-03  Vivien Nicolas  <21@vingtetun.org>
  * compzilla/chrome/content/debug.js: Removed the event listener
 

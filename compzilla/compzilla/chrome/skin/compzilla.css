@@ -8,45 +8,46 @@
  */
 
 body {
-	position: absolute;
-	margin: 0px;
-	width: 100%;
-	height: 100%;
+  position: absolute;
+  margin: 0px;
+  width: 100%;
+  height: 100%;
 }
 
 #windowStack {
-	position: absolute;
-	overflow: hidden;
-	margin: 0px;
-	left: 0px;
-	top: 0px;
-	width: 100%;
-	height: 100%;
-  /* HACK */
+  position: absolute;
+  overflow: hidden;
+  margin: 0px;
+  left: 0px;
+  top: 0px;
+  width: 100%;
+  height: 100%;
+  visibility: visible;
+
+  /* XXX HACK */
   min-height: 768px;
   max-height: 768px;
-	visibility: visible;
 }
 
 .windowLayer {
-	position: absolute;
-	overflow: hidden;
-	visibility: visible;
-	margin: 0px;
+  position: absolute;
+  overflow: hidden;
+  visibility: visible;
+  margin: 0px;
 }
 
 #desktopLayer {
-	background: url(chrome://compzilla/skin/desktop-background.jpg);
-	z-index: 0;
-	width: 100%;
-	height: 100%;
+  background: url(chrome://compzilla/skin/desktop-background.jpg);
+  z-index: 0;
+  width: 100%;
+  height: 100%;
 }
 
 #fullscreenLayer {
-	z-index: 15000;
-	display: none;
-	background: #000000;
-	background-color: transparent;
+  z-index: 15000;
+  display: none;
+  background: #000000;
+  background-color: transparent;
 }
 
 /*
@@ -54,31 +55,31 @@ body {
  * expose layer
  */
 #exposeLayer {
-	z-index: 25000;
-	display: none;
-	width: 100%;
-	height: 100%;
-	background-color: transparent;
+  z-index: 25000;
+  display: none;
+  width: 100%;
+  height: 100%;
+  background-color: transparent;
 }
 
 #exposeBackground {
-	z-index: -10;
-	width: 100%;
-	height: 100%;
-	opacity: 0.3;
-	background-color: #000000;
+  z-index: -10;
+  width: 100%;
+  height: 100%;
+  opacity: 0.3;
+  background-color: #000000;
 }
 
 .exposeItem {
-	opacity: 0.4;
-	position:absolute;
-	border: 2px solid transparent;
-	-moz-border-radius: 3.5px;
+  opacity: 0.4;
+  position:absolute;
+  border: 2px solid transparent;
+  border-radius: 3.5px;
 }
 
 .exposeItem[pyro|selected-item="true"] {
-	opacity: 1.0;
-	border-color: #eee;
+  opacity: 1.0;
+  border-color: #eee;
 }
 
 /*
@@ -86,111 +87,105 @@ body {
  * picker layer
  */
 #pickerLayer {
-	z-index: 26000;
-	width: 100%;
-	height: 100%;
-	display: none;
-	background: transparent;
+  z-index: 26000;
+  width: 100%;
+  height: 100%;
+  display: none;
+  background: transparent;
 }
 
 #pickerBackground {
-	z-index: -10;
-	width: 100%;
-	height: 100%;
-	opacity: 0.3;
-	background: #000000;
+  z-index: -10;
+  width: 100%;
+  height: 100%;
+  opacity: 0.3;
+  background: #000000;
 }
 
 #pickerWindow {
-	position: absolute;
-	overflow: hidden;
-	width: 600px;
-	height: 200px;
-
-	top: 0px;
-	bottom: 0px;
-	margin-top: auto;
-	margin-bottom: auto;
-
-	left: 0px;
-	right: 0px;
-	margin-left: auto;
-	margin-right: auto;
-
-	opacity: 1.0;
-
-	border: 3px solid #f6f6f6;
-	background-color: #e6e6e6;
-	-moz-border-radius: 2.5px;
+  position: absolute;
+  overflow: hidden;
+  width: 600px;
+  height: 200px;
+  top: 0px;
+  bottom: 0px;
+  margin-top: auto;
+  margin-bottom: auto;
+  left: 0px;
+  right: 0px;
+  margin-left: auto;
+  margin-right: auto;
+  opacity: 1.0;
+  border: 3px solid #f6f6f6;
+  background-color: #e6e6e6;
+  border-radius: 2.5px;
 }
 
 #pickerWindowBeauty {
-	position: absolute;
-	top: 0px;
-	left: 0px;
-	width: 100%;
-	height: 100%;
-	z-index: 1;
-	display: block;
+  position: absolute;
+  top: 0px;
+  left: 0px;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+  display: block;
 }
 
 #pickerContents {
-	position: absolute;
-	top: 0px;
-	left: 0px;
-	z-index: 0;
+  position: absolute;
+  top: 0px;
+  left: 0px;
+  z-index: 0;
 }
 
 .pickerItem {
-	display: none;
-	position: absolute;
-	text-align: center;
-	top: 20px;
-	width: 150px;
-	height: 150px;
-	overflow: hidden;
-
-	border: 2px solid;
-	-moz-border-radius: 3.5px;
-	border-color: transparent;
+  display: none;
+  position: absolute;
+  text-align: center;
+  top: 20px;
+  width: 150px;
+  height: 150px;
+  overflow: hidden;
+  border: 2px solid;
+  border-radius: 3.5px;
+  border-color: transparent;
 }
 
 .pickerItem[pyro|selected-item="true"] {
-	border-color: #222222;
+  border-color: #222222;
 }
 
 .pickerItem #window canvas {
-	position: absolute;
-	top: 0px;
-	bottom: 0px;
-	left: 0px;
-	right: 0px;
-	margin: auto;
+  position: absolute;
+  top: 0px;
+  bottom: 0px;
+  left: 0px;
+  right: 0px;
+  margin: auto;
 }
 
 .pickerItem #window {
-	position:absolute;
-	left: 2px;
-	right: 2px;
-	top: 2px;
-	bottom: 1.5em;
-	margin-left: auto;
-	margin-right: auto;
-
-	border: 1px solid #000;
-	-moz-border-radius: 2.5px;
+  position:absolute;
+  left: 2px;
+  right: 2px;
+  top: 2px;
+  bottom: 1.5em;
+  margin-left: auto;
+  margin-right: auto;
+  border: 1px solid #000;
+  border-radius: 2.5px;
 }
 
 .pickerItem #label {
-	position:absolute;
-	bottom: 0px;
-	left: 0px;
-	right: 0px;
-	margin-left: auto;
-	margin-right: auto;
-        font-family: Tahoma, Arial, sans-serif;
-        font-size: 10px;
-        font-weight: bold;
+  position:absolute;
+  bottom: 0px;
+  left: 0px;
+  right: 0px;
+  margin-left: auto;
+  margin-right: auto;
+  font-family: Tahoma, Arial, sans-serif;
+  font-size: 10px;
+  font-weight: bold;
 }
 
 
@@ -200,25 +195,24 @@ body {
  */
 
 #overlayLayer {
-	z-index: 30000;
-	display: none;
-	text-align: center;
-	width: 100%;
-	height: 100%;
-	opacity: 0.75;
-	background-color: #000000;
+  z-index: 30000;
+  display: none;
+  text-align: center;
+  width: 100%;
+  height: 100%;
+  opacity: 0.75;
+  background-color: #000000;
 }
 
 #overlayLayer > div {
-        height: 80%;
-        margin: 5%;
+  height: 80%;
+  margin: 5%;
 }
 
 #overlayLayer > div > iframe {
-	width: 100%;
-	height: 100%;
+  width: 100%;
+  height: 100%;
 }
-
 
 
 /*
@@ -228,17 +222,16 @@ body {
  */
 
 .windowContent {
-        -moz-user-select: none;
-        user-select: none;
-	background-color: transparent;
-	width: 100%;
-	height: 100%;
+  -moz-user-select: none;
+  user-select: none;
+  background-color: transparent;
+  width: 100%;
+  height: 100%;
 }
 
 .windowContent:focus {
-        outline-width: 0;
+  outline-width: 0;
 }
-
 
 
 /*
@@ -248,26 +241,26 @@ body {
  */
 
 #debugContent {
-	font-family: Andale Mono, monospace;
-	font-size: 0.75em;
-	width: 100%;
-	height: 100%;
+  font-family: Andale Mono, monospace;
+  font-size: 0.75em;
+  width: 100%;
+  height: 100%;
 }
 
 #debugLog {
-        position: absolute;
-        top: 0px;
-	bottom: 4em;
-        width: 100%;
+  position: absolute;
+  top: 0px;
+  bottom: 4em;
+  width: 100%;
 }
 
 #debugActions {
-        position: absolute;
-        bottom: 0px;
-        width: 100%;
-	height: 4em;
-        white-space: nowrap;
-        overflow: hidden;
+  position: absolute;
+  bottom: 0px;
+  width: 100%;
+  height: 4em;
+  white-space: nowrap;
+  overflow: hidden;
 }
 
 
@@ -278,8 +271,8 @@ body {
  */
 
 #firebugFrame {
-	width: 100%;
-	height: 100%;
+  width: 100%;
+  height: 100%;
 }
 
 
@@ -290,105 +283,119 @@ body {
  */
 
 .uiDlg {
-        position: absolute;
-        z-index: 1;
-        min-width: 200px;
-        min-height: 120px;
+  position: absolute;
+  z-index: 1;
+  min-width: 200px;
+  min-height: 120px;
 }
 
 .uiDlg:focus {
-        outline-width: 0;
+  outline-width: 0;
 }
 
 .uiDlgTop, .uiDlgTop > div, .uiDlgBottom, .uiDlgBottom > div {
-        height: 8px;
+  height: 8px;
 }
+
 .uiDlgBar, .uiDlgBar > div {
-        height: 22px;
+  height: 22px;
 }
+
 .uiDlgContent {
-        position: absolute;
-        top: 30px;
-        bottom: 8px;
-        width: 100%;
+  position: absolute;
+  top: 30px;
+  bottom: 8px;
+  width: 100%;
 }
+
 .uiDlgBottom {
-        position: absolute;
-        bottom: 0px;
-        width: 100%;
+  position: absolute;
+  bottom: 0px;
+  width: 100%;
 }
+
 .uiDlgContentLeft, .uiDlgContentRight {
-        height: 100%;
+  height: 100%;
 }
+
 .uiDlgContentCenter {
-        position: absolute;
-        left: 0px;
-        right: 0px;
-        top: 0px;
-        bottom: 0px;
+  position: absolute;
+  left: 0px;
+  right: 0px;
+  top: 0px;
+  bottom: 0px;
 }
+
 .uiDlgCenter {
-        margin-left: 8px;
-        margin-right: 8px;
+  margin-left: 8px;
+  margin-right: 8px;
 }
+
 .uiDlgBorderLeft {
-        position: absolute;
-        left: 0px;
-        width: 8px;
+  position: absolute;
+  left: 0px;
+  width: 8px;
 }
+
 .uiDlgBorderRight {
-        position: absolute;
-        right: 0px;
-        width: 8px;
+  position: absolute;
+  right: 0px;
+  width: 8px;
 }
 
 .uiDlgHandle {
-        position: absolute; 
-        bottom: 1px;
-        right: 1px;
-        display: none;
+  position: absolute;
+  bottom: 1px;
+  right: 1px;
+  display: none;
 }
 
 
 /*
  * Active Windows -- Use focused border images
  */
-
 .uiDlgTopLeft {
-        background: transparent url(chrome://compzilla/skin/nw.gif) no-repeat scroll top left;
+  background: transparent url(chrome://compzilla/skin/meebo/nw.gif) no-repeat scroll top left;
 }
+
 .uiDlgTopRight {
-        background: transparent url(chrome://compzilla/skin/ne.gif) no-repeat scroll top right;
+  background: transparent url(chrome://compzilla/skin/meebo/ne.gif) no-repeat scroll top right;
 }
+
 .uiDlgTopCenter {
-        background: transparent url(chrome://compzilla/skin/n.gif) repeat-x scroll 0% 50%;
+  background: transparent url(chrome://compzilla/skin/meebo/n.gif) repeat-x scroll 0% 50%;
 }
 
 .uiDlgBarLeft {
-        background: transparent url(chrome://compzilla/skin/barw.gif) no-repeat scroll 0%;
+  background: transparent url(chrome://compzilla/skin/meebo/barw.gif) no-repeat scroll 0%;
 }
+
 .uiDlgBarRight {
-        background: transparent url(chrome://compzilla/skin/bare.gif) no-repeat scroll 0%;
+  background: transparent url(chrome://compzilla/skin/meebo/bare.gif) no-repeat scroll 0%;
 }
+
 .uiDlgBarCenter {
-        background: transparent url(chrome://compzilla/skin/barn.gif) repeat-x scroll 0%;
+  background: transparent url(chrome://compzilla/skin/meebo/barn.gif) repeat-x scroll 0%;
 }
 
 .uiDlgContentLeft {
-        background: transparent url(chrome://compzilla/skin/w.gif) repeat-y scroll 0%;
+  background: transparent url(chrome://compzilla/skin/meebo/w.gif) repeat-y scroll 0%;
 }
+
 .uiDlgContentRight {
-        background: transparent url(chrome://compzilla/skin/e.gif) repeat-y scroll 0%;
+  background: transparent url(chrome://compzilla/skin/meebo/e.gif) repeat-y scroll 0%;
 }
 
 .uiDlgBottomLeft {
-        background: transparent url(chrome://compzilla/skin/sw.gif) no-repeat scroll 0%;
+  background: transparent url(chrome://compzilla/skin/meebo/sw.gif) no-repeat scroll 0%;
 }
+
 .uiDlgBottomRight {
-        background: transparent url(chrome://compzilla/skin/se.gif) no-repeat scroll 0%;
+  background: transparent url(chrome://compzilla/skin/meebo/se.gif) no-repeat scroll 0%;
 }
+
 .uiDlgBottomCenter {
-        background: transparent url(chrome://compzilla/skin/s.gif) repeat-x scroll 0%;
+  background: transparent url(chrome://compzilla/skin/meebo/s.gif) repeat-x scroll 0%;
 }
 
 
@@ -398,19 +405,19 @@ body {
  */
 
 .uiDlgContentCenter > * {
-        /* Default background */
-        background: #ECECEC none repeat scroll 0%;
+  /* Default background */
+  background: #ECECEC none repeat scroll 0%;
 }
 
 .uiDlg[pyro|inactive="true"] .uiDlgContentCenter > * {
-        /* Default background when unfocused */
-        background: #EAEAEB none repeat scroll 0%;
+  /* Default background when unfocused */
+  background: #EAEAEB none repeat scroll 0%;
 }
 
 .windowContent,
 .uiDlg[pyro|inactive="true"] .windowContent {
-        /* Need this to avoid having the above rule match unfocused .windowContent */
-        background-color: transparent;
+  /* Need this to avoid having the above rule match unfocused .windowContent */
+  background-color: transparent;
 }
 
 
@@ -419,37 +426,47 @@ body {
  */
 
 .uiDlg[pyro|allow-move="true"] *[pyro|resize="move"] {
-        cursor: -moz-grab;
+  cursor: -moz-grab;
 }
+
 .uiDlg[pyro|moving="true"] :active {
-        cursor: -moz-grabbing;
+  cursor: -moz-grabbing;
 }
+
 .uiDlg[pyro|allow-resize="true"] *[pyro|resize="n"] {
-        cursor: n-resize;
+  cursor: n-resize;
 }
+
 .uiDlg[pyro|allow-resize="true"] *[pyro|resize="s"] {
-        cursor: s-resize;
+  cursor: s-resize;
 }
+
 .uiDlg[pyro|allow-resize="true"] *[pyro|resize="w"] {
-        cursor: w-resize;
+  cursor: w-resize;
 }
+
 .uiDlg[pyro|allow-resize="true"] *[pyro|resize="e"] {
-        cursor: e-resize;
+  cursor: e-resize;
 }
+
 .uiDlg[pyro|allow-resize="true"] *[pyro|resize="nw"] {
-        cursor: nw-resize;
+  cursor: nw-resize;
 }
+
 .uiDlg[pyro|allow-resize="true"] *[pyro|resize="sw"] {
-        cursor: sw-resize;
+  cursor: sw-resize;
 }
+
 .uiDlg[pyro|allow-resize="true"] *[pyro|resize="ne"] {
-        cursor: ne-resize;
+  cursor: ne-resize;
 }
+
 .uiDlg[pyro|allow-resize="true"] *[pyro|resize="se"] {
-        cursor: se-resize;
+  cursor: se-resize;
 }
+
 .uiDlg[pyro|allow-resize="true"] .uiDlgHandle {
-        display: block;
+  display: block;
 }
 
 
@@ -458,29 +475,31 @@ body {
  */
 
 .uiDlg.chromeless {
-        min-width: 0px;
-        min-height: 0px;
+  min-width: 0px;
+  min-height: 0px;
 }
 
-.uiDlg.chromeless .uiDlgTop, 
-.uiDlg.chromeless .uiDlgBar, 
+.uiDlg.chromeless .uiDlgTop,
+.uiDlg.chromeless .uiDlgBar,
 .uiDlg.chromeless .uiDlgBottom,
 .uiDlg.chromeless .uiDlgHandle,
 .uiDlg.chromeless .uiDlgContentLeft,
 .uiDlg.chromeless .uiDlgContentRight {
-        display: none;
+  display: none;
 }
+
 .uiDlg.chromeless .uiDlgContentCenter {
-        display: block;
-        margin: 0px;
+  display: block;
+  margin: 0px;
 }
+
 .uiDlg.chromeless .uiDlgContent {
-        top: 0px;
-        bottom: 0px;
+  top: 0px;
+  bottom: 0px;
 }
 
 
-/* 
+/*
  * Maximized Windows -- Hide the side and bottom borders
  */
 
@@ -488,57 +507,65 @@ body {
 .uiDlg[pyro|window-state="maximized"] .uiDlgHandle,
 .uiDlg[pyro|window-state="maximized"] .uiDlgBorderLeft,
 .uiDlg[pyro|window-state="maximized"] .uiDlgBorderRight {
-        display: none;
+  display: none;
 }
+
 .uiDlg[pyro|window-state="maximized"] .uiDlgCenter {
-        margin: 0px;
+  margin: 0px;
 }
+
 .uiDlg[pyro|window-state="maximized"] .uiDlgContent {
-        bottom: 0px;
+  bottom: 0px;
 }
 
 
-/* 
+/*
  * Inactive Windows -- Use grey border images
  */
 
 .uiDlg[pyro|inactive="true"] .uiDlgTopLeft {
-        background: transparent url(chrome://compzilla/skin/dis_nw.gif) no-repeat scroll top left;
+  background: transparent url(chrome://compzilla/skin/meebo/dis_nw.gif) no-repeat scroll top left;
 }
+
 .uiDlg[pyro|inactive="true"] .uiDlgTopRight {
-        background: transparent url(chrome://compzilla/skin/dis_ne.gif) no-repeat scroll top right;
+background: transparent url(chrome://compzilla/skin/meebo/dis_ne.gif) no-repeat scroll top right;
 }
+
 .uiDlg[pyro|inactive="true"] .uiDlgTopCenter {
-        background: transparent url(chrome://compzilla/skin/dis_n.gif) repeat-x scroll 0% 50%;
+  background: transparent url(chrome://compzilla/skin/meebo/dis_n.gif) repeat-x scroll 0% 50%;
 }
 
 .uiDlg[pyro|inactive="true"] .uiDlgBarLeft {
-        background: transparent url(chrome://compzilla/skin/dis_barw.gif) no-repeat scroll 0%;
+background: transparent url(chrome://compzilla/skin/meebo/dis_barw.gif) no-repeat scroll 0%;
 }
+
 .uiDlg[pyro|inactive="true"] .uiDlgBarRight {
-        background: transparent url(chrome://compzilla/skin/dis_bare.gif) no-repeat scroll 0%;
+  background: transparent url(chrome://compzilla/skin/meebo/dis_bare.gif) no-repeat scroll 0%;
 }
+
 .uiDlg[pyro|inactive="true"] .uiDlgBarCenter {
-        background: transparent url(chrome://compzilla/skin/dis_barn.gif) repeat-x scroll 0%;
+  background: transparent url(chrome://compzilla/skin/meebo/dis_barn.gif) repeat-x scroll 0%;
 }
 
 .uiDlg[pyro|inactive="true"] .uiDlgContentLeft {
-        background: transparent url(chrome://compzilla/skin/dis_w.gif) repeat-y scroll 0%;
+  background: transparent url(chrome://compzilla/skin/meebo/dis_w.gif) repeat-y scroll 0%;
 }
+
 .uiDlg[pyro|inactive="true"] .uiDlgContentRight {
-        background: transparent url(chrome://compzilla/skin/dis_e.gif) repeat-y scroll 0%;
+  background: transparent url(chrome://compzilla/skin/meebo/dis_e.gif) repeat-y scroll 0%;
 }
 
 .uiDlg[pyro|inactive="true"] .uiDlgBottomLeft {
-        background: transparent url(chrome://compzilla/skin/dis_sw.gif) no-repeat scroll 0%;
-}
-.uiDlg[pyro|inactive="true"] .uiDlgBottomRight {
-        background: transparent url(chrome://compzilla/skin/dis_se.gif) no-repeat scroll 0%;
-}
-.uiDlg[pyro|inactive="true"] .uiDlgBottomCenter {
-        background: transparent url(chrome://compzilla/skin/dis_s.gif) repeat-x scroll 0%;
+  background: transparent url(chrome://compzilla/skin/meebo/dis_sw.gif) no-repeat scroll 0%;
 }
 
+.uiDlg[pyro|inactive="true"] .uiDlgBottomRight {
+  background: transparent url(chrome://compzilla/skin/meebo/dis_se.gif) no-repeat scroll 0%;
+}
+
+.uiDlg[pyro|inactive="true"] .uiDlgBottomCenter {
+  background: transparent url(chrome://compzilla/skin/meebo/dis_s.gif) repeat-x scroll 0%;
+}
 
 
 /*
@@ -548,40 +575,41 @@ body {
  */
 
 .uiDlgCaption {
-        color: #FFFFFF;
-        cursor: default;
-        display: inline;
-        font-family: Tahoma, Arial, sans-serif;
-        font-size: 12px;
-        font-weight: bold;
-        line-height: normal;
-        overflow: hidden;
-        white-space: nowrap;
-        position: absolute;
-        height: 18px;
-        width: auto;
-        left: 28px;
-        top: 8px;
+  color: #FFFFFF;
+  cursor: default;
+  display: inline;
+  font-family: Tahoma, Arial, sans-serif;
+  font-size: 12px;
+  font-weight: bold;
+  line-height: normal;
+  overflow: hidden;
+  white-space: nowrap;
+  position: absolute;
+  height: 18px;
+  width: auto;
+  left: 28px;
+  top: 8px;
 }
+
 .uiDlgCaption span {
-        padding: 0pt 2px 0pt 3px;
+  padding: 0pt 2px 0pt 3px;
 }
 
 /* Text Shadow -- must set caption attribute on uiDlgCaption to label content */
 .uiDlgCaption:before {
-        display: block;
-        margin: 0 0 -1.12em 0.15em;
-        color: #666666;
-        content: attr(pyro|caption);
+  display: block;
+  margin: 0 0 -1.12em 0.15em;
+  color: #666666;
+  content: attr(pyro|caption);
 }
 
 .uiDlg[pyro|inactive="true"] .uiDlgCaption {
-        color: grey;
-}
-.uiDlg[pyro|inactive="true"] .uiDlgCaption:before {
-        display: none;
+  color: grey;
 }
 
+.uiDlg[pyro|inactive="true"] .uiDlgCaption:before {
+  display: none;
+}
 
 
 /*
@@ -591,75 +619,83 @@ body {
  */
 
 .uiDlgButtons {
-        cursor: inherit;
-        position: absolute;
-        right: 8px;
-        top: 6px;
+  cursor: inherit;
+  position: absolute;
+  right: 8px;
+  top: 6px;
 }
 
 .uiDlgButton {
-        height: 19px;
-        width: 19px;
-        display: inline;
-        visibility: hidden;
+  height: 19px;
+  width: 19px;
+  display: inline;
+  visibility: hidden;
 }
 
 .uiDlgButtonMenu {
-        cursor: pointer;
-        visibility: visible;
-        position: absolute;
-        height: 18px;
-        left: 8px;
-        top: 6px;
+  cursor: pointer;
+  visibility: visible;
+  position: absolute;
+  height: 18px;
+  left: 8px;
+  top: 6px;
 }
 
 .uiDlgButtonMin {
-        background:transparent url(chrome://compzilla/skin/min.gif) no-repeat scroll 0%;
+  background:transparent url(chrome://compzilla/skin/meebo/min.gif) no-repeat scroll 0%;
 }
+
 .uiDlgButtonMax {
-        background:transparent url(chrome://compzilla/skin/max.gif) no-repeat scroll 0%;
+  background:transparent url(chrome://compzilla/skin/meebo/max.gif) no-repeat scroll 0%;
 }
+
 .uiDlgButtonClose {
-        background:transparent url(chrome://compzilla/skin/close.gif) no-repeat scroll 0%;
+  background:transparent url(chrome://compzilla/skin/meebo/close.gif) no-repeat scroll 0%;
 }
+
 .uiDlgButtonRestore {
-        background:transparent url(chrome://compzilla/skin/restore.gif) no-repeat scroll 0%;
+  background:transparent url(chrome://compzilla/skin/meebo/restore.gif) no-repeat scroll 0%;
 }
 
 .uiDlg[pyro|allow-minimize="true"] .uiDlgButtonMin,
 .uiDlg[pyro|allow-maximize="true"] .uiDlgButtonMax,
 .uiDlg[pyro|allow-close="true"] .uiDlgButtonClose,
 .uiDlg[pyro|allow-restore="true"] .uiDlgButtonRestore {
-        cursor: pointer;
-        visibility: visible;
+  cursor: pointer;
+  visibility: visible;
 }
 
 .uiDlgButtonMin:hover {
-        background:transparent url(chrome://compzilla/skin/min_hot.gif) no-repeat scroll 0%;
+  background:transparent url(chrome://compzilla/skin/meebo/min_hot.gif) no-repeat scroll 0%;
 }
+
 .uiDlgButtonMax:hover {
-        background:transparent url(chrome://compzilla/skin/max_hot.gif) no-repeat scroll 0%;
+  background:transparent url(chrome://compzilla/skin/meebo/max_hot.gif) no-repeat scroll 0%;
 }
+
 .uiDlgButtonClose:hover {
-        background:transparent url(chrome://compzilla/skin/close_hot.gif) no-repeat scroll 0%;
+  background:transparent url(chrome://compzilla/skin/meebo/close_hot.gif) no-repeat scroll 0%;
 }
+
 .uiDlgButtonRestore:hover {
-        background:transparent url(chrome://compzilla/skin/restore_hot.gif) no-repeat scroll 0%;
+  background:transparent url(chrome://compzilla/skin/meebo/restore_hot.gif) no-repeat scroll 0%;
 }
 
 .uiDlgButtonMin:active {
-        background:transparent url(chrome://compzilla/skin/min_down.gif) no-repeat scroll 0%;
-}
-.uiDlgButtonMax:active {
-        background:transparent url(chrome://compzilla/skin/max_down.gif) no-repeat scroll 0%;
-}
-.uiDlgButtonClose:active {
-        background:transparent url(chrome://compzilla/skin/close_down.gif) no-repeat scroll 0%;
-}
-.uiDlgButtonRestore:active {
-        background:transparent url(chrome://compzilla/skin/restore_down.gif) no-repeat scroll 0%;
+  background:transparent url(chrome://compzilla/skin/meebo/min_down.gif) no-repeat scroll 0%;
 }
 
+.uiDlgButtonMax:active {
+  background:transparent url(chrome://compzilla/skin/meebo/max_down.gif) no-repeat scroll 0%;
+}
+
+.uiDlgButtonClose:active {
+  background:transparent url(chrome://compzilla/skin/meebo/close_down.gif) no-repeat scroll 0%;
+}
+
+.uiDlgButtonRestore:active {
+  background:transparent url(chrome://compzilla/skin/meebo/restore_down.gif) no-repeat scroll 0%;
+}
 
 
 /*
@@ -669,17 +705,17 @@ body {
  */
 
 /* make moving windows translucent */
-.uiDlg[pyro|moving="true"] { 
-        opacity: 0.8; 
+.uiDlg[pyro|moving="true"] {
+  opacity: 0.8;
 }
 
 /* make menus and tooltips translucent */
 .uiDlg.chromeless {
-        opacity: 0.9;
+  opacity: 0.9;
 }
 
 /* a little hack to see if we can get wm-class support working.
    gnome-terminal windows should be translucent */
-.uiDlg[pyro|wm-class~="Gnome-terminal"] { 
-        opacity: 0.5;
+.uiDlg[pyro|wm-class~="Gnome-terminal"] {
+  opacity: 0.5;
 }

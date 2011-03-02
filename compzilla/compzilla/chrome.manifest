@@ -13,6 +13,7 @@ overlay chrome://browser/content/browser.xul chrome://compzilla/content/browserO
 # Flickrdemo desktop overlay
 overlay chrome://compzilla/content/start.xul chrome://compzilla/content/flickrdemo.xul
 
+# Load the interfaces and the One binary component
 interfaces components/compzillaIControl.xpt
 interfaces components/compzillaIControlObserver.xpt
 interfaces components/compzillaIWindow.xpt
