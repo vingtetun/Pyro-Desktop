@@ -1,29 +1,15 @@
-/* -*- mode: javascript; c-basic-offset: 4; indent-tabs-mode: t; -*- */
+/* -*- mode: javascript; c-basic-offset: 2; indent-tabs-mode: t; -*- */
+
+let overlayLayer = document.getElementById("overlayLayer");
+let overlayContent = document.getElementById("overlayContent");
+let display = null;
 
 
-var overlayLayer = $("#overlayLayer")[0];
-var overlayContent = $("#overlayContent", overlayLayer)[0];
+function toggleOverlay () {
+  display = overlayLayer.style.display;
+  overlayLayer.style.display = (!display || display == "none") ? "block" : "none";
 
-
-function toggleOverlay ()
-{
-    var display = overlayLayer.style.display;
-    overlayLayer.style.display = (!display || display == "none") ? 
-	"block" : "none";
-
-    if (overlayContent.src == "") {
-        overlayContent.src = "http://pyrodesktop.org";
-    }
+  if (overlayContent.getAttribute("src") == "")
+    overlayContent.setAttribute("src", "http://pyrodesktop.org");
 }
 
-
-/*
-document.addEventListener("keypress", {
-                              handleEvent: function (event) {
-				  if (event.keyCode == event.DOM_VK_F9 && event.ctrlKey) {
-				      toggleOverlay ();
-				  }
-			      }
-                          },
-                          true);
-*/

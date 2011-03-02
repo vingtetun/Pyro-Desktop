@@ -199,7 +199,7 @@ compzillaWindow::ConnectListeners(bool connect, nsCOMPtr<nsISupports> aContent)
     // nsIDOMKeyListener events
     NS_LITERAL_STRING("keydown"),
     NS_LITERAL_STRING("keyup"),
-    // "keypress",
+    NS_LITERAL_STRING("keypress"),
 
     // nsIDOMMouseListener events
     NS_LITERAL_STRING("mousedown"),
@@ -570,8 +570,14 @@ compzillaWindow::SendKeyEvent(int eventType, nsIDOMKeyEvent *keyEv)
     state |= Mod2Mask;
   }
 
+  // Restore the keycode caught during ::OnKeyDown
   PRUint32 keycode;
-  keyEv->GetKeyCode(&keycode);
+  if (mKeycode) {
+    keycode = mKeycode;
+    mKeycode = 0;
+  } else {
+    keyEv->GetKeyCode(&keycode);
+  }
 
   unsigned int xkeysym = DOMKeyCodeToKeySym(keycode);
 
@@ -692,13 +698,26 @@ compzillaWindow::SendKeyEvent(int eventType, nsIDOMKeyEvent *keyEv)
 NS_IMETHODIMP
 compzillaWindow::KeyDown(nsIDOMEvent* aDOMEvent)
 {
+  SPEW_EVENT("DOM KeyDown: Ignored. Expecting KeyPress/KeyUp instead.\n");
+
+  // The keycode of the event is stored during the keydown phase to be 
+  // used by the keypress event that is redispatched to the application
+  nsCOMPtr<nsIDOMKeyEvent> keyEv = do_QueryInterface(aDOMEvent);
+  keyEv->GetKeyCode(&mKeycode);
+
+  return NS_OK;
+}
+
+
+NS_IMETHODIMP
+compzillaWindow::KeyPress(nsIDOMEvent* aDOMEvent)
+{
   nsCOMPtr<nsIDOMKeyEvent> keyEv = do_QueryInterface(aDOMEvent);
   NS_ASSERTION(keyEv, "Invalid key event");
 
   SendKeyEvent(_KeyPress, keyEv);
   return NS_OK;
 }
-
 
 NS_IMETHODIMP
 compzillaWindow::KeyUp(nsIDOMEvent* aDOMEvent)
@@ -709,15 +728,6 @@ compzillaWindow::KeyUp(nsIDOMEvent* aDOMEvent)
   SendKeyEvent(KeyRelease, keyEv);
   return NS_OK;
 }
-
-
-NS_IMETHODIMP
-compzillaWindow::KeyPress(nsIDOMEvent* aDOMEvent)
-{
-  SPEW_EVENT("DOM KeyPress: Ignored. Expecting KeyDown/KeyUp instead.\n");
-  return NS_OK;
-}
-
 
 Window
 compzillaWindow::GetSubwindowAtPoint(int *x, int *y)

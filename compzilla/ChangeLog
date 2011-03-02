@@ -1,3 +1,18 @@
+2011-02-03  Vivien Nicolas  <21@vingtetun.org>
+ * compzilla/chrome/content/debug.js: Removed the event listener
+
+ * compzilla/chrome/content/overlay.js: Removed the event listener
+
+ * compzilla/chrome/content/start.xul: Add the 'event' attribute to <key/> and
+ make it default to 'keydown' to listen key events before the window
+
+ * compzilla/src/compzillaWindow.cpp: Move the key handler code in ::KeyDown to
+ ::KeyPress, this way the key has time to be handle by the xul <commands/>
+
+ * compzilla/src/compzillaWindow.h: Add a new private variable called mKeycode,
+ used to save the keycode of the key during keydown and restore it during
+ keypress. I'm not really sure why it works like that. Shoot first, think after
+
 2011-26-02  Vivien Nicolas  <21@vingtetun.org>
  * compzilla/src/compzillaWindow.cpp: Spaces/Indent clean up
 

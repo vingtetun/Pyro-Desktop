@@ -127,6 +127,11 @@ public:
     bool mIsRedirected;
     bool mIsResizePending;
     XWindowChanges mPendingChanges;
+
+    // Used to store the keycode during a keydown event, and to reuse it during
+    // the keypress to send to X. Otherwise it looks like the keycode is wrong
+    // and the wrong key is transmitted to X.
+    PRUint32 mKeycode;
 };
 
 

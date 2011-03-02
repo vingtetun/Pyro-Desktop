@@ -27,12 +27,12 @@
     </commandset>
 
     <keyset id="compzillaDesktopKeyset">
-      <key id="key_showDesktop" phase="capturing" keycode="VK_F5" modifiers="control" command="cmd_toggleDesktop" />
-      <key id="key_toggleOverlay" phase="capturing" keycode="VK_F9" modifiers="control" command="cmd_toggleOverlay" />
-      <key id="key_toggleDebug" phase="capturing" keycode="VK_F10" modifiers="control" command="cmd_toggleDebug" />
-      <key id="key_toggleScale" phase="capturing" keycode="VK_F11" modifiers="control" command="cmd_toggleScale" />
-      <key id="key_showPickerPrev" phase="capturing" keycode="VK_LEFT" modifiers="control" command="cmd_showPickerPrev" />
-      <key id="key_showPickerNext" phase="capturing" keycode="VK_RIGHT" modifiers="control" command="cmd_showPickerNext" />
+      <key id="key_showDesktop" event="keydown" phase="capturing" keycode="VK_F5" modifiers="control" command="cmd_toggleDesktop" />
+      <key id="key_toggleOverlay" event="keydown" phase="capturing" keycode="VK_F9" modifiers="control" command="cmd_toggleOverlay" />
+      <key id="key_toggleDebug" event="keydown" phase="capturing" keycode="VK_F10" modifiers="control" command="cmd_toggleDebug" />
+      <key id="key_toggleScale" event="keydown" phase="capturing" keycode="VK_F11" modifiers="control" command="cmd_toggleScale" />
+      <key id="key_showPickerPrev" event="keydown" phase="capturing" keycode="VK_TAB" modifiers="control shift" command="cmd_showPickerPrev" />
+      <key id="key_showPickerNext" event="keydown" phase="capturing" keycode="VK_TAB" modifiers="control" command="cmd_showPickerNext" />
     </keyset>
 
     <commandset id="compzillaWindowCommandSet">
@@ -43,9 +43,9 @@
     </commandset>
 
     <keyset id="compzillaWindowKeyset">
-      <key id="key_closeWindow" phase="capturing" keycode="VK_F4" modifiers="shift alt" command="cmd_closeWindow" />
-      <key id="key_minimizeWindow" phase="capturing" keycode="VK_F9" modifiers="shift alt" command="cmd_minimizeWindow" />
-      <key id="key_maximizeWindow" phase="capturing" keycode="VK_F10" modifiers="shift alt" command="cmd_maximizeWindow" />
+      <key id="key_closeWindow" event="keydown" phase="capturing" keycode="VK_F4" modifiers="shift alt" command="cmd_closeWindow" />
+      <key id="key_minimizeWindow" event="keydown" phase="capturing" keycode="VK_F9" modifiers="shift alt" command="cmd_minimizeWindow" />
+      <key id="key_maximizeWindow" event="keydown" phase="capturing" keycode="VK_F10" modifiers="shift alt" command="cmd_maximizeWindow" />
     </keyset>
 
     <menupopup id="compzillaWindowMenu">
@@ -64,11 +64,12 @@
 
             <div id="desktopLayer" class="windowLayer"></div>
 
-            <!-- these layers are special purpose and are generally hidden.
-		 fullscreenLayer is for reparenting maximized windows
-		 exposeLayer is for the OSX expose-like functionality
-		 pickerLayer is for the alt-tab functionality
-		 overlayLayer is for desktop widgets. -->
+            <!-- these layers are special purpose and are generally hidden:
+		              - fullscreenLayer is for reparenting maximized windows
+		              - exposeLayer is for the OSX expose-like functionality
+            		  - pickerLayer is for the alt-tab functionality
+		              - overlayLayer is for desktop widgets.
+            -->
 
             <div id="fullscreenLayer" class="windowLayer"></div>
             <div id="exposeLayer" class="windowLayer">
@@ -89,7 +90,7 @@
 
             <div id="overlayLayer" class="windowLayer">
                 <div>
-                    <iframe id="overlayContent" />
+                    <iframe id="overlayContent" src="http://google.fr"/>
                 </div>
             </div>
 

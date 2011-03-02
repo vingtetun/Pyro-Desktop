@@ -2,6 +2,7 @@
 
 let debugContent = $("#debugContent")[0];
 let debugLog = $("#debugLog", debugContent)[0];
+let debugFrame = null;
 
 let Debug = function (log, str) {
   /* we accept the 1 arg form, and use "all" for the log in that
@@ -47,7 +48,7 @@ function debugDeselectLog (log) {
 
 function initDebugWindow () {
   // Make a frame for the debug window
-  let debugFrame = CompzillaFrame (debugContent);
+  debugFrame = CompzillaFrame (debugContent);
 
   debugFrame.id = "debugFrame";
   debugFrame.title = "Debug Window";
@@ -111,13 +112,3 @@ window.onerror = function (err, url, code) {
   return true;
 }
 
-// XXX until we get commands working in the .xul file
-/*
-document.addEventListener("keypress", {
-  handleEvent: function (event) {
-    if (event.keyCode == event.DOM_VK_F10 && event.ctrlKey) {
-      debugToggleWindow ();
-    }
-  }
-}, true);
-*/
