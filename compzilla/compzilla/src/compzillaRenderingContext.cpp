@@ -56,7 +56,8 @@ compzillaRenderingContext::compzillaRenderingContext ()
   mXVisual(NULL),
   mXDrawable(None),
   mWidth(0), 
-  mHeight(0)
+  mHeight(0),
+  mValid(PR_FALSE)
 {
   // nsRefPtrs take care of initing to null
 }
@@ -164,6 +165,7 @@ compzillaRenderingContext::SetDrawable(Display *dpy,
   if (mXDisplay == dpy && mXDrawable == drawable && mXVisual == visual)
     return NS_OK;
 
+  mValid = PR_TRUE;
   mXDisplay = dpy;
   mXDrawable = drawable;
   mXVisual = visual;

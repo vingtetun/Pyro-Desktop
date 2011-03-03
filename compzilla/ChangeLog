@@ -1,4 +1,12 @@
 2011-03-03  Vivien Nicolas  <21@vingtetun.org>
+ * Makefile.am: Tweak the 'make debug' command
+
+ * compzilla/src/compzillaRenderingContext.cpp: Add a mValid check to ensure
+ the underlying thebes surface is well initialized in order to prevent a crash
+
+ * compzilla/src/compzillaRenderingContext.h: Add the mValid member
+
+2011-03-03  Vivien Nicolas  <21@vingtetun.org>
  * Makefile.am: Add a install-dev rule for simplify the dev-install-reboot
  process actually in use. I could possibly play with compzilla/Makefile.am
  in order to achieve that but I've not found the right way to do it yet.

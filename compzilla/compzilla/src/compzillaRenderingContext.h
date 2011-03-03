@@ -20,7 +20,7 @@ extern "C" {
 #include "compzillaIRenderingContextInternal.h"
 
 #include <Layers.h>
-typedef mozilla::layers::CanvasLayer CanvasLayer; 
+typedef mozilla::layers::CanvasLayer CanvasLayer;
 static PRUint8 gCompzillaLayerUserData;
 
 class nsHTMLCanvasElement;
@@ -74,6 +74,9 @@ public:
 
     already_AddRefed<CanvasLayer> GetCanvasLayer(CanvasLayer *aOldLayer,
                                                  LayerManager *aManager) {
+      if (!mValid)
+        return nsnull;
+
       nsRefPtr<CanvasLayer> canvasLayer = aManager->CreateCanvasLayer();
       if (!canvasLayer) {
          NS_WARNING("CreateCanvasLayer returned null!");
@@ -105,6 +108,7 @@ private:
 
     nsRefPtr<gfxXlibSurface> mGfxSurf;
     PRInt32 mWidth, mHeight;
+    PRBool mValid;
 };
 
 

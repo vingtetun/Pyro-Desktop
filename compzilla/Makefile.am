@@ -7,7 +7,7 @@ PROFILE_DIR=`readlink -f ${HOME}/.mozilla/firefox/*.pyrodesktop`
 debug:
 	./run-xephyr.sh &
 	DISPLAY=:9 NSPR_LOG_MODULES="compzilla:10" \
-	$(GECKO_EXEC_PREFIX)/run-mozilla.sh -g ./firefox-bin -chrome chrome://compzilla/content/start.xul -P pyrodesktop
+	$(GECKO_EXEC_PREFIX)/run-mozilla.sh -g ${GECKO_EXEC_PREFIX}/firefox-bin -chrome chrome://compzilla/content/start.xul -P pyrodesktop
 
 # Check the library for undefined symbol that prevent it to load
 check-dev:
