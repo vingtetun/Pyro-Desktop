@@ -89,6 +89,7 @@ public:
       data.mSize = nsIntSize(mWidth, mHeight);
       canvasLayer->Initialize(data);
 
+      // XXX Need to use the constant here
       PRUint32 flags = 0x01;
       canvasLayer->SetContentFlags(flags);
       canvasLayer->Updated(nsIntRect(0, 0, mWidth, mHeight));
